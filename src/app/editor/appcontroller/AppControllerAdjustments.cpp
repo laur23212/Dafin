@@ -929,6 +929,9 @@ std::optional<drift::ClipType> placeableClipType(const QString &kind)
     // Dafin: a .mogrt from the Titles grid becomes a template title, a video clip of its render.
     if (kind == QLatin1String("mogrt"))
         return drift::ClipType::Video;
+    // Dafin: a split screen template becomes a composite of its cells (AppControllerSplitScreen.cpp).
+    if (kind == QLatin1String("splitScreen"))
+        return drift::ClipType::Composite;
     return std::nullopt;
 }
 
@@ -1156,6 +1159,8 @@ QVariantMap AppController::dropAsset(const QString &kind, const QString &payload
             addAdjustmentClipAt(target, at);
         else if (kind == QLatin1String("mogrt"))
             m_mogrt->addTemplate(payload, at, target, label);
+        else if (kind == QLatin1String("splitScreen"))
+            insertSplitScreen(payload, target, at);
         if (newTrack)
             m_mcpController->endBatch(tr("Add to new track"), true);
         return plan;

@@ -27,7 +27,9 @@ QtObject {
         "textStyle": "application/x-drift-text-style",
         "adjustment": "application/x-drift-adjustment",
         // Dafin: a .mogrt from the Titles grid; the payload is the template file's path.
-        "mogrt": "application/x-dafin-mogrt"
+        "mogrt": "application/x-dafin-mogrt",
+        // Dafin: a split screen card from Templates; the payload is the layout id.
+        "splitScreen": "application/x-dafin-split-screen"
     })
     readonly property string labelKey: "application/x-drift-asset-label"
 
@@ -56,7 +58,7 @@ QtObject {
 
     // Keys of the kinds that create a clip rather than act on one.
     function placeableKeys() {
-        return ["shape", "sticker", "emoji", "textStyle", "adjustment", "mogrt"].map(k => mimeKeys[k])
+        return ["shape", "sticker", "emoji", "textStyle", "adjustment", "mogrt", "splitScreen"].map(k => mimeKeys[k])
     }
 
     function kindFromKeys(keys) {

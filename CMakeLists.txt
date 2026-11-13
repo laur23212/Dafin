@@ -686,6 +686,8 @@ add_library(driftcore STATIC
     src/core/edit/TimelineOps.cpp
     src/core/edit/BeatDuckPlan.h
     src/core/edit/BeatDuckPlan.cpp
+    src/core/edit/SplitScreen.h
+    src/core/edit/SplitScreen.cpp
     src/core/edit/MaskSpace.h
     src/core/edit/MaskSpace.cpp
     src/core/edit/CutOps.h
@@ -1322,6 +1324,7 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerProject.cpp
     src/app/editor/appcontroller/AppControllerTextLayers.cpp
     src/app/editor/appcontroller/AppControllerDafin.cpp
+    src/app/editor/appcontroller/AppControllerSplitScreen.cpp
     src/app/editor/appcontroller/AppControllerSpeed.cpp
     src/app/editor/appcontroller/AppControllerBeatsDucking.cpp
     src/app/editor/appcontroller/AppControllerPresetPreview.cpp
@@ -1884,6 +1887,7 @@ qt_add_qml_module(drift
         src/qml/components/preview/TransformGizmo.qml
         src/qml/components/preview/TransformOverlay.qml
         src/qml/components/preview/PreviewDropOverlay.qml
+        src/qml/components/preview/SplitScreenPreviewOverlay.qml
         src/qml/components/preview/CropOverlay.qml
         src/qml/components/preview/GuideLayer.qml
         src/qml/components/preview/GuidesPopover.qml
@@ -1938,6 +1942,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/Transform3dInspector.qml
         src/qml/components/properties/PdfInspector.qml
         src/qml/components/properties/MogrtInspector.qml
+        src/qml/components/properties/SplitScreenInspector.qml
         src/qml/components/properties/MasksInspector.qml
         src/qml/components/properties/VideoInspector.qml
         src/qml/components/properties/EffectsInspector.qml
@@ -2037,6 +2042,7 @@ qt_add_qml_module(drift
         src/qml/components/properties/AudioEffectHeader.qml
         src/qml/components/assets/TextAssetsTab.qml
         src/qml/components/assets/SplitScreenGrid.qml
+        src/qml/components/assets/SplitScreenThumb.qml
         src/qml/components/assets/ScenesTab.qml
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/AiToolsTab.qml

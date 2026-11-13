@@ -203,6 +203,9 @@ public:
     QString addSequence(TrackList tracks);
     // Must not be the active sequence.
     void removeSequence(const QString &id);
+    // Dafin: replaces a composite's tracks (the open tracks when it is the open one). False for the
+    // main timeline or an unknown id.
+    bool replaceSequenceTracks(const QString &id, const QList<Track> &tracks);
 
     // Every timeline's tracks — the open one, the main one and each composite's — for passes that
     // must reach clips wherever they live (path remaps, packaging).

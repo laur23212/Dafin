@@ -340,6 +340,15 @@ QJsonObject clipToJson(const Clip &clip)
                     QJsonObject{{QStringLiteral("windows"), windows},
                                 {QStringLiteral("pins"), clip.duckPins}});
     }
+    if (!clip.splitScreen.isEmpty()) {
+        json.insert(QStringLiteral("dafinSplit"),
+                    QJsonObject{{QStringLiteral("layout"), clip.splitScreen.layout},
+                                {QStringLiteral("animate"), clip.splitScreen.animate},
+                                {QStringLiteral("borderPx"), clip.splitScreen.borderPx},
+                                {QStringLiteral("borderColor"), clip.splitScreen.borderColor},
+                                {QStringLiteral("cells"), QJsonArray::fromStringList(clip.splitScreen.cellTrackIds)},
+                                {QStringLiteral("borderTrack"), clip.splitScreen.borderTrackId}});
+    }
     if (!clip.sequenceId.isEmpty())
         json.insert(QStringLiteral("sequenceId"), clip.sequenceId);
     if (clip.sourceFrame != QRectF(0, 0, 1, 1))
@@ -440,6 +449,18 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
                 clip.duckWindows.append({TimeUs(w.at(0).toDouble()), TimeUs(w.at(1).toDouble())});
         }
         clip.duckPins = duck.value(QStringLiteral("pins")).toInt();
+    }
+    {
+        const QJsonObject split = object.value(QStringLiteral("dafinSplit")).toObject();
+        if (!split.isEmpty()) {
+            clip.splitScreen.layout = split.value(QStringLiteral("layout")).toString();
+            clip.splitScreen.animate = split.value(QStringLiteral("animate")).toBool(true);
+            clip.splitScreen.borderPx = split.value(QStringLiteral("borderPx")).toDouble(6.0);
+            clip.splitScreen.borderColor = split.value(QStringLiteral("borderColor")).toString(QStringLiteral("#ffffff"));
+            for (const QJsonValue &cell : split.value(QStringLiteral("cells")).toArray())
+                clip.splitScreen.cellTrackIds.append(cell.toString());
+            clip.splitScreen.borderTrackId = split.value(QStringLiteral("borderTrack")).toString();
+        }
     }
     clip.sequenceId = object.value(QStringLiteral("sequenceId")).toString();
     clip.path = object.value(QStringLiteral("path")).toString();
@@ -804,6 +825,16 @@ QString Project::addSequence(TrackList tracks)
     drift::ensureTrackIds(sequence.tracks);
     m_sequences.insert(sequence.id, sequence);
     return sequence.id;
+}
+
+bool Project::replaceSequenceTracks(const QString &id, const QList<Track> &tracks)
+{
+    if (id.isEmpty() || !m_sequences.contains(id))
+        return false;
+    TrackList &target = id == m_activeSequenceId ? m_tracks : m_sequences[id].tracks;
+    target = tracks;
+    drift::ensureTrackIds(target);
+    return true;
 }
 
 void Project::removeSequence(const QString &id)

@@ -21,6 +21,7 @@
 #include <QList>
 #include <QPair>
 #include <QString>
+#include <QStringList>
 
 namespace drift {
 
@@ -45,6 +46,22 @@ QString adjustmentKindToString(AdjustmentKind kind);
 AdjustmentKind adjustmentKindFromString(const QString &kind);
 
 enum class StabilizeMode { Bake, Keyframes };
+
+// Dafin: set on a Composite clip made from a split screen template (Templates › Split Screen,
+// AppControllerSplitScreen.cpp). The composite's tracks named in cellTrackIds are the layout's
+// cells, in cell order, each holding one clip (a placeholder Shape until media goes in) cut to its
+// cell by a pinned mask; borderTrackId is the bottom track's fill that shows between the cells.
+struct SplitScreenInfo
+{
+    QString layout;                // core/edit/SplitScreen.h id, e.g. "split22"; empty = not a split screen
+    bool animate = true;           // cells unfold in at the start
+    double borderPx = 6.0;         // gap between cells in canvas px; 0 = no border
+    QString borderColor = QStringLiteral("#ffffff");
+    QStringList cellTrackIds;
+    QString borderTrackId;
+
+    bool isEmpty() const { return layout.isEmpty(); }
+};
 
 QString stabilizeModeToString(StabilizeMode mode);
 StabilizeMode stabilizeModeFromString(const QString &mode);
@@ -97,6 +114,8 @@ struct Clip
     // Dafin: set on a video clip that plays a rendered Motion Graphics Template; the template and
     // its editable values. Empty on every other clip.
     MogrtSource mogrt;
+    // Dafin: the layout and look of a split screen (Composite clips only); empty on every other clip.
+    SplitScreenInfo splitScreen;
     // Dafin auto ducking (timeline toolbar): the stretches, in clip-relative time, whose volume dots
     // the button wrote, and which ends of the line it pinned (1: start, 2: end). Empty when the clip
     // is not ducked; switching ducking off removes the dots inside these and the pins.

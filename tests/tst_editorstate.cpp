@@ -29,6 +29,7 @@
 #include <QFileInfo>
 #include <QImage>
 #include <QProcess>
+#include <QPolygonF>
 #include <QSet>
 #include <QSettings>
 #include <QSignalSpy>
@@ -90,6 +91,7 @@
 #include "ui/imageproviders/multicam/MulticamImageStore.h"
 
 #include "core/edit/MaskSpace.h"
+#include "core/edit/SplitScreen.h"
 #include "core/base/CameraEuler.h"
 #include "engine/render3d/scene/SceneCamera3d.h"
 #include "engine/tracking/MotionTracking.h"
@@ -161,6 +163,8 @@ private slots:
     void effectStackCopyPasteAppendsAndRescales();
     void chromaKeyHueIsFlaggedForTheColourSwatch();
     void splitScreenFillsCellsWithCoveredMaskedClips();
+    void splitScreenLayoutsCoverTheCanvasAndUnfold();
+    void splitScreenClipTakesMediaInItsCells();
     // Dafin: Filmora-style speed and the Video tab (AppControllerSpeed.cpp, AppControllerDafin.cpp).
     void speedRampPresetRetimesTheClipInPlace();
     void freezeFrameHoldsThePlayheadFrameInsideTheClip();
@@ -16433,10 +16437,11 @@ void EditorStateTest::splitScreenFillsCellsWithCoveredMaskedClips()
         project.tracks()[t].clips.append(clip);
     }
 
+    // Filmora's thirty first (Split Screen 1 is left and right), then Dafin's two extras.
     const QVariantList layouts = state.splitScreenLayouts();
-    QVERIFY(layouts.size() >= 6);
-    QCOMPARE(layouts.first().toMap().value(QStringLiteral("id")).toString(), QStringLiteral("rows3"));
-    QCOMPARE(layouts.first().toMap().value(QStringLiteral("cells")).toList().size(), 3);
+    QCOMPARE(layouts.size(), 32);
+    QCOMPARE(layouts.first().toMap().value(QStringLiteral("id")).toString(), QStringLiteral("split1"));
+    QCOMPARE(layouts.first().toMap().value(QStringLiteral("cells")).toList().size(), 2);
     QCOMPARE(state.applySplitScreen(QStringLiteral("no-such-layout")), 0);
 
     state.selectClip(0, 0);
@@ -16464,6 +16469,175 @@ void EditorStateTest::splitScreenFillsCellsWithCoveredMaskedClips()
     QVERIFY(drift::mcpdetail::findClipById(project, QStringLiteral("a"), &t, &c));
     QVERIFY(project.tracks().at(t).clips.at(c).transformX.isEmpty());
     QVERIFY(drift::linkedMaskAdjustments(project, t, c).isEmpty());
+}
+
+// Dafin: the thirty split screen layouts tile their box without gaps or overlaps, a cell unfolds
+// from nothing to its whole shape, and a border pulls only the edges cells share.
+void EditorStateTest::splitScreenLayoutsCoverTheCanvasAndUnfold()
+{
+    const QVector<drift::SplitLayoutDef> &layouts = drift::splitScreenLayoutDefs();
+    QSet<int> numbers;
+    for (const drift::SplitLayoutDef &layout : layouts) {
+        if (layout.number > 0)
+            numbers.insert(layout.number);
+    }
+    QCOMPARE(numbers.size(), 30);
+    QVERIFY(numbers.contains(1) && numbers.contains(30));
+    // The ids of the layouts Dafin had before still find theirs.
+    QVERIFY(drift::splitScreenLayout(QStringLiteral("leftright")));
+    QCOMPARE(drift::splitScreenLayout(QStringLiteral("leftright"))->id, QStringLiteral("split1"));
+    QVERIFY(!drift::splitScreenLayout(QStringLiteral("no-such-layout")));
+
+    // Every point of a layout's box lies in exactly one cell (sampled just off the cell edges).
+    for (const drift::SplitLayoutDef &layout : layouts) {
+        const QRectF bounds = drift::splitLayoutBounds(layout);
+        for (int gx = 0; gx < 40; ++gx) {
+            for (int gy = 0; gy < 40; ++gy) {
+                const QPointF p(bounds.x() + (gx + 0.5) / 40.0 * bounds.width() + 0.0013,
+                                bounds.y() + (gy + 0.5) / 40.0 * bounds.height() + 0.0017);
+                int hits = 0;
+                for (const drift::SplitCellDef &cell : layout.cells) {
+                    if (QPolygonF(cell.points).containsPoint(p, Qt::OddEvenFill))
+                        ++hits;
+                }
+                if (hits != 1)
+                    qWarning() << layout.id << p << hits;
+                QCOMPARE(hits, 1);
+            }
+        }
+    }
+
+    // Split Screen 4's left cell unfolds from the left edge: no area at first, whole at the end.
+    const drift::SplitLayoutDef *diagonal = drift::splitScreenLayout(QStringLiteral("split4"));
+    QVERIFY(diagonal);
+    QCOMPARE(drift::splitCellReveal(diagonal->cells.at(0)), drift::SplitReveal::Left);
+    const QVector<QPointF> full = drift::splitCellPolygonPx(diagonal->cells.at(0), drift::splitLayoutBounds(*diagonal),
+                                                            1920, 1080, 0.0);
+    const QMap<drift::TimeUs, QVector<QPointF>> keys =
+        drift::splitRevealKeys(full, drift::splitCellReveal(diagonal->cells.at(0)), 0);
+    double startArea = 0.0;
+    const QVector<QPointF> &start = keys.first();
+    for (int i = 0; i < start.size(); ++i) {
+        const QPointF a = start.at(i);
+        const QPointF b = start.at((i + 1) % start.size());
+        startArea += a.x() * b.y() - b.x() * a.y();
+    }
+    QVERIFY(qAbs(startArea) < 1e-6);
+    QCOMPARE(keys.lastKey(), drift::kSplitRevealUs);
+    QCOMPARE(keys.last(), full);
+
+    // A 10 px border moves the shared middle edge 5 px in; the canvas edges stay.
+    const drift::SplitLayoutDef *halves = drift::splitScreenLayout(QStringLiteral("split1"));
+    QVERIFY(halves);
+    const QRectF left = QPolygonF(drift::splitCellPolygonPx(halves->cells.at(0), drift::splitLayoutBounds(*halves),
+                                                            1920, 1080, 10.0))
+                            .boundingRect();
+    QVERIFY(qAbs(left.left()) < 1e-6);
+    QVERIFY(qAbs(left.top()) < 1e-6);
+    QVERIFY(qAbs(left.bottom() - 1080.0) < 1e-6);
+    QVERIFY(qAbs(left.right() - 955.0) < 1e-6);
+    QCOMPARE(drift::splitCellAt(*halves, QPointF(0.25, 0.5)), 0);
+    QCOMPARE(drift::splitCellAt(*halves, QPointF(0.75, 0.5)), 1);
+}
+
+// Dafin: a split screen dropped on the timeline is a composite of its cells; media goes into a cell,
+// and the animation, border, layout and length are each one undo step.
+void EditorStateTest::splitScreenClipTakesMediaInItsCells()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QImage picture(160, 90, QImage::Format_ARGB32);
+    picture.fill(Qt::blue);
+    const QString picturePath = dir.filePath(QStringLiteral("cell.png"));
+    QVERIFY(picture.save(picturePath, "PNG"));
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::Project &project = *state.project();
+    drift::MediaAsset asset;
+    asset.name = QStringLiteral("Cell picture");
+    asset.path = picturePath;
+    asset.kind = drift::MediaKind::Image;
+    asset.width = picture.width();
+    asset.height = picture.height();
+    QVERIFY(!library.addGeneratedAsset(asset).isEmpty());
+    const auto pictureIndex = [&library]() {
+        for (int i = 0; i < library.rowCount(); ++i) {
+            if (library.assetAt(i).value(QStringLiteral("name")).toString() == QLatin1String("Cell picture"))
+                return i;
+        }
+        return -1;
+    };
+
+    const QString id = state.insertSplitScreen(QStringLiteral("split22"), -1, 0.0);
+    QVERIFY(!id.isEmpty());
+    int t = -1;
+    int c = -1;
+    QVERIFY(drift::mcpdetail::findClipById(project, id, &t, &c));
+    {
+        const drift::Clip &split = project.tracks().at(t).clips.at(c);
+        QCOMPARE(split.type, drift::ClipType::Composite);
+        QCOMPARE(split.splitScreen.layout, QStringLiteral("split22"));
+        QCOMPARE(split.splitScreen.cellTrackIds.size(), 2);
+        QVERIFY(!split.splitScreen.borderTrackId.isEmpty());
+        QCOMPARE(split.name, QStringLiteral("Split Screen 22"));
+    }
+
+    // The mask pinned to the clip of cell `cell`, inside the split screen.
+    const auto cellMask = [&](int cell) -> drift::Mask {
+        const drift::Clip &split = project.tracks().at(t).clips.at(c);
+        const drift::Project view = project.sequenceView(split.sequenceId);
+        const int cellTrack = view.trackIndexById(split.splitScreen.cellTrackIds.value(cell));
+        if (cellTrack < 0)
+            return {};
+        const QList<drift::ClipRef> masks = drift::linkedMaskAdjustments(view, cellTrack, 0);
+        if (masks.isEmpty())
+            return {};
+        return view.tracks().at(masks.first().trackIndex).clips.at(masks.first().clipIndex).mask;
+    };
+    QCOMPARE(cellMask(0).shape, drift::MaskShape::Freeform);
+    QVERIFY(cellMask(0).pathKeys.size() > 1);
+    QCOMPARE(state.splitScreenInfo(t, c).value(QStringLiteral("filledCount")).toInt(), 0);
+
+    // A picture dropped on the clip goes into the first empty cell, still cut to it.
+    QVERIFY(pictureIndex() >= 0);
+    QVERIFY(state.fillSplitScreenCell(t, c, -1, pictureIndex()));
+    QVERIFY(drift::mcpdetail::findClipById(project, id, &t, &c));
+    QVariantMap info = state.splitScreenInfo(t, c);
+    QCOMPARE(info.value(QStringLiteral("filledCount")).toInt(), 1);
+    QVERIFY(info.value(QStringLiteral("cells")).toList().at(0).toMap().value(QStringLiteral("filled")).toBool());
+    QCOMPARE(cellMask(0).shape, drift::MaskShape::Freeform);
+    QVERIFY(cellMask(0).pathKeys.size() > 1);
+
+    // Animation off: whole from the start. Border off: its track goes.
+    state.setSplitScreenAnimation(t, c, false);
+    QVERIFY(cellMask(0).pathKeys.isEmpty());
+    state.setSplitScreenBorder(t, c, 0.0, QStringLiteral("#ffffff"));
+    QVERIFY(project.tracks().at(t).clips.at(c).splitScreen.borderTrackId.isEmpty());
+
+    // Another layout: cell 1 keeps the picture, the new cells are empty, the name follows.
+    state.setSplitScreenLayout(t, c, QStringLiteral("split18"));
+    info = state.splitScreenInfo(t, c);
+    QCOMPARE(info.value(QStringLiteral("cells")).toList().size(), 4);
+    QCOMPARE(info.value(QStringLiteral("filledCount")).toInt(), 1);
+    QCOMPARE(project.tracks().at(t).clips.at(c).name, QStringLiteral("Split Screen 18"));
+
+    // Longer: every cell follows.
+    state.setSplitScreenDuration(t, c, 8.0);
+    QCOMPARE(project.tracks().at(t).clips.at(c).timelineDuration, drift::secondsToUs(8.0));
+    QCOMPARE(project.sequenceDurationUs(project.tracks().at(t).clips.at(c).sequenceId), drift::secondsToUs(8.0));
+
+    QVERIFY(state.serializeProjectJson().contains("dafinSplit"));
+
+    // One undo step each: length, layout, border, animation, then the picture.
+    state.undo();
+    state.undo();
+    QCOMPARE(state.splitScreenInfo(t, c).value(QStringLiteral("cells")).toList().size(), 2);
+    state.undo();
+    state.undo();
+    QVERIFY(!cellMask(0).pathKeys.isEmpty());
+    state.undo();
+    QCOMPARE(state.splitScreenInfo(t, c).value(QStringLiteral("filledCount")).toInt(), 0);
 }
 
 // Dafin: a queued render's timeline is a workspace of its own, with its own undo list.

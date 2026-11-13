@@ -345,6 +345,15 @@ PanelFrame {
                 visible: EditorState.preview.handlesVisible
             }
 
+            // Dafin: the cells of a split screen, outlined and numbered while it is selected or
+            // while media is dragged, so it is clear where a drop goes. Draws only.
+            SplitScreenPreviewOverlay {
+                x: panelViewport.canvas.x
+                y: panelViewport.canvas.y
+                width: panelViewport.canvas.width
+                height: panelViewport.canvas.height
+            }
+
             // Assets dragged from the browsers land here as overlays at the playhead, or onto the
             // clip under the pointer. Above the transform handles so a drag passing over a
             // selected clip still reaches it.

@@ -161,6 +161,8 @@ PanelFrame {
     // Audio is one: volume is keyframeable and edited there.
     readonly property var tabs: [
         { id: "general", label: qsTr("General"), icon: Theme.icons.info, group: 0, needs: [] },
+        // Dafin: a split screen's cells, layout, animation and border (SplitScreenInspector).
+        { id: "splitScreen", label: qsTr("Split Screen"), icon: Theme.icons.layoutGrid, group: 0, needs: ["splitScreen"] },
         // Dafin: Filmora's Video tab — size, position, chroma key and masks of a video or image.
         { id: "video", label: qsTr("Video"), icon: Theme.icons.film, group: 0, needs: ["videoBasic"], keyframes: true },
         { id: "text", label: qsTr("Text"), icon: Theme.icons.type, group: 0, needs: ["textStyled"], keyframes: true },
@@ -260,7 +262,7 @@ PanelFrame {
         root._lastSelectedClipId = id
         if (root.locked || id.length === 0)
             return
-        for (const tabId of ["template", "text", "vector", "video"]) {
+        for (const tabId of ["splitScreen", "template", "text", "vector", "video"]) {
             if (root.tabVisible(tabId)) {
                 root.activeTab = root.tabIndexOf(tabId)
                 return
@@ -519,6 +521,12 @@ PanelFrame {
                     active: root.currentTabId === "general"
                     visible: active
                     sourceComponent: Component { GeneralInspector { width: tabColumn.width } }
+                }
+
+                Loader {
+                    active: root.currentTabId === "splitScreen"
+                    visible: active
+                    sourceComponent: Component { SplitScreenInspector { width: tabColumn.width } }
                 }
 
                 Loader {
