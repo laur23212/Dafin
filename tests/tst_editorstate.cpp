@@ -70,6 +70,8 @@
 #include "app/editor/sessions/MaskStackModel.h"
 #include "app/jobs/vision/TrackerListModel.h"
 #include "engine/compositor/FrameCompositor.h"
+#include "engine/packages/effects/EffectCatalog.h"
+#include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/compositor/GpuCompositor.h"
 #include "ui/imageproviders/TextStylePreviewImageProvider.h"
 #include "engine/tracking/MotionTracking.h"
@@ -401,6 +403,7 @@ private slots:
     void adjustmentLayerCreationAndCompositing();
     void adjustmentLayerDraggedToATrackEdgeGetsANewTrackThere();
     void keyframeButtonKeysAnAdjustmentLayersStrength();
+    void assetWave1PackagesLoadAndApply();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
@@ -16520,6 +16523,95 @@ void EditorStateTest::workspacesKeepTimelinesAndUndoApart()
     const QString second = workspaces->addRenderTimelineFromOpen();
     QCOMPARE(project.workspaces().at(project.workspaceIndex(second)).name,
              QStringLiteral("Render timeline 2"));
+}
+
+// Asset wave 1 from the curated ChatGPT pack (DAFIN.md, "Asset library audit"): three effects and
+// two transitions, kept under their original ids. The real package loaders must accept each one,
+// file it under a category the browser already names, find its card picture, and a clip must take
+// it with its defaults.
+void EditorStateTest::assetWave1PackagesLoadAndApply()
+{
+    struct Package
+    {
+        const char *id;
+        const char *category;
+        QStringList params;
+    };
+    const QList<Package> effects{
+        {"dafin.v3.fx.lens-barrel-warp", "glitch", {QStringLiteral("center"), QStringLiteral("barrel")}},
+        {"dafin.v4.fx.adaptive-vibrance", "color", {QStringLiteral("amount"), QStringLiteral("protect")}},
+        {"dafin.v3.fx.camera-shake-handheld", "impact",
+         {QStringLiteral("amount"), QStringLiteral("speed"), QStringLiteral("seed"), QStringLiteral("crop")}},
+    };
+    QStringList builtInEffectCategories;
+    for (const auto &category : effectCategories())
+        builtInEffectCategories.append(category.first);
+    for (const Package &p : effects) {
+        const QString id = QString::fromLatin1(p.id);
+        const EffectPresetEntry *def = effectDefForId(id);
+        QVERIFY2(def, p.id);
+        QVERIFY2(def->isGpu && def->gpu.valid, qPrintable(id + QLatin1String(": ") + def->gpu.errorMessage));
+        QVERIFY2(!def->needsFace && !def->needsDepth && !def->needsMask, p.id);
+        QCOMPARE(def->meta.category, QString::fromLatin1(p.category));
+        QVERIFY2(builtInEffectCategories.contains(def->meta.category), p.id);
+        QVERIFY2(QFileInfo::exists(def->thumbnailPath), p.id);
+        QStringList keys;
+        for (const auto &spec : def->meta.parameters)
+            keys.append(spec.key);
+        QCOMPARE(keys, p.params);
+    }
+
+    const QList<Package> transitions{
+        {"dafin.v3.transition.whip-pan-left", "cinematic", {QStringLiteral("shift"), QStringLiteral("blur")}},
+        {"dafin.suite.transition.iris-open", "geometric", {QStringLiteral("center"), QStringLiteral("softness")}},
+    };
+    QStringList builtInTransitionCategories;
+    for (const auto &category : transitionCategories())
+        builtInTransitionCategories.append(category.first);
+    for (const Package &p : transitions) {
+        const QString id = QString::fromLatin1(p.id);
+        const TransitionPresetEntry *def = transitionDefForId(id);
+        QVERIFY2(def, p.id);
+        QVERIFY2(def->gpu.valid, qPrintable(id + QLatin1String(": ") + def->gpu.errorMessage));
+        QCOMPARE(def->meta.category, QString::fromLatin1(p.category));
+        QVERIFY2(builtInTransitionCategories.contains(def->meta.category), p.id);
+        QVERIFY2(QFileInfo::exists(def->previewStripPath), p.id);
+        QCOMPARE(def->previewFrames, 12);
+        QStringList keys;
+        for (const auto &spec : def->meta.parameters)
+            keys.append(spec.key);
+        QCOMPARE(keys, p.params);
+    }
+
+    // A clip takes every effect with its defaults (on the clip's linked adjustment lane).
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        appendAdjacentShapeClips(*state.project());
+        state.selectClip(0, 0);
+        for (const Package &p : effects)
+            state.addEffect(0, 0, QString::fromLatin1(p.id));
+        const QVariantList added = state.selectedClipData().value(QStringLiteral("effects")).toList();
+        QCOMPARE(added.size(), effects.size());
+        for (int i = 0; i < effects.size(); ++i)
+            QCOMPARE(added.at(i).toMap().value(QStringLiteral("catalogId")).toString(),
+                     QString::fromLatin1(effects.at(i).id));
+    }
+
+    // A cut takes every transition, with the package defaults.
+    for (const Package &p : transitions) {
+        AssetLibrary library;
+        AppController state(&library);
+        appendAdjacentShapeClips(*state.project());
+        state.addTransition(0, 0, QString::fromLatin1(p.id), 0.5);
+        const QVariantMap added = state.transitionBetweenClips(0, 0);
+        QCOMPARE(added.value(QStringLiteral("kind")).toString(), QString::fromLatin1(p.id));
+        QCOMPARE(state.project()->tracks().at(0).transitions.size(), 1);
+        const drift::Transition &t = state.project()->tracks().at(0).transitions.first();
+        const QMap<QString, QVariant> params = resolvedTransitionParameters(t, *transitionDefForId(t.kindId));
+        for (const QString &key : p.params)
+            QVERIFY2(params.contains(key), qPrintable(key));
+    }
 }
 
 QTEST_MAIN(EditorStateTest)

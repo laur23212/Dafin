@@ -1,0 +1,45 @@
+{
+  "id": "dafin.v4.fx.adaptive-vibrance",
+  "displayName": "Adaptive Vibrance",
+  "category": "color",
+  "order": 2101,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Low-saturation boost",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": 0.35,
+      "group": "Edit"
+    },
+    {
+      "identifier": "protect",
+      "displayName": "Protect already-vivid colors",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

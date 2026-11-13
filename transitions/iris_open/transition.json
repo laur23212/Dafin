@@ -1,0 +1,58 @@
+{
+  "id": "dafin.suite.transition.iris-open",
+  "displayName": "Iris Open",
+  "category": "geometric",
+  "order": 900,
+  "parameters": [
+    {
+      "identifier": "center",
+      "displayName": "Center",
+      "type": "vec2",
+      "defaultValue": [
+        0.5,
+        0.5
+      ],
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        1,
+        1
+      ],
+      "group": "Position"
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Feather",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.15,
+      "defaultValue": 0.05,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp"
+}

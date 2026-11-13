@@ -10692,7 +10692,8 @@ void EngineTest::compositorWipeRightRevealsIncomingClip()
 void EngineTest::transitionCatalogLoadsAllPackages()
 {
     const QStringList ids = transitionPresetIds();
-    QCOMPARE(ids.size(), 28);
+    // 28 from Drift/Dafin + Whip Pan Left and Iris Open (asset wave 1, DAFIN.md "Asset library audit").
+    QCOMPARE(ids.size(), 30);
 
     // The nine ids the pre-shader enum serialized must all still resolve.
     for (const char *legacy : {"crossfade", "dip", "dip_white", "wipe_left", "wipe_right",

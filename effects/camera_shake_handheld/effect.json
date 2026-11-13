@@ -1,0 +1,63 @@
+{
+  "id": "dafin.v3.fx.camera-shake-handheld",
+  "displayName": "Camera Shake Handheld",
+  "category": "impact",
+  "order": 1250,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Shake (%)",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 12,
+      "defaultValue": 1.1,
+      "group": "Camera"
+    },
+    {
+      "identifier": "speed",
+      "displayName": "Speed",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 30,
+      "defaultValue": 7.0,
+      "group": "Camera"
+    },
+    {
+      "identifier": "seed",
+      "displayName": "Seed",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 100,
+      "defaultValue": 7,
+      "group": "Camera"
+    },
+    {
+      "identifier": "crop",
+      "displayName": "Crop safety (%)",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 30,
+      "defaultValue": 3,
+      "group": "Camera"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,104 @@
+# Asset handoff audit (13 November 2026)
+
+Audit of `DAFIN_COMPLETE_MASTER_HANDOFF` (the ChatGPT creative, SFX and transition handoff, 97 MB
+zip) against `dafin-edition` @ `07bab4f`. Every candidate has one row in
+[`reconciliation.csv`](reconciliation.csv): source path, the Dafin built-in it overlaps, whether its
+format is native, which checks ran, the action and the wave.
+
+Nothing here was run inside Dafin. The checks are a Python copy of Dafin's own package parser
+(`tools/asset-audit/gpu_audit.py`, which agrees with Dafin on all 98 bundled packages), the GLSL
+reference compiler, and the shaders executed on Mesa llvmpipe (`tools/asset-audit/gl_harness.py`).
+All of that is **preliminary**: the real loaders run in `tst_editorstate`
+(`assetWave1PackagesLoadAndApply`) once CI builds the branch.
+
+## Inventory
+
+| Tier | What | Count | Result |
+|---|---|---:|---|
+| B | Base sound library | 335 | **Already installed.** Same library id, ids, titles and durations as `asset-library/sound-effects`; the 335 WAV masters match their catalog SHA-256. Nothing to add |
+| A | GPU effects | 65 | Loader + GLSL OK for all 65. 3 accepted (wave 1), 17 duplicate a built-in, 2 archived, 8 blocked, 35 need review |
+| A | GPU transitions | 17 | Loader + GLSL OK for all. 2 accepted (wave 1), 6 duplicates, 9 need review |
+| A | Title designs | 101 | **Blocked as delivered.** Every one binds `content` and `fontFamily`, which Dafin's validator rejects (it wants `text`, `font.family`); ids lack `chatgpt.`; 92 use fonts outside Fonts Essentials (only the 9 Inter titles don't) |
+| A | Text animations | 23 | Native grammar. 2 copy built-in Fade, 1 is a second Mono Terminal, 7 only re-tune Pop/Shrink numbers (merged), 13 to review. 7 are needed by the 8 V3 kinetic titles |
+| A | SVG stickers | 78 | Valid SVG, no external refs. 12 have live Inter `<text>`. Colourways map to Dafin's SVG recolour overrides |
+| A | Lottie stickers | 9 | Valid headers (512², 30 fps, 2 s). 3 overlap bundled library stickers. `.controls.json` sidecars are not a Dafin format |
+| A | LUTs | 10 | Valid `.cube`, 33³, 6 decimals, domain 0–1. Dafin ships no looks in the repo (Looks add-on / user import) |
+| A | Workflow recipes | 20 | Not a Dafin format: archived |
+| V6 | New sounds | 12 | No name/tag overlap with the 335. Need listening approval and new browser groups |
+| V6 | New transitions | 3 | Loader + GLSL + harness OK (Subject Holdout's no-mask path is clean). Review last |
+| D | V1–V5 editable sources | 832 | Archive only, never installed |
+
+**Missing from the handoff and from this checkout:** `chatgpt.elegant-end-card` and the Sampler
+Prism template (only named in DAFIN.md), `dafin-chatgpt-title-templates-tested-to-date.zip`, the
+Baloo 2 `.driftpkg`.
+
+## Duplicates and overlaps
+
+Skipped because a built-in already does it: Soft Halation (Halation), Filmic Vignette (Vignette),
+35 mm Grain (Film Grain), Chroma Key Green Clean (Chroma Key + the toolbar key), Documentary
+Duotone (Duotone), Golden Light Leak (Light Leak), Warm Lens Flare (Lens Flare), CRT Scanlines and
+VHS Tracking (VHS / CRT, VHS), Signal Glitch (Digital Glitch), Highlight Bloom (Bloom / Glow),
+Cinematic Teal Amber (Cinematic + Color Grade), Subject Rim Outliner (Outline), two more
+chromatic-aberration variants, Depth Haze (Depth Fog), Depth Soft Focus (Depth of Field); Dip to
+Ink, Slide Push, Soft Luma Fade, RGB Glitch Switch, Bright-first Luminance, Luminance-protected
+Crossfade. Families to thin before review: zoom (crash/fast-in/fast-out/whip, 4 effects), shake (2),
+grading tools (6 that Color Grade may cover).
+
+## Compatibility issues
+
+- **Titles:** not installable until converted (bindings, `chatgpt.` id, a Fonts Essentials font
+  with Romanian glyphs) and then passed through `dafin --check-template` plus a visual review. The
+  converter must not rename public ids of anything already shipped.
+- **Diagnostics** (focus peaking, zebra, clipping, matte/depth/face inspectors, safe frame): Dafin
+  has no preview-only flag, so an enabled one is exported. Blocked until it has one.
+- **Face-Follow Mosaic:** with no face it mosaics the whole frame (`failClosed`), against Dafin's
+  rule that face effects pass through. Not a guaranteed anonymiser. Owner decision.
+- **Smart effects:** 17 of the 18 face/depth/mask effects pass the frame through when the data is
+  missing (harness). None was tried with a real sidecar.
+- **Category names:** candidates use their own (`utility`, `camera`, `smart-color`…), which would
+  each become an untranslated browser chip; accepted items are filed under Dafin's categories.
+- **Thumbnails:** WebP is Dafin's own format (all 95 built-in thumbnails), so no PNG fallback is
+  needed. Candidate thumbnails are 16:9 renders over AI-made photos; wave 1 uses new 256 px cards
+  and 12×128 strips rendered from the shipped shaders over procedural pictures (re-run
+  `effectthumbs --only <id>` / `transitionthumbs --only <id>` in a build for the house look).
+- **V6 sounds:** ids lack the sub-category the 335 use; groups (Editorial Utility, Designed
+  Atmospheres, Communications / Story) don't exist in the browser. Rebuild through
+  `tools/sfx/build_sfx_index.py`, keep the 24 fps sync pop as WAV. The Opus loops decode
+  sample-exact in FFmpeg (gapless expected); not tried in Dafin.
+
+## Licensing
+
+- Sounds: procedural originals, "royalty-free, no attribution", **not CC0**. The 44-item recordings
+  acquisition queue is a list of URLs, not bundled audio: never ship or relabel it.
+- Stickers/Lottie: the Dafin library index says Dafin originals are CC0. The handoff does not grant
+  CC0, so adding these needs a licence label decision first.
+- Fonts: none shipped. The 101 titles name 42 families, many from a Linux sandbox (URW, TLWG, GFS,
+  ADF…); licences and Ș/Ț/ă/î/â coverage unchecked.
+- Preview photos (`reference_images/`) look AI-generated and have no provenance record; wave 1 does
+  not use them.
+
+## Integration order
+
+1. **Wave 1 (this branch):** Lens Barrel Warp, Adaptive Vibrance, Camera Shake Handheld, Whip Pan
+   Left, Iris Open.
+2. Effects/transitions marked wave 2 after you decide the zoom/shake/grade families; text
+   animations; Lottie/SVG stickers after the licence label decision; first titles once a converter
+   and fonts are agreed.
+3. LUTs (after deciding where looks ship), mask/depth/face effects with real sidecars,
+   restoration filters.
+4. V6 sounds after listening approval.
+5. V6 transitions.
+
+## Wave 1 log
+
+| Package | Id (unchanged) | Change from delivery | Checks |
+|---|---|---|---|
+| `effects/lens_barrel_warp` | `dafin.v3.fx.lens-barrel-warp` | category `glitch`; zooms to fill instead of smearing edge pixels into the corners | loader, GLSL, harness: finite, repeatable, alpha kept, min/max params |
+| `effects/adaptive_vibrance` | `dafin.v4.fx.adaptive-vibrance` | category `color` | same |
+| `effects/camera_shake_handheld` | `dafin.v3.fx.camera-shake-handheld` | category `impact` | same + same picture for the same second at 24 and 60 fps, moves between frames |
+| `transitions/whip_pan_left` | `dafin.v3.transition.whip-pan-left` | category `cinematic`; mirrors the picture past the edge (clamping stretched the edge column into a pale band over up to a quarter of the frame) | loader, GLSL, harness: exact outgoing frame at 0, incoming at 1 |
+| `transitions/iris_open` | `dafin.suite.transition.iris-open` | category `geometric`; the circle reaches the farthest corner (it left 15 % of the old clip on screen at 99 % with an off-centre centre, then jumped); feather never zero | same, centre at a corner, feather 0 |
+
+Each has a new thumbnail or preview strip. Installed footprint +55 KB. Not run: Dafin preview and
+export, Windows/Linux GPUs, 1080p/4K timing, save/load round trip (the test adds them to a clip
+and a cut).

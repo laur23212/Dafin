@@ -1,0 +1,54 @@
+{
+  "id": "dafin.v3.fx.lens-barrel-warp",
+  "displayName": "Lens Barrel Warp",
+  "category": "glitch",
+  "order": 1250,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "center",
+      "displayName": "Lens center",
+      "type": "vec2",
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        1,
+        1
+      ],
+      "defaultValue": [
+        0.5,
+        0.5
+      ],
+      "group": "Position"
+    },
+    {
+      "identifier": "barrel",
+      "displayName": "Barrel strength",
+      "type": "float",
+      "minValue": -0.6,
+      "maxValue": 0.6,
+      "defaultValue": 0.06,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
