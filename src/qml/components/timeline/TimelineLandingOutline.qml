@@ -1,7 +1,8 @@
 import QtQuick
 import Drift
 
-// Landing preview outline for a library drop or a clip move.
+// Landing preview outline for a library drop or a clip move. Dafin: filled more solidly (30 %,
+// was 12 %) so it reads as the clip-sized block Filmora shows, not a faint frame.
 Rectangle {
     property var panel
     property int trackIndex: -1
@@ -11,7 +12,7 @@ Rectangle {
     width: panel.dropDurationSeconds * panel.pxPerSecond
     height: parent.height
     radius: Theme.c.timelineLandingOutline.radius
-    color: Qt.rgba(Theme.c.timelineLandingOutline.background.r, Theme.c.timelineLandingOutline.background.g, Theme.c.timelineLandingOutline.background.b, 0.12)
+    color: Qt.rgba(Theme.c.timelineLandingOutline.background.r, Theme.c.timelineLandingOutline.background.g, Theme.c.timelineLandingOutline.background.b, 0.30)
     border.width: Theme.c.timelineLandingOutline.borderWidth
     border.color: Theme.c.timelineLandingOutline.border
     z: 5

@@ -75,13 +75,23 @@ Column {
     // Default hotspot is (0,0) at the card top-left; Wayland
     // compositors (notably Mutter) then deliver drop Y far from
     // the grab point. Center on the thumbnail like effect cards.
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: cardSize * 9 / 32
+    // Dafin: the ghost card under the pointer (AssetDragGhost), drawn while the card is hovered.
+    AssetDragGhost {
+        id: dragGhost
+        thumbnail: !root.isFolder && root.liveThumbnailPath.length > 0
+                   ? EditorState.imageUrl(root.liveThumbnailPath) + "?rev=" + root.thumbnailRevision : ""
+        label: root.name
+        glyph: ""
+    }
+    Drag.imageSource: dragGhost.imageUrl
+    Drag.hotSpot.x: dragGhost.ready ? dragGhost.hotX : width / 2
+    Drag.hotSpot.y: dragGhost.ready ? dragGhost.hotY : cardSize * 9 / 32
 
     // Grid cards had neither hover feedback nor a pointing
     // cursor, while the list rows had both.
     HoverHandler {
         id: cardHover
+        onHoveredChanged: if (hovered && !root.isFolder) dragGhost.prepare()
         cursorShape: root.isFolder ? Qt.PointingHandCursor
                      : (frame.dragActive ? Qt.ClosedHandCursor : Qt.OpenHandCursor)
     }
