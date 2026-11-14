@@ -382,6 +382,18 @@ set(DAFIN_HANDOFF_EFFECTS
     old_film_vertical_scratches radial_focus shadow_chroma_clean shadow_selective_lift
     skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
     subject_pop_muted_surroundings subject_shaped_spotlight
+    aurora_ribbon black_toe_lift brushed_aluminum ceramic_craquelure
+    chemical_developer_spots chromatic_silk_screen circuit_trace_glaze contact_photogram
+    copper_patina depth_distance_mosaic depth_exposure_foreground depth_projected_rain
+    depth_stone_relief depth_surface_sparkle dot_matrix_ribbon dye_crosstalk_film
+    firefly_field gradient_vapor_shading graduated_neutral_density guilloche_foil
+    highlight_chroma_rescue lens_astigmatic_edges letterpress_toner masked_color_channel_plates
+    masked_deep_ink_etch masked_facet_mosaic masked_glass_etch masked_inner_bevel
+    needlepoint_stitch oblique_prism_rays optical_newton_rings oxide_red_print
+    photo_cross_process pinhole_light_leak powder_coat print_paper_white
+    quicksilver_film sandstone_grain satin_specular scanner_light_pass
+    snow_globe_drift thermal_receipt tilt_miniature_focus veined_marble
+    velvet_shadow wet_asphalt windborne_sand
     depth_topography_ink edge_color_defringe flat_gradient_deband highlight_shoulder
     original_grade_comparison rolling_skew_balance vertical_side_reflections
     blueprint_drafting led_stage_screen mixed_lighting_soft_balance oil_film_iridescence
@@ -407,7 +419,14 @@ set(DAFIN_HANDOFF_TRANSITIONS
     clock_dial_sweep print_dot_reveal circular_waterline
     woven_fabric_interlace curtain_pleat_pull zipper_seam_open spiral_groove_reveal
     torn_paper_column prism_column_flip ice_crystal_growth route_line_reveal
-    camera_roll_handoff tape_splice_handoff tile_card_flip_cascade)
+    camera_roll_handoff tape_splice_handoff tile_card_flip_cascade
+    accordion_accordion corner_paper_roll diagonal_refraction_grid golden_thread_crawl
+    laminated_slip lattice_iris_shadow measured_depth_planes moon_crescent_exchange
+    paper_slot_tumble pendulum_curtain perimeter_sweep prism_sundog_bars
+    radiating_circuit_traces refractive_vertical_cracks ribbon_blade_shear rice_paper_tear
+    rising_album_sleeve rotor_slice_disc spiral_sundial telescope_tube_push
+    threaded_needle_pull trailing_stencil_blocks vortex_lace_open wave_wedge_interlock
+    weather_front_exchange)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
@@ -420,7 +439,12 @@ set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
     anaglyph_object_depth broadcast_color_safety digital_palette_poster practical_noir_lighting
     reversed_channel_print subject_color_integration watercolor_postcard
     architectural_blueprint color_consistent_rooms poolside_light_play protected_speed_promo
-    studio_tritone_print)
+    studio_tritone_print
+    analogue_ticket_stub aurora_city_night cold_color_poster copper_museum_archive
+    darkroom_fiber_contact desert_memory digital_circuit_demo embroidery_documentary
+    film_silver_liquid high_design_satin maker_photo_print mineral_porcelain
+    night_street_treatment nostalgic_oxide_print premium_metal_product retro_lab_scanner
+    science_optical_glass starlit_woodland stone_construction winter_travel_day)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

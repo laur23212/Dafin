@@ -1,0 +1,142 @@
+{
+  "format": 1,
+  "id": "chatgpt.streamer-chat-topic",
+  "label": "Streamer Chat Topic",
+  "description": "Live-stream recap discussion topic label with readable contrast",
+  "category": "gaming",
+  "tags": [
+    "batch08",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "CHAT TOPIC · LEVEL DESIGN",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 400,
+    "pixelSize": 48,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 2.4,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#263E57",
+    "boxPadding": 16,
+    "boxRadius": 6,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 7,
+        "opacity": 0.38
+      },
+      {
+        "id": "stroke",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#263E57"
+        },
+        "width": 2,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#D9E7FE"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "pop",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fill",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "background",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

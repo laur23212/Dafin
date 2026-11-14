@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.high-design-satin",
+  "displayName": "High Design Satin",
+  "category": "cinematic",
+  "order": 9313,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.satin-specular",
+      "params": {
+        "strength": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.photo-cross-process",
+      "params": {
+        "strength": 0.64
+      }
+    }
+  ]
+}

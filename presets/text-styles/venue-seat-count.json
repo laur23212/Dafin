@@ -1,0 +1,142 @@
+{
+  "format": 1,
+  "id": "chatgpt.venue-seat-count",
+  "label": "Venue Seat Count",
+  "description": "Event venue capacity card showing editor-supplied figure",
+  "category": "utility",
+  "tags": [
+    "batch08",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "HALL CAPACITY · 240",
+  "requires": {
+    "fonts": [
+      "IBM Plex Mono"
+    ]
+  },
+  "style": {
+    "fontFamily": "IBM Plex Mono",
+    "fontWeight": 600,
+    "pixelSize": 48,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1.6,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#3C2146",
+    "boxPadding": 10,
+    "boxRadius": 22,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.38
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F4DFB0"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "rise",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#F4DFB0",
+    "underlineWidth": 4,
+    "underlineOffset": 7
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fill",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "background",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    },
+    {
+      "id": "accentColor",
+      "label": "Rule color",
+      "type": "color",
+      "bind": "underline.color"
+    }
+  ]
+}

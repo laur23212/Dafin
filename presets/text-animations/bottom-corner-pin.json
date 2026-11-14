@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.bottom-corner-pin",
+  "label": "Bottom Corner Pin",
+  "category": "utility",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9209,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.08,
+          "y": 0.1,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.short-crest-out",
+  "label": "Short Crest Exit",
+  "category": "editorial",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "out"
+  ],
+  "order": 9211,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.12,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": -0.13,
+          "unit": "box"
+        },
+        "scale": 108,
+        "opacity": 0
+      }
+    }
+  ]
+}

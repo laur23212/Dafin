@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.guilloche-foil",
+  "displayName": "Guilloché Security Foil",
+  "category": "retro",
+  "description": "Fine interlaced security-note curves and metallic multi-tone inks, intended for motion-design backgrounds.",
+  "order": 8823,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Engraved foil",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.88
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

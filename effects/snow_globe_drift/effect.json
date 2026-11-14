@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.snow-globe-drift",
+  "displayName": "Snow Globe Drift",
+  "category": "dreamy",
+  "description": "Layered drifting snow flecks at different apparent depths, without a weather-alert or diagnostics overlay.",
+  "order": 8819,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Snow density",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.quicksilver-film",
+  "displayName": "Liquid Quicksilver Film",
+  "category": "dreamy",
+  "description": "Turns bright shapes into mirrored chrome pools with gentle color inversion around reflective contours.",
+  "order": 8825,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Silver liquid",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.84
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "id": "chatgpt.ingredient-allergy-note",
+  "label": "Ingredient Allergy Note",
+  "description": "Plain editable ingredient-allergen statement for recipe clips",
+  "category": "utility",
+  "tags": [
+    "batch08",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "CONTAINS: TREE NUTS",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 700,
+    "pixelSize": 48,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 3.2,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#5C2B18",
+    "boxPadding": 13,
+    "boxRadius": 11,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 6,
+        "blur": 8,
+        "opacity": 0.38
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFEBB3"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "slide-up",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fill",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "background",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

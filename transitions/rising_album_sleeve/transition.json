@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.rising-album-sleeve",
+  "displayName": "Rising Album Sleeve",
+  "category": "cinematic",
+  "description": "Flat album sleeve climbs upward revealing the incoming image behind an offset matte edge.",
+  "order": 8911,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Character",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.oxide-red-print",
+  "displayName": "Iron-Oxide Photo Print",
+  "category": "retro",
+  "description": "Warm oxidized red-and-brown monochrome photographic chemistry with preserved luminance steps.",
+  "order": 8835,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Oxide tone",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.79
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

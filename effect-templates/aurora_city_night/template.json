@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.aurora-city-night",
+  "displayName": "Aurora City Night",
+  "category": "cinematic",
+  "order": 9318,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.aurora-ribbon",
+      "params": {
+        "strength": 0.55
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.black-toe-lift",
+      "params": {
+        "strength": 0.55
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.wide-to-normal-letters",
+  "label": "Wide to Normal Letters",
+  "category": "minimal",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9205,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 112,
+        "opacity": 0.15
+      }
+    }
+  ]
+}

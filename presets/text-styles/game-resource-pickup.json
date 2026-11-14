@@ -1,0 +1,146 @@
+{
+  "format": 1,
+  "id": "chatgpt.game-resource-pickup",
+  "label": "Game Resource Pickup",
+  "description": "Game footage resource pickup text, distinct from quest objective labels",
+  "category": "gaming",
+  "tags": [
+    "batch08",
+    "functional"
+  ],
+  "kind": "title",
+  "sampleText": "RESOURCE FOUND · QUARTZ",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 500,
+    "pixelSize": 86,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 0.8,
+    "textCase": "upper",
+    "boxEnabled": false,
+    "boxColor": "#1B336A",
+    "boxPadding": 10,
+    "boxRadius": 11,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 3,
+        "blur": 8,
+        "opacity": 0.38
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#CFE8FF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#CFE8FF",
+    "underlineWidth": 2,
+    "underlineOffset": 7
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fill",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "background",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "spacing",
+      "label": "Letter spacing",
+      "type": "scalar",
+      "bind": "letterSpacing",
+      "min": 0,
+      "max": 12,
+      "step": 0.2,
+      "unit": "px"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    },
+    {
+      "id": "accentColor",
+      "label": "Rule color",
+      "type": "color",
+      "bind": "underline.color"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.nostalgic-oxide-print",
+  "displayName": "Nostalgic Oxide Print",
+  "category": "look",
+  "order": 9317,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.oxide-red-print",
+      "params": {
+        "strength": 0.73
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.chemical-developer-spots",
+      "params": {
+        "strength": 0.73
+      }
+    }
+  ]
+}

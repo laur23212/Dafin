@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.lens-astigmatic-edges",
+  "displayName": "Lens Astigmatic Edges",
+  "category": "dreamy",
+  "description": "A directional off-axis optical smear concentrated at frame edges, unlike global Gaussian or zoom blur.",
+  "order": 8806,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Astigmatic smear",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.retro-lab-scanner",
+  "displayName": "Retro Lab Scanner",
+  "category": "look",
+  "order": 9315,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.scanner-light-pass",
+      "params": {
+        "strength": 0.55
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.thermal-receipt",
+      "params": {
+        "strength": 0.55
+      }
+    }
+  ]
+}

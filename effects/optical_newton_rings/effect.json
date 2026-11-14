@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.optical-newton-rings",
+  "displayName": "Optical Newton Rings",
+  "category": "dreamy",
+  "description": "High-frequency concentric thin-film interference bands centered on an adjustable lens point, not general lens flare.",
+  "order": 8828,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Ring contrast",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Ring spacing",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.51
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

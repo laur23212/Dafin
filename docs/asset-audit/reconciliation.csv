@@ -516,3 +516,220 @@ ChatGPT-batch-07,effect template,chatgpt.stack.architectural-blueprint,Dafin_Ref
 ChatGPT-batch-07,effect template,chatgpt.stack.poolside-light-play,Dafin_Reference_Compliant_Batch_07,"Poolside Light Play",,yes,"validator/harness checks passed",ACCEPTED,3,
 ChatGPT-batch-07,effect template,chatgpt.stack.color-consistent-rooms,Dafin_Reference_Compliant_Batch_07,"Color-Consistent Rooms",,yes,"validator/harness checks passed",ACCEPTED,3,
 ChatGPT-batch-07,effect template,chatgpt.stack.protected-speed-promo,Dafin_Reference_Compliant_Batch_07,"Protected Speed Promo",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.aurora-ribbon,Dafin_Reference_Compliant_Batch_08,"Aurora Ribbon Sky",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.black-toe-lift,Dafin_Reference_Compliant_Batch_08,"Black Toe Detail Guard",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.brushed-aluminum,Dafin_Reference_Compliant_Batch_08,"Brushed Aluminium Surface",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.ceramic-craquelure,Dafin_Reference_Compliant_Batch_08,"Ceramic Craquelure",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.chemical-developer-spots,Dafin_Reference_Compliant_Batch_08,"Chemical Developer Stains",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.chromatic-silk-screen,Dafin_Reference_Compliant_Batch_08,"Chromatic Textile Moiré",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.circuit-trace-glaze,Dafin_Reference_Compliant_Batch_08,"Circuit Trace Glaze",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.contact-photogram,Dafin_Reference_Compliant_Batch_08,"Darkroom Contact Photogram",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.copper-patina,Dafin_Reference_Compliant_Batch_08,"Weathered Copper Patina",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.depth-distance-mosaic,Dafin_Reference_Compliant_Batch_08,"Depth Distance Mosaic",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.depth-exposure-foreground,Dafin_Reference_Compliant_Batch_08,"Depth-Bound Exposure Curtain",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.depth-projected-rain,Dafin_Reference_Compliant_Batch_08,"Depth Projected Rain Veil",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.depth-stone-relief,Dafin_Reference_Compliant_Batch_08,"Depth Sculpted Stone",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.depth-surface-sparkle,Dafin_Reference_Compliant_Batch_08,"Depth Surface Microglints",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.dot-matrix-ribbon,Dafin_Reference_Compliant_Batch_08,"Dot Matrix Printer Ribbon",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.dye-crosstalk-film,Dafin_Reference_Compliant_Batch_08,"Three-Layer Dye Crosstalk",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.firefly-field,Dafin_Reference_Compliant_Batch_08,"Firefly Field",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.gradient-vapor-shading,Dafin_Reference_Compliant_Batch_08,"Vapor Gradient Bands",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.graduated-neutral-density,Dafin_Reference_Compliant_Batch_08,"Graduated Neutral Density",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.guilloche-foil,Dafin_Reference_Compliant_Batch_08,"Guilloché Security Foil",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.highlight-chroma-rescue,Dafin_Reference_Compliant_Batch_08,"Highlight Chroma Rescue",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.lens-astigmatic-edges,Dafin_Reference_Compliant_Batch_08,"Lens Astigmatic Edges",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.letterpress-toner,Dafin_Reference_Compliant_Batch_08,"Letterpress Toner Bite",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.masked-color-channel-plates,Dafin_Reference_Compliant_Batch_08,"Masked Channel Plate Displacement",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.masked-deep-ink-etch,Dafin_Reference_Compliant_Batch_08,"Masked Deep-Ink Lithograph",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.masked-facet-mosaic,Dafin_Reference_Compliant_Batch_08,"Masked Angular Faceting",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.masked-glass-etch,Dafin_Reference_Compliant_Batch_08,"Masked Glass Engraving",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,smart effect,chatgpt.fx.masked-inner-bevel,Dafin_Reference_Compliant_Batch_08,"Masked Inside Bevel Shadow",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.needlepoint-stitch,Dafin_Reference_Compliant_Batch_08,"Needlepoint Embroidery",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.oblique-prism-rays,Dafin_Reference_Compliant_Batch_08,"Oblique Prism Refraction",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.optical-newton-rings,Dafin_Reference_Compliant_Batch_08,"Optical Newton Rings",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.oxide-red-print,Dafin_Reference_Compliant_Batch_08,"Iron-Oxide Photo Print",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.photo-cross-process,Dafin_Reference_Compliant_Batch_08,"Cross-Processed Slide Color",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.pinhole-light-leak,Dafin_Reference_Compliant_Batch_08,"Pinhole Camera Corner Exposure",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.powder-coat,Dafin_Reference_Compliant_Batch_08,"Powder-Coat Matte",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.print-paper-white,Dafin_Reference_Compliant_Batch_08,"Paper White Neutralizer",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.quicksilver-film,Dafin_Reference_Compliant_Batch_08,"Liquid Quicksilver Film",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.sandstone-grain,Dafin_Reference_Compliant_Batch_08,"Sandstone Mineral Wash",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.satin-specular,Dafin_Reference_Compliant_Batch_08,"Satin Weave Shine",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.scanner-light-pass,Dafin_Reference_Compliant_Batch_08,"Flatbed Scanner Light Pass",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.snow-globe-drift,Dafin_Reference_Compliant_Batch_08,"Snow Globe Drift",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.thermal-receipt,Dafin_Reference_Compliant_Batch_08,"Thermal Receipt Printer",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.tilt-miniature-focus,Dafin_Reference_Compliant_Batch_08,"Tilt Miniature Lens",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.veined-marble,Dafin_Reference_Compliant_Batch_08,"Veined Marble Finish",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.velvet-shadow,Dafin_Reference_Compliant_Batch_08,"Velvet Darkroom Finish",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.wet-asphalt,Dafin_Reference_Compliant_Batch_08,"Wet Asphalt Glints",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect,chatgpt.fx.windborne-sand,Dafin_Reference_Compliant_Batch_08,"Windborne Sand Veil",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.accordion-accordion,Dafin_Reference_Compliant_Batch_08,"Accordion Pleat Split",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.corner-paper-roll,Dafin_Reference_Compliant_Batch_08,"Corner Paper Roll",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.diagonal-refraction-grid,Dafin_Reference_Compliant_Batch_08,"Diagonal Refraction Grid",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.golden-thread-crawl,Dafin_Reference_Compliant_Batch_08,"Golden Thread Crawl",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.laminated-slip,Dafin_Reference_Compliant_Batch_08,"Laminated Slip",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.lattice-iris-shadow,Dafin_Reference_Compliant_Batch_08,"Lattice Iris Shadow",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.measured-depth-planes,Dafin_Reference_Compliant_Batch_08,"Measured Depth Planes",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.moon-crescent-exchange,Dafin_Reference_Compliant_Batch_08,"Moon Crescent Exchange",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.paper-slot-tumble,Dafin_Reference_Compliant_Batch_08,"Paper Slot Tumble",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.pendulum-curtain,Dafin_Reference_Compliant_Batch_08,"Pendulum Curtain Reveal",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.perimeter-sweep,Dafin_Reference_Compliant_Batch_08,"Perimeter Border Sweep",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.prism-sundog-bars,Dafin_Reference_Compliant_Batch_08,"Prism Sundog Bars",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.radiating-circuit-traces,Dafin_Reference_Compliant_Batch_08,"Radiating Circuit Trace Reveal",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.refractive-vertical-cracks,Dafin_Reference_Compliant_Batch_08,"Refractive Vertical Cracks",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.ribbon-blade-shear,Dafin_Reference_Compliant_Batch_08,"Ribbon Blade Shear",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.rice-paper-tear,Dafin_Reference_Compliant_Batch_08,"Rice Paper Fiber Tear",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.rising-album-sleeve,Dafin_Reference_Compliant_Batch_08,"Rising Album Sleeve",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.rotor-slice-disc,Dafin_Reference_Compliant_Batch_08,"Rotor Slice Disc",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.spiral-sundial,Dafin_Reference_Compliant_Batch_08,"Spiral Sundial Reveal",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.telescope-tube-push,Dafin_Reference_Compliant_Batch_08,"Telescope Tube Push",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.threaded-needle-pull,Dafin_Reference_Compliant_Batch_08,"Threaded Needle Pull",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.trailing-stencil-blocks,Dafin_Reference_Compliant_Batch_08,"Trailing Stencil Blocks",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.vortex-lace-open,Dafin_Reference_Compliant_Batch_08,"Vortex Lace Open",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.wave-wedge-interlock,Dafin_Reference_Compliant_Batch_08,"Wave Wedge Interlock",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,transition,chatgpt.tr.weather-front-exchange,Dafin_Reference_Compliant_Batch_08,"Weather Front Exchange",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.achievement-ledger,Dafin_Reference_Compliant_Batch_08,"Achievement Ledger",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.book-folio-number,Dafin_Reference_Compliant_Batch_08,"Book Folio Number",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.chord-progression-marker,Dafin_Reference_Compliant_Batch_08,"Chord Progression Marker",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.course-checkpoint,Dafin_Reference_Compliant_Batch_08,"Course Checkpoint",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.donation-impact-tally,Dafin_Reference_Compliant_Batch_08,"Donation Impact Tally",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.faq-answer-number,Dafin_Reference_Compliant_Batch_08,"FAQ Answer Number",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.fitness-personal-best,Dafin_Reference_Compliant_Batch_08,"Fitness Personal Best",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.game-loading-hint,Dafin_Reference_Compliant_Batch_08,"Game Loading Hint",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.game-resource-pickup,Dafin_Reference_Compliant_Batch_08,"Game Resource Pickup",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.ingredient-allergy-note,Dafin_Reference_Compliant_Batch_08,"Ingredient Allergy Note",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.interior-room-area,Dafin_Reference_Compliant_Batch_08,"Interior Room Area",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.interview-discipline,Dafin_Reference_Compliant_Batch_08,"Interview Discipline",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.lab-variable-label,Dafin_Reference_Compliant_Batch_08,"Lab Variable Label",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.maker-safety-step,Dafin_Reference_Compliant_Batch_08,"Maker Safety Step",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.market-session-close,Dafin_Reference_Compliant_Batch_08,"Market Session Close",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.metro-next-stop,Dafin_Reference_Compliant_Batch_08,"Metro Next Stop",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.milestone-timeline-pin,Dafin_Reference_Compliant_Batch_08,"Milestone Timeline Pin",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.news-witness-quote,Dafin_Reference_Compliant_Batch_08,"News Witness Quote",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.nutrition-macro-card,Dafin_Reference_Compliant_Batch_08,"Nutrition Macro Card",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.price-difference-flag,Dafin_Reference_Compliant_Batch_08,"Price Difference Flag",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.public-archive-accession,Dafin_Reference_Compliant_Batch_08,"Public Archive Accession",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.quarterly-earnings-header,Dafin_Reference_Compliant_Batch_08,"Quarterly Earnings Header",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.research-figure-index,Dafin_Reference_Compliant_Batch_08,"Research Figure Index",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.satellite-coordinate,Dafin_Reference_Compliant_Batch_08,"Satellite Coordinate",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.software-code-comment,Dafin_Reference_Compliant_Batch_08,"Software Code Comment",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.streamer-chat-topic,Dafin_Reference_Compliant_Batch_08,"Streamer Chat Topic",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.streamer-raid-welcome,Dafin_Reference_Compliant_Batch_08,"Streamer Raid Welcome",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.travel-day-log,Dafin_Reference_Compliant_Batch_08,"Travel Day Log",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.venue-seat-count,Dafin_Reference_Compliant_Batch_08,"Venue Seat Count",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,title,chatgpt.wedding-place-setting,Dafin_Reference_Compliant_Batch_08,"Wedding Place Setting",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.baseline-compression,Dafin_Reference_Compliant_Batch_08,"Baseline Compression",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.bottom-corner-pin,Dafin_Reference_Compliant_Batch_08,"Bottom Corner Pin",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.depth-perspective-drop,Dafin_Reference_Compliant_Batch_08,"Depth Perspective Drop",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.diagonal-corner-join,Dafin_Reference_Compliant_Batch_08,"Diagonal Corner Join",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.ghost-character-out,Dafin_Reference_Compliant_Batch_08,"Ghost Character Exit",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.horizontal-retract-out,Dafin_Reference_Compliant_Batch_08,"Horizontal Retract Exit",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.letterform-sketch-arrival,Dafin_Reference_Compliant_Batch_08,"Letterform Sketch Arrival",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.lightly-rotated-headline,Dafin_Reference_Compliant_Batch_08,"Lightly Rotated Headline",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.micro-fold-out,Dafin_Reference_Compliant_Batch_08,"Micro Fold Exit",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.negative-scale-gather,Dafin_Reference_Compliant_Batch_08,"Negative Space Gather",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.offset-two-axis,Dafin_Reference_Compliant_Batch_08,"Offset Two-Axis",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.paper-dip-out,Dafin_Reference_Compliant_Batch_08,"Paper Dip Exit",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.sheet-pull-up,Dafin_Reference_Compliant_Batch_08,"Sheet Pull Up",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.short-crest-out,Dafin_Reference_Compliant_Batch_08,"Short Crest Exit",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,text animation,chatgpt.anim.wide-to-normal-letters,Dafin_Reference_Compliant_Batch_08,"Wide to Normal Letters",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.analogue-ticket-stub,Dafin_Reference_Compliant_Batch_08,"Analogue Ticket Stub",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.aurora-city-night,Dafin_Reference_Compliant_Batch_08,"Aurora City Night",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.cold-color-poster,Dafin_Reference_Compliant_Batch_08,"Cold Color Poster",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.copper-museum-archive,Dafin_Reference_Compliant_Batch_08,"Copper Museum Archive",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.darkroom-fiber-contact,Dafin_Reference_Compliant_Batch_08,"Darkroom Fiber Contact",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.desert-memory,Dafin_Reference_Compliant_Batch_08,"Desert Memory",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.digital-circuit-demo,Dafin_Reference_Compliant_Batch_08,"Digital Circuit Demo",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.embroidery-documentary,Dafin_Reference_Compliant_Batch_08,"Embroidery Documentary",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.film-silver-liquid,Dafin_Reference_Compliant_Batch_08,"Film Silver Liquid",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.high-design-satin,Dafin_Reference_Compliant_Batch_08,"High Design Satin",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.maker-photo-print,Dafin_Reference_Compliant_Batch_08,"Maker Photo Print",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.mineral-porcelain,Dafin_Reference_Compliant_Batch_08,"Mineral Porcelain",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.night-street-treatment,Dafin_Reference_Compliant_Batch_08,"Night Street Treatment",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.nostalgic-oxide-print,Dafin_Reference_Compliant_Batch_08,"Nostalgic Oxide Print",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.premium-metal-product,Dafin_Reference_Compliant_Batch_08,"Premium Metal Product",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.retro-lab-scanner,Dafin_Reference_Compliant_Batch_08,"Retro Lab Scanner",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.science-optical-glass,Dafin_Reference_Compliant_Batch_08,"Science Optical Glass",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.starlit-woodland,Dafin_Reference_Compliant_Batch_08,"Starlit Woodland",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.stone-construction,Dafin_Reference_Compliant_Batch_08,"Stone Construction",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,effect template,chatgpt.stack.winter-travel-day,Dafin_Reference_Compliant_Batch_08,"Winter Travel Day",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-08,sound effect,chatgpt.sfx.air_whooshes.fractal_ribbon_vent,Dafin_Reference_Compliant_Batch_08,"Fractal Ribbon Vent",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.air_whooshes.airfoil_page_bend,Dafin_Reference_Compliant_Batch_08,"Airfoil Page Bend",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.air_whooshes.vertical_mist_lift,Dafin_Reference_Compliant_Batch_08,"Vertical Mist Lift",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.air_whooshes.twin_arc_exhale,Dafin_Reference_Compliant_Batch_08,"Twin Arc Exhale",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_whooshes.orbital_mass_turn,Dafin_Reference_Compliant_Batch_08,"Orbital Mass Turn",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_whooshes.submerged_gate_swell,Dafin_Reference_Compliant_Batch_08,"Submerged Gate Swell",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_whooshes.mechanical_vault_breath,Dafin_Reference_Compliant_Batch_08,"Mechanical Vault Breath",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_whooshes.basalt_air_channel,Dafin_Reference_Compliant_Batch_08,"Basalt Air Channel",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.reverse_whooshes.crystal_dust_rewind,Dafin_Reference_Compliant_Batch_08,"Crystal Dust Rewind",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.reverse_whooshes.film_strip_intake,Dafin_Reference_Compliant_Batch_08,"Film Strip Intake",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.reverse_whooshes.orbit_curl_in,Dafin_Reference_Compliant_Batch_08,"Orbit Curl In",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.reverse_whooshes.fine_particulate_gather,Dafin_Reference_Compliant_Batch_08,"Fine Particulate Gather",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.directional_swishes.crosswind_s_path,Dafin_Reference_Compliant_Batch_08,"Crosswind S Path",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.directional_swishes.helical_left_lift,Dafin_Reference_Compliant_Batch_08,"Helical Left Lift",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.directional_swishes.split_rail_crossing,Dafin_Reference_Compliant_Batch_08,"Split Rail Crossing",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.directional_swishes.quarter_turn_slice,Dafin_Reference_Compliant_Batch_08,"Quarter Turn Slice",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.stylized_whooshes.spectral_ring_slingshot,Dafin_Reference_Compliant_Batch_08,"Spectral Ring Slingshot",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.stylized_whooshes.circuit_ribbon_turn,Dafin_Reference_Compliant_Batch_08,"Circuit Ribbon Turn",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.stylized_whooshes.moir_phase_rush,Dafin_Reference_Compliant_Batch_08,"Moiré Phase Rush",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.stylized_whooshes.prism_fan_scatter,Dafin_Reference_Compliant_Batch_08,"Prism Fan Scatter",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_motion_swishes.footnote_draw_dash,Dafin_Reference_Compliant_Batch_08,"Footnote Draw Dash",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_motion_swishes.numeric_counter_step,Dafin_Reference_Compliant_Batch_08,"Numeric Counter Step",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_motion_swishes.paragraph_indent_glide,Dafin_Reference_Compliant_Batch_08,"Paragraph Indent Glide",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_motion_swishes.code_block_unfold,Dafin_Reference_Compliant_Batch_08,"Code Block Unfold",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_sticker_swishes.caret_nudge_snap,Dafin_Reference_Compliant_Batch_08,"Caret Nudge Snap",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_sticker_swishes.tab_card_flip,Dafin_Reference_Compliant_Batch_08,"Tab Card Flip",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_sticker_swishes.arrow_hook_swing,Dafin_Reference_Compliant_Batch_08,"Arrow Hook Swing",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.text_sticker_swishes.emoji_orbit_cluster,Dafin_Reference_Compliant_Batch_08,"Emoji Orbit Cluster",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_impacts.granite_echo_chamber,Dafin_Reference_Compliant_Batch_08,"Granite Echo Chamber",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_impacts.silverplate_endstop,Dafin_Reference_Compliant_Batch_08,"Silverplate Endstop",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_impacts.four_layer_hit_resolve,Dafin_Reference_Compliant_Batch_08,"Four Layer Hit Resolve",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_impacts.hollow_dome_knock,Dafin_Reference_Compliant_Batch_08,"Hollow Dome Knock",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.risers_downers.glass_lattice_assembly,Dafin_Reference_Compliant_Batch_08,"Glass Lattice Assembly",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.risers_downers.pulsed_pressure_ladder,Dafin_Reference_Compliant_Batch_08,"Pulsed Pressure Ladder",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.risers_downers.magnified_latch_charge,Dafin_Reference_Compliant_Batch_08,"Magnified Latch Charge",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.risers_downers.magnetic_particles_descend,Dafin_Reference_Compliant_Batch_08,"Magnetic Particles Descend",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_horror.porcelain_strain,Dafin_Reference_Compliant_Batch_08,"Porcelain Strain",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_horror.cavern_pinpoint_tension,Dafin_Reference_Compliant_Batch_08,"Cavern Pinpoint Tension",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_horror.frozen_time_fracture,Dafin_Reference_Compliant_Batch_08,"Frozen Time Fracture",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cinematic_horror.threaded_suspense_lattice,Dafin_Reference_Compliant_Batch_08,"Threaded Suspense Lattice",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_tactile_clicks.parallax_screen_press,Dafin_Reference_Compliant_Batch_08,"Parallax Screen Press",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_tactile_clicks.rubber_ring_depression,Dafin_Reference_Compliant_Batch_08,"Rubber Ring Depression",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_tactile_clicks.mechanical_dial_detent,Dafin_Reference_Compliant_Batch_08,"Mechanical Dial Detent",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_tactile_clicks.timeline_scrub_stop,Dafin_Reference_Compliant_Batch_08,"Timeline Scrub Stop",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_bubble_pops.microfoam_coalescence,Dafin_Reference_Compliant_Batch_08,"Microfoam Coalescence",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_bubble_pops.three_cell_bubble_chain,Dafin_Reference_Compliant_Batch_08,"Three Cell Bubble Chain",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_bubble_pops.plasma_droplet_spark,Dafin_Reference_Compliant_Batch_08,"Plasma Droplet Spark",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_bubble_pops.polygon_gel_dissolve,Dafin_Reference_Compliant_Batch_08,"Polygon Gel Dissolve",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_toggles_switches.three_position_selector,Dafin_Reference_Compliant_Batch_08,"Three Position Selector",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_toggles_switches.color_swatch_latch,Dafin_Reference_Compliant_Batch_08,"Color Swatch Latch",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_toggles_switches.range_slider_catch,Dafin_Reference_Compliant_Batch_08,"Range Slider Catch",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_toggles_switches.track_mute_latch,Dafin_Reference_Compliant_Batch_08,"Track Mute Latch",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.notifications_bells.chapter_bookmark_chord,Dafin_Reference_Compliant_Batch_08,"Chapter Bookmark Chord",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.notifications_bells.media_link_successful,Dafin_Reference_Compliant_Batch_08,"Media Link Successful",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.notifications_bells.review_comment_arrival,Dafin_Reference_Compliant_Batch_08,"Review Comment Arrival",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.notifications_bells.session_handback_note,Dafin_Reference_Compliant_Batch_08,"Session Handback Note",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_notifications_expanded.caption_track_ready,Dafin_Reference_Compliant_Batch_08,"Caption Track Ready",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_notifications_expanded.proxy_queue_completed,Dafin_Reference_Compliant_Batch_08,"Proxy Queue Completed",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_notifications_expanded.timeline_scene_indexed,Dafin_Reference_Compliant_Batch_08,"Timeline Scene Indexed",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_notifications_expanded.render_preview_cached,Dafin_Reference_Compliant_Batch_08,"Render Preview Cached",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_feedback_status.undo_stack_restored,Dafin_Reference_Compliant_Batch_08,"Undo Stack Restored",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_feedback_status.selection_cannot_move,Dafin_Reference_Compliant_Batch_08,"Selection Cannot Move",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_feedback_status.ready_for_peer_review,Dafin_Reference_Compliant_Batch_08,"Ready For Peer Review",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_feedback_status.edit_boundary_reached,Dafin_Reference_Compliant_Batch_08,"Edit Boundary Reached",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_arcade_game.map_tile_discovery,Dafin_Reference_Compliant_Batch_08,"Map Tile Discovery",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_arcade_game.turn_token_spent,Dafin_Reference_Compliant_Batch_08,"Turn Token Spent",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_arcade_game.inventory_row_sorted,Dafin_Reference_Compliant_Batch_08,"Inventory Row Sorted",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.ui_arcade_game.puzzle_gate_unlocked,Dafin_Reference_Compliant_Batch_08,"Puzzle Gate Unlocked",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cartoon_comedy.umbrella_spring_fold,Dafin_Reference_Compliant_Batch_08,"Umbrella Spring Fold",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cartoon_comedy.jelly_parachute_land,Dafin_Reference_Compliant_Batch_08,"Jelly Parachute Land",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cartoon_comedy.brush_trampoline,Dafin_Reference_Compliant_Batch_08,"Brush Trampoline",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.cartoon_comedy.spinning_straw_rotor,Dafin_Reference_Compliant_Batch_08,"Spinning Straw Rotor",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.sci_fi_magic.gravity_compass_spin,Dafin_Reference_Compliant_Batch_08,"Gravity Compass Spin",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.sci_fi_magic.lunar_rune_awakening,Dafin_Reference_Compliant_Batch_08,"Lunar Rune Awakening",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.sci_fi_magic.bioluminescent_vine_bloom,Dafin_Reference_Compliant_Batch_08,"Bioluminescent Vine Bloom",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.sci_fi_magic.constellation_thread_link,Dafin_Reference_Compliant_Batch_08,"Constellation Thread Link",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.glitch_digital.packet_fragment_scatter,Dafin_Reference_Compliant_Batch_08,"Packet Fragment Scatter",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.glitch_digital.quantized_clock_slip,Dafin_Reference_Compliant_Batch_08,"Quantized Clock Slip",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.glitch_digital.memory_window_retrace,Dafin_Reference_Compliant_Batch_08,"Memory Window Retrace",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks
+ChatGPT-batch-08,sound effect,chatgpt.sfx.glitch_digital.binary_bloom_break,Dafin_Reference_Compliant_Batch_08,"Binary Bloom Break",,yes,"validator/harness checks passed",DEFERRED,3,Needs your listening review; passed script checks

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.analogue-ticket-stub",
+  "displayName": "Analogue Ticket Stub",
+  "category": "look",
+  "order": 9301,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.thermal-receipt",
+      "params": {
+        "strength": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.print-paper-white",
+      "params": {
+        "strength": 0.64
+      }
+    }
+  ]
+}

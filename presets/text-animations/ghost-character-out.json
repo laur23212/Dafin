@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.ghost-character-out",
+  "label": "Ghost Character Exit",
+  "category": "editorial",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "out"
+  ],
+  "order": 9210,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.12,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0.11,
+          "y": -0.05,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

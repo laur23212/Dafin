@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.chemical-developer-spots",
+  "displayName": "Chemical Developer Stains",
+  "category": "retro",
+  "description": "Organic desaturated chemical-development puddles and brown edges, not scratches or film burn.",
+  "order": 8824,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Chemical development",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

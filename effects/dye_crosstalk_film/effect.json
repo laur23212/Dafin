@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.dye-crosstalk-film",
+  "displayName": "Three-Layer Dye Crosstalk",
+  "category": "retro",
+  "description": "Simulates imperfect color-layer absorption in processed film; colored edges retain their luminance hierarchy.",
+  "order": 8803,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Film dye mixing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.83
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

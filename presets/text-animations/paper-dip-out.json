@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.paper-dip-out",
+  "label": "Paper Dip Exit",
+  "category": "minimal",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "out"
+  ],
+  "order": 9212,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.12,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": 0.08,
+          "unit": "box"
+        },
+        "scale": 90,
+        "opacity": 0
+      }
+    }
+  ]
+}

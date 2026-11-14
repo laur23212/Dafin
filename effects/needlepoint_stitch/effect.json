@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.needlepoint-stitch",
+  "displayName": "Needlepoint Embroidery",
+  "category": "retro",
+  "description": "Needlepoint diagonal colored thread stitches arranged in a woven canvas, unlike a simple fabric weave overlay.",
+  "order": 8820,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Thread texture",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

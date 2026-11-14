@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.tilt-miniature-focus",
+  "displayName": "Tilt Miniature Lens",
+  "category": "dreamy",
+  "description": "Horizontal selective focus strip with fast foreground/background falloff, creating miniature-model imagery.",
+  "order": 8807,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Defocus",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85
+    },
+    {
+      "identifier": "focus",
+      "displayName": "Focus height",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.48
+    },
+    {
+      "identifier": "width",
+      "displayName": "Focus width",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.5,
+      "defaultValue": 0.2
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

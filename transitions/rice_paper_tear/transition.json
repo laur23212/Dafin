@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.rice-paper-tear",
+  "displayName": "Rice Paper Fiber Tear",
+  "category": "liquid",
+  "description": "An irregular delicate fiber tear moves down the shot with thin torn edges, unlike the existing column-strip tear.",
+  "order": 8921,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Character",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

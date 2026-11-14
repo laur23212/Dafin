@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.chromatic-silk-screen",
+  "displayName": "Chromatic Textile Moiré",
+  "category": "glitch",
+  "description": "Fine moiré mohair thread intersections with colored microbands; useful as an abstract fashion texture, not a screenprint clone.",
+  "order": 8833,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Textile moiré",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

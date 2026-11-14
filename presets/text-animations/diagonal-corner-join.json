@@ -1,0 +1,32 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.diagonal-corner-join",
+  "label": "Diagonal Corner Join",
+  "category": "editorial",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9201,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.17,
+          "y": -0.13,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

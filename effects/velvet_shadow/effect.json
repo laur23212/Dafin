@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.velvet-shadow",
+  "displayName": "Velvet Darkroom Finish",
+  "category": "dreamy",
+  "description": "Soft directional low-key velvet fiber sheen that darkens surfaces but leaves luminous details.",
+  "order": 8815,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Velvet coating",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

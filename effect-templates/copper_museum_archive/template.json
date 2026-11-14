@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.copper-museum-archive",
+  "displayName": "Copper Museum Archive",
+  "category": "look",
+  "order": 9305,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.copper-patina",
+      "params": {
+        "strength": 0.73
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.letterpress-toner",
+      "params": {
+        "strength": 0.73
+      }
+    }
+  ]
+}

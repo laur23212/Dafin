@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.pinhole-light-leak",
+  "displayName": "Pinhole Camera Corner Exposure",
+  "category": "retro",
+  "description": "Tiny asymmetric pinhole light circles with imperfect warm falloff, separate from broad film burn and lens flare.",
+  "order": 8834,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Pinhole exposure",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.63
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

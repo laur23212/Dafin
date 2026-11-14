@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.horizontal-retract-out",
+  "label": "Horizontal Retract Exit",
+  "category": "utility",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "out"
+  ],
+  "order": 9213,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.12,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0.16,
+          "y": 0,
+          "unit": "box"
+        },
+        "scale": 93,
+        "opacity": 0
+      }
+    }
+  ]
+}

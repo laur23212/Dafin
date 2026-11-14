@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.fx.graduated-neutral-density",
+  "displayName": "Graduated Neutral Density",
+  "category": "restoration",
+  "description": "Adjustable soft-angle graduated exposure filter for bright skies and uneven location lighting.",
+  "order": 8802,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Density",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.69
+    },
+    {
+      "identifier": "angle",
+      "displayName": "Angle",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0
+    },
+    {
+      "identifier": "center",
+      "displayName": "Horizon",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.53
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Feather",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.85,
+      "defaultValue": 0.33
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

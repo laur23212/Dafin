@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.copper-patina",
+  "displayName": "Weathered Copper Patina",
+  "category": "retro",
+  "description": "Maps colored footage to aged copper and oxidized turquoise patches driven by a smooth mottled field.",
+  "order": 8812,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Patina coverage",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

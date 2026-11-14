@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.depth-stone-relief",
+  "displayName": "Depth Sculpted Stone",
+  "category": "retro",
+  "description": "Approximates a shallow carved stone relief from the real depth gradient, with physically readable carved ridges.",
+  "order": 8846,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Carved relief",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.79
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

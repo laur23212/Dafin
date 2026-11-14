@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.darkroom-fiber-contact",
+  "displayName": "Darkroom Fiber Contact",
+  "category": "cinematic",
+  "order": 9302,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.contact-photogram",
+      "params": {
+        "strength": 0.73
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.chemical-developer-spots",
+      "params": {
+        "strength": 0.73
+      }
+    }
+  ]
+}

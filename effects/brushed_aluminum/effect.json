@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.brushed-aluminum",
+  "displayName": "Brushed Aluminium Surface",
+  "category": "dreamy",
+  "description": "Converts bright areas into cool anisotropic metallic sheen with ultrafine horizontal brushing.",
+  "order": 8811,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Metal coating",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.74
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

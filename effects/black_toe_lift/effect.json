@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.black-toe-lift",
+  "displayName": "Black Toe Detail Guard",
+  "category": "restoration",
+  "description": "Softens crushed near-black pixels while anchoring true black, helping dark clothing and night interiors.",
+  "order": 8800,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Shadow recovery",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.73
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.sheet-pull-up",
+  "label": "Sheet Pull Up",
+  "category": "minimal",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9204,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": 0.16,
+          "unit": "box"
+        },
+        "scale": 104,
+        "opacity": 0
+      }
+    }
+  ]
+}

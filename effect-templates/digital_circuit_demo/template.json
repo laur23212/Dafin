@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.digital-circuit-demo",
+  "displayName": "Digital Circuit Demo",
+  "category": "hype",
+  "order": 9314,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.circuit-trace-glaze",
+      "params": {
+        "strength": 0.73
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.gradient-vapor-shading",
+      "params": {
+        "strength": 0.73
+      }
+    }
+  ]
+}

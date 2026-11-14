@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.film-silver-liquid",
+  "displayName": "Film Silver Liquid",
+  "category": "drama",
+  "order": 9319,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.quicksilver-film",
+      "params": {
+        "strength": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.optical-newton-rings",
+      "params": {
+        "strength": 0.64
+      }
+    }
+  ]
+}

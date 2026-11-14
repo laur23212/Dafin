@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.powder-coat",
+  "displayName": "Powder-Coat Matte",
+  "category": "dreamy",
+  "description": "Flat matte paint absorption with fine microtexture, distinct from glossy metal or velour.",
+  "order": 8816,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Matte coating",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

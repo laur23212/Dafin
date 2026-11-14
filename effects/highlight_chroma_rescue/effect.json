@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.highlight-chroma-rescue",
+  "displayName": "Highlight Chroma Rescue",
+  "category": "restoration",
+  "description": "Reduces garish color in nearly clipped highlights without darkening their overall brightness.",
+  "order": 8801,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Highlight color rescue",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

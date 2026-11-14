@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.negative-scale-gather",
+  "label": "Negative Space Gather",
+  "category": "minimal",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9208,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 116,
+        "opacity": 0
+      }
+    }
+  ]
+}

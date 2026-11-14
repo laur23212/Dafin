@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.offset-two-axis",
+  "label": "Offset Two-Axis",
+  "category": "editorial",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9207,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0.13,
+          "y": 0.07,
+          "unit": "box"
+        },
+        "scale": 92,
+        "opacity": 0.1
+      }
+    }
+  ]
+}
