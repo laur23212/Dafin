@@ -1,0 +1,154 @@
+{
+  "format": 1,
+  "id": "chatgpt.suite.editorial-documentary-pull-quote",
+  "label": "Pull Quote",
+  "description": "Editorial Documentary: tracking treatment with EB Garamond and fade entrance.",
+  "category": "editorial-documentary",
+  "tags": [
+    "editorial-documentary",
+    "tracking",
+    "fade",
+    "editable",
+    "font-paired"
+  ],
+  "sampleText": "“IN THEIR OWN WORDS”",
+  "kind": "title",
+  "requires": {
+    "fonts": [
+      "EB Garamond"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "EB Garamond",
+    "pixelSize": 71,
+    "fontWeight": 500,
+    "italic": false,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff34212b"
+        },
+        "opacity": 0.65,
+        "blend": "normal",
+        "offsetX": 2.4,
+        "offsetY": 3.0,
+        "blur": 4.5,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#fffffcfb"
+        },
+        "opacity": 1,
+        "blend": "normal",
+        "offsetX": 0,
+        "offsetY": 0,
+        "blur": 0,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      }
+    ],
+    "pathBend": 0,
+    "align": "center",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.08,
+    "letterSpacing": 6.0,
+    "textCase": "none",
+    "boxEnabled": false,
+    "boxColor": "#ff34212b",
+    "boxPadding": 20,
+    "boxRadius": 7,
+    "underlineEnabled": false,
+    "underlineColor": "#ffff7aa0",
+    "underlineWidth": 2.7,
+    "underlineOffset": 6,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.22
+          },
+          "stagger": {
+            "type": "scalar",
+            "value": 0.008
+          },
+          "unit": {
+            "type": "text",
+            "value": "block"
+          },
+          "ease": {
+            "type": "text",
+            "value": "easeOut"
+          }
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.2
+          }
+        }
+      },
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 22,
+      "max": 230,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "in-duration",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0.05,
+      "max": 1.5,
+      "unit": "s"
+    }
+  ]
+}

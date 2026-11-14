@@ -1,0 +1,14 @@
+{
+  "id": "cousine",
+  "family": "Cousine",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Cousine-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

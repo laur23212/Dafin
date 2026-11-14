@@ -1,0 +1,51 @@
+{
+  "id": "dafin.v4.tr.texture-first-reveal",
+  "displayName": "Texture-first Reveal",
+  "category": "geometric",
+  "order": 2157,
+  "parameters": [
+    {
+      "identifier": "softness",
+      "displayName": "Transition softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.45,
+      "defaultValue": 0.15,
+      "group": "Edit"
+    },
+    {
+      "identifier": "priority",
+      "displayName": "Detail preference",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82,
+      "group": "Edit"
+    }
+  ],
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 5,
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

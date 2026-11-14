@@ -1,0 +1,54 @@
+{
+  "id": "dafin.v5.fx.conditional-comb-line-repair",
+  "displayName": "Conditional Interlace Comb Minimizer",
+  "category": "restoration",
+  "order": 2302,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Interpolation strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Combing threshold",
+      "type": "float",
+      "minValue": 0.015,
+      "maxValue": 0.35,
+      "defaultValue": 0.09,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "radiusPx",
+      "displayName": "Vertical sample spacing",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 3,
+      "defaultValue": 1,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

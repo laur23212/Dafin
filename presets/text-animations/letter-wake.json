@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin.suite.letter-wake",
+  "label": "Letter Wake",
+  "category": "kinetic",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 306,
+  "defaults": {
+    "unit": "character",
+    "duration": 0.2,
+    "stagger": 0.008,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": 0.19,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

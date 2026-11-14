@@ -1,0 +1,14 @@
+{
+  "id": "pt-mono",
+  "family": "PT Mono",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "PTM55FT.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

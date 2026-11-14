@@ -1,0 +1,71 @@
+{
+  "id": "dafin.v6.tr.editorial-page-peel",
+  "version": "1.0.0",
+  "displayName": "Editorial Page Peel",
+  "category": "geometric",
+  "description": "An outgoing shot peels away from a diagonal fold, revealing the next scene under a shaded sheet curl and fine fold highlight; a tactile editorial transition without extra textures.",
+  "order": 3012,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 9,
+  "parameters": [
+    {
+      "identifier": "curlWidth",
+      "displayName": "Paper fold width",
+      "type": "float",
+      "minValue": 0.045,
+      "maxValue": 0.24,
+      "defaultValue": 0.11,
+      "group": "Controls"
+    },
+    {
+      "identifier": "tilt",
+      "displayName": "Fold direction",
+      "type": "float",
+      "minValue": -0.85,
+      "maxValue": 0.85,
+      "defaultValue": 0.24,
+      "group": "Controls"
+    },
+    {
+      "identifier": "shadow",
+      "displayName": "Fold shadow",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.8,
+      "defaultValue": 0.48,
+      "group": "Controls"
+    },
+    {
+      "identifier": "underside",
+      "displayName": "Paper underside shade",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.8,
+      "defaultValue": 0.34,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "dafin.v4.fx.skin-tone-guard-grade",
+  "displayName": "Skin Tone Guard Grade",
+  "category": "color",
+  "order": 2117,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Cool-background grade",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Edit"
+    },
+    {
+      "identifier": "skinProtect",
+      "displayName": "Heuristic skin protection",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

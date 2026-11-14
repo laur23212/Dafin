@@ -1,0 +1,46 @@
+{
+  "id": "dafin.v4.fx.subject-shaped-spotlight",
+  "displayName": "Subject-Shaped Spotlight",
+  "category": "depth",
+  "order": 2127,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Background dimming",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.54,
+      "group": "Edit"
+    },
+    {
+      "identifier": "feather",
+      "displayName": "Edge feather (px)",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 40,
+      "defaultValue": 5.0,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask",
+  "thumbnail": "thumbnail.webp"
+}

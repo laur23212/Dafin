@@ -102,3 +102,41 @@ grading tools (6 that Color Grade may cover).
 Each has a new thumbnail or preview strip. Installed footprint +55 KB. Not run: Dafin preview and
 export, Windows/Linux GPUs, 1080p/4K timing, save/load round trip (the test adds them to a clip
 and a cut).
+
+## Wave 2 (14 November 2026)
+
+Everything that works in Dafin went in. Everything else was dropped, with the reason on its row in
+`reconciliation.csv`.
+
+- **Effects:** 24 more, 27 with wave 1. Categories were mapped onto Dafin's own: Color, Retro,
+  Dreamy, Depth & Lighting, Keying, and a new Restoration. Cards were rendered with a stand-in
+  subject, mask and depth map (`SYNTH=1 gl_harness.py`), so the smart effects show what they do.
+  - Fixed `old_film_vertical_scratches`: GLSL `pow()` of a negative base is undefined.
+  - Dropped 11:
+    - Privacy Mosaic and Edge-Safe Sharpen: built-ins already do them.
+    - The four progress-driven zooms and Impact Shake Hit: they do nothing until keyframed.
+    - Edge-Guarded Soften: it blurs edges.
+    - Highlight Smooth Shoulder: it turns highlights grey.
+    - Face-Follow Softbox: Dafin starts the face scan only for `face_*` effects.
+    - Subject Contact Shadow: it blacks out everything outside the mask.
+- **Transitions:** 12 more, 14 with wave 1.
+  - Film Gate Jump's last frame was black: `pow(sin(PI), 8)` of a value a hair below 0.
+  - Vintage Light Leak Cut had the same `pow()` problem.
+- **Titles:** 82 of 101, converted by `tools/asset-audit/convert_titles.py`:
+  - The `chatgpt.` id prefix.
+  - `text` / `font.family` bindings.
+  - Liberation Mono becomes Cousine.
+  - The author's readability target moved to `style.animation.timing.maxReadMs`, capped at Dafin's
+    200 ms (250 ms for captions).
+  - The 19 dropped titles use fonts that are not freely shippable.
+  - Checked with Dafin's own validator and control checks, and with `tst_core` built against
+    Qt 6.10 (221/221).
+- **Fonts:** 21 OFL families in `title-fonts/`, 9 MB, staged to `<appDir>/fonts` (see its README).
+- **Text animations:** the 13 new ones, plus the 3 the kinetic titles need.
+- **Stickers:** the 6 new Lottie stickers go into the Dafin library, labelled "Royalty-free".
+  The 78 SVG stickers were dropped because the library takes Lottie only.
+- **LUTs:** dropped from the bundle; Dafin ships no looks. They can be imported as `.cube` files.
+- **New sounds:** deferred. They need a listening review and new browser groups.
+- **Shipping:** the 41 handoff packages are added to `DRIFT_CORE_EFFECTS` and
+  `DRIFT_CORE_TRANSITIONS`. Packaged builds ship only that list, and this fork cannot publish
+  add-ons.

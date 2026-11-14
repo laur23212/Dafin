@@ -1,0 +1,55 @@
+{
+  "id": "dafin.v5.fx.matte-edge-shrink-feather",
+  "displayName": "Matte Edge Shrink & Feather",
+  "category": "keying",
+  "order": 2304,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "shrink",
+      "displayName": "Edge contraction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "feather",
+      "displayName": "Edge softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.45,
+      "defaultValue": 0.13,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "radiusPx",
+      "displayName": "Edge radius (px)",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 5,
+      "defaultValue": 2.5,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask",
+  "thumbnail": "thumbnail.webp"
+}

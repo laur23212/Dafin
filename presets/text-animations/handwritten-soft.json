@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin-v2-handwritten-soft",
+  "label": "Handwritten Soft",
+  "category": "signature",
+  "sampleText": "A little note",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 304,
+  "defaults": {
+    "duration": 0.37,
+    "stagger": 0,
+    "unit": "block",
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": 0.07,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "dafin.v4.fx.specular-ray-builder",
+  "displayName": "Specular Ray Builder",
+  "category": "depth",
+  "order": 2109,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Ray strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 2,
+      "defaultValue": 0.8,
+      "group": "Edit"
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Bright source threshold",
+      "type": "float",
+      "minValue": 0.4,
+      "maxValue": 1,
+      "defaultValue": 0.77,
+      "group": "Edit"
+    },
+    {
+      "identifier": "rayLength",
+      "displayName": "Ray length in pixels",
+      "type": "float",
+      "minValue": 5,
+      "maxValue": 140,
+      "defaultValue": 65,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

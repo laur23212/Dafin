@@ -1,0 +1,14 @@
+{
+  "id": "pt-serif",
+  "family": "PT Serif",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "PT_Serif-Web-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

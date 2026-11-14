@@ -1,0 +1,109 @@
+{
+  "format": 1,
+  "id": "chatgpt.suite.captions-subtitles-interview-subtitle",
+  "label": "Interview Subtitle",
+  "description": "Captions Subtitles: caption treatment with Lato and none entrance.",
+  "category": "captions-subtitles",
+  "tags": [
+    "captions-subtitles",
+    "caption",
+    "none",
+    "editable",
+    "font-paired"
+  ],
+  "sampleText": "An important conversation.",
+  "kind": "caption",
+  "requires": {
+    "fonts": [
+      "Lato"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "Lato",
+    "pixelSize": 58,
+    "fontWeight": 500,
+    "italic": false,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff151515"
+        },
+        "opacity": 0.38,
+        "blend": "normal",
+        "offsetX": 2.4,
+        "offsetY": 3.0,
+        "blur": 4.5,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ffffffff"
+        },
+        "opacity": 1,
+        "blend": "normal",
+        "offsetX": 0,
+        "offsetY": 0,
+        "blur": 0,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      }
+    ],
+    "pathBend": 0,
+    "align": "center",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 0.0,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#e3191c24",
+    "boxPadding": 16,
+    "boxRadius": 7,
+    "underlineEnabled": false,
+    "underlineColor": "#ffb7bdca",
+    "underlineWidth": 2.7,
+    "underlineOffset": 6,
+    "animation": {
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 22,
+      "max": 230,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    }
+  ]
+}

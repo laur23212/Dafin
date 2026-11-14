@@ -1,0 +1,14 @@
+{
+  "id": "gentium-book-plus",
+  "family": "Gentium Book Plus",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "GentiumBookPlus-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

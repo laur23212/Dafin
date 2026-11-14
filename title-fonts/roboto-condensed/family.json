@@ -1,0 +1,19 @@
+{
+  "id": "roboto-condensed",
+  "family": "Roboto Condensed",
+  "category": "impact",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "RobotoCondensed-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    },
+    {
+      "file": "RobotoCondensed-ExtraBold.ttf",
+      "weight": 800,
+      "styleName": "ExtraBold"
+    }
+  ]
+}

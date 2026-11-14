@@ -1,0 +1,171 @@
+{
+  "format": 1,
+  "id": "chatgpt.v2.playful.comic-neue.statement",
+  "label": "Comic Neue Statement",
+  "description": "Reaction emphasis using the exact Comic Neue face; editable native layers and typography.",
+  "category": "v2-playful",
+  "kind": "title",
+  "sampleText": "TRY IT OUT",
+  "tags": [
+    "v2",
+    "type-diversity",
+    "playful",
+    "statement",
+    "reaction emphasis"
+  ],
+  "requires": {
+    "fonts": [
+      "Comic Neue"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "Comic Neue",
+    "pixelSize": 106,
+    "fontWeight": 700,
+    "italic": false,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff15344e"
+        },
+        "opacity": 0.68,
+        "blend": "normal",
+        "offsetX": 3.2,
+        "offsetY": 5.2,
+        "blur": 4.2,
+        "width": 2.0,
+        "spread": 0.0,
+        "scope": "all"
+      },
+      {
+        "id": "stroke",
+        "kind": "stroke",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff15344e"
+        },
+        "opacity": 1.0,
+        "blend": "normal",
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "blur": 0.0,
+        "width": 1.75,
+        "spread": 0.0,
+        "scope": "all",
+        "strokeAlign": "outside",
+        "dash": "solid",
+        "join": "round",
+        "dashOffset": 0
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#fffe9382"
+        },
+        "opacity": 1.0,
+        "blend": "normal",
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "blur": 0.0,
+        "width": 2.0,
+        "spread": 0.0,
+        "scope": "all"
+      }
+    ],
+    "align": "center",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.06,
+    "letterSpacing": 0.3,
+    "textCase": "none",
+    "pathBend": 0,
+    "boxEnabled": false,
+    "boxColor": "#ff36758d",
+    "boxPadding": 12,
+    "boxRadius": 6,
+    "underlineEnabled": false,
+    "underlineColor": "#fffe9382",
+    "underlineWidth": 2.5,
+    "underlineOffset": 7,
+    "animation": {
+      "in": {
+        "preset": "pop",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.18
+          },
+          "stagger": {
+            "type": "scalar",
+            "value": 0
+          },
+          "unit": {
+            "type": "text",
+            "value": "block"
+          }
+        }
+      },
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Typeface",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "font-size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 28,
+      "max": 240,
+      "unit": "px"
+    },
+    {
+      "id": "font-colour",
+      "label": "Primary ink",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "stroke-width",
+      "label": "Outline width",
+      "type": "scalar",
+      "bind": "layer.stroke.width",
+      "min": 0,
+      "max": 10,
+      "unit": "px"
+    },
+    {
+      "id": "in-duration",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0.05,
+      "max": 1.25,
+      "unit": "s"
+    }
+  ]
+}

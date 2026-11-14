@@ -145,6 +145,7 @@ private slots:
     void textTimingOlderProjectsKeepAuthoredTiming();
     void textTimingEveryPresetIsReadableInTime();
     void titleTemplatesBundledAreValid();
+    void chatgptTitleFontsShip();
     void titleTemplateControlsDriveTheirProperty();
     void titleTemplateValidatorExplainsMistakes();
     void titleTemplateUserStoreKeepsEverything();
@@ -6763,6 +6764,43 @@ void CoreTest::titleTemplatesBundledAreValid()
     QVERIFY(qFuzzyIsNull(underline.style.resolvedAt(0).underlineReveal));
     QVERIFY(qFuzzyCompare(underline.style.resolvedAt(400'000).underlineReveal, 1.0));
     QVERIFY(!underline.style.animation.in.isActive()); // readable from the first frame
+}
+
+// Dafin: every bundled ChatGPT title draws in its own font: one of Fonts Essentials, or a family
+// shipped in title-fonts/ (OFL, licence beside it) with the files family.json names.
+void CoreTest::chatgptTitleFontsShip()
+{
+    const QSet<QString> essentials{
+        QStringLiteral("Inter"), QStringLiteral("Montserrat"), QStringLiteral("Poppins"), QStringLiteral("DM Sans"),
+        QStringLiteral("Outfit"), QStringLiteral("Plus Jakarta Sans"), QStringLiteral("League Spartan"),
+        QStringLiteral("Ubuntu"), QStringLiteral("Anton"), QStringLiteral("Archivo Black"), QStringLiteral("Bebas Neue"),
+        QStringLiteral("Oswald"), QStringLiteral("Rubik One"), QStringLiteral("Fredoka"), QStringLiteral("Pacifico"),
+        QStringLiteral("Playfair Display"), QStringLiteral("Bodoni Moda"), QStringLiteral("Cormorant Garamond"),
+        QStringLiteral("Cinzel")};
+    const QDir root(QStringLiteral(DRIFT_TEST_DATA_DIR "/../../title-fonts"));
+    QVERIFY(root.exists());
+    QSet<QString> shipped;
+    for (const QString &pkg : root.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        const QDir dir(root.filePath(pkg));
+        QFile file(dir.filePath(QStringLiteral("family.json")));
+        QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(pkg));
+        const QJsonObject family = QJsonDocument::fromJson(file.readAll()).object();
+        QVERIFY2(QFileInfo::exists(dir.filePath(QStringLiteral("OFL.txt"))), qPrintable(pkg));
+        const QJsonArray faces = family.value(QStringLiteral("faces")).toArray();
+        QVERIFY2(!faces.isEmpty(), qPrintable(pkg));
+        for (const QJsonValue &face : faces)
+            QVERIFY2(QFileInfo::exists(dir.filePath(face.toObject().value(QStringLiteral("file")).toString())), qPrintable(pkg));
+        shipped.insert(family.value(QStringLiteral("family")).toString());
+    }
+    int titles = 0;
+    for (const TextPreset &t : TitleTemplateCatalog::instance().templates()) {
+        if (!t.id.startsWith(QLatin1String("chatgpt.")))
+            continue;
+        ++titles;
+        QVERIFY2(essentials.contains(t.style.fontFamily) || shipped.contains(t.style.fontFamily),
+                 qPrintable(t.id + QLatin1String(": ") + t.style.fontFamily));
+    }
+    QVERIFY(titles >= 90);
 }
 
 void CoreTest::titleTemplateControlsDriveTheirProperty()

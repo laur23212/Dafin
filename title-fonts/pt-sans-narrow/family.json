@@ -1,0 +1,14 @@
+{
+  "id": "pt-sans-narrow",
+  "family": "PT Sans Narrow",
+  "category": "impact",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "PT_Sans-Narrow-Web-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

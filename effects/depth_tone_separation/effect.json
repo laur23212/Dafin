@@ -1,0 +1,60 @@
+{
+  "id": "dafin.v4.fx.depth-tone-separation",
+  "displayName": "Depth Tone Separation",
+  "category": "depth",
+  "order": 2135,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Foreground/background split",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Separation depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Edit"
+    },
+    {
+      "identifier": "nearColor",
+      "displayName": "Near tint",
+      "type": "color",
+      "defaultValue": "#ffcf97",
+      "group": "Edit"
+    },
+    {
+      "identifier": "farColor",
+      "displayName": "Far tint",
+      "type": "color",
+      "defaultValue": "#488ca5",
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "depth",
+  "thumbnail": "thumbnail.webp"
+}

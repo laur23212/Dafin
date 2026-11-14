@@ -1,0 +1,55 @@
+{
+  "id": "dafin.v4.fx.depth-distance-alpha",
+  "displayName": "Depth Distance Alpha",
+  "category": "depth",
+  "order": 2142,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "near",
+      "displayName": "Near boundary",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.3,
+      "group": "Edit"
+    },
+    {
+      "identifier": "far",
+      "displayName": "Far boundary",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7,
+      "group": "Edit"
+    },
+    {
+      "identifier": "feather",
+      "displayName": "Edge feather",
+      "type": "float",
+      "minValue": 0.005,
+      "maxValue": 0.25,
+      "defaultValue": 0.08,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "depth",
+  "thumbnail": "thumbnail.webp"
+}

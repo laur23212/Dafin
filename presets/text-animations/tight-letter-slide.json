@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin-v2-tight-letter-slide",
+  "label": "Tight Letter Slide",
+  "category": "kinetic",
+  "sampleText": "CUT TO THE POINT",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 301,
+  "defaults": {
+    "duration": 0.24,
+    "stagger": 0.008,
+    "unit": "character",
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.14,
+          "y": 0,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

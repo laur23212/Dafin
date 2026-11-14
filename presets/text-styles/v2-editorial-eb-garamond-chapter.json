@@ -1,0 +1,124 @@
+{
+  "format": 1,
+  "id": "chatgpt.v2.editorial.eb-garamond.chapter",
+  "label": "EB Garamond Chapter",
+  "description": "Chapter marker using the exact EB Garamond face; editable native layers and typography.",
+  "category": "v2-editorial",
+  "kind": "title",
+  "sampleText": "CHAPTER ONE",
+  "tags": [
+    "v2",
+    "type-diversity",
+    "editorial",
+    "chapter",
+    "chapter marker"
+  ],
+  "requires": {
+    "fonts": [
+      "EB Garamond"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "EB Garamond",
+    "pixelSize": 66,
+    "fontWeight": 400,
+    "italic": false,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff162235"
+        },
+        "opacity": 1.0,
+        "blend": "normal",
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "blur": 0.0,
+        "width": 2.0,
+        "spread": 0.0,
+        "scope": "all"
+      }
+    ],
+    "align": "center",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 2.6,
+    "textCase": "none",
+    "pathBend": 0,
+    "boxEnabled": false,
+    "boxColor": "#ff223c50",
+    "boxPadding": 12,
+    "boxRadius": 1,
+    "underlineEnabled": true,
+    "underlineColor": "#ffb06b48",
+    "underlineWidth": 2.5,
+    "underlineOffset": 7,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.32
+          },
+          "stagger": {
+            "type": "scalar",
+            "value": 0
+          },
+          "unit": {
+            "type": "text",
+            "value": "block"
+          }
+        }
+      },
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Typeface",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "font-size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 28,
+      "max": 240,
+      "unit": "px"
+    },
+    {
+      "id": "font-colour",
+      "label": "Primary ink",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "in-duration",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0.05,
+      "max": 1.25,
+      "unit": "s"
+    }
+  ]
+}

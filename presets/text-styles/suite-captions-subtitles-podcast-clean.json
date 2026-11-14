@@ -1,0 +1,139 @@
+{
+  "format": 1,
+  "id": "chatgpt.suite.captions-subtitles-podcast-clean",
+  "label": "Podcast Clean",
+  "description": "Captions Subtitles: caption treatment with Inter and fade entrance.",
+  "category": "captions-subtitles",
+  "tags": [
+    "captions-subtitles",
+    "caption",
+    "fade",
+    "editable",
+    "font-paired"
+  ],
+  "sampleText": "Keep following the story.",
+  "kind": "caption",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "Inter",
+    "pixelSize": 58,
+    "fontWeight": 500,
+    "italic": false,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff263929"
+        },
+        "opacity": 0.38,
+        "blend": "normal",
+        "offsetX": 2.4,
+        "offsetY": 3.0,
+        "blur": 4.5,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#fff9fff7"
+        },
+        "opacity": 1,
+        "blend": "normal",
+        "offsetX": 0,
+        "offsetY": 0,
+        "blur": 0,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      }
+    ],
+    "pathBend": 0,
+    "align": "center",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 0.0,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#e3191c24",
+    "boxPadding": 16,
+    "boxRadius": 7,
+    "underlineEnabled": false,
+    "underlineColor": "#ff93d38c",
+    "underlineWidth": 2.7,
+    "underlineOffset": 6,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.16
+          },
+          "stagger": {
+            "type": "scalar",
+            "value": 0.0
+          },
+          "unit": {
+            "type": "text",
+            "value": "block"
+          },
+          "ease": {
+            "type": "text",
+            "value": "easeOut"
+          }
+        }
+      },
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 22,
+      "max": 230,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "in-duration",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0.05,
+      "max": 1.5,
+      "unit": "s"
+    }
+  ]
+}

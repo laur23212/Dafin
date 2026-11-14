@@ -1,0 +1,51 @@
+{
+  "id": "dafin.v4.tr.high-contrast-edge-reveal",
+  "displayName": "High-contrast Edge Reveal",
+  "category": "geometric",
+  "order": 2152,
+  "parameters": [
+    {
+      "identifier": "softness",
+      "displayName": "Transition softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.5,
+      "defaultValue": 0.15,
+      "group": "Edit"
+    },
+    {
+      "identifier": "edgePriority",
+      "displayName": "Edge priority",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85,
+      "group": "Edit"
+    }
+  ],
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 5,
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

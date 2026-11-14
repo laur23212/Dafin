@@ -1,0 +1,14 @@
+{
+  "id": "andika",
+  "family": "Andika",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Andika-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

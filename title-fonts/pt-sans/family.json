@@ -1,0 +1,14 @@
+{
+  "id": "pt-sans",
+  "family": "PT Sans",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "PT_Sans-Web-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "dafin.v3.anim.headline-snap",
+  "label": "Headline Snap",
+  "category": "fast",
+  "sampleText": "EDIT YOUR TEXT",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 1200,
+  "defaults": {
+    "duration": 0.15,
+    "unit": "block",
+    "stagger": 0,
+    "ease": "back"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 77,
+        "opacity": 0
+      }
+    }
+  ]
+}

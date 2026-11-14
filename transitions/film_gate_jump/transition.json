@@ -1,0 +1,50 @@
+{
+  "id": "dafin.v3.transition.film-gate-jump",
+  "displayName": "Film Gate Jump",
+  "category": "cinematic",
+  "order": 914,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "jump",
+      "displayName": "Gate shake",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.09,
+      "defaultValue": 0.028,
+      "group": "Controls"
+    },
+    {
+      "identifier": "flash",
+      "displayName": "Splice flash",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.8,
+      "defaultValue": 0.19,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp"
+}

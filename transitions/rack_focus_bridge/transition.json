@@ -1,0 +1,62 @@
+{
+  "id": "dafin.v6.tr.rack-focus-bridge",
+  "version": "1.0.0",
+  "displayName": "Rack Focus Bridge",
+  "category": "cinematic",
+  "description": "Shot A loses detail as if focus is pulled away while shot B arrives blurred and becomes sharp. Purely image-space defocus; no fake camera tracking.",
+  "order": 3011,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 9,
+  "parameters": [
+    {
+      "identifier": "blurPixels",
+      "displayName": "Maximum defocus (px)",
+      "type": "float",
+      "minValue": 2,
+      "maxValue": 26,
+      "defaultValue": 13,
+      "group": "Controls"
+    },
+    {
+      "identifier": "handoffWidth",
+      "displayName": "Focus overlap",
+      "type": "float",
+      "minValue": 0.12,
+      "maxValue": 0.44,
+      "defaultValue": 0.27,
+      "group": "Controls"
+    },
+    {
+      "identifier": "focusAsymmetry",
+      "displayName": "Focus timing bias",
+      "type": "float",
+      "minValue": -0.16,
+      "maxValue": 0.16,
+      "defaultValue": 0,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

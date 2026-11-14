@@ -1,0 +1,14 @@
+{
+  "id": "noto-serif-display",
+  "family": "Noto Serif Display",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "NotoSerifDisplay-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "id": "dafin.v4.fx.subject-dual-tone-grade",
+  "displayName": "Subject Dual Tone Grade",
+  "category": "color",
+  "order": 2131,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Color split strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    },
+    {
+      "identifier": "subjectColor",
+      "displayName": "Subject tone",
+      "type": "color",
+      "defaultValue": "#e6b47e",
+      "group": "Edit"
+    },
+    {
+      "identifier": "backgroundColor",
+      "displayName": "Background tone",
+      "type": "color",
+      "defaultValue": "#4aa4c6",
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask",
+  "thumbnail": "thumbnail.webp"
+}

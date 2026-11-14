@@ -1,0 +1,54 @@
+{
+  "id": "dafin.v4.fx.detail-local-clarity",
+  "displayName": "Detail Local Clarity",
+  "category": "color",
+  "order": 2104,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "clarity",
+      "displayName": "Local contrast",
+      "type": "float",
+      "minValue": -1,
+      "maxValue": 1,
+      "defaultValue": 0.33,
+      "group": "Edit"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Pixel radius",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 8,
+      "defaultValue": 2.1,
+      "group": "Edit"
+    },
+    {
+      "identifier": "haloGuard",
+      "displayName": "Halo prevention",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.68,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

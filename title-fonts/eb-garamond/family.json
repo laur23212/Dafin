@@ -1,0 +1,19 @@
+{
+  "id": "eb-garamond",
+  "family": "EB Garamond",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "EBGaramond-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "EBGaramond-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    }
+  ]
+}

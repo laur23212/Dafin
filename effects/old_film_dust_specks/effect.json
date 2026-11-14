@@ -1,0 +1,72 @@
+{
+  "id": "dafin.v3.fx.old-film-dust-specks",
+  "displayName": "Old Film Dust Specks",
+  "category": "retro",
+  "order": 1250,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "size",
+      "displayName": "Spot size",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 3,
+      "defaultValue": 1,
+      "group": "Controls"
+    },
+    {
+      "identifier": "density",
+      "displayName": "Density",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Controls"
+    },
+    {
+      "identifier": "intensity",
+      "displayName": "Opacity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7,
+      "group": "Controls"
+    },
+    {
+      "identifier": "holdFrames",
+      "displayName": "Frame persistence",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 12,
+      "defaultValue": 3,
+      "group": "Controls"
+    },
+    {
+      "identifier": "seed",
+      "displayName": "Seed",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 100,
+      "defaultValue": 22,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

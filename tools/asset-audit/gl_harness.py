@@ -4,10 +4,7 @@ check behaviour, and render thumbnails / preview strips.
 Not Dafin: same .frag source, same uniform names/types, top-left uv; no compositor, no
 premultiply handling, no real clip layers. Results are PRELIMINARY.
 
-usage: python3 -I gl_harness.py <out_dir> <kind>:<package_dir>[:<overrides_json>] ...
-  kind is effect or transition. Overrides set the thumbnail values (and, for transitions, the checks).
-  Needs: pip install moderngl numpy pillow, and Mesa EGL (apt install libegl1 libgl1-mesa-dri).
-  Writes <slug>.thumbnail.webp (256 px) or <slug>.preview_strip.webp (12 x 128 px) and harness_results.json.
+usage: python3 -I gl_harness.py <out_dir> <kind>:<package_dir>[:<thumb_overrides_json>] ...
 """
 import json, os, sys
 import numpy as np
@@ -68,7 +65,18 @@ def defaults(params, overrides=None):
     return vals
 
 
-def render(pkg, kind, imgs, values, progress=0.0, frame=0, fps=30.0):
+def synth_maps(w, h):
+    """Stand-in subject data for card art only: the sun disc is the subject/face, lower = nearer."""
+    y, x = np.mgrid[0:h, 0:w].astype('f4'); u, v = x / w, y / h
+    d = np.sqrt(((u - 0.5) * w / h) ** 2 + (v - 0.38) ** 2)
+    m = np.clip((0.16 - d) / 0.03, 0, 1)
+    dep = np.maximum(m * 0.95, np.clip(v, 0, 1) * 0.7)
+    def g(a):
+        o = np.zeros((h, w, 4), 'f4'); o[..., 0] = o[..., 1] = o[..., 2] = a; o[..., 3] = 1; return o
+    return g(m), g(dep)
+
+
+def render(pkg, kind, imgs, values, progress=0.0, frame=0, fps=30.0, synth=False):
     meta = json.load(open(os.path.join(pkg, kind + '.json')))
     passes = meta['pipeline']['passes']
     assert len(passes) == 1, 'harness handles single-pass packages only'
@@ -77,7 +85,7 @@ def render(pkg, kind, imgs, values, progress=0.0, frame=0, fps=30.0):
     req = req if isinstance(req, list) else [req]
     if 'mask' in req or ('depth' in req and kind == 'effect'):
         import re as _re
-        rt = open(os.path.join(os.environ.get('DAFIN_REPO', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..')), 'src/engine/gpu/GlRuntime.cpp')).read()
+        rt = open(os.environ['DAFIN_REPO'] + '/src/engine/gpu/GlRuntime.cpp').read()
         pre = ''
         if 'depth' in req and kind == 'effect':
             pre += _re.search(r'kDepthPrelude = R"\((.*?)\)";', rt, _re.S).group(1)
@@ -102,6 +110,17 @@ def render(pkg, kind, imgs, values, progress=0.0, frame=0, fps=30.0):
     for n, v in eng.items():
         if n in prog:
             prog[n].value = v
+    if synth:
+        mk, dp = synth_maps(w, h)
+        extra = [tex(mk), tex(dp)]; extra[0].use(5); extra[1].use(6); texs += extra
+        ar = w / h
+        sv = {'u_clipMask': 5, 'u_hasClipMask': 1.0, 'u_depthTexture': 6, 'u_hasDepth': 1.0,
+              'u_depthResolution': (float(w), float(h)), 'u_faceValid': 1.0, 'u_faceCenterX': 0.5,
+              'u_faceCenterY': 0.38, 'u_faceRx': 0.12 / ar, 'u_faceRy': 0.12, 'u_faceLeftEyeX': 0.5 - 0.05 / ar,
+              'u_faceLeftEyeY': 0.35, 'u_faceRightEyeX': 0.5 + 0.05 / ar, 'u_faceRightEyeY': 0.35, 'u_faceEyeRadius': 0.015}
+        for n, v in sv.items():
+            if n in prog:
+                prog[n].value = v
     for k, (t, v) in values.items():
         if k not in prog:
             continue
@@ -127,6 +146,10 @@ def render(pkg, kind, imgs, values, progress=0.0, frame=0, fps=30.0):
 
 
 def to_img(a):
+    # cards show transparency over a checkerboard, so alpha-only effects still read
+    h, w = a.shape[:2]; y, x = np.mgrid[0:h, 0:w]
+    chk = np.where(((x // 16 + y // 16) % 2)[..., None] == 0, 0.78, 0.55).astype('f4')
+    al = np.clip(a[..., 3:4], 0, 1); a = a.copy(); a[..., :3] = a[..., :3] * al + chk * (1 - al); a[..., 3] = 1
     return Image.fromarray((np.clip(a, 0, 1) * 255 + 0.5).astype('u1'), 'RGBA')
 
 
@@ -181,10 +204,10 @@ for spec in sys.argv[2:]:
     sv = defaults(params, show)
     if kind == 'effect':
         base = scene(256, 256, 0)
-        to_img(render(pkg, kind, [base], sv, frame=9)).convert('RGB').save(os.path.join(OUT, slug + '.thumbnail.webp'), 'WEBP', quality=82, method=6)
+        to_img(render(pkg, kind, [base], sv, frame=9, synth=bool(os.environ.get('SYNTH')))).convert('RGB').save(os.path.join(OUT, slug + '.thumbnail.webp'), 'WEBP', quality=82, method=6)
     else:
         a, b = scene(128, 128, 0), scene(128, 128, 1)
-        cells = [render(pkg, kind, [a, b], sv, progress=i / 11) for i in range(12)]
+        cells = [render(pkg, kind, [a, b], sv, progress=i / 11, synth=bool(os.environ.get('SYNTH'))) for i in range(12)]
         to_img(np.concatenate(cells, 1)).convert('RGB').save(os.path.join(OUT, slug + '.preview_strip.webp'), 'WEBP', quality=82, method=6)
     results[pid + ('' if not show else ' ' + json.dumps(show))] = r
 json.dump(results, open(os.path.join(OUT, 'harness_results.json'), 'w'), indent=1)

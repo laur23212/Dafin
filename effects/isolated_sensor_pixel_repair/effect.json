@@ -1,0 +1,63 @@
+{
+  "id": "dafin.v5.fx.isolated-sensor-pixel-repair",
+  "displayName": "Isolated Hot / Dead Pixel Repair",
+  "category": "restoration",
+  "order": 2300,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "threshold",
+      "displayName": "Outlier threshold",
+      "type": "float",
+      "minValue": 0.04,
+      "maxValue": 0.65,
+      "defaultValue": 0.21,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "radiusPx",
+      "displayName": "Sample radius (px)",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 3,
+      "defaultValue": 1,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "strength",
+      "displayName": "Repair strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.95,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "repairDark",
+      "displayName": "Repair dead/dark pixels",
+      "type": "bool",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 1,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

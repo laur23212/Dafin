@@ -1,0 +1,14 @@
+{
+  "id": "amiri",
+  "family": "Amiri",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Amiri-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

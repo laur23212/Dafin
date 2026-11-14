@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin.suite.calm-lift",
+  "label": "Calm Lift",
+  "category": "minimal",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 302,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.36,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": 0.2,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

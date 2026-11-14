@@ -1,0 +1,50 @@
+{
+  "id": "dafin.v3.transition.digital-slice-cut",
+  "displayName": "Digital Slice Cut",
+  "category": "glitch",
+  "order": 914,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "slices",
+      "displayName": "Number of bands",
+      "type": "float",
+      "minValue": 2,
+      "maxValue": 60,
+      "defaultValue": 16,
+      "group": "Controls"
+    },
+    {
+      "identifier": "tear",
+      "displayName": "Displacement",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.25,
+      "defaultValue": 0.11,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp"
+}

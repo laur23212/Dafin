@@ -1,0 +1,50 @@
+{
+  "id": "dafin.v3.transition.crash-zoom-cut",
+  "displayName": "Crash Zoom Cut",
+  "category": "cinematic",
+  "order": 914,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "zoom",
+      "displayName": "Zoom strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1.7,
+      "defaultValue": 0.58,
+      "group": "Controls"
+    },
+    {
+      "identifier": "blur",
+      "displayName": "Streak blur",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.3,
+      "defaultValue": 0.07,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp"
+}

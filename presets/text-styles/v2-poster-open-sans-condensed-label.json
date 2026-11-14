@@ -1,0 +1,137 @@
+{
+  "format": 1,
+  "id": "chatgpt.v2.poster.open-sans-condensed.label",
+  "label": "Open Sans Condensed Nameplate",
+  "description": "Shorts hook using the exact Open Sans Condensed face; editable native layers and typography.",
+  "category": "v2-poster",
+  "kind": "lower-third",
+  "sampleText": "LEVEL UP",
+  "tags": [
+    "v2",
+    "type-diversity",
+    "poster",
+    "label",
+    "shorts hook"
+  ],
+  "requires": {
+    "fonts": [
+      "Open Sans Condensed"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "Open Sans Condensed",
+    "pixelSize": 59,
+    "fontWeight": 700,
+    "italic": false,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#fffdfcf3"
+        },
+        "opacity": 1.0,
+        "blend": "normal",
+        "offsetX": 0.0,
+        "offsetY": 0.0,
+        "blur": 0.0,
+        "width": 2.0,
+        "spread": 0.0,
+        "scope": "all"
+      }
+    ],
+    "align": "center",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.06,
+    "letterSpacing": 0.3,
+    "textCase": "none",
+    "pathBend": 0,
+    "boxEnabled": true,
+    "boxColor": "#f52c3b50",
+    "boxPadding": 16,
+    "boxRadius": 6,
+    "underlineEnabled": false,
+    "underlineColor": "#fffdfcf3",
+    "underlineWidth": 2.5,
+    "underlineOffset": 7,
+    "animation": {
+      "in": {
+        "preset": "slide-left",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.18
+          },
+          "stagger": {
+            "type": "scalar",
+            "value": 0
+          },
+          "unit": {
+            "type": "text",
+            "value": "block"
+          },
+          "distance": {
+            "type": "scalar",
+            "value": 0.22
+          }
+        }
+      },
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Typeface",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "font-size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 28,
+      "max": 240,
+      "unit": "px"
+    },
+    {
+      "id": "font-colour",
+      "label": "Primary ink",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box-padding",
+      "label": "Label padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 50,
+      "unit": "px"
+    },
+    {
+      "id": "in-duration",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0.05,
+      "max": 1.25,
+      "unit": "s"
+    }
+  ]
+}

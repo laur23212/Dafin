@@ -1,0 +1,54 @@
+{
+  "id": "dafin.v4.fx.shadow-chroma-clean",
+  "displayName": "Shadow Chroma Clean",
+  "category": "restoration",
+  "order": 2107,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Shadow color smoothing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75,
+      "group": "Edit"
+    },
+    {
+      "identifier": "range",
+      "displayName": "Darkness range",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.7,
+      "defaultValue": 0.38,
+      "group": "Edit"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Sampling radius",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 6,
+      "defaultValue": 2.3,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

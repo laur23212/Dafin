@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "dafin.suite.gentle-focus",
+  "label": "Gentle Focus",
+  "category": "minimal",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 304,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.43,
+    "stagger": 0.0,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "blur": 18,
+        "opacity": 0
+      }
+    }
+  ]
+}

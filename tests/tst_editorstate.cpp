@@ -404,6 +404,7 @@ private slots:
     void adjustmentLayerDraggedToATrackEdgeGetsANewTrackThere();
     void keyframeButtonKeysAnAdjustmentLayersStrength();
     void assetWave1PackagesLoadAndApply();
+    void assetHandoffPackagesLoadAndApply();
     void clipEffectsLiveOnALinkedAdjustmentLane();
     void splittingAGradedClipKeepsEffectsOnBothHalves();
     void transitionPartnerIsTheNearestClipNotTheEarliest();
@@ -16611,6 +16612,65 @@ void EditorStateTest::assetWave1PackagesLoadAndApply()
         const QMap<QString, QVariant> params = resolvedTransitionParameters(t, *transitionDefForId(t.kindId));
         for (const QString &key : p.params)
             QVERIFY2(params.contains(key), qPrintable(key));
+    }
+}
+
+// Dafin: every package from the ChatGPT asset handoff (ids "dafin.*", DAFIN.md "Asset library
+// audit") loads as GPU, sits in a category the browser labels, has its card art, and applies.
+void EditorStateTest::assetHandoffPackagesLoadAndApply()
+{
+    const QSet<QString> effectCats{QStringLiteral("color"),  QStringLiteral("glitch"), QStringLiteral("retro"),
+                                   QStringLiteral("dreamy"), QStringLiteral("impact"), QStringLiteral("depth"),
+                                   QStringLiteral("keying"), QStringLiteral("restoration")};
+    QStringList effectIds;
+    for (const QString &id : effectPresetIds()) {
+        if (!id.startsWith(QLatin1String("dafin.")))
+            continue;
+        effectIds.append(id);
+        const EffectPresetEntry *def = effectDefForId(id);
+        QVERIFY2(def && def->isGpu && def->gpu.valid, qPrintable(id + QLatin1String(": ") + (def ? def->gpu.errorMessage : QString())));
+        QVERIFY2(effectCats.contains(def->meta.category), qPrintable(id + QLatin1String(" in ") + def->meta.category));
+        QVERIFY2(!effectCategoryLabel(def->meta.category).isEmpty(), qPrintable(id));
+        QVERIFY2(QFileInfo::exists(def->thumbnailPath), qPrintable(id));
+    }
+    QCOMPARE(effectIds.size(), 27);
+
+    const QSet<QString> transitionCats{QStringLiteral("basic"), QStringLiteral("geometric"), QStringLiteral("liquid"),
+                                       QStringLiteral("glitch"), QStringLiteral("cinematic")};
+    QStringList transitionIds;
+    for (const QString &id : transitionPresetIds()) {
+        if (!id.startsWith(QLatin1String("dafin.")))
+            continue;
+        transitionIds.append(id);
+        const TransitionPresetEntry *def = transitionDefForId(id);
+        QVERIFY2(def && def->gpu.valid, qPrintable(id));
+        QVERIFY2(transitionCats.contains(def->meta.category), qPrintable(id + QLatin1String(" in ") + def->meta.category));
+        QVERIFY2(QFileInfo::exists(def->previewStripPath), qPrintable(id));
+        QCOMPARE(def->previewFrames, 12);
+    }
+    QCOMPARE(transitionIds.size(), 14);
+
+    // One clip takes every effect with its defaults.
+    {
+        AssetLibrary library;
+        AppController state(&library);
+        appendAdjacentShapeClips(*state.project());
+        state.selectClip(0, 0);
+        for (const QString &id : effectIds)
+            state.addEffect(0, 0, id);
+        const QVariantList added = state.selectedClipData().value(QStringLiteral("effects")).toList();
+        QCOMPARE(added.size(), effectIds.size());
+        for (int i = 0; i < effectIds.size(); ++i)
+            QCOMPARE(added.at(i).toMap().value(QStringLiteral("catalogId")).toString(), effectIds.at(i));
+    }
+
+    // Every cut takes every transition.
+    for (const QString &id : transitionIds) {
+        AssetLibrary library;
+        AppController state(&library);
+        appendAdjacentShapeClips(*state.project());
+        state.addTransition(0, 0, id, 0.5);
+        QCOMPARE(state.transitionBetweenClips(0, 0).value(QStringLiteral("kind")).toString(), id);
     }
 }
 

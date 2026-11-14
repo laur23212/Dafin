@@ -1,0 +1,14 @@
+{
+  "id": "cabin",
+  "family": "Cabin",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Cabin-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

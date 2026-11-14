@@ -1,0 +1,55 @@
+{
+  "id": "dafin.v3.transition.vintage-light-leak-cut",
+  "displayName": "Vintage Light Leak Cut",
+  "category": "cinematic",
+  "order": 914,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "tint",
+      "displayName": "Leak tint",
+      "type": "color",
+      "defaultValue": "#ffbc70",
+      "group": "Colour",
+      "swatches": [
+        "#ffffff",
+        "#ffcc88",
+        "#ff5577",
+        "#49bfea",
+        "#181b29"
+      ]
+    },
+    {
+      "identifier": "amount",
+      "displayName": "Peak leak",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp"
+}

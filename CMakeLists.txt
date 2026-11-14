@@ -369,6 +369,24 @@ set(DRIFT_CORE_EFFECTS
     color_grade film_grain chromatic_aberration adjust_brightness adjust_contrast adjust_gamma
     adjust_hue adjust_saturation adjust_temperature gaussian_blur bloom_glow halation stylize_vignette)
 set(DRIFT_CORE_TRANSITIONS crossfade dip dip_white)
+# Dafin: the packages from the ChatGPT asset handoff (docs/asset-audit/README.md) ship with every
+# build, including the installers. Upstream's other packages come from its add-on service, which
+# this fork cannot publish to, so bundling them is the only way they reach users.
+set(DAFIN_HANDOFF_EFFECTS
+    8mm_gate_weave adaptive_backlit_subject_lift adaptive_vibrance bright_region_auto_spotlight
+    camera_shake_handheld conditional_chroma_moire conditional_comb_line_repair
+    depth_distance_alpha depth_tone_separation detail_local_clarity
+    isolated_sensor_pixel_repair lens_barrel_warp luma_range_isolator mask_background_soft_focus
+    matte_edge_shrink_feather matte_interior_color_repair neutral_grid_balance old_film_dust_specks
+    old_film_vertical_scratches radial_focus shadow_chroma_clean shadow_selective_lift
+    skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
+    subject_pop_muted_surroundings subject_shaped_spotlight)
+set(DAFIN_HANDOFF_TRANSITIONS
+    crash_zoom_cut digital_slice_cut editorial_page_peel film_gate_jump gradient_wipe
+    high_contrast_edge_reveal incoming_color_priority iris_open noise_dissolve rack_focus_bridge
+    subject_holdout_bridge texture_first_reveal vintage_light_leak_cut whip_pan_left)
+list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
+list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
 set(DRIFT_CORE_EFFECT_TEMPLATES "")
 find_package(OnnxRuntime QUIET)
@@ -1711,6 +1729,12 @@ qt_add_resources(drift "drift_asset_library"
         asset-library/stickers/sparkles.json
         asset-library/stickers/speech-bubble.json
         asset-library/stickers/star-burst.json
+        asset-library/stickers/annotation-pointer.json
+        asset-library/stickers/cursor-tap.json
+        asset-library/stickers/focus-reticle.json
+        asset-library/stickers/live-indicator.json
+        asset-library/stickers/speaker-bell.json
+        asset-library/stickers/warning-triangle.json
         asset-library/titles/chapter-line.json
         asset-library/titles/corner-tag.json
         asset-library/titles/lower-third-slide.json
@@ -3234,6 +3258,18 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         drift_copy_audio_effects(drift)
     endif()
     drift_bundle_onnxruntime(drift)
+    # Dafin: the fonts the ChatGPT title templates use that Fonts Essentials does not have (OFL,
+    # from google/fonts; title-fonts/README.md). They land in <appDir>/fonts, which FontCatalog
+    # searches. Not the repo's /fonts: that is the fetched Essentials bundle the tests read.
+    # In a macOS bundle they go to Contents/Resources (also searched), never beside the signed binary.
+    if(APPLE)
+        set(_dafin_fonts_dest "$<TARGET_BUNDLE_CONTENT_DIR:drift>/Resources/fonts")
+    else()
+        set(_dafin_fonts_dest "$<TARGET_FILE_DIR:drift>/fonts")
+    endif()
+    add_custom_command(TARGET drift POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/title-fonts" "${_dafin_fonts_dest}"
+        COMMENT "Copy the title-template fonts next to Dafin")
 endif()
 
 # Desktop packaging, the headless CLI tools and the QTest binaries. None of it applies to an
@@ -3275,6 +3311,8 @@ else()
     # the app searches <appDir>/<subdir> (PackageSearchPaths::defaultSearchPaths). Installing
     # them here (rather than via the DRIFT_*_DIR env vars) keeps installed addons able to
     # supersede the bundled copies.
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/title-fonts/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/fonts COMPONENT drift)
     foreach(_assetdir effects transitions effect-templates audio-effects)
         if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
             string(TOUPPER "${_assetdir}" _upper)

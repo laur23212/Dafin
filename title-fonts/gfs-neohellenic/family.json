@@ -1,0 +1,14 @@
+{
+  "id": "gfs-neohellenic",
+  "family": "GFS Neohellenic",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "GFSNeohellenic.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

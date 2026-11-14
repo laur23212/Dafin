@@ -1,0 +1,72 @@
+{
+  "id": "dafin.v3.fx.8mm-gate-weave",
+  "displayName": "8mm Gate Weave",
+  "category": "retro",
+  "order": 1250,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "weave",
+      "displayName": "Gate displacement",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 12,
+      "defaultValue": 3,
+      "group": "Controls"
+    },
+    {
+      "identifier": "speed",
+      "displayName": "Wobble speed",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 20,
+      "defaultValue": 7,
+      "group": "Controls"
+    },
+    {
+      "identifier": "seed",
+      "displayName": "Seed",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 100,
+      "defaultValue": 6,
+      "group": "Controls"
+    },
+    {
+      "identifier": "mono",
+      "displayName": "Monochrome mix",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.2,
+      "group": "Controls"
+    },
+    {
+      "identifier": "contrast",
+      "displayName": "Contrast",
+      "type": "float",
+      "minValue": 0.5,
+      "maxValue": 2,
+      "defaultValue": 1.12,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

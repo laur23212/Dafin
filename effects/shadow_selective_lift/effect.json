@@ -1,0 +1,45 @@
+{
+  "id": "dafin.v4.fx.shadow-selective-lift",
+  "displayName": "Shadow Selective Lift",
+  "category": "color",
+  "order": 2102,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "lift",
+      "displayName": "Shadow lift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.26,
+      "group": "Edit"
+    },
+    {
+      "identifier": "range",
+      "displayName": "Shadow selection",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.85,
+      "defaultValue": 0.46,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

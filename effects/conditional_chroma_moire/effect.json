@@ -1,0 +1,54 @@
+{
+  "id": "dafin.v5.fx.conditional-chroma-moire",
+  "displayName": "Conditional Chroma Moir\u00e9 Cleanup",
+  "category": "restoration",
+  "order": 2301,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Chroma suppression",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "sensitivity",
+      "displayName": "Pattern sensitivity",
+      "type": "float",
+      "minValue": 0.02,
+      "maxValue": 0.35,
+      "defaultValue": 0.12,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "radiusPx",
+      "displayName": "Chroma radius (px)",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 3,
+      "defaultValue": 1.7,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "open-sans-condensed",
+  "family": "Open Sans Condensed",
+  "category": "impact",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "OpenSansCondensed-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

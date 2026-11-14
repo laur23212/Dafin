@@ -1,0 +1,30 @@
+{
+  "format": 1,
+  "id": "dafin.v3.anim.drama-focus",
+  "label": "Drama Focus",
+  "category": "cinematic",
+  "sampleText": "EDIT YOUR TEXT",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 1207,
+  "defaults": {
+    "duration": 0.45,
+    "unit": "block",
+    "stagger": 0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "blur": 16,
+        "scale": 118,
+        "opacity": 0
+      }
+    }
+  ]
+}

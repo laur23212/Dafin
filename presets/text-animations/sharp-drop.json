@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin.suite.sharp-drop",
+  "label": "Sharp Drop",
+  "category": "sports",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 312,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.18,
+    "stagger": 0.0,
+    "ease": "back"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": -0.62,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

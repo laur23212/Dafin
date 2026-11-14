@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin.suite.newsroom-slide",
+  "label": "Newsroom Slide",
+  "category": "lower-third",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 301,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.28,
+    "stagger": 0.0,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.7,
+          "y": 0,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

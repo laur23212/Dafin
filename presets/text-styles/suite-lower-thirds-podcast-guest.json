@@ -1,0 +1,154 @@
+{
+  "format": 1,
+  "id": "chatgpt.suite.lower-thirds-podcast-guest",
+  "label": "Podcast Guest",
+  "description": "Lower Thirds: panel treatment with Cabin and slide-up entrance.",
+  "category": "lower-thirds",
+  "tags": [
+    "lower-thirds",
+    "panel",
+    "slide-up",
+    "editable",
+    "font-paired"
+  ],
+  "sampleText": "JORDAN • GUEST",
+  "kind": "lower-third",
+  "requires": {
+    "fonts": [
+      "Cabin"
+    ],
+    "minAppVersion": "1.1.0"
+  },
+  "style": {
+    "packId": "",
+    "fontFamily": "Cabin",
+    "pixelSize": 51,
+    "fontWeight": 700,
+    "italic": false,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ff201126"
+        },
+        "opacity": 0.38,
+        "blend": "normal",
+        "offsetX": 2.4,
+        "offsetY": 3.0,
+        "blur": 4.5,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "enabled": true,
+        "paint": {
+          "kind": "solid",
+          "color": "#ffffedf8"
+        },
+        "opacity": 1,
+        "blend": "normal",
+        "offsetX": 0,
+        "offsetY": 0,
+        "blur": 0,
+        "width": 2,
+        "spread": 0,
+        "scope": "all"
+      }
+    ],
+    "pathBend": 0,
+    "align": "left",
+    "valign": "middle",
+    "wordWrap": true,
+    "lineHeight": 1.08,
+    "letterSpacing": 0.0,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#ff201126",
+    "boxPadding": 20,
+    "boxRadius": 7,
+    "underlineEnabled": false,
+    "underlineColor": "#ffea5dba",
+    "underlineWidth": 2.7,
+    "underlineOffset": 6,
+    "animation": {
+      "in": {
+        "preset": "slide-up",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.28
+          },
+          "stagger": {
+            "type": "scalar",
+            "value": 0.008
+          },
+          "unit": {
+            "type": "text",
+            "value": "block"
+          },
+          "ease": {
+            "type": "text",
+            "value": "easeOut"
+          }
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": {
+            "type": "scalar",
+            "value": 0.2
+          }
+        }
+      },
+      "timing": {
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "pixelSize",
+      "min": 22,
+      "max": 230,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "in-duration",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0.05,
+      "max": 1.5,
+      "unit": "s"
+    }
+  ]
+}

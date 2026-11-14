@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "dafin.suite.mono-terminal",
+  "label": "Mono Terminal",
+  "category": "documentary",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 314,
+  "defaults": {
+    "unit": "word",
+    "duration": 0.3,
+    "stagger": 0.015,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "blur": 4,
+        "opacity": 0
+      }
+    }
+  ]
+}

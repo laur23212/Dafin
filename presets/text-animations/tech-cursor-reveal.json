@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin.v3.anim.tech-cursor-reveal",
+  "label": "Tech Cursor Reveal",
+  "category": "tech",
+  "sampleText": "EDIT YOUR TEXT",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 1204,
+  "defaults": {
+    "duration": 0.29,
+    "unit": "character",
+    "stagger": 0.018,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.17,
+          "y": 0,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

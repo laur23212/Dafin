@@ -1,0 +1,14 @@
+{
+  "id": "comic-neue",
+  "family": "Comic Neue",
+  "category": "playful",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "ComicNeue-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

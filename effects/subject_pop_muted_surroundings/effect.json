@@ -1,0 +1,46 @@
+{
+  "id": "dafin.v4.fx.subject-pop-muted-surroundings",
+  "displayName": "Subject Pop / Muted Surroundings",
+  "category": "color",
+  "order": 2128,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "desaturate",
+      "displayName": "Background desaturation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75,
+      "group": "Edit"
+    },
+    {
+      "identifier": "lift",
+      "displayName": "Subject exposure lift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.5,
+      "defaultValue": 0.1,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask",
+  "thumbnail": "thumbnail.webp"
+}

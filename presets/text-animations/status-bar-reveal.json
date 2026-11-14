@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "dafin.v3.anim.status-bar-reveal",
+  "label": "Status Bar Reveal",
+  "category": "utility",
+  "sampleText": "EDIT YOUR TEXT",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 1209,
+  "defaults": {
+    "duration": 0.25,
+    "unit": "block",
+    "stagger": 0,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": -0.15,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

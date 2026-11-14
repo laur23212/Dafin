@@ -1,0 +1,14 @@
+{
+  "id": "gfs-didot",
+  "family": "GFS Didot",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "GFSDidot-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

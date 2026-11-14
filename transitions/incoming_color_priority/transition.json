@@ -1,0 +1,58 @@
+{
+  "id": "dafin.v4.tr.incoming-color-priority",
+  "displayName": "Incoming Color Priority",
+  "category": "liquid",
+  "order": 2155,
+  "parameters": [
+    {
+      "identifier": "softness",
+      "displayName": "Transition softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.5,
+      "defaultValue": 0.13,
+      "group": "Edit"
+    },
+    {
+      "identifier": "priority",
+      "displayName": "Color priority",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8,
+      "group": "Edit"
+    },
+    {
+      "identifier": "targetColor",
+      "displayName": "Target tint",
+      "type": "color",
+      "defaultValue": "#52a36d",
+      "group": "Edit"
+    }
+  ],
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 5,
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

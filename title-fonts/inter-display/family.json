@@ -1,0 +1,19 @@
+{
+  "id": "inter-display",
+  "family": "Inter Display",
+  "category": "impact",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "InterDisplay-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    },
+    {
+      "file": "InterDisplay-ExtraBold.ttf",
+      "weight": 800,
+      "styleName": "ExtraBold"
+    }
+  ]
+}

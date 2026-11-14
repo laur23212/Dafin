@@ -1,0 +1,55 @@
+{
+  "id": "dafin.v5.fx.adaptive-backlit-subject-lift",
+  "displayName": "Adaptive Backlit Subject Rescue",
+  "category": "depth",
+  "order": 2303,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Auto subject lift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "maxLift",
+      "displayName": "Maximum exposure lift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.7,
+      "defaultValue": 0.28,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "targetGap",
+      "displayName": "Allowed brightness gap",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.3,
+      "defaultValue": 0.07,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask",
+  "thumbnail": "thumbnail.webp"
+}

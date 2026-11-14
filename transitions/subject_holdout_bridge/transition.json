@@ -1,0 +1,72 @@
+{
+  "id": "dafin.v6.tr.subject-holdout-bridge",
+  "version": "1.0.0",
+  "displayName": "Subject Holdout Bridge",
+  "category": "cinematic",
+  "description": "Requires an outgoing clip mask. The next shot replaces the environment while the subject briefly remains, then gracefully fades. If no mask exists, uses a smooth alpha-aware crossfade.",
+  "order": 3010,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 9,
+  "parameters": [
+    {
+      "identifier": "hold",
+      "displayName": "Subject hold time",
+      "type": "float",
+      "minValue": 0.45,
+      "maxValue": 0.9,
+      "defaultValue": 0.74,
+      "group": "Controls"
+    },
+    {
+      "identifier": "backgroundSpeed",
+      "displayName": "Background reveal pace",
+      "type": "float",
+      "minValue": 0.35,
+      "maxValue": 0.82,
+      "defaultValue": 0.6,
+      "group": "Controls"
+    },
+    {
+      "identifier": "edgeSoftness",
+      "displayName": "Mask edge smoothing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.28,
+      "group": "Controls"
+    },
+    {
+      "identifier": "subjectLift",
+      "displayName": "Subject lift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.045,
+      "defaultValue": 0.014,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask"
+}

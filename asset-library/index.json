@@ -199,6 +199,72 @@
    "author": "Airbnb (lottie-android samples)",
    "page": "https://github.com/airbnb/lottie-android",
    "remoteOnly": true
+  },
+  {
+   "id": "annotation-pointer",
+   "kind": "sticker",
+   "title": "Annotation pointer",
+   "tags": "pointer arrow annotate callout look here",
+   "file": "stickers/annotation-pointer.json",
+   "license": "Royalty-free",
+   "author": "Dafin (made with ChatGPT)",
+   "previewAt": 0.5,
+   "duration": 2.0
+  },
+  {
+   "id": "cursor-tap",
+   "kind": "sticker",
+   "title": "Cursor tap",
+   "tags": "cursor tap click hand tutorial screen",
+   "file": "stickers/cursor-tap.json",
+   "license": "Royalty-free",
+   "author": "Dafin (made with ChatGPT)",
+   "previewAt": 0.5,
+   "duration": 2.0
+  },
+  {
+   "id": "focus-reticle",
+   "kind": "sticker",
+   "title": "Focus reticle",
+   "tags": "focus target reticle highlight aim",
+   "file": "stickers/focus-reticle.json",
+   "license": "Royalty-free",
+   "author": "Dafin (made with ChatGPT)",
+   "previewAt": 0.5,
+   "duration": 2.0
+  },
+  {
+   "id": "live-indicator",
+   "kind": "sticker",
+   "title": "Live indicator",
+   "tags": "live record dot broadcast stream red",
+   "file": "stickers/live-indicator.json",
+   "license": "Royalty-free",
+   "author": "Dafin (made with ChatGPT)",
+   "previewAt": 0.5,
+   "duration": 2.0
+  },
+  {
+   "id": "speaker-bell",
+   "kind": "sticker",
+   "title": "Bell shake",
+   "tags": "bell notification ring alert subscribe",
+   "file": "stickers/speaker-bell.json",
+   "license": "Royalty-free",
+   "author": "Dafin (made with ChatGPT)",
+   "previewAt": 0.5,
+   "duration": 2.0
+  },
+  {
+   "id": "warning-triangle",
+   "kind": "sticker",
+   "title": "Warning triangle",
+   "tags": "warning caution alert attention triangle",
+   "file": "stickers/warning-triangle.json",
+   "license": "Royalty-free",
+   "author": "Dafin (made with ChatGPT)",
+   "previewAt": 0.5,
+   "duration": 2.0
   }
  ]
 }

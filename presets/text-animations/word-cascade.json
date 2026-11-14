@@ -1,0 +1,34 @@
+{
+  "format": 1,
+  "id": "dafin.suite.word-cascade",
+  "label": "Word Cascade",
+  "category": "creator",
+  "sampleText": "YOUR TITLE",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 305,
+  "defaults": {
+    "unit": "word",
+    "duration": 0.25,
+    "stagger": 0.015,
+    "ease": "back"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": 0.32,
+          "unit": "box"
+        },
+        "scale": 80,
+        "opacity": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "dafin.v4.fx.mask-background-soft-focus",
+  "displayName": "Background Soft Focus / Mask",
+  "category": "dreamy",
+  "order": 2130,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Background softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.77,
+      "group": "Edit"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Softness radius (px)",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 32,
+      "defaultValue": 12,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "mask",
+  "thumbnail": "thumbnail.webp"
+}

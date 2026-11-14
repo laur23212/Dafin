@@ -1,0 +1,72 @@
+{
+  "id": "dafin.v3.fx.old-film-vertical-scratches",
+  "displayName": "Old Film Vertical Scratches",
+  "category": "retro",
+  "order": 1250,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Occurrence",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6,
+      "group": "Controls"
+    },
+    {
+      "identifier": "width",
+      "displayName": "Scratch width",
+      "type": "float",
+      "minValue": 0.0003,
+      "maxValue": 0.01,
+      "defaultValue": 0.0015,
+      "group": "Controls"
+    },
+    {
+      "identifier": "intensity",
+      "displayName": "Intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.47,
+      "group": "Controls"
+    },
+    {
+      "identifier": "holdFrames",
+      "displayName": "Frames per scratch",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 20,
+      "defaultValue": 5,
+      "group": "Controls"
+    },
+    {
+      "identifier": "seed",
+      "displayName": "Seed",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 100,
+      "defaultValue": 9,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

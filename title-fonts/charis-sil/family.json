@@ -1,0 +1,14 @@
+{
+  "id": "charis-sil",
+  "family": "Charis SIL",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "CharisSIL-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}
