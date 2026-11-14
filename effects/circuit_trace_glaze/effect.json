@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.circuit-trace-glaze",
+  "displayName": "Circuit Trace Glaze",
+  "category": "glitch",
+  "description": "Decorative printed circuit traces generated from geometric cells, for tech backgrounds without false diagnostics.",
+  "order": 8826,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Circuit overlay",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.84
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.night-street-treatment",
+  "displayName": "Night Street Treatment",
+  "category": "cinematic",
+  "order": 9300,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.wet-asphalt",
+      "params": {
+        "strength": 0.55
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.dye-crosstalk-film",
+      "params": {
+        "strength": 0.55
+      }
+    }
+  ]
+}

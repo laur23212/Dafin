@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.lightly-rotated-headline",
+  "label": "Lightly Rotated Headline",
+  "category": "editorial",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9203,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "rotation": -7,
+        "scale": 96,
+        "opacity": 0
+      }
+    }
+  ]
+}

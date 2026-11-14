@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.ceramic-craquelure",
+  "displayName": "Ceramic Craquelure",
+  "category": "retro",
+  "description": "Irregular fine glaze cracks with porcelain shading and subtle aging, not a generic grain overlay.",
+  "order": 8813,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Crackle glaze",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

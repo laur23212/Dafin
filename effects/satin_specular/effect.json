@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.satin-specular",
+  "displayName": "Satin Weave Shine",
+  "category": "dreamy",
+  "description": "Directional silky glints that follow animated satin-like folds, a luminous counterpart to the linen weave filter.",
+  "order": 8831,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Satin glint",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.83
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.scanner-light-pass",
+  "displayName": "Flatbed Scanner Light Pass",
+  "category": "retro",
+  "description": "Sharp slow scan carriage illumination that moves across an image and reveals sensor-like exposure falloff.",
+  "order": 8829,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Scanner glare",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

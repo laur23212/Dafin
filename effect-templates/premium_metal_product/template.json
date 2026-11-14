@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.premium-metal-product",
+  "displayName": "Premium Metal Product",
+  "category": "cinematic",
+  "order": 9304,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.brushed-aluminum",
+      "params": {
+        "strength": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.highlight-chroma-rescue",
+      "params": {
+        "strength": 0.64
+      }
+    }
+  ]
+}

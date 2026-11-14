@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.mineral-porcelain",
+  "displayName": "Mineral Porcelain",
+  "category": "look",
+  "order": 9312,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.ceramic-craquelure",
+      "params": {
+        "strength": 0.55
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.print-paper-white",
+      "params": {
+        "strength": 0.55
+      }
+    }
+  ]
+}

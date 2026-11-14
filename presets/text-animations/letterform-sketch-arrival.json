@@ -1,0 +1,28 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.letterform-sketch-arrival",
+  "label": "Letterform Sketch Arrival",
+  "category": "handwritten",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9202,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "opacity": 0,
+        "skew": -0.08
+      }
+    }
+  ]
+}

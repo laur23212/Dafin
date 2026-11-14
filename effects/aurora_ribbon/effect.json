@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.aurora-ribbon",
+  "displayName": "Aurora Ribbon Sky",
+  "category": "dreamy",
+  "description": "Slow atmospheric curtains of luminous cyan and violet in the upper background, for fantasy scenery.",
+  "order": 8818,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Aurora brightness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

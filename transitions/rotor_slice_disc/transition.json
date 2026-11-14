@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.rotor-slice-disc",
+  "displayName": "Rotor Slice Disc",
+  "category": "cinematic",
+  "description": "Staggered concentric rotor arcs briefly reveal alternating regions as a mechanical disc turns.",
+  "order": 8916,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Character",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

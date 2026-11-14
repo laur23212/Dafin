@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.contact-photogram",
+  "displayName": "Darkroom Contact Photogram",
+  "category": "retro",
+  "description": "Cyan-black contact print with bright reversed outlines and textured photographic paper grain.",
+  "order": 8822,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Contact print look",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

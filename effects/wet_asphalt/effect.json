@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.wet-asphalt",
+  "displayName": "Wet Asphalt Glints",
+  "category": "dreamy",
+  "description": "Subtle vertical glistening micro-reflections on dark surfaces, for night streets without adding raindrops.",
+  "order": 8817,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Wet-surface sheen",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

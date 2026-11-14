@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "id": "chatgpt.market-session-close",
+  "label": "Market Session Close",
+  "description": "Financial market session title with a fixed timestamp entered by editor",
+  "category": "business",
+  "tags": [
+    "batch08",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "SESSION CLOSE · 16:00",
+  "requires": {
+    "fonts": [
+      "Oswald"
+    ]
+  },
+  "style": {
+    "fontFamily": "Oswald",
+    "fontWeight": 500,
+    "pixelSize": 48,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 0.8,
+    "textCase": "upper",
+    "boxEnabled": true,
+    "boxColor": "#182E52",
+    "boxPadding": 13,
+    "boxRadius": 22,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 3,
+        "blur": 10,
+        "opacity": 0.38
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F5F3E5"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fill",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "background",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

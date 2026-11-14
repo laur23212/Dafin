@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.desert-memory",
+  "displayName": "Desert Memory",
+  "category": "cinematic",
+  "order": 9308,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.sandstone-grain",
+      "params": {
+        "strength": 0.73
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.windborne-sand",
+      "params": {
+        "strength": 0.73
+      }
+    }
+  ]
+}

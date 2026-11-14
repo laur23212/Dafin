@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.dot-matrix-ribbon",
+  "displayName": "Dot Matrix Printer Ribbon",
+  "category": "retro",
+  "description": "Stamped mechanical impact-printer dots with row-by-row ribbon density rather than a standard halftone screen.",
+  "order": 8821,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Printer ink",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

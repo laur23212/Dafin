@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.starlit-woodland",
+  "displayName": "Starlit Woodland",
+  "category": "cinematic",
+  "order": 9307,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.firefly-field",
+      "params": {
+        "strength": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.black-toe-lift",
+      "params": {
+        "strength": 0.64
+      }
+    }
+  ]
+}

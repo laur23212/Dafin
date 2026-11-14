@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.photo-cross-process",
+  "displayName": "Cross-Processed Slide Color",
+  "category": "color",
+  "description": "Selective inter-channel slide-film cross process with cyan-leaning shadows and warm midtones; no global duotone.",
+  "order": 8804,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Processing intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

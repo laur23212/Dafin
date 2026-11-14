@@ -1,0 +1,29 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.micro-fold-out",
+  "label": "Micro Fold Exit",
+  "category": "editorial",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "out"
+  ],
+  "order": 9214,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.12,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 85,
+        "rotation": 5,
+        "opacity": 0
+      }
+    }
+  ]
+}

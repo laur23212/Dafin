@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.gradient-vapor-shading",
+  "displayName": "Vapor Gradient Bands",
+  "category": "dreamy",
+  "description": "Soft tinted rolling vapor bands added to footage for motion graphics, without a depth fog prerequisite.",
+  "order": 8836,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Vapor opacity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.73
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

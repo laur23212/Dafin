@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.oblique-prism-rays",
+  "displayName": "Oblique Prism Refraction",
+  "category": "dreamy",
+  "description": "Angular refracted highlight streaks cut across glass-like diagonals instead of a generic RGB offset.",
+  "order": 8808,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Prismatic refraction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Facet spacing",
+      "type": "float",
+      "minValue": 0.12,
+      "maxValue": 1,
+      "defaultValue": 0.52
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

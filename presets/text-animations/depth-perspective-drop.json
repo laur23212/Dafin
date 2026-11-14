@@ -1,0 +1,33 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.depth-perspective-drop",
+  "label": "Depth Perspective Drop",
+  "category": "cinematic",
+  "sampleText": "SAMPLE TITLE",
+  "slots": [
+    "in"
+  ],
+  "order": 9206,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.11,
+    "stagger": 0.0,
+    "ease": "smooth"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0,
+          "y": -0.21,
+          "unit": "box"
+        },
+        "scale": 80,
+        "opacity": 0
+      }
+    }
+  ]
+}

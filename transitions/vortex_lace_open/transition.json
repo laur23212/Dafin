@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.vortex-lace-open",
+  "displayName": "Vortex Lace Open",
+  "category": "liquid",
+  "description": "Filigree loops break apart a rotating lace boundary, not a solid iris circle.",
+  "order": 8908,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Character",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.print-paper-white",
+  "displayName": "Paper White Neutralizer",
+  "category": "restoration",
+  "description": "Tames the yellow or blue cast of pale printed surfaces while protecting saturated colored objects.",
+  "order": 8805,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Paper neutrality",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
