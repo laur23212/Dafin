@@ -127,6 +127,10 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
         return caps;
     }
 
+    // Dafin: a split screen clip gets its Split Screen tab (layout, cells, animation, border).
+    if (!clip.splitScreen.isEmpty())
+        caps << QStringLiteral("splitScreen");
+
     switch (clip.type) {
     case ClipType::Video:
         // Dafin: videoBasic is the Video tab (Filmora's size, position, chroma key and masks).

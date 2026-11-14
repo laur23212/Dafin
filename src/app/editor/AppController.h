@@ -21,6 +21,7 @@
 #include <QObject>
 #include <QPair>
 #include <QSet>
+#include <QSizeF>
 #include <QStringList>
 #include <QTransform>
 #include <QUndoStack>
@@ -1375,12 +1376,46 @@ public:
     // playhead (the dominant saturated hue, the frame's edges counting most), or switches the key the
     // clip already has off or back on. (-1, -1) means the selected clip.
     Q_INVOKABLE void toggleChromaKey(int trackIndex = -1, int clipIndex = -1);
-    // Dafin: Templates > Split Screen. The layouts, each cell a box (fractions of the canvas) with its
-    // corners inside it, and applying one: the selected pictures (or every picture under the playhead
-    // when fewer than two are selected), top track first, fill the cells in order — each scaled to cover
-    // its cell and cut to it with a mask. One undo step; returns how many clips were placed.
+    // Dafin: Templates > Split Screen (AppControllerSplitScreen.cpp, layouts in core/edit/SplitScreen).
+    // The layouts for the cards: id, label, and each cell as a polygon in canvas fractions with its
+    // entrance (the polygon it unfolds from, when it starts, how long it takes).
     Q_INVOKABLE QVariantList splitScreenLayouts() const;
+    // Applying one to clips already on the timeline: the selected pictures (or every picture under the
+    // playhead when fewer than two are selected), top track first, fill the cells in order — each
+    // scaled to cover its cell and cut to it with a mask. One undo step; returns how many were placed.
     Q_INVOKABLE int applySplitScreen(const QString &layoutId);
+    // A split screen clip, as Filmora drops one: a composite whose tracks are the layout's cells, each
+    // a grey placeholder until media goes in, with the entrance and a border. Lands on trackIndex at
+    // atSeconds (-1 for either: the playhead, on a free video track). One undo step; returns its id.
+    Q_INVOKABLE QString insertSplitScreen(const QString &layoutId, int trackIndex = -1, double atSeconds = -1.0);
+    // A click on a card: with two or more pictures selected they go into the cells (applySplitScreen),
+    // otherwise a split screen clip is added at the playhead (insertSplitScreen).
+    Q_INVOKABLE void activateSplitScreen(const QString &layoutId);
+    // The split screen clip on trackIndex covering atSeconds, or -1.
+    Q_INVOKABLE int splitScreenClipAt(int trackIndex, double atSeconds) const;
+    // Puts media asset assetIndex (a video or an image) into a cell of the split screen clip; cell -1
+    // takes the first empty one. Scaled to cover the cell and cut to it, as long as the split screen.
+    // One undo step; false when nothing was put in (the message says why).
+    Q_INVOKABLE bool fillSplitScreenCell(int trackIndex, int clipIndex, int cell, int assetIndex);
+    // Empties a cell again (its placeholder comes back). One undo step.
+    Q_INVOKABLE void clearSplitScreenCell(int trackIndex, int clipIndex, int cell);
+    // Swaps what two cells show. One undo step.
+    Q_INVOKABLE void swapSplitScreenCells(int trackIndex, int clipIndex, int cellA, int cellB);
+    // Another layout for the same clip: cell n keeps its media; cells the new layout lacks are dropped.
+    Q_INVOKABLE void setSplitScreenLayout(int trackIndex, int clipIndex, const QString &layoutId);
+    Q_INVOKABLE void setSplitScreenAnimation(int trackIndex, int clipIndex, bool on);
+    // widthPx 0 = no border; colour as #rrggbb.
+    Q_INVOKABLE void setSplitScreenBorder(int trackIndex, int clipIndex, double widthPx, const QString &color);
+    // The split screen's length: every cell follows (a video only as far as its media goes).
+    Q_INVOKABLE void setSplitScreenDuration(int trackIndex, int clipIndex, double seconds);
+    // Layout, look and cells of a split screen clip, for its Properties tab; empty for other clips.
+    Q_INVOKABLE QVariantMap splitScreenInfo(int trackIndex, int clipIndex) const;
+    // The split screen under the playhead (the selected one first), its cells in canvas fractions,
+    // so the preview can outline them and say where media goes; empty map when there is none.
+    Q_INVOKABLE QVariantMap splitScreenOverlay() const;
+    // The cell of a split screen at the playhead under a canvas point (px): {track, clip, cell, x, y,
+    // width, height, rotation}, the box being the cell's in canvas px; empty map when none is there.
+    Q_INVOKABLE QVariantMap splitScreenCellAtCanvasPoint(double canvasX, double canvasY) const;
     // Dafin: the Video tab's Chroma Key switch. Adds the key like toggleChromaKey (backdrop colour
     // read from the frame) or switches the existing one on or off. Either way the media clip stays
     // selected, so the key's settings open right under the switch.
@@ -2181,6 +2216,13 @@ protected:
     // whose clip is gone. Runs in finishEdit so moves, trims, splits and deletes all keep links
     // true without every call site having to remember.
     void syncLinkedAdjustments(drift::Project &project) const;
+    // Dafin split screen (AppControllerSplitScreen.cpp): runs `edit` on a scratch project holding the
+    // split screen clip's cell tracks, then writes them back as one undo step. False (no step) when
+    // the clip is not a split screen or `edit` changed nothing.
+    bool editSplitScreen(int trackIndex, int clipIndex, const QString &undoText,
+                         const std::function<bool(drift::Project &cells, drift::Clip &splitClip)> &edit);
+    // The size a cell's media is drawn at before it is fitted (the asset's, turned by its correction).
+    QSizeF splitMediaSize(const drift::Clip &clip) const;
 
     // Write a mask for (trackIndex, clipIndex), whether that names a mask adjustment (the mask is
     // its payload) or a media clip (the mask is pinned to it through a lane). MAY INSERT TRACKS.

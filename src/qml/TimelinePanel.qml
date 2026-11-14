@@ -822,11 +822,29 @@ PanelFrame {
         snapGuideSeconds = snapped.guide
     }
 
+    // Dafin: a video or picture over a split screen clip goes into its next empty cell.
+    function splitScreenDropTarget(assetIndex, dropX, dropY) {
+        const kind = assetKind(assetIndex)
+        if (kind !== "video" && kind !== "image")
+            return null
+        const track = trackIndexAtY(dropY)
+        const clip = EditorState.splitScreenClipAt(track, Math.max(0, dropX / pxPerSecond))
+        return clip >= 0 ? { "track": track, "clip": clip } : null
+    }
+
     function updateAssetDropPreview(assetIndex, dropX, dropY) {
         if (EditorState.masking.assetMaskRole(assetIndex) !== "") {
             dropRouter.hover("maskMedia", String(assetIndex), dropX, dropY)
             return
         }
+        const split = splitScreenDropTarget(assetIndex, dropX, dropY)
+        if (split) {
+            clearLandingPreview()
+            effectDropTrackIndex = split.track
+            effectDropClipIndex = split.clip
+            return
+        }
+        clearEffectDropHighlight()
         updateDropPreviewForKind(assetKind(assetIndex), assetDurationSeconds(assetIndex),
                                  dropX, dropY)
     }
@@ -862,6 +880,16 @@ PanelFrame {
             return
         if (EditorState.masking.assetMaskRole(assetIndex) !== "") {
             dropRouter.drop("maskMedia", String(assetIndex), "", dropX, dropY)
+            return
+        }
+        const split = splitScreenDropTarget(assetIndex, dropX, dropY)
+        if (split) {
+            clearEffectDropHighlight()
+            const run = function() { EditorState.fillSplitScreenCell(split.track, split.clip, -1, assetIndex) }
+            if (ShellBridge.main && ShellBridge.main.configureAndAddAsset)
+                ShellBridge.main.configureAndAddAsset(assetIndex, run)
+            else
+                run()
             return
         }
         const atSeconds = Math.max(0, dropX / pxPerSecond)
@@ -2109,6 +2137,7 @@ PanelFrame {
                         onExited: {
                             root.clearUrlDropState()
                             root.clearLandingPreview()
+                            root.clearEffectDropHighlight()
                         }
                         onDropped: (drop) => {
                             drop.accept(Qt.CopyAction)
@@ -2183,8 +2212,10 @@ PanelFrame {
         // A drag abandoned outside the timeline never fires onExited/onDropped
         // on any DropArea here, so the landing outline used to stay painted.
         function onDraggingAssetIndexChanged() {
-            if (EditorState.draggingAssetIndex < 0)
+            if (EditorState.draggingAssetIndex < 0) {
                 root.clearLandingPreview()
+                root.clearEffectDropHighlight()
+            }
         }
     }
 

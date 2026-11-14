@@ -1451,6 +1451,16 @@ QVariantMap PreviewController::planDrop(const QString &kind, const QString &payl
             return rejectDrop();
         if (asset->kind == drift::MediaKind::Audio)
             return rejectDrop(AppController::tr("Audio goes on the timeline."));
+        // Dafin: a video or picture dropped on a cell of a split screen goes into that cell.
+        if (asset->kind == drift::MediaKind::Video || asset->kind == drift::MediaKind::Image) {
+            QVariantMap cell = m_app.splitScreenCellAtCanvasPoint(canvasX, canvasY);
+            if (!cell.isEmpty()) {
+                cell.insert(QStringLiteral("accepted"), true);
+                cell.insert(QStringLiteral("mode"), QStringLiteral("clip"));
+                cell.insert(QStringLiteral("splitCell"), cell.value(QStringLiteral("cell")));
+                return cell;
+            }
+        }
         return {{QStringLiteral("accepted"), true}, {QStringLiteral("mode"), QStringLiteral("canvas")}};
     }
     if (placeableClipType(kind))
@@ -1480,6 +1490,12 @@ QVariantMap PreviewController::dropAsset(const QString &kind, const QString &pay
     if (!plan.value(QStringLiteral("accepted")).toBool())
         return plan;
     const double at = drift::usToSeconds(m_app.m_playheadUs);
+
+    if (plan.contains(QStringLiteral("splitCell"))) {
+        m_app.fillSplitScreenCell(plan.value(QStringLiteral("track")).toInt(), plan.value(QStringLiteral("clip")).toInt(),
+                                  plan.value(QStringLiteral("splitCell")).toInt(), payload.toInt());
+        return plan;
+    }
 
     if (plan.value(QStringLiteral("mode")).toString() == QLatin1String("clip")) {
         const int track = plan.value(QStringLiteral("track")).toInt();
@@ -1515,7 +1531,10 @@ QVariantMap PreviewController::dropAsset(const QString &kind, const QString &pay
         m_app.addTextClip(QString(), at, payload, -1);
     else if (kind == QLatin1String("adjustment"))
         m_app.addAdjustmentClipAt(-1, at);
-    if (kind != QLatin1String("adjustment") && m_app.m_selectedTrack >= 0
+    else if (kind == QLatin1String("splitScreen"))
+        m_app.insertSplitScreen(payload, -1, at);
+    // An adjustment layer and a split screen cover the whole canvas; the rest centre on the drop.
+    if (kind != QLatin1String("adjustment") && kind != QLatin1String("splitScreen") && m_app.m_selectedTrack >= 0
         && m_app.m_selectedTrack < m_app.m_project.tracks().size()
         && m_app.m_selectedClip >= 0 && m_app.m_selectedClip < m_app.m_project.tracks().at(m_app.m_selectedTrack).clips.size()) {
         drift::Clip &added = m_app.m_project.tracks()[m_app.m_selectedTrack].clips[m_app.m_selectedClip];
