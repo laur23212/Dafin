@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.reversed-channel-print",
+  "displayName": "Reversed Channel Print",
+  "category": "chaos",
+  "order": 6729,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.channel-routing-lab",
+      "params": {
+        "routing": 3,
+        "mixAmount": 0.9
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.indexed-palette-dither",
+      "params": {
+        "steps": 5,
+        "dotBias": 0.35
+      }
+    }
+  ]
+}

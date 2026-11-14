@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.indexed-palette-dither",
+  "displayName": "Indexed Palette Dither",
+  "category": "retro",
+  "order": 4500,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Pixel density",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 1,
+      "defaultValue": 0.62,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "steps",
+      "displayName": "Palette steps",
+      "type": "float",
+      "minValue": 2,
+      "maxValue": 9,
+      "defaultValue": 4,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "inkBlend",
+      "displayName": "Colour ink amount",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "dotBias",
+      "displayName": "Dither spread",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.62,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

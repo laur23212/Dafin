@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.tr.ice-crystal-growth",
+  "displayName": "Ice-Crystal Growth",
+  "category": "liquid",
+  "order": 5212,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "branch",
+      "displayName": "Crystal branching",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Edge softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.2,
+      "defaultValue": 0.06,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "seed",
+      "displayName": "Crystal pattern",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.43,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

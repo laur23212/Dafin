@@ -196,3 +196,13 @@ Open, Spiral Groove Reveal, Torn Paper Column, Prism Column Flip), 12 titles and
 - IBM Plex Mono Bold was added to `title-fonts/` for Keyboard Shortcut Hint; the other title fonts come with Essentials.
 - Horizontal Highlight Streak is strong on bright scenes (it works from highlights).
 - Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.
+
+## Batch 06 from ChatGPT (14 November 2026)
+
+All 32 assets are in: 11 effects (Indexed Palette Dither, Watercolour Pigment Wash, Saturated Colour Soft
+Knee, Channel Routing Lab, Photographic Bas-Relief, Practical Lamp Flicker, Sky Blue Balancer, and the smart
+Masked Ambient Colour Match, Depth Stereo Anaglyph, Depth Contact Shading, Masked Ink Window), 2 transitions
+(Route-Line Unveil, Ice-Crystal Growth), 12 titles and 7 effect templates. No new fonts were needed.
+
+- Smart effects pass the picture through without a mask or depth map.
+- Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.

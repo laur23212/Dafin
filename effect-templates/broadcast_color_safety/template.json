@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.broadcast-color-safety",
+  "displayName": "Broadcast Colour Safety",
+  "category": "look",
+  "order": 6728,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.gamut-soft-knee",
+      "params": {
+        "threshold": 0.38,
+        "amount": 0.9
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.sky-blue-balance",
+      "params": {
+        "skyStrength": 0.35
+      }
+    }
+  ]
+}

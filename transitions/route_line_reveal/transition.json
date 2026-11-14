@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.tr.route-line-reveal",
+  "displayName": "Route-Line Unveil",
+  "category": "geometric",
+  "order": 5211,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "amplitude",
+      "displayName": "Route bend",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "lineWidth",
+      "displayName": "Reveal band",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.3,
+      "defaultValue": 0.1,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "travel",
+      "displayName": "Travel bias",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

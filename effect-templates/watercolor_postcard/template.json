@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.watercolor-postcard",
+  "displayName": "Watercolour Postcard",
+  "category": "look",
+  "order": 6727,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.watercolor-pigment-wash",
+      "params": {
+        "wash": 0.85,
+        "edgeInk": 0.48
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.gamut-soft-knee",
+      "params": {
+        "amount": 0.37
+      }
+    }
+  ]
+}

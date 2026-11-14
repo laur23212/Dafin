@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.watercolor-pigment-wash",
+  "displayName": "Watercolour Pigment Wash",
+  "category": "dreamy",
+  "order": 4501,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "wash",
+      "displayName": "Wash strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "spread",
+      "displayName": "Pigment spread",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "edgeInk",
+      "displayName": "Edge pooling",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.53,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "paper",
+      "displayName": "Paper granulation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.24,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

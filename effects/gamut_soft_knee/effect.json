@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.gamut-soft-knee",
+  "displayName": "Saturated Colour Soft Knee",
+  "category": "restoration",
+  "order": 4502,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "threshold",
+      "displayName": "Chroma knee start",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "defaultValue": 0.22,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "amount",
+      "displayName": "Knee strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.91,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "highlight",
+      "displayName": "Highlight priority",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

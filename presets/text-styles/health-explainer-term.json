@@ -1,0 +1,155 @@
+{
+  "format": 1,
+  "id": "chatgpt.health-explainer-term",
+  "label": "Health Explainer Term",
+  "description": "Accessible neutral label for anatomy and educational health videos without medical claims.",
+  "category": "education",
+  "tags": [
+    "dafin-batch-06",
+    "original"
+  ],
+  "kind": "title",
+  "sampleText": "THE RESPIRATORY SYSTEM",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 600,
+    "pixelSize": 84,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1.0,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 4,
+        "blur": 8,
+        "opacity": 0.43
+      },
+      {
+        "id": "stroke",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#E7F7F4"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#143142"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#E7F7F4",
+    "boxPadding": 21,
+    "boxRadius": 5,
+    "underlineEnabled": true,
+    "underlineColor": "#43988A",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "ease": "easeOut",
+          "unit": "block"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.15,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Title text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 32,
+      "max": 180,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fg",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "accent",
+      "label": "Stroke colour",
+      "type": "color",
+      "bind": "layer.stroke.color"
+    },
+    {
+      "id": "background",
+      "label": "Card background",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "underline",
+      "label": "Underline colour",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}
