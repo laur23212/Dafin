@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.color-negative-to-positive",
+  "displayName": "Color Negative to Positive",
+  "category": "restoration",
+  "order": 2700,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "redMask",
+      "displayName": "Red-base compensation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.65,
+      "defaultValue": 0.14,
+      "group": "Film base"
+    },
+    {
+      "identifier": "blueMask",
+      "displayName": "Blue-base compensation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.28,
+      "group": "Film base"
+    },
+    {
+      "identifier": "exposure",
+      "displayName": "Exposure",
+      "type": "float",
+      "minValue": -0.4,
+      "maxValue": 0.4,
+      "defaultValue": 0.03,
+      "group": "Finish"
+    },
+    {
+      "identifier": "density",
+      "displayName": "Contrast density",
+      "type": "float",
+      "minValue": -0.6,
+      "maxValue": 0.8,
+      "defaultValue": 0.12,
+      "group": "Finish"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

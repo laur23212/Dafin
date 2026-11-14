@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.color-threshold-key",
+  "displayName": "Colorless Luma Key",
+  "category": "keying",
+  "order": 2704,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "threshold",
+      "displayName": "Brightness threshold",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.95,
+      "defaultValue": 0.5,
+      "group": "Key"
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Edge feather",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.65,
+      "defaultValue": 0.18,
+      "group": "Key"
+    },
+    {
+      "identifier": "invert",
+      "displayName": "Keep dark instead",
+      "type": "bool",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0,
+      "group": "Key"
+    },
+    {
+      "identifier": "spillDarkness",
+      "displayName": "Dim removed areas",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0,
+      "group": "Key"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

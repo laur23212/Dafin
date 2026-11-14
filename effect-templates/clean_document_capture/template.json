@@ -1,0 +1,26 @@
+{
+  "id": "clean_document_capture",
+  "displayName": "Clean Document Capture",
+  "category": "look",
+  "order": 2774,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.shadow-chroma-denoise",
+      "params": {
+        "amount": 0.6,
+        "shadowGate": 0.38,
+        "edgeProtect": 0.1
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.paper-document-cleanup",
+      "params": {
+        "paperWhite": 0.76,
+        "inkDepth": 0.43,
+        "neutralize": 0.7,
+        "threshold": 0.62
+      }
+    }
+  ]
+}

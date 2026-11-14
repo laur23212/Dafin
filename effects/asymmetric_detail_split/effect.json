@@ -1,0 +1,79 @@
+{
+  "id": "chatgpt.fx.asymmetric-detail-split",
+  "displayName": "Asymmetric Detail Split",
+  "category": "impact",
+  "order": 2710,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "splitAt",
+      "displayName": "Panel division",
+      "type": "float",
+      "minValue": 0.35,
+      "maxValue": 0.82,
+      "defaultValue": 0.69,
+      "group": "Layout"
+    },
+    {
+      "identifier": "detailZoom",
+      "displayName": "Detail zoom",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 4,
+      "defaultValue": 2.0,
+      "group": "Layout"
+    },
+    {
+      "identifier": "detailFocus",
+      "displayName": "Detail center",
+      "type": "vec2",
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        1,
+        1
+      ],
+      "defaultValue": [
+        0.5,
+        0.5
+      ],
+      "group": "Layout"
+    },
+    {
+      "identifier": "separator",
+      "displayName": "Separator width",
+      "type": "float",
+      "minValue": 0.001,
+      "maxValue": 0.035,
+      "defaultValue": 0.009,
+      "group": "Layout"
+    },
+    {
+      "identifier": "lineColor",
+      "displayName": "Separator color",
+      "type": "color",
+      "defaultValue": "#FFFFFF",
+      "group": "Layout"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

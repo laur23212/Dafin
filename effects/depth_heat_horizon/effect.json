@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.depth-heat-horizon",
+  "displayName": "Distant Heat Haze",
+  "category": "depth",
+  "order": 2708,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Heat displacement",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.018,
+      "defaultValue": 0.0135,
+      "group": "Refraction"
+    },
+    {
+      "identifier": "rippleRate",
+      "displayName": "Haze motion rate",
+      "type": "float",
+      "minValue": 0.5,
+      "maxValue": 5,
+      "defaultValue": 2.4,
+      "group": "Refraction"
+    },
+    {
+      "identifier": "farLimit",
+      "displayName": "Distant depth limit",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.65,
+      "defaultValue": 0.33,
+      "group": "Depth"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

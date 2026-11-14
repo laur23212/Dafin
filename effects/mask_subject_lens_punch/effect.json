@@ -1,0 +1,64 @@
+{
+  "id": "chatgpt.fx.mask-subject-lens-punch",
+  "displayName": "Masked Subject Lens Punch",
+  "category": "impact",
+  "order": 2706,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "focus",
+      "displayName": "Magnify center",
+      "type": "vec2",
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        1,
+        1
+      ],
+      "defaultValue": [
+        0.52,
+        0.45
+      ],
+      "group": "Placement"
+    },
+    {
+      "identifier": "zoom",
+      "displayName": "Subject magnification",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 1.8,
+      "defaultValue": 1.3,
+      "group": "Lens"
+    },
+    {
+      "identifier": "blend",
+      "displayName": "Effect strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.94,
+      "group": "Lens"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

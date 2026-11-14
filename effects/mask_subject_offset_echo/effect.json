@@ -1,0 +1,71 @@
+{
+  "id": "chatgpt.fx.mask-subject-offset-echo",
+  "displayName": "Masked Subject Offset Echo",
+  "category": "impact",
+  "order": 2705,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "offset",
+      "displayName": "Echo displacement",
+      "type": "vec2",
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        0.18,
+        0.18
+      ],
+      "defaultValue": [
+        0.07,
+        0.035
+      ],
+      "group": "Placement"
+    },
+    {
+      "identifier": "echoOpacity",
+      "displayName": "Echo tint strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78,
+      "group": "Style"
+    },
+    {
+      "identifier": "edgeSoftness",
+      "displayName": "Echo softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.18,
+      "group": "Style"
+    },
+    {
+      "identifier": "echoColor",
+      "displayName": "Echo color",
+      "type": "color",
+      "defaultValue": "#EA8C5A",
+      "group": "Style"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "quick_neutral_video",
+  "displayName": "Quick Neutral Video",
+  "category": "look",
+  "order": 2775,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.neutral-cast-rebalance",
+      "params": {
+        "strength": 0.65,
+        "preserveContrast": 0.85
+      }
+    },
+    {
+      "effectId": "dafin.v4.fx.adaptive-vibrance",
+      "params": {
+        "amount": 0.17,
+        "protect": 0.88
+      }
+    }
+  ]
+}

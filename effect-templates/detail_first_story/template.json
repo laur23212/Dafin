@@ -1,0 +1,24 @@
+{
+  "id": "detail_first_story",
+  "displayName": "Detail First Story",
+  "category": "cinematic",
+  "order": 2776,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.circular-detail-inset",
+      "params": {
+        "radius": 0.23,
+        "magnification": 2.2,
+        "ringWidth": 0.012
+      }
+    },
+    {
+      "effectId": "dafin.v4.fx.adaptive-vibrance",
+      "params": {
+        "amount": 0.2,
+        "protect": 0.9
+      }
+    }
+  ]
+}

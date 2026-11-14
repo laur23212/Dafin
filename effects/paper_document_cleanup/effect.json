@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.paper-document-cleanup",
+  "displayName": "Paper Document Cleanup",
+  "category": "restoration",
+  "order": 2702,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "paperWhite",
+      "displayName": "Paper whitening",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72,
+      "group": "Paper"
+    },
+    {
+      "identifier": "inkDepth",
+      "displayName": "Dark ink contrast",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.8,
+      "defaultValue": 0.44,
+      "group": "Ink"
+    },
+    {
+      "identifier": "neutralize",
+      "displayName": "Remove color cast",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7,
+      "group": "Paper"
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Paper/ink pivot",
+      "type": "float",
+      "minValue": 0.25,
+      "maxValue": 0.85,
+      "defaultValue": 0.6,
+      "group": "Paper"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

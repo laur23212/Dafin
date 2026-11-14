@@ -1,0 +1,69 @@
+{
+  "id": "chatgpt.tr.origami-fan-reveal",
+  "displayName": "Origami Fan Reveal",
+  "category": "geometric",
+  "order": 2825,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "sectors",
+      "displayName": "Number of folds",
+      "type": "float",
+      "minValue": 3,
+      "maxValue": 10,
+      "defaultValue": 6,
+      "group": "Fan"
+    },
+    {
+      "identifier": "seamDarkening",
+      "displayName": "Crease shadow",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.65,
+      "defaultValue": 0.34,
+      "group": "Fan"
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Fold center",
+      "type": "vec2",
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        1,
+        1
+      ],
+      "defaultValue": [
+        0.5,
+        0.5
+      ],
+      "group": "Fan"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

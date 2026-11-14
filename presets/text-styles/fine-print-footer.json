@@ -1,0 +1,115 @@
+{
+  "format": 1,
+  "id": "chatgpt.fine-print-footer",
+  "label": "Fine Print Footer",
+  "description": "Subtle documentary disclosure or short legal footnote, kept fully readable.",
+  "category": "documentary",
+  "tags": [
+    "dafin",
+    "chatgpt",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "Illustrative footage only.",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 500,
+    "pixelSize": 42,
+    "italic": false,
+    "align": "center",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.15,
+    "letterSpacing": 0,
+    "textCase": "none",
+    "boxEnabled": false,
+    "boxColor": "#B80F1927",
+    "boxRadius": 0,
+    "boxPadding": 0,
+    "layers": [
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#263138"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F6F0E5"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 175,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "entry",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    }
+  ]
+}

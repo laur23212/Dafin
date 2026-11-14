@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.shadow-chroma-denoise",
+  "displayName": "Shadow Chroma Denoise",
+  "category": "restoration",
+  "order": 2701,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Chrominance cleanup",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82,
+      "group": "Noise"
+    },
+    {
+      "identifier": "shadowGate",
+      "displayName": "Shadow threshold",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.72,
+      "defaultValue": 0.38,
+      "group": "Noise"
+    },
+    {
+      "identifier": "edgeProtect",
+      "displayName": "Luma edge protection",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.3,
+      "defaultValue": 0.09,
+      "group": "Noise"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

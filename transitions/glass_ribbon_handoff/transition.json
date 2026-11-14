@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.tr.glass-ribbon-handoff",
+  "displayName": "Glass Ribbon Handoff",
+  "category": "cinematic",
+  "order": 2824,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "ribbonWidth",
+      "displayName": "Glass ribbon width",
+      "type": "float",
+      "minValue": 0.07,
+      "maxValue": 0.4,
+      "defaultValue": 0.22,
+      "group": "Glass"
+    },
+    {
+      "identifier": "refraction",
+      "displayName": "Refraction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.055,
+      "defaultValue": 0.026,
+      "group": "Glass"
+    },
+    {
+      "identifier": "edgeContrast",
+      "displayName": "Glass edge strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.64,
+      "group": "Glass"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

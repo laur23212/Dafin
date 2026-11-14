@@ -1,0 +1,23 @@
+{
+  "id": "masked_echo_poster",
+  "displayName": "Masked Echo Poster",
+  "category": "drama",
+  "order": 2777,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.mask-subject-offset-echo",
+      "params": {
+        "echoOpacity": 0.78,
+        "edgeSoftness": 0.16
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.mask-subject-lens-punch",
+      "params": {
+        "zoom": 1.12,
+        "blend": 0.5
+      }
+    }
+  ]
+}

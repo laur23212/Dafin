@@ -1,0 +1,79 @@
+{
+  "id": "chatgpt.fx.circular-detail-inset",
+  "displayName": "Circular Detail Inset",
+  "category": "impact",
+  "order": 2711,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "center",
+      "displayName": "Inset location",
+      "type": "vec2",
+      "minValue": [
+        0,
+        0
+      ],
+      "maxValue": [
+        1,
+        1
+      ],
+      "defaultValue": [
+        0.76,
+        0.26
+      ],
+      "group": "Circle"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Inset radius",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.42,
+      "defaultValue": 0.22,
+      "group": "Circle"
+    },
+    {
+      "identifier": "magnification",
+      "displayName": "Zoom",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 5,
+      "defaultValue": 2.25,
+      "group": "Circle"
+    },
+    {
+      "identifier": "ringWidth",
+      "displayName": "Ring thickness",
+      "type": "float",
+      "minValue": 0.002,
+      "maxValue": 0.05,
+      "defaultValue": 0.012,
+      "group": "Circle"
+    },
+    {
+      "identifier": "ringColor",
+      "displayName": "Ring color",
+      "type": "color",
+      "defaultValue": "#FFFFFF",
+      "group": "Circle"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

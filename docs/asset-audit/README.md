@@ -164,3 +164,13 @@ Ink), 2 transitions (Editorial Card Retreat, Left Hinge Turn), 7 titles and 3 ef
 - Fonts added to `title-fonts/`: Noto Serif and IBM Plex Mono. DM Sans, Inter and Oswald come with Essentials.
 - Original / Grade Comparison draws a split into the picture, so it also shows in exports.
 - Not tested: the full app, tst_editorstate and tst_engine, real depth maps, Inter weight 600.
+
+## Batch 03 from ChatGPT (14 November 2026)
+
+All 30 assets are in: 14 effects, 2 transitions (Glass Ribbon Handoff, Origami Fan Reveal), 8 titles and 4 effect templates.
+
+- **Restoration (4):** Color Negative to Positive, Shadow Chroma Denoise, Paper Document Cleanup, Neutral Cast Rebalance.
+- **Colorless Luma Key** changes the clip's alpha on purpose (all other effects keep it).
+- **Smart effects (4):** Masked Subject Offset Echo, Masked Subject Lens Punch (need a mask), Depth Parallax Nudge, Distant Heat Haze (need a depth map). Without one they pass the picture through.
+- **Panel effects (5):** Quadrant Crop Mosaic, Asymmetric Detail Split, Circular Detail Inset, Diagonal Dual Crop, Horizontal Focus Stack. Each uses ONE clip.
+- No new fonts. Not tested: the full app, tst_editorstate and tst_engine, Inter weights 500/800, real masks and depth maps.

@@ -383,17 +383,22 @@ set(DAFIN_HANDOFF_EFFECTS
     skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
     subject_pop_muted_surroundings subject_shaped_spotlight
     depth_topography_ink edge_color_defringe flat_gradient_deband highlight_shoulder
-    original_grade_comparison rolling_skew_balance vertical_side_reflections)
+    original_grade_comparison rolling_skew_balance vertical_side_reflections
+    color_negative_to_positive shadow_chroma_denoise paper_document_cleanup neutral_cast_rebalance
+    color_threshold_key mask_subject_offset_echo mask_subject_lens_punch depth_parallax_nudge
+    depth_heat_horizon quad_crop_mosaic asymmetric_detail_split circular_detail_inset
+    diagonal_dual_crop horizontal_focus_stack)
 set(DAFIN_HANDOFF_TRANSITIONS
     crash_zoom_cut digital_slice_cut double_door_reveal editorial_page_peel film_gate_jump gradient_wipe
     high_contrast_edge_reveal incoming_color_priority iris_open noise_dissolve rack_focus_bridge
     subject_holdout_bridge texture_first_reveal vintage_light_leak_cut whip_pan_left
-    editorial_card_retreat left_hinge_turn)
+    editorial_card_retreat left_hinge_turn glass_ribbon_handoff origami_fan_reveal)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
 set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
-    controlled_highlights vertical_editorial_canvas)
+    controlled_highlights vertical_editorial_canvas clean_document_capture quick_neutral_video
+    detail_first_story masked_echo_poster)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

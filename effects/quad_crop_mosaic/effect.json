@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.quad-crop-mosaic",
+  "displayName": "Quadrant Crop Mosaic",
+  "category": "impact",
+  "order": 2709,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "cropZoom",
+      "displayName": "Crop magnification",
+      "type": "float",
+      "minValue": 1.1,
+      "maxValue": 4,
+      "defaultValue": 2,
+      "group": "Layout"
+    },
+    {
+      "identifier": "gap",
+      "displayName": "Dividing line",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.025,
+      "defaultValue": 0.007,
+      "group": "Layout"
+    },
+    {
+      "identifier": "dividerColor",
+      "displayName": "Divider color",
+      "type": "color",
+      "defaultValue": "#F2E8D4",
+      "group": "Layout"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

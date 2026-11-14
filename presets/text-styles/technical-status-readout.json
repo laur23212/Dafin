@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "id": "chatgpt.technical-status-readout",
+  "label": "Technical Status Readout",
+  "description": "Minimal monospaced status label for tech demos and equipment closeups.",
+  "category": "technology",
+  "tags": [
+    "dafin",
+    "chatgpt",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "STATUS / ACTIVE",
+  "requires": {
+    "fonts": [
+      "IBM Plex Mono"
+    ]
+  },
+  "style": {
+    "fontFamily": "IBM Plex Mono",
+    "fontWeight": 600,
+    "pixelSize": 53,
+    "italic": false,
+    "align": "left",
+    "valign": "top",
+    "wordWrap": true,
+    "lineHeight": 1.15,
+    "letterSpacing": 1,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#D9162A32",
+    "boxRadius": 5,
+    "boxPadding": 16,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#A4F6CE"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 175,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "entry",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "boxcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Panel"
+    },
+    {
+      "id": "panel",
+      "label": "Show panel",
+      "type": "bool",
+      "bind": "box.enabled",
+      "group": "Panel"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.depth-parallax-nudge",
+  "displayName": "Depth Parallax Nudge",
+  "category": "depth",
+  "order": 2707,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "shift",
+      "displayName": "Camera offset",
+      "type": "float",
+      "minValue": -0.07,
+      "maxValue": 0.07,
+      "defaultValue": 0.024,
+      "group": "Parallax"
+    },
+    {
+      "identifier": "nearBias",
+      "displayName": "Depth influence",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 1,
+      "group": "Parallax"
+    },
+    {
+      "identifier": "sway",
+      "displayName": "Slow sway",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.045,
+      "defaultValue": 0.01,
+      "group": "Motion"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

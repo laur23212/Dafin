@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "id": "chatgpt.urgent-notice-strip",
+  "label": "Urgent Notice Strip",
+  "description": "Strong warning headline for demonstrations and cautionary context, not a certification.",
+  "category": "utility",
+  "tags": [
+    "dafin",
+    "chatgpt",
+    "functional"
+  ],
+  "kind": "title",
+  "sampleText": "CAUTION: HOT SURFACE",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 800,
+    "pixelSize": 74,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.15,
+    "letterSpacing": 0,
+    "textCase": "upper",
+    "boxEnabled": true,
+    "boxColor": "#FFB02F32",
+    "boxRadius": 6,
+    "boxPadding": 16,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 175,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "entry",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "boxcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Panel"
+    },
+    {
+      "id": "panel",
+      "label": "Show panel",
+      "type": "bool",
+      "bind": "box.enabled",
+      "group": "Panel"
+    }
+  ]
+}

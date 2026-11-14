@@ -1,0 +1,119 @@
+{
+  "format": 1,
+  "id": "chatgpt.sports-score-line",
+  "label": "Sports Score Line",
+  "description": "Compact two-team score line with bold tabular-looking figures, text-editable as one line.",
+  "category": "sports",
+  "tags": [
+    "dafin",
+    "chatgpt",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "NORTH 2 : 1 SOUTH",
+  "requires": {
+    "fonts": [
+      "Oswald"
+    ]
+  },
+  "style": {
+    "fontFamily": "Oswald",
+    "fontWeight": 700,
+    "pixelSize": 78,
+    "italic": false,
+    "align": "center",
+    "valign": "top",
+    "wordWrap": true,
+    "lineHeight": 1.15,
+    "letterSpacing": 0,
+    "textCase": "upper",
+    "boxEnabled": true,
+    "boxColor": "#F51B303B",
+    "boxRadius": 10,
+    "boxPadding": 16,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 175,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "entry",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "boxcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Panel"
+    },
+    {
+      "id": "panel",
+      "label": "Show panel",
+      "type": "bool",
+      "bind": "box.enabled",
+      "group": "Panel"
+    }
+  ]
+}
