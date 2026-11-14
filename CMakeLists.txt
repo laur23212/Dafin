@@ -384,6 +384,9 @@ set(DAFIN_HANDOFF_EFFECTS
     subject_pop_muted_surroundings subject_shaped_spotlight
     depth_topography_ink edge_color_defringe flat_gradient_deband highlight_shoulder
     original_grade_comparison rolling_skew_balance vertical_side_reflections
+    indexed_palette_dither watercolor_pigment_wash gamut_soft_knee channel_routing_lab
+    surface_emboss_relief practical_lamp_flicker sky_blue_balance mask_ambient_match
+    depth_stereo_anaglyph depth_edge_contact mask_ink_wash_window
     horizontal_highlight_streak rainy_window_droplets linen_weave_finish passing_cloud_shadows
     graphic_thermal_palette six_frame_contact_sheet subject_edge_light_wrap depth_near_texture_pop
     silver_bleach_print false_infrared_foliage two_zone_split_tone woodcut_cross_engrave
@@ -409,7 +412,9 @@ set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
     detail_first_story masked_echo_poster silver_documentary infrared_expedition woodcut_poster
     stained_editorial subject_graphic_poster under_glass
     close_detail_finish fabric_story moody_clouds rainy_product_window
-    single_clip_proof subject_wrap_finish thermal_graphics)
+    single_clip_proof subject_wrap_finish thermal_graphics
+    anaglyph_object_depth broadcast_color_safety digital_palette_poster practical_noir_lighting
+    reversed_channel_print subject_color_integration watercolor_postcard)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.depth-edge-contact",
+  "displayName": "Depth Contact Shading",
+  "category": "depth",
+  "order": 4509,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Contact darkening",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "spread",
+      "displayName": "Edge radius",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Depth edge threshold",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "depth",
+  "thumbnail": "thumbnail.webp"
+}

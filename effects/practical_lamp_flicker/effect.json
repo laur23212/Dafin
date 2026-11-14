@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.practical-lamp-flicker",
+  "displayName": "Practical Lamp Flicker",
+  "category": "dreamy",
+  "order": 4505,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "warmth",
+      "displayName": "Warm colour",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "strength",
+      "displayName": "Flicker strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.57,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "tempo",
+      "displayName": "Flicker tempo",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "ambient",
+      "displayName": "Preserve ambient",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

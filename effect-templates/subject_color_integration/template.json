@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.subject-color-integration",
+  "displayName": "Subject Colour Integration",
+  "category": "look",
+  "order": 6732,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.mask-ambient-match",
+      "params": {
+        "blend": 0.8,
+        "retainContrast": 0.86
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.gamut-soft-knee",
+      "params": {
+        "amount": 0.27
+      }
+    }
+  ]
+}

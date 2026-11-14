@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.practical-noir-lighting",
+  "displayName": "Practical Noir Lighting",
+  "category": "drama",
+  "order": 6730,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.surface-emboss-relief",
+      "params": {
+        "depth": 0.52,
+        "tint": 0.65
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.practical-lamp-flicker",
+      "params": {
+        "warmth": 0.32,
+        "strength": 0.65
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.digital-palette-poster",
+  "displayName": "Digital Palette Poster",
+  "category": "look",
+  "order": 6726,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.indexed-palette-dither",
+      "params": {
+        "density": 0.66,
+        "steps": 4,
+        "inkBlend": 0.5
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.watercolor-pigment-wash",
+      "params": {
+        "wash": 0.25,
+        "paper": 0.15
+      }
+    }
+  ]
+}

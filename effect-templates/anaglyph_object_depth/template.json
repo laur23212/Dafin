@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.anaglyph-object-depth",
+  "displayName": "Anaglyph Object Depth",
+  "category": "clone",
+  "order": 6731,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.depth-stereo-anaglyph",
+      "params": {
+        "parallax": 0.62,
+        "balance": 0.86
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.gamut-soft-knee",
+      "params": {
+        "amount": 0.45
+      }
+    }
+  ]
+}

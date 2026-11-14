@@ -1,0 +1,155 @@
+{
+  "format": 1,
+  "id": "chatgpt.budget-line-item",
+  "label": "Budget Line Item",
+  "description": "A finance-specific allocation heading with clear numbers and labels.",
+  "category": "business",
+  "tags": [
+    "dafin-batch-06",
+    "original"
+  ],
+  "kind": "lower-third",
+  "sampleText": "BUDGET · DESIGN €12,500",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 700,
+    "pixelSize": 75,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1.0,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 4,
+        "blur": 8,
+        "opacity": 0.43
+      },
+      {
+        "id": "stroke",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#173F40"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#ECFFF9"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#173F40",
+    "boxPadding": 21,
+    "boxRadius": 5,
+    "underlineEnabled": true,
+    "underlineColor": "#A1E8D5",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "ease": "easeOut",
+          "unit": "block"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.15,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Title text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 32,
+      "max": 180,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fg",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "accent",
+      "label": "Stroke colour",
+      "type": "color",
+      "bind": "layer.stroke.color"
+    },
+    {
+      "id": "background",
+      "label": "Card background",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "underline",
+      "label": "Underline colour",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

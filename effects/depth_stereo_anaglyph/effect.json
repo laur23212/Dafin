@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.depth-stereo-anaglyph",
+  "displayName": "Depth Stereo Anaglyph",
+  "category": "depth",
+  "order": 4508,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "parallax",
+      "displayName": "Stereo parallax",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.67,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "zeroPlane",
+      "displayName": "Zero-parallax depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.48,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "balance",
+      "displayName": "Luminance balance",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "depth",
+  "thumbnail": "thumbnail.webp"
+}

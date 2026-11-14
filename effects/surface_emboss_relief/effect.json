@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.surface-emboss-relief",
+  "displayName": "Photographic Bas-Relief",
+  "category": "dreamy",
+  "order": 4504,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "depth",
+      "displayName": "Relief depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 2,
+      "defaultValue": 0.72,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Surface smoothing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "tint",
+      "displayName": "Original colour share",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.2,
+      "group": "Adjust"
+    },
+    {
+      "identifier": "lightAngle",
+      "displayName": "Light direction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Adjust"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
