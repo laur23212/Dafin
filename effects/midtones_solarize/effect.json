@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.midtones-solarize",
+  "displayName": "Midtone Solarization",
+  "category": "retro",
+  "order": 1807,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Solarization",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82,
+      "group": "Look"
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Tone center",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 0.85,
+      "defaultValue": 0.48,
+      "group": "Look"
+    },
+    {
+      "identifier": "span",
+      "displayName": "Tone span",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.65,
+      "defaultValue": 0.36,
+      "group": "Look"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

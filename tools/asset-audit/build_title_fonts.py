@@ -32,7 +32,11 @@ FAMILIES = [
     ('PT Sans Narrow', 'pt-sans-narrow', 'impact', 'ptsansnarrow', ('static', [('PT_Sans-Narrow-Web-Regular.ttf', 400), ('PT_Sans-Narrow-Web-Bold.ttf', 700)])),
     ('PT Serif', 'pt-serif', 'editorial', 'ptserif', ('static', [('PT_Serif-Web-Regular.ttf', 400), ('PT_Serif-Web-Bold.ttf', 700)])),
     ('Roboto Condensed', 'roboto-condensed', 'impact', 'robotocondensed', ('var', 'RobotoCondensed[wght].ttf', {}, [400, 700, 800])),
+    # Apache-2.0, not OFL: the licence file is LICENSE.txt (see LICENSE_FILE below)
+    ('Roboto Slab', 'roboto-slab', 'editorial', 'robotoslab', ('var', 'RobotoSlab[wght].ttf', {}, [400, 700])),
 ]
+APACHE = {'roboto-slab'}
+ONLY = set(os.environ.get('ONLY', '').split(',')) - {''}
 
 
 def names(f):
@@ -67,6 +71,8 @@ def set_names(f, family, style, weight):
 
 total = 0
 for family, fid, cat, srcdir, spec in FAMILIES:
+    if ONLY and fid not in ONLY:
+        continue
     d = os.path.join(OUT, fid); shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
     faces = []
     if spec[0] == 'static':
@@ -85,8 +91,9 @@ for family, fid, cat, srcdir, spec in FAMILIES:
             out = f"{family.replace(' ', '')}-{style}.ttf"
             inst.save(os.path.join(d, out))
             faces.append({'file': out, 'weight': w, 'styleName': style})
-    shutil.copy(os.path.join(SRC, srcdir, 'OFL.txt'), d)
-    json.dump({'id': fid, 'family': family, 'category': cat, 'license': 'OFL-1.1', 'order': 0, 'faces': faces},
+    lic = 'LICENSE.txt' if fid in APACHE else 'OFL.txt'
+    shutil.copy(os.path.join(SRC, srcdir, lic), d)
+    json.dump({'id': fid, 'family': family, 'category': cat, 'license': 'Apache-2.0' if fid in APACHE else 'OFL-1.1', 'order': 0, 'faces': faces},
               open(os.path.join(d, 'family.json'), 'w'), indent=2)
     open(os.path.join(d, 'family.json'), 'a').write('\n')
     sz = sum(os.path.getsize(os.path.join(d, x)) for x in os.listdir(d)); total += sz

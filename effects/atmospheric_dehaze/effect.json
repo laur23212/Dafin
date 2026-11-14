@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.atmospheric-dehaze",
+  "displayName": "Atmospheric Dehaze",
+  "category": "restoration",
+  "order": 1800,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Veil removal",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.52,
+      "group": "Restore"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Neighbourhood",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 5,
+      "defaultValue": 2.5,
+      "group": "Restore"
+    },
+    {
+      "identifier": "highlightGuard",
+      "displayName": "Highlight protection",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75,
+      "group": "Restore"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,69 @@
+{
+  "id": "chatgpt.fx.depth-cut-paper-relief",
+  "displayName": "Depth Cut-Paper Relief",
+  "category": "depth",
+  "order": 1821,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Paper treatment",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.84,
+      "group": "Look"
+    },
+    {
+      "identifier": "bands",
+      "displayName": "Depth layers",
+      "type": "float",
+      "minValue": 3,
+      "maxValue": 8,
+      "defaultValue": 5,
+      "group": "Look"
+    },
+    {
+      "identifier": "relief",
+      "displayName": "Edge emboss",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.56,
+      "group": "Look"
+    },
+    {
+      "identifier": "nearTint",
+      "displayName": "Near paper",
+      "type": "color",
+      "defaultValue": "#f3dfba",
+      "group": "Palette"
+    },
+    {
+      "identifier": "farTint",
+      "displayName": "Far paper",
+      "type": "color",
+      "defaultValue": "#344f60",
+      "group": "Palette"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "requires": "depth",
+  "thumbnail": "thumbnail.webp"
+}

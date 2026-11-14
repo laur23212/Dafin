@@ -1,0 +1,137 @@
+{
+  "format": 1,
+  "id": "chatgpt.chapter-placard",
+  "label": "Chapter Placard",
+  "description": "Clear chapter card for tutorials, explainers and documentary sections.",
+  "category": "editorial",
+  "tags": [
+    "editorial",
+    "practical",
+    "readable"
+  ],
+  "kind": "title",
+  "sampleText": "CHAPTER 04",
+  "requires": {
+    "fonts": [
+      "Roboto Slab"
+    ]
+  },
+  "style": {
+    "fontFamily": "Roboto Slab",
+    "fontWeight": 700,
+    "pixelSize": 106,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.1,
+    "letterSpacing": 0.7,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#E32A3440",
+    "boxPadding": 24,
+    "boxRadius": 17,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.55
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#162630"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFF4DB"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "words",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 28,
+      "max": 180,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textColor",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "cardColor",
+      "label": "Card colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

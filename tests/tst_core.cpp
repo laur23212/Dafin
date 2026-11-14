@@ -6785,7 +6785,7 @@ void CoreTest::chatgptTitleFontsShip()
         QFile file(dir.filePath(QStringLiteral("family.json")));
         QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(pkg));
         const QJsonObject family = QJsonDocument::fromJson(file.readAll()).object();
-        QVERIFY2(QFileInfo::exists(dir.filePath(QStringLiteral("OFL.txt"))), qPrintable(pkg));
+        QVERIFY2(QFileInfo::exists(dir.filePath(QStringLiteral("OFL.txt"))) || QFileInfo::exists(dir.filePath(QStringLiteral("LICENSE.txt"))), qPrintable(pkg));
         const QJsonArray faces = family.value(QStringLiteral("faces")).toArray();
         QVERIFY2(!faces.isEmpty(), qPrintable(pkg));
         for (const QJsonValue &face : faces)

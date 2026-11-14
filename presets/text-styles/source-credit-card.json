@@ -1,0 +1,138 @@
+{
+  "format": 1,
+  "id": "chatgpt.source-credit-card",
+  "label": "Source Credit Card",
+  "description": "Readable source attribution lower third with subtle underline.",
+  "category": "editorial",
+  "tags": [
+    "editorial",
+    "practical",
+    "readable"
+  ],
+  "kind": "lower-third",
+  "sampleText": "SOURCE: COMMUNITY ARCHIVE",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 600,
+    "pixelSize": 48,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.1,
+    "letterSpacing": 0.7,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#D8182A37",
+    "boxPadding": 16,
+    "boxRadius": 10,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.55
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#45D2BF",
+    "underlineWidth": 3,
+    "underlineOffset": 7,
+    "underlineReveal": 1
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "words",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 28,
+      "max": 180,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textColor",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "cardColor",
+      "label": "Card colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    },
+    {
+      "id": "accent",
+      "label": "Accent line",
+      "type": "color",
+      "bind": "underline.color"
+    }
+  ]
+}

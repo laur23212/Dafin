@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.tr.double-door-reveal",
+  "displayName": "Double-Door Reveal",
+  "category": "geometric",
+  "order": 1791,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "edgeShade",
+      "displayName": "Door-edge shade",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.5,
+      "defaultValue": 0.25,
+      "group": "Look"
+    },
+    {
+      "identifier": "seam",
+      "displayName": "Center seam",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.025,
+      "defaultValue": 0.006,
+      "group": "Look"
+    },
+    {
+      "identifier": "finishAt",
+      "displayName": "Fully open by",
+      "type": "float",
+      "minValue": 0.72,
+      "maxValue": 0.96,
+      "defaultValue": 0.9,
+      "group": "Timing"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

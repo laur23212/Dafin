@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.clear-weathered-footage",
+  "displayName": "Clear Weathered Footage",
+  "category": "look",
+  "order": 1808,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.atmospheric-dehaze",
+      "params": {
+        "strength": 0.48,
+        "radius": 2.0,
+        "highlightGuard": 0.85
+      }
+    },
+    {
+      "effectId": "dafin.v4.fx.adaptive-vibrance",
+      "params": {
+        "amount": 0.14,
+        "protect": 0.88
+      }
+    }
+  ]
+}

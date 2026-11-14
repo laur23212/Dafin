@@ -140,3 +140,16 @@ Everything that works in Dafin went in. Everything else was dropped, with the re
 - **Shipping:** the 41 handoff packages are added to `DRIFT_CORE_EFFECTS` and
   `DRIFT_CORE_TRANSITIONS`. Packaged builds ship only that list, and this fork cannot publish
   add-ons.
+
+## Batch 01 from ChatGPT (14 November 2026)
+
+First batch made from `PROMPT_FOR_CHATGPT.md`; all 8 assets are in.
+
+- **Effects (4):** Atmospheric Dehaze, Midtone Solarization, Editorial Triptych (three crops of one
+  clip, not three clips) and Depth Cut-Paper Relief (smart: needs the depth map, else unchanged).
+- **Transition (1):** Double-Door Reveal; checked at progress 0, 0.99 and 1.
+- **Titles (2):** Source Credit Card (Inter, already in Essentials) and Chapter Placard (Roboto Slab,
+  added to `title-fonts/` as Apache-2.0 with its LICENSE.txt). Both pass Dafin's validator.
+- **Effect template (1):** Clear Weathered Footage (dehaze + Adaptive Vibrance). Added to
+  `DRIFT_CORE_EFFECT_TEMPLATES`, which was empty.
+- **Not tested:** the full app was never built; the Depth card uses a stand-in depth map; Inter weight 600.

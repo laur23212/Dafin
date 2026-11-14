@@ -14,6 +14,9 @@ License 1.1; each folder keeps its `OFL.txt`. Only the faces the titles use are 
   variable fonts with fontTools. None of those declares a Reserved Font Name.
 - Comfortaa does declare one, so it was not cut, and its one title was left out.
 
+Roboto Slab (Regular, Bold) is Apache-2.0, not OFL: its folder keeps `LICENSE.txt`. It is cut
+from the upstream variable font; ș/ț are present.
+
 Amiri, Comic Neue and Lobster Two have no ș/ț: Romanian text in those titles falls back for
 those letters.
 

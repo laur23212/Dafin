@@ -16615,7 +16615,7 @@ void EditorStateTest::assetWave1PackagesLoadAndApply()
     }
 }
 
-// Dafin: every package from the ChatGPT asset handoff (ids "dafin.*", DAFIN.md "Asset library
+// Dafin: every package from the ChatGPT asset handoff (ids "dafin.*" and "chatgpt.*", DAFIN.md "Asset library
 // audit") loads as GPU, sits in a category the browser labels, has its card art, and applies.
 void EditorStateTest::assetHandoffPackagesLoadAndApply()
 {
@@ -16624,7 +16624,7 @@ void EditorStateTest::assetHandoffPackagesLoadAndApply()
                                    QStringLiteral("keying"), QStringLiteral("restoration")};
     QStringList effectIds;
     for (const QString &id : effectPresetIds()) {
-        if (!id.startsWith(QLatin1String("dafin.")))
+        if (!id.startsWith(QLatin1String("dafin.")) && !id.startsWith(QLatin1String("chatgpt.")))
             continue;
         effectIds.append(id);
         const EffectPresetEntry *def = effectDefForId(id);
@@ -16633,13 +16633,13 @@ void EditorStateTest::assetHandoffPackagesLoadAndApply()
         QVERIFY2(!effectCategoryLabel(def->meta.category).isEmpty(), qPrintable(id));
         QVERIFY2(QFileInfo::exists(def->thumbnailPath), qPrintable(id));
     }
-    QCOMPARE(effectIds.size(), 27);
+    QCOMPARE(effectIds.size(), 31);
 
     const QSet<QString> transitionCats{QStringLiteral("basic"), QStringLiteral("geometric"), QStringLiteral("liquid"),
                                        QStringLiteral("glitch"), QStringLiteral("cinematic")};
     QStringList transitionIds;
     for (const QString &id : transitionPresetIds()) {
-        if (!id.startsWith(QLatin1String("dafin.")))
+        if (!id.startsWith(QLatin1String("dafin.")) && !id.startsWith(QLatin1String("chatgpt.")))
             continue;
         transitionIds.append(id);
         const TransitionPresetEntry *def = transitionDefForId(id);
@@ -16648,7 +16648,7 @@ void EditorStateTest::assetHandoffPackagesLoadAndApply()
         QVERIFY2(QFileInfo::exists(def->previewStripPath), qPrintable(id));
         QCOMPARE(def->previewFrames, 12);
     }
-    QCOMPARE(transitionIds.size(), 14);
+    QCOMPARE(transitionIds.size(), 15);
 
     // One clip takes every effect with its defaults.
     {

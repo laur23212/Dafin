@@ -373,22 +373,23 @@ set(DRIFT_CORE_TRANSITIONS crossfade dip dip_white)
 # build, including the installers. Upstream's other packages come from its add-on service, which
 # this fork cannot publish to, so bundling them is the only way they reach users.
 set(DAFIN_HANDOFF_EFFECTS
-    8mm_gate_weave adaptive_backlit_subject_lift adaptive_vibrance bright_region_auto_spotlight
+    8mm_gate_weave adaptive_backlit_subject_lift adaptive_vibrance atmospheric_dehaze
+    bright_region_auto_spotlight
     camera_shake_handheld conditional_chroma_moire conditional_comb_line_repair
-    depth_distance_alpha depth_tone_separation detail_local_clarity
+    depth_cut_paper_relief depth_distance_alpha depth_tone_separation detail_local_clarity editorial_triptych
     isolated_sensor_pixel_repair lens_barrel_warp luma_range_isolator mask_background_soft_focus
-    matte_edge_shrink_feather matte_interior_color_repair neutral_grid_balance old_film_dust_specks
+    matte_edge_shrink_feather midtones_solarize matte_interior_color_repair neutral_grid_balance old_film_dust_specks
     old_film_vertical_scratches radial_focus shadow_chroma_clean shadow_selective_lift
     skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
     subject_pop_muted_surroundings subject_shaped_spotlight)
 set(DAFIN_HANDOFF_TRANSITIONS
-    crash_zoom_cut digital_slice_cut editorial_page_peel film_gate_jump gradient_wipe
+    crash_zoom_cut digital_slice_cut double_door_reveal editorial_page_peel film_gate_jump gradient_wipe
     high_contrast_edge_reveal incoming_color_priority iris_open noise_dissolve rack_focus_bridge
     subject_holdout_bridge texture_first_reveal vintage_light_leak_cut whip_pan_left)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
-set(DRIFT_CORE_EFFECT_TEMPLATES "")
+set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

@@ -1,0 +1,61 @@
+{
+  "id": "chatgpt.fx.editorial-triptych",
+  "displayName": "Editorial Triptych",
+  "category": "impact",
+  "order": 1814,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "gutter",
+      "displayName": "Gutter width",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.045,
+      "defaultValue": 0.012,
+      "group": "Layout"
+    },
+    {
+      "identifier": "crop",
+      "displayName": "Panel crop width",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 0.8,
+      "defaultValue": 0.46,
+      "group": "Layout"
+    },
+    {
+      "identifier": "offset",
+      "displayName": "Side view offset",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.35,
+      "defaultValue": 0.23,
+      "group": "Layout"
+    },
+    {
+      "identifier": "gutterColor",
+      "displayName": "Gutter colour",
+      "type": "color",
+      "defaultValue": "#172430",
+      "group": "Layout"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
