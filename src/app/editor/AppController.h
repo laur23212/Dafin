@@ -1737,6 +1737,12 @@ public:
     // the model still has it at its old position, so those two targets sit right under the
     // pointer at the start of every move.
     Q_INVOKABLE double snapTime(double seconds, const QString &excludeClipId = {}) const;
+    // Dafin: snap for a clip being dragged (library drop or move). Tries both edges and holds a
+    // snapped edge on its target until the pointer pulls well away, like Filmora's magnet.
+    // Returns {start, guide} in seconds; guide < 0 = no snap. Targets are built once per drag
+    // (rebuilt when the dragged clip changes or after a pause of more than 400 ms).
+    Q_INVOKABLE QVariantMap snapDragStart(double desiredStart, double duration,
+                                          const QString &excludeClipId = {}) const;
     // Snapping pulls within a fixed on-screen distance, so the timeline reports its zoom here.
     Q_INVOKABLE void setSnapRadius(double pixels, double pxPerSecond);
     Q_INVOKABLE QVariantList waveformPeaks(const QString &path) const;
@@ -2349,6 +2355,11 @@ protected:
     // the only targets that do move are the dragged clip's own edges.
     drift::SnapTargets m_gestureSnapTargets;
     bool m_trimGestureActive = false;
+    mutable drift::SnapTargets m_dragSnapTargets;
+    mutable QString m_dragSnapExclude;
+    mutable QElapsedTimer m_dragSnapClock;
+    mutable drift::TimeUs m_dragHeldUs = -1;
+    mutable bool m_dragHeldIsEnd = false;
     mutable drift::TimeUs m_heldSnapUs = -1; // sticky snap: target the drag is held on, -1 = none
     bool m_trimGestureChanged = false;
     drift::TimeUs m_trimGestureLastInputUs = -1;

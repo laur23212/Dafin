@@ -94,6 +94,46 @@ TimeUs snapTimeToSticky(const SnapTargets &targets, TimeUs time, bool snapEnable
     return snapped;
 }
 
+DragSnap snapDraggedClip(const SnapTargets &targets, TimeUs desiredStart, TimeUs duration,
+                         bool snapEnabled, TimeUs thresholdUs, TimeUs breakAwayUs,
+                         TimeUs &heldTarget, bool &heldIsEnd)
+{
+    DragSnap out;
+    out.start = qMax<TimeUs>(0, desiredStart);
+    if (!snapEnabled || targets.sorted.empty()) {
+        heldTarget = -1;
+        return out;
+    }
+    const TimeUs endEdge = desiredStart + duration;
+    if (heldTarget >= 0
+        && std::binary_search(targets.sorted.begin(), targets.sorted.end(), heldTarget)) {
+        const TimeUs edge = heldIsEnd ? endEdge : desiredStart;
+        if (qAbs(heldTarget - edge) <= qMax(breakAwayUs, thresholdUs)) {
+            out.start = qMax<TimeUs>(0, heldIsEnd ? heldTarget - duration : heldTarget);
+            out.guide = heldTarget;
+            return out;
+        }
+    }
+    const TimeUs l = snapTimeTo(targets, desiredStart, true, thresholdUs);
+    const TimeUs r = snapTimeTo(targets, endEdge, true, thresholdUs);
+    const bool lSnapped = qAbs(l - desiredStart) > 0 && l != qMax<TimeUs>(0, desiredStart);
+    const bool rSnapped = r != endEdge;
+    if (lSnapped && (!rSnapped || qAbs(l - desiredStart) <= qAbs(r - endEdge))) {
+        heldTarget = l;
+        heldIsEnd = false;
+        out.start = l;
+        out.guide = l;
+    } else if (rSnapped) {
+        heldTarget = r;
+        heldIsEnd = true;
+        out.start = qMax<TimeUs>(0, r - duration);
+        out.guide = r;
+    } else {
+        heldTarget = -1;
+    }
+    return out;
+}
+
 TimeUs snapTime(const Project &project, TimeUs time, bool snapEnabled, TimeUs playheadUs,
                 const QList<TimeUs> &extraTargets, const QString &excludeClipId, TimeUs thresholdUs)
 {

@@ -567,16 +567,9 @@ PanelFrame {
     // `excludeClipId` is the clip being dragged, if any: it is still parked at its old start in
     // the model, so leaving its edges in the target set pins every short drag back to the origin.
     function snapClipStart(desiredStart, duration, excludeClipId) {
-        const ex = excludeClipId || ""
-        const l = EditorState.snapTime(desiredStart, ex)
-        const rEdge = EditorState.snapTime(desiredStart + duration, ex)
-        const lSnapped = Math.abs(l - desiredStart) > 0.0005
-        const rSnapped = Math.abs(rEdge - (desiredStart + duration)) > 0.0005
-        if (lSnapped && (!rSnapped || Math.abs(l - desiredStart) <= Math.abs(rEdge - duration - desiredStart)))
-            return { "start": l, "guide": l }
-        if (rSnapped)
-            return { "start": rEdge - duration, "guide": rEdge }
-        return { "start": desiredStart, "guide": -1 }
+        // Dafin: sticky, both edges, targets built once per drag (see AppController::snapDragStart).
+        const r = EditorState.snapDragStart(desiredStart, duration, excludeClipId || "")
+        return { "start": r.start, "guide": r.guide }
     }
 
     // Actual row height: the per-type default, the lane's DAW-style vertical zoom, and room for
@@ -864,7 +857,9 @@ PanelFrame {
             dropRouter.drop("maskMedia", String(assetIndex), "", dropX, dropY)
             return
         }
-        const atSeconds = Math.max(0, dropX / pxPerSecond)
+        // Dafin: lands where the outline was, snapped the way the preview snapped it.
+        const rawSeconds = Math.max(0, dropX / pxPerSecond)
+        const atSeconds = snapClipStart(rawSeconds, assetDurationSeconds(assetIndex)).start
         placeAssetAtTarget(assetIndex, atSeconds,
                            resolveDropTarget(assetKind(assetIndex), dropY, atSeconds,
                                              assetDurationSeconds(assetIndex)))

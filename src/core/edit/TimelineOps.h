@@ -46,6 +46,20 @@ TimeUs snapTimeTo(const SnapTargets &targets, TimeUs time, bool snapEnabled,
 TimeUs snapTimeToSticky(const SnapTargets &targets, TimeUs time, bool snapEnabled,
                         TimeUs thresholdUs, TimeUs breakAwayUs, TimeUs &held);
 
+// Snapping for a clip being dragged (a library drop or a move): both its start and its end edge
+// are tried, the nearer one wins, and the edge that is snapped stays held on its target until the
+// pointer has moved more than `breakAwayUs` away (a little more than `thresholdUs`), so the clip
+// "clicks" onto a clip edge or the playhead and sticks there instead of flickering on and off at
+// the rim of the snap window. `guide` is the snapped target (the line to draw), -1 when none.
+// `heldTarget`/`heldIsEnd` carry the hold from one call to the next of the same drag.
+struct DragSnap {
+    TimeUs start = 0;
+    TimeUs guide = -1;
+};
+DragSnap snapDraggedClip(const SnapTargets &targets, TimeUs desiredStart, TimeUs duration,
+                         bool snapEnabled, TimeUs thresholdUs, TimeUs breakAwayUs,
+                         TimeUs &heldTarget, bool &heldIsEnd);
+
 // `extraTargets` are additional snap positions supplied by the caller — currently the
 // detected beat grid, which is analysis state rather than something the project stores.
 // Core never learns what a beat is; it just snaps to whatever times it is handed.
