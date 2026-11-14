@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.tungsten-skin-quiet",
+  "displayName": "Tungsten Skin Quiet",
+  "category": "restoration",
+  "description": "Restrains over-orange tungsten illumination while retaining face-friendly warmth, avoiding global cooling.",
+  "order": 9600,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Warm cast reduction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

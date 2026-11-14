@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.amber-red-highlight-limit",
+  "displayName": "Red Stage Highlight Recovery",
+  "category": "restoration",
+  "description": "Pulls saturated red stage lights away from hard clipping without flattening midtone detail.",
+  "order": 9603,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Red highlight protection",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

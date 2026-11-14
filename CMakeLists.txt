@@ -382,6 +382,21 @@ set(DAFIN_HANDOFF_EFFECTS
     old_film_vertical_scratches radial_focus shadow_chroma_clean shadow_selective_lift
     skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
     subject_pop_muted_surroundings subject_shaped_spotlight
+    acrylic_palette_knife amber_red_highlight_limit anodized_carbon_pattern anodized_titanium_film
+    blue_pool_color_rescue brass_plate_etching ceramic_speckle_glaze chalk_pastel_dust
+    charcoal_wipe_sketch corrugated_plastic_sheet crushed_chroma_repair crushed_velour_fabric
+    cyanotype_sun_blueprint depth_ambient_tint_bands depth_backdrop_coolgrain depth_distant_sun_streak
+    depth_foreground_color_grain depth_material_normals_ink depth_near_glass_mist depth_surface_anisotropy
+    embossed_leather_press fluorescent_green_repair forest_green_separation frosted_mica_flakes
+    fused_glass_striae glass_bottle_warp graphite_rubbing_transfer halogen_vertical_shimmer
+    handdrawn_offset_crosshatch inked_rubber_stamp kraft_fluted_board lens_coma_star_tail
+    linocut_negative_carve macro_lens_honey_bokeh masked_background_lateral_water masked_color_spotlight_pool
+    masked_cutout_motion_notch masked_foreground_signal masked_paper_grain_overlay masked_silhouette_crease
+    masked_stipple_boundary masked_vignette_exclusion masked_vivid_subject_matte microscope_slide_coverslip
+    oxidized_paper_foxing pale_daylight_balance pixel_sort_streak polarized_glass_color
+    ring_flash_specular risograph_ink_register shadow_purple_suppress sodium_streetlight_tamer
+    soft_lens_fingerprint split_diopter_window stippled_clay_plaster tungsten_skin_quiet
+    violet_stage_skin_repair
     aurora_ribbon black_toe_lift brushed_aluminum ceramic_craquelure
     chemical_developer_spots chromatic_silk_screen circuit_trace_glaze contact_photogram
     copper_patina depth_distance_mosaic depth_exposure_foreground depth_projected_rain
@@ -426,7 +441,15 @@ set(DAFIN_HANDOFF_TRANSITIONS
     radiating_circuit_traces refractive_vertical_cracks ribbon_blade_shear rice_paper_tear
     rising_album_sleeve rotor_slice_disc spiral_sundial telescope_tube_push
     threaded_needle_pull trailing_stencil_blocks vortex_lace_open wave_wedge_interlock
-    weather_front_exchange)
+    weather_front_exchange
+    book_edge_gilding cardboard_tape_peel copper_wire_coil drop_shadow_slide_card
+    film_trim_splice_marker heat_map_burnin lantern_paper_window lava_lamp_globule
+    map_fold_axis marble_vein_fault notebook_binder_release observatory_orbit_grid
+    optical_split_gate paint_squeegee_pull pollen_seed_scatter polycarbonate_cell_slide
+    porcelain_chip_scatter postcard_postmark projection_reel_cog punch_card_perforation
+    rainbow_arc_seconds sand_dune_tide snaking_lens_ribbon solar_halo_ring
+    stained_window_lead_pull ticker_roll_index typebar_shutter_rows venetian_shadow_clock
+    water_wick_marbling zigzag_construction_joint)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
@@ -444,7 +467,13 @@ set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
     darkroom_fiber_contact desert_memory digital_circuit_demo embroidery_documentary
     film_silver_liquid high_design_satin maker_photo_print mineral_porcelain
     night_street_treatment nostalgic_oxide_print premium_metal_product retro_lab_scanner
-    science_optical_glass starlit_woodland stone_construction winter_travel_day)
+    science_optical_glass starlit_woodland stone_construction winter_travel_day
+    anodized_product bottle_product_lens brass_component_macro carbon_engineering
+    charcoal_linework cool_subject_separation cyanotype_scrapbook dim_window_pastel
+    diopter_macro distance_light_volume document_graphite indoor_fluorescent_neutral
+    leather_history mica_cosmetic_reel near_material_texture paper_subject_reveal
+    print_riso_label refraction_walkby stage_background_sweep stage_violet_skin
+    stoneware_maker streetlamp_color_recovery underwater_archive)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

@@ -1,0 +1,146 @@
+{
+  "format": 1,
+  "id": "chatgpt.museum-audio-guide-stop",
+  "label": "Museum Audio Guide Stop",
+  "description": "Museum walkthrough audio-guide number",
+  "category": "minimal",
+  "tags": [
+    "batch09",
+    "functional"
+  ],
+  "kind": "title",
+  "sampleText": "AUDIO STOP 07",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 700,
+    "pixelSize": 88,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 1.5,
+    "textCase": "upper",
+    "boxEnabled": false,
+    "boxColor": "#342124",
+    "boxPadding": 9,
+    "boxRadius": 2,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 3,
+        "blur": 7,
+        "opacity": 0.43
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFF2DD"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "rise",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.13,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#FFF2DD",
+    "underlineWidth": 3,
+    "underlineOffset": 9
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Main text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 18,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "underline",
+      "label": "Accent underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "underlineColor",
+      "label": "Accent color",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    },
+    {
+      "id": "spacing",
+      "label": "Letter spacing",
+      "type": "scalar",
+      "bind": "letterSpacing",
+      "min": 0,
+      "max": 12,
+      "step": 0.2,
+      "unit": "px"
+    }
+  ]
+}

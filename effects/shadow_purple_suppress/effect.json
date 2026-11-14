@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.shadow-purple-suppress",
+  "displayName": "Purple Shadow Bias Fix",
+  "category": "restoration",
+  "description": "Neutralizes violet shadows created by extreme camera white balance while retaining bright lavender props.",
+  "order": 9609,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Shadow purple fix",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.95
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

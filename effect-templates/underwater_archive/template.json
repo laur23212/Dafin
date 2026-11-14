@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.underwater-archive",
+  "displayName": "Underwater Archive Color",
+  "category": "look",
+  "order": 9753,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.blue-pool-color-rescue",
+      "params": {
+        "strength": 0.9
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.crushed-chroma-repair",
+      "params": {
+        "strength": 0.7
+      }
+    }
+  ]
+}

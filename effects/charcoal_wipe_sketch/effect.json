@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.charcoal-wipe-sketch",
+  "displayName": "Charcoal Side Smudge",
+  "category": "retro",
+  "description": "Directional carbon smudge from dark source regions, like soft charcoal rubbed with a cloth.",
+  "order": 9613,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "detail",
+      "displayName": "Scale",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

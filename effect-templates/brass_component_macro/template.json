@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.brass-component-macro",
+  "displayName": "Brass Workshop Macro",
+  "category": "look",
+  "order": 9760,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.brass-plate-etching",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.lens-coma-star-tail",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

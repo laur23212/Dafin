@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.paper-subject-reveal",
+  "displayName": "Paper Subject Study",
+  "category": "look",
+  "order": 9770,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.masked-paper-grain-overlay",
+      "params": {
+        "strength": 0.87
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.masked-stipple-boundary",
+      "params": {
+        "strength": 0.88
+      }
+    }
+  ]
+}

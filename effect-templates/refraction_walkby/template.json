@@ -1,0 +1,27 @@
+{
+  "id": "chatgpt.stack.refraction-walkby",
+  "displayName": "Refraction Walkby",
+  "category": "hype",
+  "order": 9774,
+  "sync": "onset",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.fused-glass-striae",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.halogen-vertical-shimmer",
+      "params": {
+        "strength": 0.78
+      },
+      "pulse": {
+        "param": "strength",
+        "rest": 0.42900000000000005,
+        "peak": 0.8580000000000001,
+        "decayMs": 160
+      }
+    }
+  ]
+}

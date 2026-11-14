@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.stippled-clay-plaster",
+  "displayName": "Stippled Clay Plaster",
+  "category": "retro",
+  "description": "Warm mineral plaster with small relief pits that translate midtone texture into a tactile matte.",
+  "order": 9629,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "detail",
+      "displayName": "Scale",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

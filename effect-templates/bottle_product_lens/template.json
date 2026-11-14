@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.bottle-product-lens",
+  "displayName": "Bottle Product Refraction",
+  "category": "cinematic",
+  "order": 9765,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.glass-bottle-warp",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.ring-flash-specular",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.streetlamp-color-recovery",
+  "displayName": "Streetlamp Color Recovery",
+  "category": "cinematic",
+  "order": 9751,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.sodium-streetlight-tamer",
+      "params": {
+        "strength": 0.75
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.amber-red-highlight-limit",
+      "params": {
+        "strength": 0.9
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.polycarbonate-cell-slide",
+  "displayName": "Polycarbonate Cell Slide",
+  "category": "geometric",
+  "description": "Offset translucent honeycomb strips appear to slide behind one another as scenes exchange.",
+  "order": 9706,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Motion character",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

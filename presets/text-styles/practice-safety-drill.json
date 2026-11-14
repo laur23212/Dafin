@@ -1,0 +1,140 @@
+{
+  "format": 1,
+  "id": "chatgpt.practice-safety-drill",
+  "label": "Practice Safety Drill",
+  "description": "Explicitly labeled practice-only training slide, not an emergency warning",
+  "category": "editorial",
+  "tags": [
+    "batch09",
+    "functional"
+  ],
+  "kind": "title",
+  "sampleText": "PRACTICE DRILL",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 700,
+    "pixelSize": 88,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 0.4,
+    "textCase": "upper",
+    "boxEnabled": true,
+    "boxColor": "#153E37",
+    "boxPadding": 12,
+    "boxRadius": 0,
+    "layers": [
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#153E37"
+        },
+        "width": 2.5,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#C4F4E1"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "rise",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.13,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Main text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 18,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "background",
+      "label": "Card background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    },
+    {
+      "id": "spacing",
+      "label": "Letter spacing",
+      "type": "scalar",
+      "bind": "letterSpacing",
+      "min": 0,
+      "max": 12,
+      "step": 0.2,
+      "unit": "px"
+    }
+  ]
+}

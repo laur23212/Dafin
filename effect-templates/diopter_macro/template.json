@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.diopter-macro",
+  "displayName": "Split Diopter Macro",
+  "category": "cinematic",
+  "order": 9767,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.split-diopter-window",
+      "params": {
+        "strength": 0.95
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.macro-lens-honey-bokeh",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

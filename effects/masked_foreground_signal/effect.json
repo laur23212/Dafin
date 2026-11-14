@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.masked-foreground-signal",
+  "displayName": "Masked Foreground Data Threads",
+  "category": "glitch",
+  "description": "Subtle moving scan-threads appear only inside a defined foreground mask, not on the backdrop.",
+  "order": 9652,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Scan threads",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.document-graphite",
+  "displayName": "Document Graphite Transfer",
+  "category": "look",
+  "order": 9755,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.graphite-rubbing-transfer",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.oxidized-paper-foxing",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.split-diopter-window",
+  "displayName": "Split Diopter Window",
+  "category": "dreamy",
+  "description": "One focus-sharp half and one softly defocused half like a partial optical diopter.",
+  "order": 9632,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Out-of-focus strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.95
+    },
+    {
+      "identifier": "detail",
+      "displayName": "Defocus radius",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8
+    },
+    {
+      "identifier": "divide",
+      "displayName": "Diopter boundary",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 0.85,
+      "defaultValue": 0.48
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

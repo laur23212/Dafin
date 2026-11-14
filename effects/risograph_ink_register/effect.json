@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.risograph-ink-register",
+  "displayName": "Risograph Ink Registration",
+  "category": "retro",
+  "description": "Two visibly misregistered soy-ink impressions over paper stock, not a generic duotone.",
+  "order": 9616,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "detail",
+      "displayName": "Scale",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

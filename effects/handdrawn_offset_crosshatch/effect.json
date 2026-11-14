@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.handdrawn-offset-crosshatch",
+  "displayName": "Offset Scribble Crosshatch",
+  "category": "retro",
+  "description": "Loosely hand-inked diagonal intersections following dark image regions, unlike precise engraving.",
+  "order": 9643,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "detail",
+      "displayName": "Scale",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

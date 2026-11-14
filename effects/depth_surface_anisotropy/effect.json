@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.depth-surface-anisotropy",
+  "displayName": "Depth-Brushed Surface Flow",
+  "category": "dreamy",
+  "description": "Directional brushstroke highlights follow the surface orientation estimated from the depth map.",
+  "order": 9661,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Surface brush sheen",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.88
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

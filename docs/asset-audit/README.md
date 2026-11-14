@@ -227,3 +227,13 @@ The biggest batch: 217 items. 137 went in: 47 effects (10 need a mask or depth m
   Dafin: they wait for a listening review. A listening pack was made for the user.
 - Black Toe Detail Guard and Print Paper White are subtle by design and show little on bright scenes.
 - Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.
+
+## Batch 09 from ChatGPT (14 November 2026)
+
+250 items: 57 effects, 30 transitions, 40 titles, 15 text animations and 23 effect templates went in.
+No new fonts were needed.
+
+- Dropped: Bouncing Satellite Glint, Microfilament Mesh and Periscope Corner Reflection (almost
+  nothing shows at their defaults), and the two effect templates that used them.
+- The 80 sounds passed script checks but wait for a listening review (not in Dafin).
+- Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.

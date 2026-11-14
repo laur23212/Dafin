@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.depth-ambient-tint-bands",
+  "displayName": "Depth Stage Color Bands",
+  "category": "color",
+  "description": "Subtle colored scenic lighting by three distinct distance zones, preserving original surface detail.",
+  "order": 9660,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Three zone color",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.86
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

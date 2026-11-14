@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.dim-window-pastel",
+  "displayName": "Window Light Neutral",
+  "category": "cinematic",
+  "order": 9754,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.pale-daylight-balance",
+      "params": {
+        "strength": 0.9
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.tungsten-skin-quiet",
+      "params": {
+        "strength": 0.85
+      }
+    }
+  ]
+}

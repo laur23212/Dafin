@@ -1,0 +1,27 @@
+{
+  "id": "chatgpt.stack.stage-background-sweep",
+  "displayName": "Stage Background Sweep",
+  "category": "hype",
+  "order": 9769,
+  "sync": "beat",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.masked-vignette-exclusion",
+      "params": {
+        "strength": 0.86
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.masked-foreground-signal",
+      "params": {
+        "strength": 0.9
+      },
+      "pulse": {
+        "param": "strength",
+        "rest": 0.49500000000000005,
+        "peak": 0.9900000000000001,
+        "decayMs": 160
+      }
+    }
+  ]
+}
