@@ -144,6 +144,7 @@ class EditorStateTest : public QObject
 
 private slots:
     void snapTimeEnabled();
+    void draggedClipSnapsToEitherEdgeAndSticks();
     void projectScannerFindsProjectsAndSkipsAutoSaves();
     void projectScannerReadsFilmoraLengthAndPicture();
     void compositeFromSelectionUndoRedo();
@@ -2902,6 +2903,41 @@ void EditorStateTest::bookmarkSnapTarget()
     state.addBookmark(2.0, QStringLiteral("Snap me"));
     // Within the 150ms snap window of the bookmark.
     QCOMPARE(state.snapTime(2.05), 2.0);
+}
+
+void EditorStateTest::draggedClipSnapsToEitherEdgeAndSticks()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(true);
+    state.addBookmark(2.0, QStringLiteral("Snap me"));
+
+    // Start edge within the snap window: it clicks onto the marker, with a guide line there.
+    QVariantMap r = state.snapDragStart(2.05, 1.0);
+    QCOMPARE(r.value(QStringLiteral("start")).toDouble(), 2.0);
+    QCOMPARE(r.value(QStringLiteral("guide")).toDouble(), 2.0);
+    // Pulled a little past the plain window (150 ms) it is still held, like Filmora's magnet.
+    r = state.snapDragStart(2.22, 1.0);
+    QCOMPARE(r.value(QStringLiteral("start")).toDouble(), 2.0);
+    QCOMPARE(r.value(QStringLiteral("guide")).toDouble(), 2.0);
+    // Pulled well away it lets go, and the guide goes.
+    r = state.snapDragStart(2.5, 1.0);
+    QCOMPARE(r.value(QStringLiteral("start")).toDouble(), 2.5);
+    QVERIFY(r.value(QStringLiteral("guide")).toDouble() < 0.0);
+
+    // The end edge snaps too: a 1 s clip whose end is near the marker lands ending on it.
+    AppController other(&library);
+    other.setSnapEnabled(true);
+    other.addBookmark(2.0, QStringLiteral("Snap me"));
+    r = other.snapDragStart(0.98, 1.0);
+    QCOMPARE(r.value(QStringLiteral("start")).toDouble(), 1.0);
+    QCOMPARE(r.value(QStringLiteral("guide")).toDouble(), 2.0);
+
+    // Snapping off: nothing moves.
+    other.setSnapEnabled(false);
+    r = other.snapDragStart(2.05, 1.0);
+    QCOMPARE(r.value(QStringLiteral("start")).toDouble(), 2.05);
+    QVERIFY(r.value(QStringLiteral("guide")).toDouble() < 0.0);
 }
 
 void EditorStateTest::renameClipAndAsset()

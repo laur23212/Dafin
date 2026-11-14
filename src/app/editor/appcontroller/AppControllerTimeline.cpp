@@ -559,6 +559,27 @@ double AppController::snapTime(double seconds, const QString &excludeClipId) con
                                               m_snapThresholdUs));
 }
 
+QVariantMap AppController::snapDragStart(double desiredStart, double duration,
+                                         const QString &excludeClipId) const
+{
+    const bool snapOn = m_snapEnabled && !(QGuiApplication::keyboardModifiers() & Qt::AltModifier);
+    // A new drag, or a pause long enough that the project may have changed in between.
+    if (!m_dragSnapClock.isValid() || m_dragSnapClock.elapsed() > 400
+        || m_dragSnapExclude != excludeClipId || m_dragSnapTargets.isEmpty()) {
+        m_dragSnapTargets.build(m_project, m_playheadUs, extraSnapTargetsCached(), excludeClipId);
+        m_dragSnapExclude = excludeClipId;
+        m_dragHeldUs = -1;
+    }
+    m_dragSnapClock.start();
+    const drift::DragSnap snap = drift::snapDraggedClip(
+        m_dragSnapTargets, drift::secondsToUs(desiredStart), drift::secondsToUs(duration), snapOn,
+        m_snapThresholdUs, m_snapThresholdUs * 2, m_dragHeldUs, m_dragHeldIsEnd);
+    QVariantMap out;
+    out.insert(QStringLiteral("start"), drift::usToSeconds(snap.start));
+    out.insert(QStringLiteral("guide"), snap.guide >= 0 ? drift::usToSeconds(snap.guide) : -1.0);
+    return out;
+}
+
 void AppController::setSnapRadius(double pixels, double pxPerSecond)
 {
     if (pixels <= 0.0 || pxPerSecond <= 0.0)

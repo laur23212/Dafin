@@ -2316,6 +2316,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/ShapesTab.qml
         src/qml/components/assets/AssetSearchBar.qml
         src/qml/components/assets/AssetDragSource.qml
+        src/qml/components/assets/AssetDragGhost.qml
         src/qml/components/assets/MasksTab.qml
         src/qml/components/assets/SoundsTab.qml
         src/qml/components/assets/OnlineAssetBrowser.qml

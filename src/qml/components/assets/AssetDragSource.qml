@@ -40,9 +40,16 @@ Item {
     Drag.keys: root.fileDrag ? ["text/uri-list"] : [AssetDrag.mimeKey(root.kind)]
     Drag.mimeData: root.fileDrag ? ({ "text/uri-list": root.fileUrl.toString() })
                                  : AssetDrag.mimeData(root.kind, root.payload, root.label)
-    // Centred, so the drop lands under the pointer rather than a card's width to its left.
-    Drag.hotSpot.x: width / 2
-    Drag.hotSpot.y: height / 2
+    // Dafin: ghost card under the pointer while dragging (see AssetDragGhost).
+    AssetDragGhost {
+        id: ghost
+        thumbnail: root.thumbnail.length > 0 ? EditorState.imageUrl(root.thumbnail) : ""
+        label: root.label
+        glyph: root.glyph
+    }
+    Drag.imageSource: ghost.imageUrl
+    Drag.hotSpot.x: ghost.ready ? ghost.hotX : width / 2
+    Drag.hotSpot.y: ghost.ready ? ghost.hotY : height / 2
 
     Item {
         anchors.fill: parent
@@ -50,6 +57,14 @@ Item {
         HoverHandler {
             id: hover
             cursorShape: mouseDrag.active ? Qt.ClosedHandCursor : Qt.PointingHandCursor
+        }
+
+        Connections {
+            target: tap
+            function onPressedChanged() {
+                if (tap.pressed)
+                    ghost.prepare()
+            }
         }
 
         TapHandler {
