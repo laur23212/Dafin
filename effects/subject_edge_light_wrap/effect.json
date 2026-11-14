@@ -1,0 +1,56 @@
+{
+  "id": "chatgpt.fx.subject-edge-light-wrap",
+  "displayName": "Subject Edge Light Wrap",
+  "category": "dreamy",
+  "description": "Adds subtle background-colored illumination just inside an existing subject matte for believable composites.",
+  "backend": "gpu",
+  "order": 6306,
+  "parameters": [
+    {
+      "identifier": "wrap",
+      "displayName": "Light wrap",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Edit"
+    },
+    {
+      "identifier": "width",
+      "displayName": "Edge width",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.58,
+      "group": "Edit"
+    },
+    {
+      "identifier": "warm",
+      "displayName": "Warm reflected light",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.3,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

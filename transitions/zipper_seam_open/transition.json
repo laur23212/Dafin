@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.tr.zipper-seam-open",
+  "displayName": "Zipper Seam Open",
+  "category": "geometric",
+  "description": "A traveling center zipper parts into an incoming frame through alternating teeth.",
+  "order": 6702,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "teeth",
+      "displayName": "Tooth pitch",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    },
+    {
+      "identifier": "gap",
+      "displayName": "Open width",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

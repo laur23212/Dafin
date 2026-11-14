@@ -1,0 +1,56 @@
+{
+  "id": "chatgpt.fx.depth-near-texture-pop",
+  "displayName": "Depth Near Texture Pop",
+  "category": "restoration",
+  "description": "Restores microcontrast in nearby depth regions while leaving distant, noisy backgrounds gentle.",
+  "backend": "gpu",
+  "order": 6307,
+  "parameters": [
+    {
+      "identifier": "detail",
+      "displayName": "Near detail",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.64,
+      "group": "Edit"
+    },
+    {
+      "identifier": "depthCut",
+      "displayName": "Near distance",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.95,
+      "defaultValue": 0.52,
+      "group": "Edit"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Microcontrast radius",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 1,
+      "defaultValue": 0.71,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

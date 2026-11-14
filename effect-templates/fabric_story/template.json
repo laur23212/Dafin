@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.fabric-story",
+  "displayName": "Linen Story",
+  "category": "look",
+  "order": 6101,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.linen-weave-finish",
+      "params": {
+        "weaveStrength": 0.63,
+        "threadScale": 0.49
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.passing-cloud-shadows",
+      "params": {
+        "strength": 0.17,
+        "scale": 0.53
+      }
+    }
+  ]
+}

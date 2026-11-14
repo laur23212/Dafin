@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.linen-weave-finish",
+  "displayName": "Linen Weave Finish",
+  "category": "retro",
+  "description": "Natural textile weave with crossing fine fibers, distinct from printed halftone, woodcut, or digital pixelation.",
+  "backend": "gpu",
+  "order": 6302,
+  "parameters": [
+    {
+      "identifier": "weaveStrength",
+      "displayName": "Weave strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.52,
+      "group": "Edit"
+    },
+    {
+      "identifier": "threadScale",
+      "displayName": "Thread spacing",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 1,
+      "defaultValue": 0.54,
+      "group": "Edit"
+    },
+    {
+      "identifier": "warmth",
+      "displayName": "Fabric warmth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.37,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

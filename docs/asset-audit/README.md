@@ -185,3 +185,14 @@ Waterline), 12 titles and 6 effect templates.
   `title-fonts/` now has Noto Serif 500 and IBM Plex Mono Medium.
 - Smart effects need a mask or depth map; without one the picture is unchanged.
 - Not tested: the full app, tst_editorstate and tst_engine, Inter 500/800, real masks and depth maps.
+
+## Batch 05 from ChatGPT (14 November 2026)
+
+All 33 assets are in: 8 effects (Horizontal Highlight Streak, Rainy Window Droplets, Linen Weave Finish,
+Passing Cloud Shadows, Graphic Thermal Palette, Six-Frame Contact Sheet, and the smart Subject Edge Light
+Wrap and Depth Near Texture Pop), 6 transitions (Woven Fabric Interlace, Curtain Pleat Pull, Zipper Seam
+Open, Spiral Groove Reveal, Torn Paper Column, Prism Column Flip), 12 titles and 7 effect templates.
+
+- IBM Plex Mono Bold was added to `title-fonts/` for Keyboard Shortcut Hint; the other title fonts come with Essentials.
+- Horizontal Highlight Streak is strong on bright scenes (it works from highlights).
+- Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.

@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.single-clip-proof",
+  "displayName": "Six-Frame Proof",
+  "category": "clone",
+  "order": 6105,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.six-frame-contact-sheet",
+      "params": {
+        "border": 0.63,
+        "zoom": 0.58
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.linen-weave-finish",
+      "params": {
+        "weaveStrength": 0.1
+      }
+    }
+  ]
+}

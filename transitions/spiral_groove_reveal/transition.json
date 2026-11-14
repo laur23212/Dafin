@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.tr.spiral-groove-reveal",
+  "displayName": "Spiral Groove Reveal",
+  "category": "geometric",
+  "description": "A spiraling vinyl-groove threshold rolls the incoming picture outward in a continuous band.",
+  "order": 6703,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "turns",
+      "displayName": "Groove turns",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.53,
+      "group": "Edit"
+    },
+    {
+      "identifier": "soft",
+      "displayName": "Softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.22,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

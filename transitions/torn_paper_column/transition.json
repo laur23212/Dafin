@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.tr.torn-paper-column",
+  "displayName": "Torn Paper Column",
+  "category": "geometric",
+  "description": "A rough hand-torn paper edge travels across the frame with layered fibrous irregularities.",
+  "order": 6705,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "tear",
+      "displayName": "Tear irregularity",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.62,
+      "group": "Edit"
+    },
+    {
+      "identifier": "feather",
+      "displayName": "Paper edge softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.16,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

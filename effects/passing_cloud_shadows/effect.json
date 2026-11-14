@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.passing-cloud-shadows",
+  "displayName": "Passing Cloud Shadows",
+  "category": "dreamy",
+  "description": "Slow uneven cloud shadows drift over footage for outdoor time-passing sequences.",
+  "backend": "gpu",
+  "order": 6303,
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Shade strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.42,
+      "group": "Edit"
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Cloud scale",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Edit"
+    },
+    {
+      "identifier": "speed",
+      "displayName": "Drift speed",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.36,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

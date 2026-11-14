@@ -10692,8 +10692,8 @@ void EngineTest::compositorWipeRightRevealsIncomingClip()
 void EngineTest::transitionCatalogLoadsAllPackages()
 {
     const QStringList ids = transitionPresetIds();
-    // 28 from Drift/Dafin + 22 from the ChatGPT asset handoff (DAFIN.md "Asset library audit").
-    QCOMPARE(ids.size(), 50);
+    // 28 from Drift/Dafin + 28 from the ChatGPT asset handoff (DAFIN.md "Asset library audit").
+    QCOMPARE(ids.size(), 56);
 
     // The nine ids the pre-shader enum serialized must all still resolve.
     for (const char *legacy : {"crossfade", "dip", "dip_white", "wipe_left", "wipe_right",

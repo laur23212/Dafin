@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.moody-clouds",
+  "displayName": "Passing Weather",
+  "category": "cinematic",
+  "order": 6102,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.passing-cloud-shadows",
+      "params": {
+        "strength": 0.6,
+        "speed": 0.47
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.horizontal-highlight-streak",
+      "params": {
+        "mixAmount": 0.23,
+        "threshold": 0.84
+      }
+    }
+  ]
+}

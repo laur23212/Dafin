@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.subject-wrap-finish",
+  "displayName": "Subject Composite Finish",
+  "category": "look",
+  "order": 6106,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.subject-edge-light-wrap",
+      "params": {
+        "wrap": 0.47,
+        "width": 0.41
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.horizontal-highlight-streak",
+      "params": {
+        "mixAmount": 0.19,
+        "threshold": 0.9
+      }
+    }
+  ]
+}

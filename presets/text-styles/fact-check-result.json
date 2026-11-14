@@ -1,0 +1,162 @@
+{
+  "format": 1,
+  "id": "chatgpt.fact-check-result",
+  "label": "Fact Check Result",
+  "description": "An editorial verification verdict for commentary and explainer videos.",
+  "category": "news",
+  "tags": [
+    "news",
+    "dafin-v4",
+    "chatgpt"
+  ],
+  "kind": "title",
+  "sampleText": "VERIFIED",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 700,
+    "pixelSize": 112,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 9,
+        "opacity": 0.45
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#102E32"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F5FCFA"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#102E32",
+    "boxPadding": 21,
+    "boxRadius": 6,
+    "underlineEnabled": true,
+    "underlineColor": "#2EE1B4",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "ease": "easeOut",
+          "unit": "block"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.16,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 34,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textcolor",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color",
+      "group": "Colors"
+    },
+    {
+      "id": "outlinecolor",
+      "label": "Outline color",
+      "type": "color",
+      "bind": "layer.outline.color",
+      "group": "Colors"
+    },
+    {
+      "id": "cardcolor",
+      "label": "Background card",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Colors"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "group": "Layout"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "accent",
+      "label": "Accent rule",
+      "type": "color",
+      "bind": "underline.color",
+      "group": "Colors"
+    }
+  ]
+}

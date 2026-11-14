@@ -1,0 +1,166 @@
+{
+  "format": 1,
+  "id": "chatgpt.travel-gate-marker",
+  "label": "Boarding Gate Marker",
+  "description": "Boarding/gate overlay for travel stories; not a place-name label.",
+  "category": "travel",
+  "tags": [
+    "travel",
+    "dafin-v4",
+    "chatgpt"
+  ],
+  "kind": "lower-third",
+  "sampleText": "GATE B12",
+  "requires": {
+    "fonts": [
+      "Oswald"
+    ]
+  },
+  "style": {
+    "fontFamily": "Oswald",
+    "fontWeight": 700,
+    "pixelSize": 113,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 9,
+        "opacity": 0.45
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#203C58"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FDFFFB"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#203C58",
+    "boxPadding": 17,
+    "boxRadius": 6,
+    "underlineEnabled": false,
+    "underlineColor": "#FFE17D",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "ease": "easeOut",
+          "unit": "block"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.16,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 34,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textcolor",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color",
+      "group": "Colors"
+    },
+    {
+      "id": "outlinecolor",
+      "label": "Outline color",
+      "type": "color",
+      "bind": "layer.outline.color",
+      "group": "Colors"
+    },
+    {
+      "id": "cardcolor",
+      "label": "Background card",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Colors"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "group": "Layout"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "radius",
+      "label": "Card corners",
+      "type": "scalar",
+      "bind": "box.radius",
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "group": "Layout"
+    }
+  ]
+}

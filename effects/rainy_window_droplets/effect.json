@@ -1,0 +1,64 @@
+{
+  "id": "chatgpt.fx.rainy-window-droplets",
+  "displayName": "Rainy Window Droplets",
+  "category": "dreamy",
+  "description": "Optical rain beads distort the video beneath them, suggesting a pane of glass rather than applying a global ripple.",
+  "backend": "gpu",
+  "order": 6301,
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Droplet density",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.59,
+      "group": "Edit"
+    },
+    {
+      "identifier": "lens",
+      "displayName": "Refraction",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.78,
+      "group": "Edit"
+    },
+    {
+      "identifier": "contrast",
+      "displayName": "Droplet visibility",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.64,
+      "group": "Edit"
+    },
+    {
+      "identifier": "drift",
+      "displayName": "Slow vertical drift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.29,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

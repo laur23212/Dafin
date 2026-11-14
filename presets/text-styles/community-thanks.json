@@ -1,0 +1,162 @@
+{
+  "format": 1,
+  "id": "chatgpt.community-thanks",
+  "label": "Community Thank-You",
+  "description": "Volunteer recognition card for community and charity videos.",
+  "category": "charity",
+  "tags": [
+    "charity",
+    "dafin-v4",
+    "chatgpt"
+  ],
+  "kind": "title",
+  "sampleText": "THANK YOU, VOLUNTEERS",
+  "requires": {
+    "fonts": [
+      "Outfit"
+    ]
+  },
+  "style": {
+    "fontFamily": "Outfit",
+    "fontWeight": 700,
+    "pixelSize": 88,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 9,
+        "opacity": 0.45
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#234A45"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#234A45",
+    "boxPadding": 21,
+    "boxRadius": 6,
+    "underlineEnabled": true,
+    "underlineColor": "#F1CC83",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "ease": "easeOut",
+          "unit": "block"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.16,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 34,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textcolor",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color",
+      "group": "Colors"
+    },
+    {
+      "id": "outlinecolor",
+      "label": "Outline color",
+      "type": "color",
+      "bind": "layer.outline.color",
+      "group": "Colors"
+    },
+    {
+      "id": "cardcolor",
+      "label": "Background card",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Colors"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "group": "Layout"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "accent",
+      "label": "Accent rule",
+      "type": "color",
+      "bind": "underline.color",
+      "group": "Colors"
+    }
+  ]
+}

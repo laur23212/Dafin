@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.thermal-graphics",
+  "displayName": "Thermal Illustration",
+  "category": "look",
+  "order": 6103,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.graphic-thermal-palette",
+      "params": {
+        "amount": 0.94,
+        "contrast": 0.57
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.linen-weave-finish",
+      "params": {
+        "weaveStrength": 0.11
+      }
+    }
+  ]
+}

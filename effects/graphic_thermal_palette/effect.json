@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.graphic-thermal-palette",
+  "displayName": "Graphic Thermal Palette",
+  "category": "color",
+  "description": "Stylized temperature-map colors based on image brightness only, not a real infrared sensor.",
+  "backend": "gpu",
+  "order": 6304,
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Graphic color amount",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.86,
+      "group": "Edit"
+    },
+    {
+      "identifier": "contrast",
+      "displayName": "Heat-map separation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.52,
+      "group": "Edit"
+    },
+    {
+      "identifier": "smoothness",
+      "displayName": "Band smoothing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.59,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

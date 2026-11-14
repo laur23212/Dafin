@@ -1,0 +1,62 @@
+{
+  "id": "chatgpt.fx.horizontal-highlight-streak",
+  "displayName": "Horizontal Highlight Streak",
+  "category": "dreamy",
+  "description": "Stretches only bright source details into cinematic horizontal lens streaks, without a fake fixed flare.",
+  "backend": "gpu",
+  "order": 6300,
+  "parameters": [
+    {
+      "identifier": "reach",
+      "displayName": "Streak reach",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Edit"
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Highlight threshold",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 0.98,
+      "defaultValue": 0.54,
+      "group": "Edit"
+    },
+    {
+      "identifier": "mixAmount",
+      "displayName": "Lens streak intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.68,
+      "group": "Edit"
+    },
+    {
+      "identifier": "tint",
+      "displayName": "Glass tint",
+      "type": "color",
+      "defaultValue": "#79C5D5",
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

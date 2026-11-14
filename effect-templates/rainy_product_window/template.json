@@ -1,0 +1,25 @@
+{
+  "id": "chatgpt.stack.rainy-product-window",
+  "displayName": "Rainy Product Window",
+  "category": "cinematic",
+  "order": 6100,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.rainy-window-droplets",
+      "params": {
+        "density": 0.58,
+        "lens": 0.72,
+        "contrast": 0.7
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.horizontal-highlight-streak",
+      "params": {
+        "reach": 0.48,
+        "threshold": 0.77,
+        "mixAmount": 0.32
+      }
+    }
+  ]
+}

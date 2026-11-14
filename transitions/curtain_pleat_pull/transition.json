@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.tr.curtain-pleat-pull",
+  "displayName": "Curtain Pleat Pull",
+  "category": "cinematic",
+  "description": "Outgoing scene is drawn aside like softly folded fabric, with shading on moving pleats.",
+  "order": 6701,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "pleats",
+      "displayName": "Pleat frequency",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    },
+    {
+      "identifier": "shade",
+      "displayName": "Fabric shading",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.62,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}

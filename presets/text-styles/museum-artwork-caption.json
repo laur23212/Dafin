@@ -1,0 +1,163 @@
+{
+  "format": 1,
+  "id": "chatgpt.museum-artwork-caption",
+  "label": "Museum Artwork Caption",
+  "description": "Museum/artwork metadata label with a restrained gallery look.",
+  "category": "documentary",
+  "tags": [
+    "documentary",
+    "dafin-v4",
+    "chatgpt"
+  ],
+  "kind": "lower-third",
+  "sampleText": "OIL ON CANVAS · 1887",
+  "requires": {
+    "fonts": [
+      "Playfair Display"
+    ]
+  },
+  "style": {
+    "fontFamily": "Playfair Display",
+    "fontWeight": 700,
+    "pixelSize": 81,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 9,
+        "opacity": 0.45
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#2D2924"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F8F3E9"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#2D2924",
+    "boxPadding": 17,
+    "boxRadius": 6,
+    "underlineEnabled": true,
+    "underlineColor": "#CBA76A",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "slide-up",
+        "params": {
+          "duration": 0.14,
+          "ease": "easeOut",
+          "unit": "block",
+          "distance": 0.15
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.16,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 34,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textcolor",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color",
+      "group": "Colors"
+    },
+    {
+      "id": "outlinecolor",
+      "label": "Outline color",
+      "type": "color",
+      "bind": "layer.outline.color",
+      "group": "Colors"
+    },
+    {
+      "id": "cardcolor",
+      "label": "Background card",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Colors"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "group": "Layout"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "accent",
+      "label": "Accent rule",
+      "type": "color",
+      "bind": "underline.color",
+      "group": "Colors"
+    }
+  ]
+}

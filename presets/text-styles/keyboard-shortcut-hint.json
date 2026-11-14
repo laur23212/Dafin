@@ -1,0 +1,162 @@
+{
+  "format": 1,
+  "id": "chatgpt.keyboard-shortcut-hint",
+  "label": "Keyboard Shortcut Hint",
+  "description": "Keyboard shortcut callout for software tutorials and screen recordings.",
+  "category": "education",
+  "tags": [
+    "education",
+    "dafin-v4",
+    "chatgpt"
+  ],
+  "kind": "lower-third",
+  "sampleText": "CTRL + SHIFT + S",
+  "requires": {
+    "fonts": [
+      "IBM Plex Mono"
+    ]
+  },
+  "style": {
+    "fontFamily": "IBM Plex Mono",
+    "fontWeight": 700,
+    "pixelSize": 82,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 9,
+        "opacity": 0.45
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#162D48"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#ECF8FE"
+        }
+      }
+    ],
+    "boxEnabled": true,
+    "boxColor": "#162D48",
+    "boxPadding": 17,
+    "boxRadius": 6,
+    "underlineEnabled": true,
+    "underlineColor": "#5EE0F3",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "ease": "easeOut",
+          "unit": "block"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.16,
+          "ease": "easeIn",
+          "unit": "block"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 180
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Displayed text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 34,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "textcolor",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color",
+      "group": "Colors"
+    },
+    {
+      "id": "outlinecolor",
+      "label": "Outline color",
+      "type": "color",
+      "bind": "layer.outline.color",
+      "group": "Colors"
+    },
+    {
+      "id": "cardcolor",
+      "label": "Background card",
+      "type": "color",
+      "bind": "box.color",
+      "group": "Colors"
+    },
+    {
+      "id": "padding",
+      "label": "Card padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "group": "Layout"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s",
+      "group": "Motion"
+    },
+    {
+      "id": "accent",
+      "label": "Accent rule",
+      "type": "color",
+      "bind": "underline.color",
+      "group": "Colors"
+    }
+  ]
+}

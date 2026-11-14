@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.close-detail-finish",
+  "displayName": "Near Detail Documentary",
+  "category": "cinematic",
+  "order": 6107,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.depth-near-texture-pop",
+      "params": {
+        "detail": 0.46,
+        "depthCut": 0.5
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.passing-cloud-shadows",
+      "params": {
+        "strength": 0.1
+      }
+    }
+  ]
+}

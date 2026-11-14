@@ -19,6 +19,11 @@
       "file": "IBMPlexMono-SemiBold.ttf",
       "weight": 600,
       "styleName": "SemiBold"
+    },
+    {
+      "file": "IBMPlexMono-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
     }
   ]
 }
