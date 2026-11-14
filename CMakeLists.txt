@@ -919,6 +919,8 @@ add_library(driftengine STATIC
     src/engine/EngineTuning.h
     src/engine/gpu/GlRuntime.h
     src/engine/gpu/GlRuntime.cpp
+    src/engine/gpu/PresentClaims.h
+    src/engine/gpu/PresentClaims.cpp
     src/engine/gpu/device/GpuStatus.h
     src/engine/gpu/device/GpuStatus.cpp
     src/engine/decode/hw/VaapiZeroCopy.h
@@ -1226,6 +1228,8 @@ qt_add_executable(drift
     src/app/editor/LayoutStore.cpp
     src/app/editor/WorkspaceStore.h
     src/app/editor/WorkspaceStore.cpp
+    src/app/editor/TutorialContent.h
+    src/app/editor/TutorialContent.cpp
     src/app/editor/SearchIndex.h
     src/app/editor/SearchIndex.cpp
     src/app/platform/FileDialogs.h
@@ -1381,6 +1385,8 @@ target_sources(driftapp PRIVATE
     src/app/platform/DiagnosticsLog.cpp
     src/app/editor/ProjectSafety.h
     src/app/editor/ProjectSafety.cpp
+    src/app/editor/ProjectScanner.h
+    src/app/editor/ProjectScanner.cpp
     src/app/bin/AssetPreviewController.h
     src/app/bin/AssetPreviewController.cpp
     src/app/editor/sessions/SpeedCurveController.h
@@ -1956,6 +1962,7 @@ qt_add_qml_module(drift
         src/qml/MediaPreviewWindow.qml
         src/qml/PropertiesPanel.qml
         src/qml/components/properties/GeneralInspector.qml
+        src/qml/components/properties/AdvancedTextEditDialog.qml
         src/qml/components/properties/TextInspector.qml
         src/qml/components/properties/TextParamSlots.qml
         src/qml/components/properties/PaintEditor.qml
@@ -2726,6 +2733,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/StartScreenTitle.qml
         src/qml/components/shell/StartScreenRecents.qml
         src/qml/components/shell/StartScreenProjectRow.qml
+        src/qml/components/shell/StartScreenProjectCard.qml
         src/qml/components/shell/StartScreenActions.qml
         src/qml/components/shell/SettingsAboutPage.qml
         src/qml/components/shell/SettingsUpdatesPage.qml
@@ -2757,6 +2765,7 @@ qt_add_qml_module(drift
         src/qml/components/quicksetup/QuickSetupAddonsPage.qml
         src/qml/components/quicksetup/QuickSetupAddonRow.qml
         src/qml/components/quicksetup/QuickSetupTipsPage.qml
+        src/qml/components/quicksetup/QuickSetupPlansPage.qml
         src/qml/components/quicksetup/QuickSetupCommunityPage.qml
         src/qml/components/quicksetup/QuickSetupMockEditor.qml
         src/qml/components/quicksetup/QuickSetupTipArt.qml
