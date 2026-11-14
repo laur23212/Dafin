@@ -1,0 +1,25 @@
+{
+  "id": "chatgpt.stack.summer-light-banner",
+  "displayName": "Summer Light Banner",
+  "category": "cinematic",
+  "order": 13012,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.subsurface-warm-bounce",
+      "params": {
+        "strength": 0.67,
+        "falloff": 0.62,
+        "bias": 0.55
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.caption-contrast-ramp",
+      "params": {
+        "strength": 0.72,
+        "height": 0.31,
+        "softness": 0.52
+      }
+    }
+  ]
+}

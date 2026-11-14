@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.pastel-photo-page",
+  "displayName": "Pastel Photo Page",
+  "category": "look",
+  "order": 13001,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.peach-cream-editorial",
+      "params": {
+        "strength": 0.85,
+        "pastel": 0.72
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.magazine-white-border",
+      "params": {
+        "width": 0.075,
+        "cream": 0.62,
+        "shadow": 0.35
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.noir-violet-editorial",
+  "displayName": "Noir Violet Editorial",
+  "category": "drama",
+  "order": 13010,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.aubergine-silver-noir",
+      "params": {
+        "strength": 0.88,
+        "metal": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.glass-bevel-border",
+      "params": {
+        "strength": 0.71,
+        "width": 0.073
+      }
+    }
+  ]
+}

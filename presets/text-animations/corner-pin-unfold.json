@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.corner-pin-unfold",
+  "label": "Corner Pin Unfold",
+  "category": "kinetic",
+  "sampleText": "READY NOW",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 12003,
+  "defaults": {
+    "unit": "block",
+    "stagger": 0,
+    "duration": 0.1,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.14,
+          "y": -0.11,
+          "unit": "box"
+        },
+        "scale": 86,
+        "rotation": 6,
+        "opacity": 0
+      }
+    }
+  ]
+}

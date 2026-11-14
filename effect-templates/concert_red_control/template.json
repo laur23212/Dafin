@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.concert-red-control",
+  "displayName": "Concert Red Control",
+  "category": "cinematic",
+  "order": 13013,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.red-channel-tone-recovery",
+      "params": {
+        "strength": 0.82,
+        "softStart": 0.48
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.deep-ruby-concert",
+      "params": {
+        "strength": 0.78,
+        "punch": 0.69
+      }
+    }
+  ]
+}

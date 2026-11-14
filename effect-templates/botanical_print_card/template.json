@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.botanical-print-card",
+  "displayName": "Botanical Print Card",
+  "category": "look",
+  "order": 13006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.warm-celadon-travel",
+      "params": {
+        "strength": 0.82,
+        "leafBalance": 0.66
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.worn-blue-silkscreen",
+      "params": {
+        "strength": 0.8,
+        "wear": 0.45
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.film-cell-sprocket-roll",
+  "displayName": "Film Cell Sprocket Roll",
+  "category": "cinematic",
+  "description": "The outgoing frame flows through tiny sprocket-like cells as B replaces it from bottom to top.",
+  "order": 11126,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "holes",
+      "displayName": "Perforation count",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.49
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Cell softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.4,
+      "defaultValue": 0.09
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

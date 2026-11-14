@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.particle-chess-clock",
+  "displayName": "Particle Chess Clock",
+  "category": "glitch",
+  "description": "Tiny fixed noise cells flip in alternating clock-like arcs rather than dissolving uniformly.",
+  "order": 11130,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Particle count",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.57
+    },
+    {
+      "identifier": "rotation",
+      "displayName": "Order angle",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.48
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

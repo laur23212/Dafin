@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.blue-hour-caption",
+  "displayName": "Blue Hour Caption",
+  "category": "cinematic",
+  "order": 13000,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.granite-blue-hour",
+      "params": {
+        "strength": 0.83,
+        "dusk": 0.62
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.caption-contrast-ramp",
+      "params": {
+        "strength": 0.72,
+        "height": 0.31,
+        "softness": 0.52
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.museum-slide-lighttable",
+  "displayName": "Museum Light Table",
+  "category": "retro",
+  "description": "Illuminated archival glass-slide aesthetic with luminous margins and gentle center toning.",
+  "order": 10135,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Light table",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.71
+    },
+    {
+      "identifier": "margin",
+      "displayName": "Slide margin",
+      "type": "float",
+      "minValue": 0.025,
+      "maxValue": 0.17,
+      "defaultValue": 0.07
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

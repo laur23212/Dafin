@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.caption-contrast-ramp",
+  "displayName": "Caption Contrast Ramp",
+  "category": "color",
+  "description": "A feathered lower-screen luminance reduction to improve subtitle legibility while leaving faces higher in frame unchanged.",
+  "order": 10118,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Bottom darkening",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    },
+    {
+      "identifier": "height",
+      "displayName": "Coverage",
+      "type": "float",
+      "minValue": 0.12,
+      "maxValue": 0.65,
+      "defaultValue": 0.31
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Feather",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.85,
+      "defaultValue": 0.52
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.mineral-poster-cut",
+  "displayName": "Mineral Poster Cut",
+  "category": "chaos",
+  "order": 13024,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.pastel-mono-poster",
+      "params": {
+        "strength": 0.84,
+        "threshold": 0.48
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.chiseled-concrete-corners",
+      "params": {
+        "strength": 0.72,
+        "grain": 0.52
+      }
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "id": "chatgpt.fx.masked-background-paper-halves",
+  "displayName": "Cutout Paper Halves",
+  "category": "retro",
+  "description": "Split the masked background into two contrasting editorial paper inks while retaining natural subject pixels.",
+  "order": 10161,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Paper effect",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    },
+    {
+      "identifier": "split",
+      "displayName": "Paper division",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "defaultValue": 0.52
+    },
+    {
+      "identifier": "leftInk",
+      "displayName": "Left paper",
+      "type": "color",
+      "defaultValue": "#d8cab6"
+    },
+    {
+      "identifier": "rightInk",
+      "displayName": "Right paper",
+      "type": "color",
+      "defaultValue": "#b7d4c7"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

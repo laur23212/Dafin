@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.dim-jewelry-counter",
+  "displayName": "Dim Jewelry Counter",
+  "category": "look",
+  "order": 13023,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.bronze-flashback",
+      "params": {
+        "strength": 0.9,
+        "patina": 0.46
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.liquid-chrome-edges",
+      "params": {
+        "strength": 0.78,
+        "edgeWidth": 0.45
+      }
+    }
+  ]
+}

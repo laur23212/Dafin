@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.paper-photo-corners",
+  "displayName": "Paper Photo Corners",
+  "category": "retro",
+  "description": "Four subtly folded paper corners frame a shot for a scrapbook or photo-archive visual without simulated film dirt.",
+  "order": 10121,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "foldSize",
+      "displayName": "Fold size",
+      "type": "float",
+      "minValue": 0.035,
+      "maxValue": 0.2,
+      "defaultValue": 0.16
+    },
+    {
+      "identifier": "ink",
+      "displayName": "Paper shade",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.86
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

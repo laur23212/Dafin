@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.studio-softbox-pan",
+  "displayName": "Studio Softbox Pan",
+  "category": "cinematic",
+  "description": "A sharply shaped rectangular patch of studio illumination guides the transition across the footage.",
+  "order": 11119,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "width",
+      "displayName": "Softbox width",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.57
+    },
+    {
+      "identifier": "angle",
+      "displayName": "Softbox slant",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.53
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.burnished-ink-emboss",
+  "displayName": "Burnished Ink Emboss",
+  "category": "retro",
+  "description": "Raised debossed ink impression derived from diagonal luminance gradients, emphasizing letter-like edges.",
+  "order": 10134,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Imprint depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8
+    },
+    {
+      "identifier": "size",
+      "displayName": "Relief scale",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.47
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

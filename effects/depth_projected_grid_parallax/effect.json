@@ -1,0 +1,45 @@
+{
+  "id": "chatgpt.fx.depth-projected-grid-parallax",
+  "displayName": "Depth Projected Lattice",
+  "category": "depth",
+  "description": "A depth-following projected lattice which twists around nearby forms, for futuristic tech cutaways.",
+  "order": 10162,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Grid opacity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.77
+    },
+    {
+      "identifier": "density",
+      "displayName": "Grid cells",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.5
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

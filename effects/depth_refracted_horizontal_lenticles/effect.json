@@ -1,0 +1,45 @@
+{
+  "id": "chatgpt.fx.depth-refracted-horizontal-lenticles",
+  "displayName": "Depth Refracted Lenticles",
+  "category": "depth",
+  "description": "Lenticular horizontal lens strips shift foreground and background by different image-space offsets.",
+  "order": 10168,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Depth refraction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    },
+    {
+      "identifier": "count",
+      "displayName": "Lenticule density",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.46
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

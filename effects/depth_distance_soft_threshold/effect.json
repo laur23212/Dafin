@@ -1,0 +1,45 @@
+{
+  "id": "chatgpt.fx.depth-distance-soft-threshold",
+  "displayName": "Depth Distance Poster Threshold",
+  "category": "depth",
+  "description": "Sharpens the distinction between near and distant forms using two contrasting photographic exposure curves.",
+  "order": 10165,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Distance contrast",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.74
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Plane division",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 0.85,
+      "defaultValue": 0.52
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

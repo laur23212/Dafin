@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.microbubble-cluster-reveal",
+  "displayName": "Microbubble Cluster Reveal",
+  "category": "liquid",
+  "description": "A stable scatter of expanding small circular windows gradually joins to replace the entire image.",
+  "order": 11115,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "bubbles",
+      "displayName": "Bubble spacing",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Circular edge",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.4,
+      "defaultValue": 0.09
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

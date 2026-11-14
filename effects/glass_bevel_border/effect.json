@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.glass-bevel-border",
+  "displayName": "Glass Bevel Border",
+  "category": "dreamy",
+  "description": "Photographic inset surrounded by a beveled translucent frame, for product stories and social end cards.",
+  "order": 10152,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Bevel",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.71
+    },
+    {
+      "identifier": "width",
+      "displayName": "Frame width",
+      "type": "float",
+      "minValue": 0.015,
+      "maxValue": 0.2,
+      "defaultValue": 0.073
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

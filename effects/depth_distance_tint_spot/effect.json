@@ -1,0 +1,62 @@
+{
+  "id": "chatgpt.fx.depth-distance-tint-spot",
+  "displayName": "Depth Amber Stage Pocket",
+  "category": "depth",
+  "description": "Localized amber light is restricted to near depth zones while the far layer remains cool.",
+  "order": 10166,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Near amber light",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.73
+    },
+    {
+      "identifier": "depthStart",
+      "displayName": "Front distance",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "defaultValue": 0.58
+    },
+    {
+      "identifier": "light",
+      "displayName": "Light position",
+      "type": "point",
+      "minValue": [
+        0.0,
+        0.0
+      ],
+      "maxValue": [
+        1.0,
+        1.0
+      ],
+      "defaultValue": [
+        0.72,
+        0.4
+      ]
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

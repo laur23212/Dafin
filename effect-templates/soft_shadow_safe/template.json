@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.soft-shadow-safe",
+  "displayName": "Soft Shadow Safe",
+  "category": "cinematic",
+  "order": 13016,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.shadow-luma-veil",
+      "params": {
+        "strength": 0.82,
+        "shadowEnd": 0.38
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.caption-contrast-ramp",
+      "params": {
+        "strength": 0.72,
+        "height": 0.31,
+        "softness": 0.52
+      }
+    }
+  ]
+}

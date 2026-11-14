@@ -1,0 +1,61 @@
+{
+  "id": "chatgpt.fx.soft-product-pool-shadow",
+  "displayName": "Product Pool Shadow",
+  "category": "dreamy",
+  "description": "A soft oval pool of light from a tabletop product spotlight, with darker corners and controllable center.",
+  "order": 10122,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Spot strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "spread",
+      "displayName": "Light spread",
+      "type": "float",
+      "minValue": 0.12,
+      "maxValue": 1,
+      "defaultValue": 0.64
+    },
+    {
+      "identifier": "center",
+      "displayName": "Pool center",
+      "type": "point",
+      "minValue": [
+        0.0,
+        0.0
+      ],
+      "maxValue": [
+        1.0,
+        1.0
+      ],
+      "defaultValue": [
+        0.51,
+        0.52
+      ]
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

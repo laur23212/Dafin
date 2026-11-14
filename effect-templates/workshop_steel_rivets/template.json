@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.workshop-steel-rivets",
+  "displayName": "Workshop Steel Rivets",
+  "category": "look",
+  "order": 13003,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.liquid-chrome-edges",
+      "params": {
+        "strength": 0.78,
+        "edgeWidth": 0.45
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.metal-punched-rivets",
+      "params": {
+        "strength": 0.71,
+        "spacing": 0.48
+      }
+    }
+  ]
+}

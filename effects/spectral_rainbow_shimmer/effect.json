@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.spectral-rainbow-shimmer",
+  "displayName": "Spectral Ribbon Shimmer",
+  "category": "dreamy",
+  "description": "A narrow moving interference ribbon crossing the image, used as an editorial accent rather than image warping.",
+  "order": 10150,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Shimmer",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65
+    },
+    {
+      "identifier": "speed",
+      "displayName": "Movement",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.47
+    },
+    {
+      "identifier": "width",
+      "displayName": "Ribbon width",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.33
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.vintage-wax-seal-tint",
+  "displayName": "Wax Seal Contrast",
+  "category": "retro",
+  "description": "Deep lacquered oxblood and gold contrast applied by original image luminance, for bookish editorial inserts.",
+  "order": 10138,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Wax look",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.79
+    },
+    {
+      "identifier": "gold",
+      "displayName": "Gold highlight",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

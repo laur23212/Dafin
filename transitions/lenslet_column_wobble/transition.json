@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.lenslet-column-wobble",
+  "displayName": "Lenslet Column Wobble",
+  "category": "liquid",
+  "description": "Narrow vertical lenticular columns refract between shots at different offsets before settling into B.",
+  "order": 11112,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "columns",
+      "displayName": "Lenslet count",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.52
+    },
+    {
+      "identifier": "distortion",
+      "displayName": "Lens bending",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.56
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

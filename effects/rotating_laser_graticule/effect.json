@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.rotating-laser-graticule",
+  "displayName": "Rotating Light Graticule",
+  "category": "impact",
+  "description": "Thin animated light arcs crossing the footage for sci-fi screen reveals rather than an editor-only diagnostic grid.",
+  "order": 10143,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Light intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7
+    },
+    {
+      "identifier": "rate",
+      "displayName": "Rotation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55
+    },
+    {
+      "identifier": "density",
+      "displayName": "Arc density",
+      "type": "float",
+      "minValue": 0.08,
+      "maxValue": 1,
+      "defaultValue": 0.5
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

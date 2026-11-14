@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.magazine-gloss-product",
+  "displayName": "Magazine Gloss Product",
+  "category": "look",
+  "order": 13004,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.soft-product-pool-shadow",
+      "params": {
+        "strength": 0.78,
+        "spread": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.glass-bevel-border",
+      "params": {
+        "strength": 0.71,
+        "width": 0.073
+      }
+    }
+  ]
+}

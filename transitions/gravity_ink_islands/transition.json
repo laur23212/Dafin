@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.gravity-ink-islands",
+  "displayName": "Gravity Ink Islands",
+  "category": "liquid",
+  "description": "Irregular ink islands descend in layers before meeting into the new scene; no live random state.",
+  "order": 11113,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "islands",
+      "displayName": "Island density",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    },
+    {
+      "identifier": "feather",
+      "displayName": "Fluid feather",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.3,
+      "defaultValue": 0.11
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.pocket-fold-rise",
+  "label": "Pocket Fold Rise",
+  "category": "kinetic",
+  "sampleText": "READY NOW",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 12005,
+  "defaults": {
+    "unit": "word",
+    "stagger": 0,
+    "duration": 0.08,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 72,
+        "position": {
+          "x": 0,
+          "y": 0.23,
+          "unit": "box"
+        },
+        "rotation": -8,
+        "opacity": 0
+      }
+    }
+  ]
+}

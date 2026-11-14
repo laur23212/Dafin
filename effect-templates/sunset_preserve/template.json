@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.sunset-preserve",
+  "displayName": "Sunset Preserve",
+  "category": "look",
+  "order": 13015,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.selective-orange-sky-control",
+      "params": {
+        "strength": 0.72,
+        "ceiling": 0.72
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.warm-celadon-travel",
+      "params": {
+        "strength": 0.82,
+        "leafBalance": 0.66
+      }
+    }
+  ]
+}

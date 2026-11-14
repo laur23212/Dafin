@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.curved-media-sleeve",
+  "displayName": "Curved Media Sleeve",
+  "category": "cinematic",
+  "description": "A curved photo-sleeve band slides to the side while the next shot is revealed inside its gutter.",
+  "order": 11109,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "curl",
+      "displayName": "Sleeve curl",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65
+    },
+    {
+      "identifier": "shadow",
+      "displayName": "Crease depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.36
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "chatgpt.fx.masked-background-checker-glass",
+  "displayName": "Subject-Safe Checker Glass",
+  "category": "dreamy",
+  "description": "Turn the region outside a provided subject mask into refractive checker glass while preserving the subject.",
+  "order": 10154,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Glass strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "tileSize",
+      "displayName": "Lens tile size",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

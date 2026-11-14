@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.oblique-polaroid-flick",
+  "displayName": "Oblique Polaroid Flick",
+  "category": "cinematic",
+  "description": "The outgoing image rotates and slips away like a printed instant photo without covering the destination with black.",
+  "order": 11111,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "rotation",
+      "displayName": "Flick angle",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.51
+    },
+    {
+      "identifier": "slide",
+      "displayName": "Card slide",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.63
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

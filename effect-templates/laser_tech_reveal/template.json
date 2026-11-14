@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.laser-tech-reveal",
+  "displayName": "Laser Tech Reveal",
+  "category": "hype",
+  "order": 13019,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.rotating-laser-graticule",
+      "params": {
+        "strength": 0.7,
+        "rate": 0.55,
+        "density": 0.5
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.spliced-color-channels",
+      "params": {
+        "strength": 0.75,
+        "scale": 0.48
+      }
+    }
+  ]
+}

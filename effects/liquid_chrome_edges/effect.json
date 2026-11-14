@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.liquid-chrome-edges",
+  "displayName": "Liquid Chrome Edge Glass",
+  "category": "dreamy",
+  "description": "A wet metallic contour sheen driven by local contrast rather than a fake full-screen mirror.",
+  "order": 10141,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Chrome sheen",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78
+    },
+    {
+      "identifier": "edgeWidth",
+      "displayName": "Edge width",
+      "type": "float",
+      "minValue": 0.08,
+      "maxValue": 1,
+      "defaultValue": 0.45
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

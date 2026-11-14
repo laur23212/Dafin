@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.rose-quartz-fashion",
+  "displayName": "Rose Quartz Fashion",
+  "category": "look",
+  "order": 13009,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.peach-cream-editorial",
+      "params": {
+        "strength": 0.85,
+        "pastel": 0.72
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.glass-bevel-border",
+      "params": {
+        "strength": 0.71,
+        "width": 0.073
+      }
+    }
+  ]
+}

@@ -382,6 +382,21 @@ set(DAFIN_HANDOFF_EFFECTS
     old_film_vertical_scratches radial_focus shadow_chroma_clean shadow_selective_lift
     skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
     subject_pop_muted_surroundings subject_shaped_spotlight
+    aubergine_silver_noir broad_analog_color_bands bronze_flashback burnished_ink_emboss
+    caption_contrast_ramp chiseled_concrete_corners colored_shadow_tiles cool_neon_mist
+    cyan_snow_repair deep_ruby_concert depth_distance_soft_threshold depth_distance_tint_spot
+    depth_distant_monochrome_curtain depth_pastel_planes depth_projected_grid_parallax depth_refracted_horizontal_lenticles
+    depth_tilted_focal_color documentary_black_frame dusty_glass_edges glass_bevel_border
+    granite_blue_hour lime_tint_neutralizer linear_moonlight_reflection liquid_chrome_edges
+    magazine_white_border masked_background_checker_glass masked_background_directional_streak masked_background_paper_halves
+    masked_background_two_plate masked_outer_hatching masked_subject_chromatic_stencil masked_subject_engraved_halo
+    masked_subject_paper_stencil metal_punched_rivets midnight_amber_windows mint_concrete_commercial
+    museum_slide_lighttable opal_skin_neutral paper_photo_corners pastel_mono_poster
+    peach_cream_editorial polygon_stencil_overprint poster_ink_bands red_channel_tone_recovery
+    rotating_laser_graticule saturated_purple_highlight_limiter selective_orange_sky_control shadow_luma_veil
+    shadowy_architecture_silhouette silhouette_sunburst_poster soft_product_pool_shadow spectral_rainbow_shimmer
+    spliced_color_channels stormy_olive_matte subsurface_warm_bounce tilted_hard_light_panels
+    vintage_wax_seal_tint warm_celadon_travel window_reflective_veil worn_blue_silkscreen
     acrylic_palette_knife amber_red_highlight_limit anodized_carbon_pattern anodized_titanium_film
     blue_pool_color_rescue brass_plate_etching ceramic_speckle_glaze chalk_pastel_dust
     charcoal_wipe_sketch corrugated_plastic_sheet crushed_chroma_repair crushed_velour_fabric
@@ -449,7 +464,15 @@ set(DAFIN_HANDOFF_TRANSITIONS
     porcelain_chip_scatter postcard_postmark projection_reel_cog punch_card_perforation
     rainbow_arc_seconds sand_dune_tide snaking_lens_ribbon solar_halo_ring
     stained_window_lead_pull ticker_roll_index typebar_shutter_rows venetian_shadow_clock
-    water_wick_marbling zigzag_construction_joint)
+    water_wick_marbling zigzag_construction_joint
+    cinema_mat_unroll cinema_slate_bar_slide concentric_picture_frames copper_light_slit
+    corridor_invert_slide curved_media_sleeve curved_prism_focus_handoff elliptic_orbit_handoff
+    film_cell_sprocket_roll graphic_ribbon_corner_stagger gravity_ink_islands ink_stamp_checkpoints
+    leaf_vein_lift lenslet_column_wobble lightbox_sweep_matrix liquid_surface_sheen_reveal
+    marbled_pool_distortion microbubble_cluster_reveal noir_shadow_pleats oblique_polaroid_flick
+    parallax_letterbox_slice particle_chess_clock perforated_ruler_run perspective_corner_kite
+    raindrop_lens_chain slanted_acrylic_sheets split_perspective_rails staggered_vertical_photo_cards
+    studio_softbox_pan wet_ink_spoke_wheel)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
@@ -473,7 +496,14 @@ set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
     diopter_macro distance_light_volume document_graphite indoor_fluorescent_neutral
     leather_history mica_cosmetic_reel near_material_texture paper_subject_reveal
     print_riso_label refraction_walkby stage_background_sweep stage_violet_skin
-    stoneware_maker streetlamp_color_recovery underwater_archive)
+    stoneware_maker streetlamp_color_recovery underwater_archive
+    blue_hour_caption botanical_print_card calm_ocean_page concert_ambient_spotlight
+    concert_red_control dim_jewelry_counter editorial_graphic_burst galvanized_archive
+    laser_tech_reveal magazine_gloss_product mineral_poster_cut night_window_glow
+    noir_violet_editorial paper_keepsake pastel_photo_page printout_ink_bands
+    rose_quartz_fashion snow_day_neutral soft_shadow_safe stargazer_intro
+    studio_window_product summer_light_banner sunset_preserve vintage_photo_slide
+    workshop_steel_rivets)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

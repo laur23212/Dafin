@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.counterspin-number",
+  "label": "Counterspin Number",
+  "category": "kinetic",
+  "sampleText": "READY NOW",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 12012,
+  "defaults": {
+    "unit": "block",
+    "stagger": 0,
+    "duration": 0.1,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 82,
+        "rotation": 22,
+        "position": {
+          "x": 0.09,
+          "y": 0,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.window-reflective-veil",
+  "displayName": "Window Reflective Veil",
+  "category": "dreamy",
+  "description": "Layered faint reflected bands across glass-shopfront footage, without duplicating the scene or hiding faces.",
+  "order": 10123,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "opacity",
+      "displayName": "Reflection opacity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    },
+    {
+      "identifier": "tilt",
+      "displayName": "Reflection tilt",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.24
+    },
+    {
+      "identifier": "width",
+      "displayName": "Glass streak width",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.43
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

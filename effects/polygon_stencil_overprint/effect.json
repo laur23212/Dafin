@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.polygon-stencil-overprint",
+  "displayName": "Polygon Stencil Overprint",
+  "category": "retro",
+  "description": "Overlapping angular print stencils reveal complementary transparent color blocks over footage.",
+  "order": 10136,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Print strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.73
+    },
+    {
+      "identifier": "geometry",
+      "displayName": "Polygon size",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.55
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

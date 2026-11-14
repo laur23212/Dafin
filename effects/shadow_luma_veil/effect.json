@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.shadow-luma-veil",
+  "displayName": "Shadow Luma Veil",
+  "category": "restoration",
+  "description": "Reduces blotchy deep-shadow luminance contrast by a small guided four-neighbor average.",
+  "order": 10114,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82
+    },
+    {
+      "identifier": "shadowEnd",
+      "displayName": "Shadow limit",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 0.65,
+      "defaultValue": 0.38
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

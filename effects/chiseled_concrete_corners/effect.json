@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.chiseled-concrete-corners",
+  "displayName": "Chiseled Concrete Corners",
+  "category": "retro",
+  "description": "Angular tonal chisel marks appear at high-contrast edges for bold album art.",
+  "order": 10137,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Chisel intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    },
+    {
+      "identifier": "grain",
+      "displayName": "Chisel width",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.52
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

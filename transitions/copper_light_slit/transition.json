@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.copper-light-slit",
+  "displayName": "Copper Light Slit",
+  "category": "cinematic",
+  "description": "A thin warm slit of light crosses and reveals the second image from the center outward.",
+  "order": 11124,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "power",
+      "displayName": "Light power",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.69
+    },
+    {
+      "identifier": "width",
+      "displayName": "Slit width",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.52
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

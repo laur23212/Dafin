@@ -1,0 +1,45 @@
+{
+  "id": "chatgpt.fx.masked-subject-chromatic-stencil",
+  "displayName": "Subject Chromatic Stencil",
+  "category": "impact",
+  "description": "Uses an existing mask to offset colored image plates inside the subject only, for pop-art kinetic posters.",
+  "order": 10159,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Plate split",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    },
+    {
+      "identifier": "offset",
+      "displayName": "Plate offset",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

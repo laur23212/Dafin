@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.curved-prism-focus-handoff",
+  "displayName": "Curved Prism Focus Handoff",
+  "category": "cinematic",
+  "description": "A curved ribbon of enlarged optics crosses the image as B emerges, without a cross-zoom distortion.",
+  "order": 11123,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "bend",
+      "displayName": "Prism curvature",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.55
+    },
+    {
+      "identifier": "widen",
+      "displayName": "Prism width",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.45
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

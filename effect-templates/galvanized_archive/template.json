@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.galvanized-archive",
+  "displayName": "Galvanized Archive",
+  "category": "look",
+  "order": 13020,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.chiseled-concrete-corners",
+      "params": {
+        "strength": 0.72,
+        "grain": 0.52
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.dusty-glass-edges",
+      "params": {
+        "strength": 0.63,
+        "coverage": 0.48
+      }
+    }
+  ]
+}

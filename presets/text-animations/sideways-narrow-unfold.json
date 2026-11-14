@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.sideways-narrow-unfold",
+  "label": "Sideways Narrow Unfold",
+  "category": "kinetic",
+  "sampleText": "READY NOW",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 12013,
+  "defaults": {
+    "unit": "block",
+    "stagger": 0,
+    "duration": 0.1,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 71,
+        "skew": -12,
+        "position": {
+          "x": -0.18,
+          "y": 0,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

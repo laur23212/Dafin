@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.noir-shadow-pleats",
+  "displayName": "Noir Shadow Pleats",
+  "category": "cinematic",
+  "description": "Deep angled shadow bands sequentially uncover B without fading through black.",
+  "order": 11127,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "bands",
+      "displayName": "Shadow bands",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.6
+    },
+    {
+      "identifier": "slope",
+      "displayName": "Band slope",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.42
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}
