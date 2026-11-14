@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.panel-corner-tuck",
+  "label": "Panel Corner Tuck",
+  "category": "kinetic",
+  "sampleText": "PANEL CORNER TUCK",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 9763,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.105,
+    "stagger": 0.0,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": 0.09,
+          "y": 0.11,
+          "unit": "box"
+        },
+        "rotation": 8,
+        "scale": 84,
+        "opacity": 0
+      }
+    }
+  ]
+}

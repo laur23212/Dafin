@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.heat-map-burnin",
+  "displayName": "Thermal Map Heat In",
+  "category": "liquid",
+  "description": "Bright colored thermal isotherm bands sweep toward the image center, revealing footage by heat threshold.",
+  "order": 9725,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Motion character",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.depth-material-normals-ink",
+  "displayName": "Depth Normal Ink Wash",
+  "category": "retro",
+  "description": "Treats depth-estimated surface slopes as directional ink pressure, not depth contour lines.",
+  "order": 9658,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Depth ink pressure",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

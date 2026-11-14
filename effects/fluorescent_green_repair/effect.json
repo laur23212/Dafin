@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.fluorescent-green-repair",
+  "displayName": "Fluorescent Green Repair",
+  "category": "restoration",
+  "description": "Reduces sickly green casts in indoor fluorescents while keeping genuinely green objects.",
+  "order": 9602,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Green suppression",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.93
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

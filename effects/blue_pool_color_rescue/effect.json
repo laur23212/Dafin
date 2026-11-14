@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.blue-pool-color-rescue",
+  "displayName": "Underwater Cyan Restoration",
+  "category": "restoration",
+  "description": "Balances blue-green filtered footage using luminance-dependent red reconstruction instead of a global LUT.",
+  "order": 9604,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Underwater color lift",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

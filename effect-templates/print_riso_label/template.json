@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.print-riso-label",
+  "displayName": "Two-Color Print Label",
+  "category": "look",
+  "order": 9756,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.risograph-ink-register",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.inked-rubber-stamp",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

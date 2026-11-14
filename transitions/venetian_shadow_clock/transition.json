@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.venetian-shadow-clock",
+  "displayName": "Rotating Louver Shadow",
+  "category": "geometric",
+  "description": "Diagonal light gaps rotate as single blades, making a shadow-pattern handoff rather than linear blinds.",
+  "order": 9708,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Motion character",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

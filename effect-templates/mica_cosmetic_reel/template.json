@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.mica-cosmetic-reel",
+  "displayName": "Mica Cosmetics Promo",
+  "category": "cinematic",
+  "order": 9759,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.frosted-mica-flakes",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.ring-flash-specular",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

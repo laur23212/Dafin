@@ -1,0 +1,120 @@
+{
+  "format": 1,
+  "id": "chatgpt.travel-expense-line",
+  "label": "Travel Expense Line",
+  "description": "Manual budget expense caption for travel-vlog planning",
+  "category": "minimal",
+  "tags": [
+    "batch09",
+    "functional"
+  ],
+  "kind": "lower-third",
+  "sampleText": "TRAIN · €19.50",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 700,
+    "pixelSize": 51,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 3.4,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#2F3062",
+    "boxPadding": 20,
+    "boxRadius": 12,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#DDE5FE"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.13,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Main text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 18,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "font",
+      "label": "Font family",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "color",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "background",
+      "label": "Card background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "backgroundColor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance length",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

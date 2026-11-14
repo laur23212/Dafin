@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.typebar-shutter-rows",
+  "displayName": "Typebar Shutter Rows",
+  "category": "glitch",
+  "description": "A sequence of thin typewriter-like shutter bars clears line by line at different speeds.",
+  "order": 9710,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Motion character",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

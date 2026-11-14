@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.forest-green-separation",
+  "displayName": "Forest Green Tonal Split",
+  "category": "color",
+  "description": "Separates yellow-green highlights from blue-green shadows to keep layered foliage visible.",
+  "order": 9611,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Foliage depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.cool-subject-separation",
+  "displayName": "Cool Subject Separation",
+  "category": "cinematic",
+  "order": 9771,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.masked-vivid-subject-matte",
+      "params": {
+        "strength": 0.83
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.masked-color-spotlight-pool",
+      "params": {
+        "strength": 0.93
+      }
+    }
+  ]
+}

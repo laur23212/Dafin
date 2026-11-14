@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.depth-foreground-color-grain",
+  "displayName": "Depth-Weighted Color Emulsion",
+  "category": "retro",
+  "description": "Fine emulsion color-speckle density grows toward near objects, avoiding equal-strength full-screen grain.",
+  "order": 9657,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Emulsion separation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

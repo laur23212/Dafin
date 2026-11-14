@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.masked-color-spotlight-pool",
+  "displayName": "Masked Peripheral Color Pool",
+  "category": "dreamy",
+  "description": "Creates a warm color pool behind the silhouette but leaves its own colors untouched.",
+  "order": 9655,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Backdrop warm pool",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.93
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

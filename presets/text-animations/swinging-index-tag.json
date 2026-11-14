@@ -1,0 +1,34 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.swinging-index-tag",
+  "label": "Swinging Index Tag",
+  "category": "kinetic",
+  "sampleText": "SWINGING INDEX TAG",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 9751,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.105,
+    "stagger": 0.0,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.11,
+          "y": -0.1,
+          "unit": "box"
+        },
+        "rotation": 13,
+        "opacity": 0
+      }
+    }
+  ]
+}

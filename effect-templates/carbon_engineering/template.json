@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.carbon-engineering",
+  "displayName": "Carbon Engineering Study",
+  "category": "cinematic",
+  "order": 9761,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.anodized-carbon-pattern",
+      "params": {
+        "strength": 0.78
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.shadow-purple-suppress",
+      "params": {
+        "strength": 0.95
+      }
+    }
+  ]
+}

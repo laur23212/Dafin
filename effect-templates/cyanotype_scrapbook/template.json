@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.cyanotype-scrapbook",
+  "displayName": "Cyanotype Scrapbook",
+  "category": "cinematic",
+  "order": 9757,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.cyanotype-sun-blueprint",
+      "params": {
+        "strength": 0.88
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.kraft-fluted-board",
+      "params": {
+        "strength": 0.78
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.near-material-texture",
+  "displayName": "Near Material Texture",
+  "category": "look",
+  "order": 9772,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.depth-foreground-color-grain",
+      "params": {
+        "strength": 0.85
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.depth-material-normals-ink",
+      "params": {
+        "strength": 0.76
+      }
+    }
+  ]
+}

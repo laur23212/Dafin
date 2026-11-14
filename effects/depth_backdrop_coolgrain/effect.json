@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.depth-backdrop-coolgrain",
+  "displayName": "Depth-Distance Texture Switch",
+  "category": "dreamy",
+  "description": "Gradually changes small-scale texture in the background but preserves detailed foreground surfaces.",
+  "order": 9659,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Distance texture",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.85
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

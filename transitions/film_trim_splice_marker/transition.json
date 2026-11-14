@@ -1,0 +1,42 @@
+{
+  "id": "chatgpt.tr.film-trim-splice-marker",
+  "displayName": "Film Trim Marks",
+  "category": "cinematic",
+  "description": "Dark geometric trim notches of a film editing table briefly reveal the incoming cut.",
+  "order": 9707,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "character",
+      "displayName": "Motion character",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

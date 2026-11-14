@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.stage-violet-skin",
+  "displayName": "Stage Violet Recovery",
+  "category": "look",
+  "order": 9752,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.violet-stage-skin-repair",
+      "params": {
+        "strength": 0.83
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.amber-red-highlight-limit",
+      "params": {
+        "strength": 0.9
+      }
+    }
+  ]
+}

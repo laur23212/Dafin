@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.crushed-chroma-repair",
+  "displayName": "Crushed Chroma Reconstruction",
+  "category": "restoration",
+  "description": "Reduces color quantization in dark gradients without smoothing the luminance edge.",
+  "order": 9606,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Chroma reconstruction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.7
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

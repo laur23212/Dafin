@@ -1,0 +1,21 @@
+{
+  "id": "chatgpt.stack.distance-light-volume",
+  "displayName": "Distance Light Volume",
+  "category": "cinematic",
+  "order": 9773,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.depth-distant-sun-streak",
+      "params": {
+        "strength": 0.9
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.depth-backdrop-coolgrain",
+      "params": {
+        "strength": 0.85
+      }
+    }
+  ]
+}

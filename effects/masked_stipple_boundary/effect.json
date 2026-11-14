@@ -1,0 +1,37 @@
+{
+  "id": "chatgpt.fx.masked-stipple-boundary",
+  "displayName": "Masked Stipple Fringe",
+  "category": "retro",
+  "description": "Renders a textured offset stipple fringe around a user mask while keeping subject and background intact.",
+  "order": 9651,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Edge stipple",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.88
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.cyanotype-sun-blueprint",
+  "displayName": "Cyanotype Contact Print",
+  "category": "retro",
+  "description": "Deep Prussian-blue photochemical contact-paper style with white silhouette shadows, not blueprint drafting lines.",
+  "order": 9617,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Blueprint chemistry",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.88
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "chatgpt.fx.pale-daylight-balance",
+  "displayName": "Window Daylight Amber Guard",
+  "category": "color",
+  "description": "Warmth restoration confined to bright, blue-window-lit areas rather than the full image.",
+  "order": 9610,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Daylight warmth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
