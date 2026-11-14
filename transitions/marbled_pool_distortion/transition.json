@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.marbled-pool-distortion",
+  "displayName": "Marbled Pool Distortion",
+  "category": "liquid",
+  "description": "A wavy horizontal marbling layer carries the new image upward with independently wiggling contour lines.",
+  "order": 11114,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "amplitude",
+      "displayName": "Marble amplitude",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.66
+    },
+    {
+      "identifier": "detail",
+      "displayName": "Contour detail",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.53
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

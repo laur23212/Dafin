@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.paper-keepsake",
+  "displayName": "Paper Keepsake",
+  "category": "look",
+  "order": 13022,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.paper-photo-corners",
+      "params": {
+        "foldSize": 0.1,
+        "ink": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.museum-slide-lighttable",
+      "params": {
+        "strength": 0.71,
+        "margin": 0.07
+      }
+    }
+  ]
+}

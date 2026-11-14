@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.staggered-vertical-photo-cards",
+  "displayName": "Staggered Photo Cards",
+  "category": "cinematic",
+  "description": "Three overlapping unwarped vertical photographic cards slip off at successive times, revealing B.",
+  "order": 11122,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "spread",
+      "displayName": "Card spread",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.58
+    },
+    {
+      "identifier": "delay",
+      "displayName": "Stagger delay",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.48
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

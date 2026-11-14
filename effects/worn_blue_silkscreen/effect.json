@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.worn-blue-silkscreen",
+  "displayName": "Worn Blue Silkscreen",
+  "category": "retro",
+  "description": "Single-ink blue print with worn ink gaps and broad paper-color shadows; unlike cyanotype photographic negatives.",
+  "order": 10139,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Silkscreen",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.8
+    },
+    {
+      "identifier": "wear",
+      "displayName": "Ink wear",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

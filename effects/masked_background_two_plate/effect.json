@@ -1,0 +1,49 @@
+{
+  "id": "chatgpt.fx.masked-background-two-plate",
+  "displayName": "Background Two-Plate Print",
+  "category": "color",
+  "description": "Replaces only the region outside an existing mask with a blue/amber two-plate editorial grade.",
+  "order": 10157,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Background ink",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.79
+    },
+    {
+      "identifier": "darkInk",
+      "displayName": "Shadow plate",
+      "type": "color",
+      "defaultValue": "#183a5c"
+    },
+    {
+      "identifier": "lightInk",
+      "displayName": "Light plate",
+      "type": "color",
+      "defaultValue": "#f2b57d"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

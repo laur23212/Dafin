@@ -1,0 +1,144 @@
+{
+  "format": 1,
+  "id": "chatgpt.wedding-speech-speaker",
+  "label": "Wedding Speech Speaker",
+  "description": "Elegant wedding-speech participant label without copying vow cards",
+  "category": "wedding",
+  "tags": [
+    "chatgpt-v10",
+    "functional",
+    "wedding"
+  ],
+  "kind": "lower-third",
+  "sampleText": "TOAST / FRIEND",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 600,
+    "pixelSize": 75,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 2,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 11,
+        "opacity": 0.44
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFF1EA"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "pop",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut",
+          "from": 75
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#E6514343",
+    "boxPadding": 16,
+    "boxRadius": 3,
+    "underlineEnabled": true,
+    "underlineColor": "#D6A094",
+    "underlineWidth": 4,
+    "underlineOffset": 7
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Edit words",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "boxcolor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "underline",
+      "label": "Underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "accent",
+      "label": "Accent color",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

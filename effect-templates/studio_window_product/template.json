@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.studio-window-product",
+  "displayName": "Studio Window Product",
+  "category": "look",
+  "order": 13017,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.window-reflective-veil",
+      "params": {
+        "opacity": 0.54,
+        "tilt": 0.24,
+        "width": 0.43
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.soft-product-pool-shadow",
+      "params": {
+        "strength": 0.78,
+        "spread": 0.64
+      }
+    }
+  ]
+}

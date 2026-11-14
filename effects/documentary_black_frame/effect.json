@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.documentary-black-frame",
+  "displayName": "Documentary Contact Frame",
+  "category": "retro",
+  "description": "A slim rectangular contact-frame mat and soft black edge around footage without cropping the source.",
+  "order": 10120,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "frame",
+      "displayName": "Frame thickness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.09,
+      "defaultValue": 0.035
+    },
+    {
+      "identifier": "rounded",
+      "displayName": "Corner softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.29
+    },
+    {
+      "identifier": "density",
+      "displayName": "Ink strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

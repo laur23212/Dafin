@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.printout-ink-bands",
+  "displayName": "Printout Ink Bands",
+  "category": "look",
+  "order": 13011,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.poster-ink-bands",
+      "params": {
+        "strength": 0.91,
+        "bands": 0.55
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.documentary-black-frame",
+      "params": {
+        "frame": 0.035,
+        "rounded": 0.29,
+        "density": 0.82
+      }
+    }
+  ]
+}

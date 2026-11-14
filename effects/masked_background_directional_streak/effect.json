@@ -1,0 +1,45 @@
+{
+  "id": "chatgpt.fx.masked-background-directional-streak",
+  "displayName": "Subject-Safe Directional Blur",
+  "category": "impact",
+  "description": "Applies directional multi-sample motion streaks behind a provided mask while the subject remains crisp.",
+  "order": 10160,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Background streak",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    },
+    {
+      "identifier": "length",
+      "displayName": "Streak length",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.62
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.baseline-hinge-join",
+  "label": "Baseline Hinge Join",
+  "category": "minimal",
+  "sampleText": "READY NOW",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 12014,
+  "defaults": {
+    "unit": "line",
+    "stagger": 0,
+    "duration": 0.08,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "scale": 108,
+        "rotation": -13,
+        "position": {
+          "x": 0,
+          "y": 0.1,
+          "unit": "box"
+        },
+        "opacity": 0
+      }
+    }
+  ]
+}

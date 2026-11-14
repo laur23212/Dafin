@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.perforated-ruler-run",
+  "displayName": "Perforated Ruler Run",
+  "category": "geometric",
+  "description": "A measured line of small notches marches across the frame from left to right as the new shot arrives.",
+  "order": 11102,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "teeth",
+      "displayName": "Ruler notches",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    },
+    {
+      "identifier": "bite",
+      "displayName": "Notch depth",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.42
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

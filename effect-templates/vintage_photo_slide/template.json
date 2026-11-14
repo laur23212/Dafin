@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.vintage-photo-slide",
+  "displayName": "Vintage Photo Slide",
+  "category": "look",
+  "order": 13005,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.bronze-flashback",
+      "params": {
+        "strength": 0.9,
+        "patina": 0.46
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.museum-slide-lighttable",
+      "params": {
+        "strength": 0.71,
+        "margin": 0.07
+      }
+    }
+  ]
+}

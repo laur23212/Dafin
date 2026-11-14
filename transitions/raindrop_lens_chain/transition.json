@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.raindrop-lens-chain",
+  "displayName": "Raindrop Lens Chain",
+  "category": "liquid",
+  "description": "A trail of slanted water-like lens circles climbs across the image, carrying the next frame in each one.",
+  "order": 11116,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "spacing",
+      "displayName": "Drop spacing",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.56
+    },
+    {
+      "identifier": "size",
+      "displayName": "Drop radius",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.62
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

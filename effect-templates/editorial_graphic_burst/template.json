@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.editorial-graphic-burst",
+  "displayName": "Editorial Graphic Burst",
+  "category": "hype",
+  "order": 13018,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.silhouette-sunburst-poster",
+      "params": {
+        "strength": 0.68,
+        "rays": 0.58
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.poster-ink-bands",
+      "params": {
+        "strength": 0.91,
+        "bands": 0.55
+      }
+    }
+  ]
+}

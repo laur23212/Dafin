@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.colored-shadow-tiles",
+  "displayName": "Colored Shadow Tiles",
+  "category": "glitch",
+  "description": "Large offset colored translucent shadow tiles with no random time changes, for bold motion-graphics footage.",
+  "order": 10142,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Tile tint",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.79
+    },
+    {
+      "identifier": "size",
+      "displayName": "Tile size",
+      "type": "float",
+      "minValue": 0.08,
+      "maxValue": 1,
+      "defaultValue": 0.49
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

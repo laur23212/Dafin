@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.granite-blue-hour",
+  "displayName": "Granite Blue Hour",
+  "category": "color",
+  "description": "Cool granite-like evening tonality for daylight-to-blue-hour edits, keeping bright neutral surfaces.",
+  "order": 10100,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.83
+    },
+    {
+      "identifier": "dusk",
+      "displayName": "Twilight depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.62
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

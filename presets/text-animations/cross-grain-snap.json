@@ -1,0 +1,35 @@
+{
+  "format": 1,
+  "id": "chatgpt.anim.cross-grain-snap",
+  "label": "Cross Grain Snap",
+  "category": "character",
+  "sampleText": "READY NOW",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 12006,
+  "defaults": {
+    "unit": "block",
+    "stagger": 0,
+    "duration": 0.1,
+    "ease": "easeOut"
+  },
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": -0.11,
+          "y": 0.17,
+          "unit": "box"
+        },
+        "skew": -17,
+        "rotation": 5,
+        "opacity": 0
+      }
+    }
+  ]
+}

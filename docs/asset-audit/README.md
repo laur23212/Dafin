@@ -237,3 +237,13 @@ No new fonts were needed.
   nothing shows at their defaults), and the two effect templates that used them.
 - The 80 sounds passed script checks but wait for a listening review (not in Dafin).
 - Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.
+
+## Batch 10 from ChatGPT (14 November 2026)
+
+All 170 items went in: 60 effects (15 smart), 30 transitions, 40 titles, 15 text animations and
+25 effect templates. No new fonts were needed; no sounds in this batch.
+
+- Cyan Snow Repair, Lime Tint Neutralizer and Shadow Luma Veil are narrow repair tools: little change on
+  scenes without the flaw they fix.
+- Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.
+- ChatGPT also sent two extra preview photographs. They are not Dafin assets and were not added.

@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.snow-day-neutral",
+  "displayName": "Snow Day Neutral",
+  "category": "look",
+  "order": 13014,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.cyan-snow-repair",
+      "params": {
+        "strength": 0.82,
+        "whiteGate": 0.62
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.opal-skin-neutral",
+      "params": {
+        "strength": 0.75,
+        "neutrality": 0.65
+      }
+    }
+  ]
+}

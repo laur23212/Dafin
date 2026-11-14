@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.magazine-white-border",
+  "displayName": "Magazine White Border",
+  "category": "retro",
+  "description": "Clean off-white page margin around the original shot, useful for article-style chapter stills and product cards.",
+  "order": 10119,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "width",
+      "displayName": "Border width",
+      "type": "float",
+      "minValue": 0.02,
+      "maxValue": 0.2,
+      "defaultValue": 0.075
+    },
+    {
+      "identifier": "cream",
+      "displayName": "Paper tint",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.62
+    },
+    {
+      "identifier": "shadow",
+      "displayName": "Inner edge shadow",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.35
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

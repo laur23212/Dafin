@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.metal-punched-rivets",
+  "displayName": "Riveted Metal Sheet",
+  "category": "retro",
+  "description": "Raised circular rivets with tiny directional shadows arranged on a sheet-like fixed grid, for industrial montage design.",
+  "order": 10133,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Rivets",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.71
+    },
+    {
+      "identifier": "spacing",
+      "displayName": "Spacing",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.48
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

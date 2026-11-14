@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.cool-neon-mist",
+  "displayName": "Cool Neon Mist",
+  "category": "dreamy",
+  "description": "Broad off-axis cyan and violet light swells for atmospheric concert or gaming footage; no explicit lens flare.",
+  "order": 10145,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Mist glow",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Glow spread",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.56
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

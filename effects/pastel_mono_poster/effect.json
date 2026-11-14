@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.pastel-mono-poster",
+  "displayName": "Pastel Mono Poster",
+  "category": "retro",
+  "description": "Two-lightness soft rose and pistachio poster treatment for social graphics.",
+  "order": 10140,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Print strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.84
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Ink dividing lightness",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 0.9,
+      "defaultValue": 0.48
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

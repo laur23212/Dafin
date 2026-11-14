@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.poster-ink-bands",
+  "displayName": "Poster Ink Bands",
+  "category": "retro",
+  "description": "Four stepped brightness bands with high-contrast poster inks and hard graphic edges for thumbnails.",
+  "order": 10130,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Poster amount",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.91
+    },
+    {
+      "identifier": "bands",
+      "displayName": "Band contrast",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.55
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

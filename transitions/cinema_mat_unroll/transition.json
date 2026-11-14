@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.cinema-mat-unroll",
+  "displayName": "Cinema Mat Unroll",
+  "category": "cinematic",
+  "description": "Two broad photographic matte bars retract outward while revealing the destination shot.",
+  "order": 11110,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "barHeight",
+      "displayName": "Matte proportion",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.56
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Edge softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.4,
+      "defaultValue": 0.09
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "format": 1,
+  "id": "chatgpt.music-mix-note",
+  "label": "Music Mix Note",
+  "description": "Session mix identification for music production videos",
+  "category": "music",
+  "tags": [
+    "chatgpt-v10",
+    "functional",
+    "music"
+  ],
+  "kind": "lower-third",
+  "sampleText": "MIX / TAKE 02",
+  "requires": {
+    "fonts": [
+      "IBM Plex Mono"
+    ]
+  },
+  "style": {
+    "fontFamily": "IBM Plex Mono",
+    "fontWeight": 600,
+    "pixelSize": 64,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 1,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 0,
+        "offsetY": 5,
+        "blur": 11,
+        "opacity": 0.44
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F1E8F8"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "pop",
+        "params": {
+          "duration": 0.11,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut",
+          "from": 75
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#E6291B41",
+    "boxPadding": 16,
+    "boxRadius": 3,
+    "underlineEnabled": true,
+    "underlineColor": "#9E77CC",
+    "underlineWidth": 4,
+    "underlineOffset": 7
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Edit words",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "boxcolor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "underline",
+      "label": "Underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "accent",
+      "label": "Accent color",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

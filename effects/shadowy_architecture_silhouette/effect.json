@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.shadowy-architecture-silhouette",
+  "displayName": "Architectural Doorway Shade",
+  "category": "dreamy",
+  "description": "Projects a softly feathered doorway shadow pattern for interior storytelling, distinct from lattice-window shadows.",
+  "order": 10127,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Shadow strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.76
+    },
+    {
+      "identifier": "width",
+      "displayName": "Opening width",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "defaultValue": 0.47
+    },
+    {
+      "identifier": "offset",
+      "displayName": "Opening position",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.95,
+      "defaultValue": 0.49
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

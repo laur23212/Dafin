@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.night-window-glow",
+  "displayName": "Night Window Glow",
+  "category": "cinematic",
+  "order": 13002,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.midnight-amber-windows",
+      "params": {
+        "strength": 0.82,
+        "warmGate": 0.48
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.window-reflective-veil",
+      "params": {
+        "opacity": 0.54,
+        "tilt": 0.24,
+        "width": 0.43
+      }
+    }
+  ]
+}

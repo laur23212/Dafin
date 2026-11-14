@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.corridor-invert-slide",
+  "displayName": "Corridor Invert Slide",
+  "category": "cinematic",
+  "description": "Foreground bands recede toward the vanishing point while the destination grows into the open corridor.",
+  "order": 11107,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "depth",
+      "displayName": "Corridor perspective",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.72
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Doorway edge",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.4,
+      "defaultValue": 0.13
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

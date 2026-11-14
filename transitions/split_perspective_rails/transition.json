@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.split-perspective-rails",
+  "displayName": "Split Perspective Rails",
+  "category": "cinematic",
+  "description": "Two rails of image move away from a central vanishing track and hand the frame to the incoming clip.",
+  "order": 11108,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "push",
+      "displayName": "Rail push",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65
+    },
+    {
+      "identifier": "width",
+      "displayName": "Rail gap",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.42
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

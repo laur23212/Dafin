@@ -1,0 +1,53 @@
+{
+  "id": "chatgpt.fx.depth-tilted-focal-color",
+  "displayName": "Depth Focal Color Strip",
+  "category": "depth",
+  "description": "A narrow band of depth remains natural color while nearer and farther material gets a muted blue grade.",
+  "order": 10167,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Depth color select",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.77
+    },
+    {
+      "identifier": "focusDepth",
+      "displayName": "In-focus depth",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "defaultValue": 0.52
+    },
+    {
+      "identifier": "width",
+      "displayName": "Depth window",
+      "type": "float",
+      "minValue": 0.03,
+      "maxValue": 0.5,
+      "defaultValue": 0.19
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

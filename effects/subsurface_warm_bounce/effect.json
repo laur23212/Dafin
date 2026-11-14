@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.subsurface-warm-bounce",
+  "displayName": "Warm Bounce Card",
+  "category": "dreamy",
+  "description": "Soft bounced warm illumination from the bottom side of the image for product and tabletop shots.",
+  "order": 10126,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Bounce strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.67
+    },
+    {
+      "identifier": "falloff",
+      "displayName": "Reach",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.62
+    },
+    {
+      "identifier": "bias",
+      "displayName": "Warmth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

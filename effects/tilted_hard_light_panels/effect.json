@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.fx.tilted-hard-light-panels",
+  "displayName": "Tilted Hard Light Panels",
+  "category": "impact",
+  "description": "Two slanted hard-light shafts sweep the clip for performance-style emphasis, separate from a grid shadow.",
+  "order": 10153,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Light power",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.68
+    },
+    {
+      "identifier": "angle",
+      "displayName": "Light angle",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.59
+    },
+    {
+      "identifier": "spread",
+      "displayName": "Band spread",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.42
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

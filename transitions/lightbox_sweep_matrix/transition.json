@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.lightbox-sweep-matrix",
+  "displayName": "Lightbox Sweep Matrix",
+  "category": "cinematic",
+  "description": "Independently timed luminous rectangular cells switch from A to B like a gallery light table.",
+  "order": 11118,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "cells",
+      "displayName": "Lightbox cells",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    },
+    {
+      "identifier": "stagger",
+      "displayName": "Handoff stagger",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.52
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.calm-ocean-page",
+  "displayName": "Calm Ocean Page",
+  "category": "look",
+  "order": 13008,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.mint-concrete-commercial",
+      "params": {
+        "strength": 0.8,
+        "air": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.linear-moonlight-reflection",
+      "params": {
+        "strength": 0.68,
+        "horizon": 0.55,
+        "ripples": 0.62
+      }
+    }
+  ]
+}

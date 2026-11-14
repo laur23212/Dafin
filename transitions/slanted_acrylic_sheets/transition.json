@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.slanted-acrylic-sheets",
+  "displayName": "Slanted Acrylic Sheets",
+  "category": "geometric",
+  "description": "Successive transparent polygon plates with slight refraction slide across to uncover B.",
+  "order": 11129,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "plates",
+      "displayName": "Number of plates",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.49
+    },
+    {
+      "identifier": "offset",
+      "displayName": "Acrylic offset",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.51
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

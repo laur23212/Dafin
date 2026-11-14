@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.elliptic-orbit-handoff",
+  "displayName": "Elliptic Orbit Handoff",
+  "category": "geometric",
+  "description": "The second shot arrives as an offset elliptical orbital band then fills both sides.",
+  "order": 11133,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "flatten",
+      "displayName": "Orbit flatten",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Orbit softness",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.3,
+      "defaultValue": 0.1
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

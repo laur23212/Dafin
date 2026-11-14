@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.leaf-vein-lift",
+  "displayName": "Leaf Vein Lift",
+  "category": "liquid",
+  "description": "Branching leaf-like veins spread the incoming scene from a corner, distinct from a radial iris.",
+  "order": 11100,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "branches",
+      "displayName": "Vein branching",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.55
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Vein feather",
+      "type": "float",
+      "minValue": 0.01,
+      "maxValue": 0.4,
+      "defaultValue": 0.12
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

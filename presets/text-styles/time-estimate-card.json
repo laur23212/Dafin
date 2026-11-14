@@ -1,0 +1,133 @@
+{
+  "format": 1,
+  "id": "chatgpt.time-estimate-card",
+  "label": "Time Estimate Card",
+  "description": "Estimated tutorial step duration for creator videos",
+  "category": "education",
+  "tags": [
+    "chatgpt-v10",
+    "functional",
+    "education"
+  ],
+  "kind": "title",
+  "sampleText": "ABOUT 5 MIN",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 700,
+    "pixelSize": 85,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.12,
+    "letterSpacing": 3,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "halo",
+        "kind": "glow",
+        "paint": {
+          "kind": "solid",
+          "color": "#3FC5AE"
+        },
+        "blur": 12,
+        "spread": 1,
+        "opacity": 0.35
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F6FFFE"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "pop",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut",
+          "from": 75
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#E6173638",
+    "boxPadding": 16,
+    "boxRadius": 10
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Edit words",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Background",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "boxcolor",
+      "label": "Background color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

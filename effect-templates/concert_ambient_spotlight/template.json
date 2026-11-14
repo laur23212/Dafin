@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.concert-ambient-spotlight",
+  "displayName": "Concert Ambient Spotlight",
+  "category": "cinematic",
+  "order": 13021,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.tilted-hard-light-panels",
+      "params": {
+        "strength": 0.68,
+        "angle": 0.59,
+        "spread": 0.42
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.cool-neon-mist",
+      "params": {
+        "strength": 0.76,
+        "scale": 0.56
+      }
+    }
+  ]
+}

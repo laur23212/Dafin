@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.liquid-surface-sheen-reveal",
+  "displayName": "Liquid Surface Sheen Reveal",
+  "category": "liquid",
+  "description": "A thin wavefront of highlight shimmer undulates down the image as the next scene arrives.",
+  "order": 11128,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "wave",
+      "displayName": "Wave complexity",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.62
+    },
+    {
+      "identifier": "sheen",
+      "displayName": "Sheen",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.54
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

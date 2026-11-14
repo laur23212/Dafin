@@ -1,0 +1,50 @@
+{
+  "id": "chatgpt.tr.ink-stamp-checkpoints",
+  "displayName": "Ink Stamp Checkpoints",
+  "category": "glitch",
+  "description": "Discrete offset rectangles reveal B in stepwise editorial checkmarks rather than a binary matrix dissolve.",
+  "order": 11132,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "scale",
+      "displayName": "Stamp scale",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.56
+    },
+    {
+      "identifier": "stagger",
+      "displayName": "Stamp order",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

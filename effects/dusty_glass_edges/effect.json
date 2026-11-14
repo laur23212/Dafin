@@ -1,0 +1,44 @@
+{
+  "id": "chatgpt.fx.dusty-glass-edges",
+  "displayName": "Dusty Glass Edges",
+  "category": "retro",
+  "description": "Subtle edge-localized translucent grime and streaks framing an otherwise clean center.",
+  "order": 10129,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Edge grime",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.63
+    },
+    {
+      "identifier": "coverage",
+      "displayName": "Edge coverage",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.48
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
