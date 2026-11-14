@@ -1,0 +1,142 @@
+{
+  "format": 1,
+  "id": "chatgpt.podcast-episode",
+  "label": "Podcast Episode Title",
+  "description": "Readable podcast identifier with an optional color accent and clear hierarchy.",
+  "category": "podcast",
+  "tags": [
+    "dafin",
+    "v3",
+    "editorial"
+  ],
+  "kind": "lower-third",
+  "sampleText": "EP. 12 · BIG IDEAS",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 700,
+    "pixelSize": 76,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.17,
+    "letterSpacing": 1.2,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "opacity": 0.56,
+        "offsetY": 5,
+        "blur": 9
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F5F8FE"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "stagger": 0,
+          "duration": 0.12,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "duration": 0.16,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#B0182635",
+    "boxPadding": 16,
+    "boxRadius": 10,
+    "underlineEnabled": true,
+    "underlineColor": "#F9BC73",
+    "underlineWidth": 4,
+    "underlineOffset": 9
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 36,
+      "max": 114,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Ink color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Box",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "panelcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "underline",
+      "label": "Underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "underlinecolor",
+      "label": "Line color",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "duration",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

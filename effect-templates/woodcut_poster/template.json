@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.woodcut-poster",
+  "displayName": "Woodcut Poster",
+  "category": "look",
+  "order": 6006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.screenprint-color-blocks",
+      "params": {
+        "levels": 0.54,
+        "inkStrength": 0.47
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.woodcut-cross-engrave",
+      "params": {
+        "density": 0.55,
+        "ink": 0.77
+      }
+    }
+  ]
+}

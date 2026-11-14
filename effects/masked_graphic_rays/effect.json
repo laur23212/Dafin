@@ -1,0 +1,63 @@
+{
+  "id": "chatgpt.fx.masked-graphic-rays",
+  "displayName": "Masked Graphic Rays",
+  "category": "dreamy",
+  "description": "Behind a supplied subject matte, animated printed radial bars add editorial emphasis.",
+  "backend": "gpu",
+  "order": 5007,
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Backdrop opacity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.77,
+      "group": "Edit"
+    },
+    {
+      "identifier": "bars",
+      "displayName": "Ray density",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 1,
+      "defaultValue": 0.72,
+      "group": "Edit"
+    },
+    {
+      "identifier": "movement",
+      "displayName": "Subtle rotation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.17,
+      "group": "Edit"
+    },
+    {
+      "identifier": "rayColor",
+      "displayName": "Ray color",
+      "type": "color",
+      "defaultValue": "#E5D2AB",
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

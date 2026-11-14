@@ -34,9 +34,9 @@ FAMILIES = [
     ('Roboto Condensed', 'roboto-condensed', 'impact', 'robotocondensed', ('var', 'RobotoCondensed[wght].ttf', {}, [400, 700, 800])),
     # Apache-2.0, not OFL: the licence file is LICENSE.txt (see LICENSE_FILE below)
     ('Roboto Slab', 'roboto-slab', 'editorial', 'robotoslab', ('var', 'RobotoSlab[wght].ttf', {}, [400, 700])),
-    ('Noto Serif', 'noto-serif', 'editorial', 'notoserif', ('var', 'NotoSerif[wdth,wght].ttf', {'wdth': 100}, [400, 600, 700])),
+    ('Noto Serif', 'noto-serif', 'editorial', 'notoserif', ('var', 'NotoSerif[wdth,wght].ttf', {'wdth': 100}, [400, 500, 600, 700])),
     # IBM Plex declares the Reserved Font Name "Plex": the static upstream files are copied unchanged
-    ('IBM Plex Mono', 'ibm-plex-mono', 'clean', 'ibmplexmono', ('static', [('IBMPlexMono-Regular.ttf', 400), ('IBMPlexMono-SemiBold.ttf', 600)])),
+    ('IBM Plex Mono', 'ibm-plex-mono', 'clean', 'ibmplexmono', ('static', [('IBMPlexMono-Regular.ttf', 400), ('IBMPlexMono-Medium.ttf', 500), ('IBMPlexMono-SemiBold.ttf', 600)])),
 ]
 APACHE = {'roboto-slab'}
 ONLY = set(os.environ.get('ONLY', '').split(',')) - {''}

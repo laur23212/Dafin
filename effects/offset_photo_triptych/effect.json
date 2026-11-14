@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.offset-photo-triptych",
+  "displayName": "Offset Photo Montage",
+  "category": "dreamy",
+  "description": "Three overlapping border-mounted image cards using different crops of the SAME clip.",
+  "backend": "gpu",
+  "order": 5011,
+  "parameters": [
+    {
+      "identifier": "zoom",
+      "displayName": "Crop zoom",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 1,
+      "defaultValue": 0.62,
+      "group": "Edit"
+    },
+    {
+      "identifier": "frameSize",
+      "displayName": "White border",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.56,
+      "group": "Edit"
+    },
+    {
+      "identifier": "tilt",
+      "displayName": "Editorial tilt",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

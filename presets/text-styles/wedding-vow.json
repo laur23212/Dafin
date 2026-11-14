@@ -1,0 +1,132 @@
+{
+  "format": 1,
+  "id": "chatgpt.wedding-vow",
+  "label": "Wedding Vow Card",
+  "description": "Minimal expressive vow statement on airy translucent backing.",
+  "category": "wedding",
+  "tags": [
+    "dafin",
+    "v3",
+    "editorial"
+  ],
+  "kind": "title",
+  "sampleText": "Always, together.",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 400,
+    "pixelSize": 84,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.17,
+    "letterSpacing": 1.2,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "opacity": 0.56,
+        "offsetY": 5,
+        "blur": 9
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFF5EE"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "stagger": 0,
+          "duration": 0.12,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "duration": 0.16,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#B0182635",
+    "boxPadding": 16,
+    "boxRadius": 10
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 40,
+      "max": 126,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Ink color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Box",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "panelcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "duration",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

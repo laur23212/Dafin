@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.under-glass",
+  "displayName": "Under Glass",
+  "category": "cinematic",
+  "order": 6006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.depth-glass-refraction",
+      "params": {
+        "strength": 0.42,
+        "colorOffset": 0.2
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.two-zone-split-tone",
+      "params": {
+        "amount": 0.39
+      }
+    }
+  ]
+}

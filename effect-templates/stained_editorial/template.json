@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.stained-editorial",
+  "displayName": "Stained Editorial",
+  "category": "look",
+  "order": 6006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.stained-glass-mosaic",
+      "params": {
+        "cellSize": 0.48,
+        "leading": 0.7
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.two-zone-split-tone",
+      "params": {
+        "amount": 0.35
+      }
+    }
+  ]
+}

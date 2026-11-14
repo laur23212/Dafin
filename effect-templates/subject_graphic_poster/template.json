@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.subject-graphic-poster",
+  "displayName": "Subject Graphic Poster",
+  "category": "drama",
+  "order": 6006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.masked-graphic-rays",
+      "params": {
+        "strength": 0.6,
+        "bars": 0.64
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.masked-silhouette-poster",
+      "params": {
+        "amount": 0.64
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.masked-silhouette-poster",
+  "displayName": "Masked Silhouette Poster",
+  "category": "retro",
+  "description": "Turns the supplied matte into a flat graphic poster silhouette while retaining the rest of the scene.",
+  "backend": "gpu",
+  "order": 5008,
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Silhouette amount",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.92,
+      "group": "Edit"
+    },
+    {
+      "identifier": "inkNoise",
+      "displayName": "Ink texture",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.33,
+      "group": "Edit"
+    },
+    {
+      "identifier": "inkColor",
+      "displayName": "Silhouette ink",
+      "type": "color",
+      "defaultValue": "#17354A",
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

@@ -1,0 +1,56 @@
+{
+  "id": "chatgpt.fx.depth-distant-dustfall",
+  "displayName": "Depth Distant Dustfall",
+  "category": "dreamy",
+  "description": "Soft floating dust motes appear preferentially in distant regions of a scene depth map.",
+  "backend": "gpu",
+  "order": 5010,
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Dust density",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.66,
+      "group": "Edit"
+    },
+    {
+      "identifier": "size",
+      "displayName": "Particle size",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.44,
+      "group": "Edit"
+    },
+    {
+      "identifier": "depthStart",
+      "displayName": "Distance threshold",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 0.95,
+      "defaultValue": 0.62,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.silver-bleach-print",
+  "displayName": "Silver Bypass Print",
+  "category": "color",
+  "description": "High contrast, restrained saturation and silver-shadow density for documentary footage.",
+  "backend": "gpu",
+  "order": 5000,
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Silver density",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.68,
+      "group": "Edit"
+    },
+    {
+      "identifier": "retainColor",
+      "displayName": "Original color retained",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.3,
+      "group": "Edit"
+    },
+    {
+      "identifier": "lift",
+      "displayName": "Shadow openness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.5,
+      "defaultValue": 0.14,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

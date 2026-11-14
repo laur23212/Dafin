@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.infrared-expedition",
+  "displayName": "Infrared Expedition",
+  "category": "look",
+  "order": 6006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.false-infrared-foliage",
+      "params": {
+        "intensity": 0.89,
+        "leafSelect": 0.53
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.two-zone-split-tone",
+      "params": {
+        "amount": 0.23
+      }
+    }
+  ]
+}

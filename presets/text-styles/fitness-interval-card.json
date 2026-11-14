@@ -1,0 +1,141 @@
+{
+  "format": 1,
+  "id": "chatgpt.fitness-interval-card",
+  "label": "Fitness Interval Card",
+  "description": "Bold manually editable exercise stage card; not an automatic countdown.",
+  "category": "fitness",
+  "tags": [
+    "dafin",
+    "v3",
+    "editorial"
+  ],
+  "kind": "title",
+  "sampleText": "ROUND 02 · REST",
+  "requires": {
+    "fonts": [
+      "Oswald"
+    ]
+  },
+  "style": {
+    "fontFamily": "Oswald",
+    "fontWeight": 700,
+    "pixelSize": 116,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.17,
+    "letterSpacing": 1.2,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "opacity": 0.56,
+        "offsetY": 5,
+        "blur": 9
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#2A4638"
+        },
+        "width": 3.5
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#F1FFED"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "stagger": 0,
+          "duration": 0.12,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "duration": 0.16,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#B0182635",
+    "boxPadding": 16,
+    "boxRadius": 10
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 55,
+      "max": 174,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Ink color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Box",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "panelcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "duration",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

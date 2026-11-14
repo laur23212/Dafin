@@ -16633,7 +16633,7 @@ void EditorStateTest::assetHandoffPackagesLoadAndApply()
         QVERIFY2(!effectCategoryLabel(def->meta.category).isEmpty(), qPrintable(id));
         QVERIFY2(QFileInfo::exists(def->thumbnailPath), qPrintable(id));
     }
-    QCOMPARE(effectIds.size(), 52);
+    QCOMPARE(effectIds.size(), 64);
 
     const QSet<QString> transitionCats{QStringLiteral("basic"), QStringLiteral("geometric"), QStringLiteral("liquid"),
                                        QStringLiteral("glitch"), QStringLiteral("cinematic")};
@@ -16648,7 +16648,7 @@ void EditorStateTest::assetHandoffPackagesLoadAndApply()
         QVERIFY2(QFileInfo::exists(def->previewStripPath), qPrintable(id));
         QCOMPARE(def->previewFrames, 12);
     }
-    QCOMPARE(transitionIds.size(), 19);
+    QCOMPARE(transitionIds.size(), 22);
 
     // One clip takes every effect with its defaults.
     {

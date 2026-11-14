@@ -11,6 +11,11 @@
       "styleName": "Regular"
     },
     {
+      "file": "IBMPlexMono-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    },
+    {
       "file": "IBMPlexMono-SemiBold.ttf",
       "weight": 600,
       "styleName": "SemiBold"

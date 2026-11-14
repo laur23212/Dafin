@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.silver-documentary",
+  "displayName": "Silver Documentary",
+  "category": "cinematic",
+  "order": 6006,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.gentle-codec-edge-repair",
+      "params": {
+        "strength": 0.26,
+        "protect": 0.9
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.silver-bleach-print",
+      "params": {
+        "density": 0.66,
+        "retainColor": 0.26
+      }
+    }
+  ]
+}

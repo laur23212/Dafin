@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.woodcut-cross-engrave",
+  "displayName": "Woodcut Cross Engraving",
+  "category": "retro",
+  "description": "Hand-carved dark hatch marks respond to scene luminance without copying pencil-sketch filters.",
+  "backend": "gpu",
+  "order": 5003,
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Line density",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.72,
+      "group": "Edit"
+    },
+    {
+      "identifier": "ink",
+      "displayName": "Ink strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82,
+      "group": "Edit"
+    },
+    {
+      "identifier": "paper",
+      "displayName": "Warm paper tone",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.25,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

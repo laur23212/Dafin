@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.fx.two-zone-split-tone",
+  "displayName": "Two-Zone Film Split",
+  "category": "color",
+  "description": "Independent shadow and highlight tint with neutral midtones for consistent dramatic grading.",
+  "backend": "gpu",
+  "order": 5002,
+  "parameters": [
+    {
+      "identifier": "amount",
+      "displayName": "Grade amount",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.64,
+      "group": "Edit"
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Midtone pivot",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 0.8,
+      "defaultValue": 0.47,
+      "group": "Edit"
+    },
+    {
+      "identifier": "shadowTint",
+      "displayName": "Shadow color",
+      "type": "color",
+      "defaultValue": "#355B7C",
+      "group": "Edit"
+    },
+    {
+      "identifier": "highlightTint",
+      "displayName": "Highlight color",
+      "type": "color",
+      "defaultValue": "#F3C58B",
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

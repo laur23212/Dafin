@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.tr.clock-dial-sweep",
+  "displayName": "Clock Dial Sweep",
+  "category": "geometric",
+  "description": "Precise clockwise circular handoff for chapters, sports highlights and time-lapse edits.",
+  "order": 5100,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "feather",
+      "displayName": "Edge softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.16,
+      "group": "Edit"
+    },
+    {
+      "identifier": "start",
+      "displayName": "Starting direction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.25,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

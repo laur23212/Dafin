@@ -1,0 +1,52 @@
+{
+  "id": "chatgpt.tr.circular-waterline",
+  "displayName": "Circular Waterline",
+  "category": "liquid",
+  "description": "A circular advancing waterline refracts the seam while preserving source frames.",
+  "order": 5103,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "refraction",
+      "displayName": "Waterline bend",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.66,
+      "group": "Edit"
+    },
+    {
+      "identifier": "softness",
+      "displayName": "Reveal softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.36,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

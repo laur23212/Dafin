@@ -1,0 +1,152 @@
+{
+  "format": 1,
+  "id": "chatgpt.luxury-collection",
+  "label": "Luxury Collection",
+  "description": "Quiet premium fashion title with refined warm gradient and slim underline.",
+  "category": "fashion",
+  "tags": [
+    "dafin",
+    "v3",
+    "editorial"
+  ],
+  "kind": "title",
+  "sampleText": "THE COLLECTION",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 500,
+    "pixelSize": 94,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.17,
+    "letterSpacing": 1.2,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "opacity": 0.56,
+        "offsetY": 5,
+        "blur": 9
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "gradient",
+          "gradient": {
+            "kind": "linear",
+            "angle": 90,
+            "space": "line",
+            "stops": [
+              {
+                "pos": 0,
+                "color": "#FFF4D7"
+              },
+              {
+                "pos": 1,
+                "color": "#C2A880"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "stagger": 0,
+          "duration": 0.12,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "duration": 0.16,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#BEA77B",
+    "underlineWidth": 4,
+    "underlineOffset": 9
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 45,
+      "max": 141,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "topcolor",
+      "label": "Top ink",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.0.color"
+    },
+    {
+      "id": "bottomcolor",
+      "label": "Bottom ink",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.1.color"
+    },
+    {
+      "id": "underline",
+      "label": "Underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "underlinecolor",
+      "label": "Line color",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "duration",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

@@ -11,6 +11,11 @@
       "styleName": "Regular"
     },
     {
+      "file": "NotoSerif-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    },
+    {
       "file": "NotoSerif-SemiBold.ttf",
       "weight": 600,
       "styleName": "SemiBold"

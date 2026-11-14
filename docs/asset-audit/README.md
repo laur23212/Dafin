@@ -174,3 +174,14 @@ All 30 assets are in: 14 effects, 2 transitions (Glass Ribbon Handoff, Origami F
 - **Smart effects (4):** Masked Subject Offset Echo, Masked Subject Lens Punch (need a mask), Depth Parallax Nudge, Distant Heat Haze (need a depth map). Without one they pass the picture through.
 - **Panel effects (5):** Quadrant Crop Mosaic, Asymmetric Detail Split, Circular Detail Inset, Diagonal Dual Crop, Horizontal Focus Stack. Each uses ONE clip.
 - No new fonts. Not tested: the full app, tst_editorstate and tst_engine, Inter weights 500/800, real masks and depth maps.
+
+## Batch 04 from ChatGPT (14 November 2026)
+
+All 33 assets are in: 12 effects (3 colour looks, 2 retro prints, Stained-Glass Facets, Gentle Codec Ringing
+Repair, 4 smart effects, Offset Photo Montage), 3 transitions (Clock Dial Sweep, Print Dot Reveal, Circular
+Waterline), 12 titles and 6 effect templates.
+
+- Two titles use weight 500 (Luxury Collection in Noto Serif, Crew Role Title in IBM Plex Mono), so
+  `title-fonts/` now has Noto Serif 500 and IBM Plex Mono Medium.
+- Smart effects need a mask or depth map; without one the picture is unchanged.
+- Not tested: the full app, tst_editorstate and tst_engine, Inter 500/800, real masks and depth maps.

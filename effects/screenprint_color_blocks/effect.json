@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.screenprint-color-blocks",
+  "displayName": "Screenprint Color Blocks",
+  "category": "retro",
+  "description": "Bold four-tone color reduction with subtle print texture for posters and social graphics.",
+  "backend": "gpu",
+  "order": 5005,
+  "parameters": [
+    {
+      "identifier": "levels",
+      "displayName": "Color steps",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Edit"
+    },
+    {
+      "identifier": "inkStrength",
+      "displayName": "Print character",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.74,
+      "group": "Edit"
+    },
+    {
+      "identifier": "dotScale",
+      "displayName": "Dot detail",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.56,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

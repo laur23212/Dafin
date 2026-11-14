@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.gentle-codec-edge-repair",
+  "displayName": "Gentle Codec Ringing Repair",
+  "category": "restoration",
+  "description": "Reduces small edge-adjacent digital mosquito patterns using luminance-aware neighboring samples.",
+  "backend": "gpu",
+  "order": 5006,
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Repair strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.53,
+      "group": "Edit"
+    },
+    {
+      "identifier": "protect",
+      "displayName": "Protect genuine edges",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.74,
+      "group": "Edit"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Pixel radius",
+      "type": "float",
+      "minValue": 0.4,
+      "maxValue": 1.5,
+      "defaultValue": 0.75,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

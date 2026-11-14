@@ -1,0 +1,145 @@
+{
+  "format": 1,
+  "id": "chatgpt.children-story-title",
+  "label": "Children Story Title",
+  "description": "Playful readable story headline with warm gradient and friendly outline.",
+  "category": "kids",
+  "tags": [
+    "dafin",
+    "v3",
+    "editorial"
+  ],
+  "kind": "title",
+  "sampleText": "LITTLE EXPLORERS",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 800,
+    "pixelSize": 115,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.17,
+    "letterSpacing": 1.2,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "opacity": 0.56,
+        "offsetY": 5,
+        "blur": 9
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#345D70"
+        },
+        "width": 3.5
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "gradient",
+          "gradient": {
+            "kind": "linear",
+            "angle": 90,
+            "space": "line",
+            "stops": [
+              {
+                "pos": 0,
+                "color": "#FFF3AF"
+              },
+              {
+                "pos": 1,
+                "color": "#F6A86D"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "pop",
+        "params": {
+          "unit": "block",
+          "stagger": 0,
+          "duration": 0.12,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "duration": 0.16,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 55,
+      "max": 172,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "topcolor",
+      "label": "Top ink",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.0.color"
+    },
+    {
+      "id": "bottomcolor",
+      "label": "Bottom ink",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.1.color"
+    },
+    {
+      "id": "duration",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

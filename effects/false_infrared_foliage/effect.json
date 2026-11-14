@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.false-infrared-foliage",
+  "displayName": "False Infrared Foliage",
+  "category": "color",
+  "description": "Artistic false-infrared simulation makes green vegetation pink while retaining readable scene shapes.",
+  "backend": "gpu",
+  "order": 5001,
+  "parameters": [
+    {
+      "identifier": "intensity",
+      "displayName": "False-color intensity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.83,
+      "group": "Edit"
+    },
+    {
+      "identifier": "leafSelect",
+      "displayName": "Green sensitivity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.52,
+      "group": "Edit"
+    },
+    {
+      "identifier": "skyCool",
+      "displayName": "Cool skies and shadows",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.52,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

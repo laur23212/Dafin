@@ -1,0 +1,55 @@
+{
+  "id": "chatgpt.fx.stained-glass-mosaic",
+  "displayName": "Stained-Glass Facets",
+  "category": "dreamy",
+  "description": "Voronoi-like colored glass facets with dark leading and real footage sampled in each cell.",
+  "backend": "gpu",
+  "order": 5004,
+  "parameters": [
+    {
+      "identifier": "cellSize",
+      "displayName": "Facet size",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.53,
+      "group": "Edit"
+    },
+    {
+      "identifier": "leading",
+      "displayName": "Dark seams",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78,
+      "group": "Edit"
+    },
+    {
+      "identifier": "colorBoost",
+      "displayName": "Glass saturation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Edit"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

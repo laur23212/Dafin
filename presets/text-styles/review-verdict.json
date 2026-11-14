@@ -1,0 +1,151 @@
+{
+  "format": 1,
+  "id": "chatgpt.review-verdict",
+  "label": "Review Verdict",
+  "description": "Simple high-visibility review verdict; text remains fully editable.",
+  "category": "reviews",
+  "tags": [
+    "dafin",
+    "v3",
+    "editorial"
+  ],
+  "kind": "title",
+  "sampleText": "RECOMMENDED",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 800,
+    "pixelSize": 102,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.17,
+    "letterSpacing": 1.2,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "opacity": 0.56,
+        "offsetY": 5,
+        "blur": 9
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#1B4534"
+        },
+        "width": 3.5
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#EDFFCF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "stagger": 0,
+          "duration": 0.12,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "unit": "block",
+          "duration": 0.16,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#B0182635",
+    "boxPadding": 16,
+    "boxRadius": 10,
+    "underlineEnabled": true,
+    "underlineColor": "#9DF19A",
+    "underlineWidth": 4,
+    "underlineOffset": 9
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 48,
+      "max": 153,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Ink color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box",
+      "label": "Box",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "panelcolor",
+      "label": "Panel color",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "underline",
+      "label": "Underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "underlinecolor",
+      "label": "Line color",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "duration",
+      "label": "Entrance time",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}
