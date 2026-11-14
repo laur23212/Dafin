@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.studio-tritone-print",
+  "displayName": "Studio Tritone Print",
+  "category": "look",
+  "order": 7900,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.tritone-exposure-map",
+      "params": {
+        "strength": 0.81,
+        "midpoint": 0.48,
+        "blendWidth": 0.28
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.oil-film-iridescence",
+      "params": {
+        "strength": 0.22,
+        "threshold": 0.72
+      }
+    }
+  ]
+}

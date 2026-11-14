@@ -1,0 +1,123 @@
+{
+  "format": 1,
+  "id": "chatgpt.memorial-dedication",
+  "label": "Memorial Dedication",
+  "description": "Quiet, respectful memorial or tribute text with restrained serif-like spacing; never an automatic notice.",
+  "category": "elegant",
+  "tags": [
+    "memorial-dedication",
+    "dafin-v7",
+    "editorial"
+  ],
+  "kind": "title",
+  "sampleText": "In loving memory",
+  "requires": {
+    "fonts": [
+      "Noto Serif"
+    ]
+  },
+  "style": {
+    "fontFamily": "Noto Serif",
+    "fontWeight": 500,
+    "pixelSize": 74,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 1,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.42
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#f5e8d4"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#b89c7b",
+    "underlineWidth": 3,
+    "underlineOffset": 8,
+    "underlineReveal": 1
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "words",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "text_colour",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "accent_colour",
+      "label": "Accent colour",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "chatgpt.stack.architectural-blueprint",
+  "displayName": "Architectural Blueprint",
+  "category": "look",
+  "order": 7901,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.mixed-lighting-soft-balance",
+      "params": {
+        "strength": 0.38
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.blueprint-drafting",
+      "params": {
+        "lineStrength": 0.93,
+        "gridAmount": 0.32
+      }
+    }
+  ]
+}

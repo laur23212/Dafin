@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.color-consistent-rooms",
+  "displayName": "Color-Consistent Rooms",
+  "category": "look",
+  "order": 7903,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.mixed-lighting-soft-balance",
+      "params": {
+        "strength": 0.63,
+        "shadowNeutral": 0.53,
+        "highlightNeutral": 0.47
+      }
+    },
+    {
+      "effectId": "dafin.v4.fx.adaptive-vibrance",
+      "params": {
+        "amount": 0.18,
+        "protect": 0.9
+      }
+    }
+  ]
+}

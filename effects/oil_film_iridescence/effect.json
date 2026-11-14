@@ -1,0 +1,64 @@
+{
+  "id": "chatgpt.fx.oil-film-iridescence",
+  "displayName": "Oil-Film Iridescence",
+  "category": "dreamy",
+  "description": "A restrained spectral interference sheen appears on bright image details, like a thin oil film rather than a chromatic fringe.",
+  "order": 7602,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Iridescence",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Controls"
+    },
+    {
+      "identifier": "threshold",
+      "displayName": "Bright-area threshold",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 0.9,
+      "defaultValue": 0.48,
+      "group": "Controls"
+    },
+    {
+      "identifier": "scale",
+      "displayName": "Interference bands",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.4,
+      "group": "Controls"
+    },
+    {
+      "identifier": "direction",
+      "displayName": "Band angle",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.34,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

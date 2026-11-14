@@ -1,0 +1,64 @@
+{
+  "id": "chatgpt.fx.led-stage-screen",
+  "displayName": "LED Stage Screen",
+  "category": "retro",
+  "description": "Physical RGB LED clusters with black pixel gaps and luminous subpixels; designed for concerts and digital signage instead of VHS/CRT.",
+  "order": 7604,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "pitch",
+      "displayName": "LED density",
+      "type": "float",
+      "minValue": 0.05,
+      "maxValue": 1,
+      "defaultValue": 0.54,
+      "group": "Controls"
+    },
+    {
+      "identifier": "gap",
+      "displayName": "Diode spacing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.45,
+      "group": "Controls"
+    },
+    {
+      "identifier": "brightness",
+      "displayName": "LED brightness",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 1,
+      "defaultValue": 0.79,
+      "group": "Controls"
+    },
+    {
+      "identifier": "colorMix",
+      "displayName": "RGB cluster strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.92,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
