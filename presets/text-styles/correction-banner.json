@@ -1,0 +1,143 @@
+{
+  "format": 1,
+  "id": "chatgpt.correction-banner",
+  "label": "Correction Banner",
+  "description": "Clear correction, clarification and update title for factual videos.",
+  "category": "utility",
+  "tags": [
+    "dafin-v6",
+    "practical",
+    "original"
+  ],
+  "kind": "lower-third",
+  "sampleText": "CORRECTION: UPDATED FIGURES",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 700,
+    "pixelSize": 48,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 0.15,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#E5A62F21",
+    "boxPadding": 24,
+    "boxRadius": 14,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.5
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#32130D"
+        },
+        "width": 3,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "copy",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fg",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "bg",
+      "label": "Box colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "edge",
+      "label": "Outline colour",
+      "type": "color",
+      "bind": "layer.outline.color"
+    },
+    {
+      "id": "enter",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

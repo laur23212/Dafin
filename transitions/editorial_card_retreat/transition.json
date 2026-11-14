@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.tr.editorial-card-retreat",
+  "displayName": "Editorial Card Retreat",
+  "category": "cinematic",
+  "order": 2577,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "cardScale",
+      "displayName": "Final card size",
+      "type": "float",
+      "minValue": 0.18,
+      "maxValue": 0.75,
+      "defaultValue": 0.32,
+      "group": "Shape"
+    },
+    {
+      "identifier": "shadow",
+      "displayName": "Cast shadow",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.75,
+      "defaultValue": 0.35,
+      "group": "Shape"
+    },
+    {
+      "identifier": "cornerSoftness",
+      "displayName": "Edge feather",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.09,
+      "defaultValue": 0.025,
+      "group": "Shape"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

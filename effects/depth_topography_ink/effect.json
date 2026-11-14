@@ -1,0 +1,62 @@
+{
+  "id": "chatgpt.fx.depth-topography-ink",
+  "displayName": "Depth Topography Ink",
+  "category": "depth",
+  "order": 2506,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "density",
+      "displayName": "Contour lines",
+      "type": "float",
+      "minValue": 5,
+      "maxValue": 32,
+      "defaultValue": 18,
+      "group": "Lines"
+    },
+    {
+      "identifier": "inkStrength",
+      "displayName": "Ink strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82,
+      "group": "Lines"
+    },
+    {
+      "identifier": "lineWidth",
+      "displayName": "Stroke weight",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 2.3,
+      "defaultValue": 0.85,
+      "group": "Lines"
+    },
+    {
+      "identifier": "inkColor",
+      "displayName": "Ink color",
+      "type": "color",
+      "defaultValue": "#EEE7CE",
+      "group": "Lines"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "depth"
+}

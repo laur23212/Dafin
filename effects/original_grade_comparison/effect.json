@@ -1,0 +1,70 @@
+{
+  "id": "chatgpt.fx.original-grade-comparison",
+  "displayName": "Original / Grade Comparison",
+  "category": "impact",
+  "order": 2505,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "divide",
+      "displayName": "Before/after split",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 0.9,
+      "defaultValue": 0.5,
+      "group": "Comparison"
+    },
+    {
+      "identifier": "rightExposure",
+      "displayName": "After: exposure",
+      "type": "float",
+      "minValue": -0.4,
+      "maxValue": 0.4,
+      "defaultValue": 0.1,
+      "group": "Comparison"
+    },
+    {
+      "identifier": "rightContrast",
+      "displayName": "After: contrast",
+      "type": "float",
+      "minValue": -0.6,
+      "maxValue": 0.7,
+      "defaultValue": 0.22,
+      "group": "Comparison"
+    },
+    {
+      "identifier": "lineWidth",
+      "displayName": "Dividing line",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.018,
+      "defaultValue": 0.004,
+      "group": "Comparison"
+    },
+    {
+      "identifier": "lineColor",
+      "displayName": "Line color",
+      "type": "color",
+      "defaultValue": "#F3E9CF",
+      "group": "Comparison"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

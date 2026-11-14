@@ -1,0 +1,144 @@
+{
+  "format": 1,
+  "id": "chatgpt.archive-date-stamp",
+  "label": "Archive Date Stamp",
+  "description": "Monospaced timestamp or document reference label for historical footage.",
+  "category": "documentary",
+  "tags": [
+    "dafin-v6",
+    "practical",
+    "original"
+  ],
+  "kind": "lower-third",
+  "sampleText": "ARCHIVE / 1998-07-22",
+  "requires": {
+    "fonts": [
+      "IBM Plex Mono"
+    ]
+  },
+  "style": {
+    "fontFamily": "IBM Plex Mono",
+    "fontWeight": 600,
+    "pixelSize": 46,
+    "italic": false,
+    "align": "left",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 0.6,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#DE10242B",
+    "boxPadding": 24,
+    "boxRadius": 14,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.5
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#CDEFE4"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "underlineEnabled": true,
+    "underlineColor": "#A4D9BD",
+    "underlineWidth": 4,
+    "underlineOffset": 8,
+    "underlineReveal": 1
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "copy",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fg",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "bg",
+      "label": "Box colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "rule",
+      "label": "Accent underline",
+      "type": "bool",
+      "bind": "underline.enabled"
+    },
+    {
+      "id": "rulecolor",
+      "label": "Accent colour",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "enter",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

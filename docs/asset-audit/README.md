@@ -153,3 +153,14 @@ First batch made from `PROMPT_FOR_CHATGPT.md`; all 8 assets are in.
 - **Effect template (1):** Clear Weathered Footage (dehaze + Adaptive Vibrance). Added to
   `DRIFT_CORE_EFFECT_TEMPLATES`, which was empty.
 - **Not tested:** the full app was never built; the Depth card uses a stand-in depth map; Inter weight 600.
+
+## Batch 02 from ChatGPT (14 November 2026)
+
+All 19 assets are in: 7 effects (Highlight Shoulder Guard, Magenta Lens Fringe Repair, Smooth Gradient
+Deband, Rolling Skew Balance, Vertical Side Reflections, Original / Grade Comparison, Depth Topography
+Ink), 2 transitions (Editorial Card Retreat, Left Hinge Turn), 7 titles and 3 effect templates.
+
+- Question Focus asked for Inter weight 650, which Inter does not have; changed to 600.
+- Fonts added to `title-fonts/`: Noto Serif and IBM Plex Mono. DM Sans, Inter and Oswald come with Essentials.
+- Original / Grade Comparison draws a split into the picture, so it also shows in exports.
+- Not tested: the full app, tst_editorstate and tst_engine, real depth maps, Inter weight 600.

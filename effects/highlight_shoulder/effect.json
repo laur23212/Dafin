@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.highlight-shoulder",
+  "displayName": "Highlight Shoulder Guard",
+  "category": "restoration",
+  "order": 2500,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Compression",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.78,
+      "group": "Highlights"
+    },
+    {
+      "identifier": "knee",
+      "displayName": "Roll-off begins",
+      "type": "float",
+      "minValue": 0.3,
+      "maxValue": 0.88,
+      "defaultValue": 0.64,
+      "group": "Highlights"
+    },
+    {
+      "identifier": "colorRetention",
+      "displayName": "Color retention",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.82,
+      "group": "Highlights"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "chatgpt.stack.controlled-highlights",
+  "displayName": "Controlled Highlights",
+  "category": "look",
+  "order": 2601,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.highlight-shoulder",
+      "params": {
+        "strength": 0.72,
+        "knee": 0.64,
+        "colorRetention": 0.89
+      }
+    },
+    {
+      "effectId": "dafin.v4.fx.adaptive-vibrance",
+      "params": {
+        "amount": 0.12,
+        "protect": 0.93
+      }
+    }
+  ]
+}

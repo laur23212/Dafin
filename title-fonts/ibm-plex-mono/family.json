@@ -1,0 +1,19 @@
+{
+  "id": "ibm-plex-mono",
+  "family": "IBM Plex Mono",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "IBMPlexMono-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "IBMPlexMono-SemiBold.ttf",
+      "weight": 600,
+      "styleName": "SemiBold"
+    }
+  ]
+}

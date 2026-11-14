@@ -381,15 +381,19 @@ set(DAFIN_HANDOFF_EFFECTS
     matte_edge_shrink_feather midtones_solarize matte_interior_color_repair neutral_grid_balance old_film_dust_specks
     old_film_vertical_scratches radial_focus shadow_chroma_clean shadow_selective_lift
     skin_tone_guard_grade specular_ray_builder subject_dual_tone_grade
-    subject_pop_muted_surroundings subject_shaped_spotlight)
+    subject_pop_muted_surroundings subject_shaped_spotlight
+    depth_topography_ink edge_color_defringe flat_gradient_deband highlight_shoulder
+    original_grade_comparison rolling_skew_balance vertical_side_reflections)
 set(DAFIN_HANDOFF_TRANSITIONS
     crash_zoom_cut digital_slice_cut double_door_reveal editorial_page_peel film_gate_jump gradient_wipe
     high_contrast_edge_reveal incoming_color_priority iris_open noise_dissolve rack_focus_bridge
-    subject_holdout_bridge texture_first_reveal vintage_light_leak_cut whip_pan_left)
+    subject_holdout_bridge texture_first_reveal vintage_light_leak_cut whip_pan_left
+    editorial_card_retreat left_hinge_turn)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
-set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage)
+set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
+    controlled_highlights vertical_editorial_canvas)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

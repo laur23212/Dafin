@@ -1,0 +1,25 @@
+{
+  "id": "chatgpt.stack.vertical-editorial-canvas",
+  "displayName": "Vertical Editorial Canvas",
+  "category": "clone",
+  "order": 2603,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.vertical-side-reflections",
+      "params": {
+        "centerWidth": 0.44,
+        "sideDim": 0.38,
+        "separator": 0.004
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.highlight-shoulder",
+      "params": {
+        "strength": 0.32,
+        "knee": 0.77,
+        "colorRetention": 0.9
+      }
+    }
+  ]
+}

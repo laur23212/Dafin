@@ -1,0 +1,60 @@
+{
+  "id": "chatgpt.tr.left-hinge-turn",
+  "displayName": "Left Hinge Turn",
+  "category": "geometric",
+  "order": 2578,
+  "audioCurve": "crossfade",
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12,
+  "parameters": [
+    {
+      "identifier": "perspective",
+      "displayName": "Corner perspective",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.75,
+      "defaultValue": 0.34,
+      "group": "Plane"
+    },
+    {
+      "identifier": "panelShade",
+      "displayName": "Turning shade",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.8,
+      "defaultValue": 0.32,
+      "group": "Plane"
+    },
+    {
+      "identifier": "finish",
+      "displayName": "Fully clear by",
+      "type": "float",
+      "minValue": 0.72,
+      "maxValue": 0.96,
+      "defaultValue": 0.9,
+      "group": "Timing"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

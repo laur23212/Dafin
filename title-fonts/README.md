@@ -17,6 +17,9 @@ License 1.1; each folder keeps its `OFL.txt`. Only the faces the titles use are 
 Roboto Slab (Regular, Bold) is Apache-2.0, not OFL: its folder keeps `LICENSE.txt`. It is cut
 from the upstream variable font; ș/ț are present.
 
+IBM Plex Mono (Regular, SemiBold) declares the Reserved Font Name "Plex", so its two static files
+are the upstream ones, unchanged. Noto Serif (400/600/700) is cut from the variable font.
+
 Amiri, Comic Neue and Lobster Two have no ș/ț: Romanian text in those titles falls back for
 those letters.
 

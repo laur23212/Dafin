@@ -1,0 +1,25 @@
+{
+  "id": "chatgpt.stack.clean-gradient-capture",
+  "displayName": "Clean Gradient Capture",
+  "category": "look",
+  "order": 2602,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.edge-color-defringe",
+      "params": {
+        "strength": 0.65,
+        "radius": 2.0,
+        "sensitivity": 0.15
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.flat-gradient-deband",
+      "params": {
+        "smoothing": 0.75,
+        "edgeProtect": 0.14,
+        "dither": 0.75
+      }
+    }
+  ]
+}

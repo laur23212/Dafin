@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.rolling-skew-balance",
+  "displayName": "Rolling Skew Balance",
+  "category": "restoration",
+  "order": 2503,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "skew",
+      "displayName": "Horizontal skew",
+      "type": "float",
+      "minValue": -0.25,
+      "maxValue": 0.25,
+      "defaultValue": 0.055,
+      "group": "Straighten"
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Anchor line",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Straighten"
+    },
+    {
+      "identifier": "subtleCurve",
+      "displayName": "Row curvature",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0,
+      "group": "Straighten"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

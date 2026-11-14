@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.flat-gradient-deband",
+  "displayName": "Smooth Gradient Deband",
+  "category": "restoration",
+  "order": 2502,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "smoothing",
+      "displayName": "Gradient smoothing",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.75,
+      "group": "Repair"
+    },
+    {
+      "identifier": "edgeProtect",
+      "displayName": "Edge protection",
+      "type": "float",
+      "minValue": 0.03,
+      "maxValue": 0.35,
+      "defaultValue": 0.14,
+      "group": "Repair"
+    },
+    {
+      "identifier": "dither",
+      "displayName": "Dither (8-bit steps)",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 2,
+      "defaultValue": 0.9,
+      "group": "Repair"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

@@ -1,0 +1,121 @@
+{
+  "format": 1,
+  "id": "chatgpt.accessible-subtitle-card",
+  "label": "Accessible Subtitle Card",
+  "description": "High-contrast boxed caption treatment; cue text comes from subtitles.",
+  "category": "captions",
+  "tags": [
+    "dafin-v6",
+    "practical",
+    "original"
+  ],
+  "kind": "caption",
+  "sampleText": "Readable subtitles",
+  "requires": {
+    "fonts": [
+      "Inter"
+    ]
+  },
+  "style": {
+    "fontFamily": "Inter",
+    "fontWeight": 600,
+    "pixelSize": 49,
+    "italic": false,
+    "align": "center",
+    "valign": "bottom",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 0.05,
+    "textCase": "none",
+    "boxEnabled": true,
+    "boxColor": "#E600101B",
+    "boxPadding": 18,
+    "boxRadius": 14,
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.5
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.08,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 250
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 20,
+      "max": 200,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "fg",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "bg",
+      "label": "Box colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "enter",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

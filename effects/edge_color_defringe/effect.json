@@ -1,0 +1,54 @@
+{
+  "id": "chatgpt.fx.edge-color-defringe",
+  "displayName": "Magenta Lens Fringe Repair",
+  "category": "restoration",
+  "order": 2501,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Fringe removal",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.9,
+      "group": "Repair"
+    },
+    {
+      "identifier": "radius",
+      "displayName": "Edge sample radius",
+      "type": "float",
+      "minValue": 1,
+      "maxValue": 5,
+      "defaultValue": 2.5,
+      "group": "Repair"
+    },
+    {
+      "identifier": "sensitivity",
+      "displayName": "Fringe threshold",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.45,
+      "defaultValue": 0.13,
+      "group": "Repair"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}
