@@ -1,0 +1,6 @@
+{
+  "name": "Balanced Flat Restore",
+  "category": "Log Recovery",
+  "description": "Generic flat-source contrast and saturation recovery; not a camera-specific log transform.",
+  "order": 1360
+}

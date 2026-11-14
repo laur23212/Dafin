@@ -476,6 +476,21 @@ set(DAFIN_HANDOFF_TRANSITIONS
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
+# Dafin: the 40 colour looks from ChatGPT batch 11 (looks/<id>/look.cube + look.json), baked into every build.
+set(DRIFT_CORE_LOOKS
+    airy_white_balance amber_interior balanced_flat_restore balanced_panchrome
+    bronze_skinlight clean_product_definition clear_morning_color coastal_amber_contrast
+    contrast_first_restore cool_archive_sheet copper_filter_monochrome
+    copper_shadow_evening cyan_lemon_contrast deep_botanical_green dense_midtone_print
+    electric_dusk_rose faded_walnut_print golden_paper_memory green_garden_natural
+    harbor_twilight leaf_detail_monochrome lilac_and_honey low_contrast_print
+    natural_aqua_bronze natural_daylight_tidy open_negative portrait_midtone_care
+    rain_window_blue shadow_detail_restore silver_high_key soft_cyan_skinlight
+    soft_flat_recovery soft_indoor_balance soft_pastel_keepsake soft_silver_curve
+    soft_slate_cinema steel_and_copper stormcloud_muted sunlit_neutral_lift
+    verdigris_duotone
+)
+
 set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
     controlled_highlights vertical_editorial_canvas clean_document_capture quick_neutral_video
     detail_first_story masked_echo_poster silver_documentary infrared_expedition woodcut_poster
@@ -1856,6 +1871,106 @@ qt_add_resources(drift "drift_asset_library"
         asset-library/stickers/live-indicator.json
         asset-library/stickers/speaker-bell.json
         asset-library/stickers/warning-triangle.json
+        asset-library/stickers/chatgpt_arrow_arc_turn.json
+        asset-library/stickers/chatgpt_arrow_detour_zigzag.json
+        asset-library/stickers/chatgpt_arrow_direction_block.json
+        asset-library/stickers/chatgpt_arrow_double_axis.json
+        asset-library/stickers/chatgpt_arrow_downshift_bounce.json
+        asset-library/stickers/chatgpt_arrow_edge_swoop.json
+        asset-library/stickers/chatgpt_arrow_gesture_scribble.json
+        asset-library/stickers/chatgpt_arrow_precision_needle.json
+        asset-library/stickers/chatgpt_arrow_return_u_turn.json
+        asset-library/stickers/chatgpt_arrow_route_trace.json
+        asset-library/stickers/chatgpt_arrow_split_fork.json
+        asset-library/stickers/chatgpt_arrow_threading_loop.json
+        asset-library/stickers/chatgpt_circle_closing_gap.json
+        asset-library/stickers/chatgpt_circle_corner_brackets.json
+        asset-library/stickers/chatgpt_circle_dash_spinner.json
+        asset-library/stickers/chatgpt_circle_double_encircle.json
+        asset-library/stickers/chatgpt_circle_offset_eclipse.json
+        asset-library/stickers/chatgpt_circle_orbit_dots.json
+        asset-library/stickers/chatgpt_circle_orbit_trace.json
+        asset-library/stickers/chatgpt_circle_pulse_target.json
+        asset-library/stickers/chatgpt_circle_rough_loop.json
+        asset-library/stickers/chatgpt_circle_rounded_highlight.json
+        asset-library/stickers/chatgpt_circle_spotlight_oval.json
+        asset-library/stickers/chatgpt_circle_water_ripple.json
+        asset-library/stickers/chatgpt_emphasis_arrowhead_burst.json
+        asset-library/stickers/chatgpt_emphasis_banner_tuck.json
+        asset-library/stickers/chatgpt_emphasis_contrast_diamond.json
+        asset-library/stickers/chatgpt_emphasis_data_fan.json
+        asset-library/stickers/chatgpt_emphasis_diamond_frame.json
+        asset-library/stickers/chatgpt_emphasis_focus_explode.json
+        asset-library/stickers/chatgpt_emphasis_high_priority_bars.json
+        asset-library/stickers/chatgpt_emphasis_impact_chevrons.json
+        asset-library/stickers/chatgpt_emphasis_radial_meter.json
+        asset-library/stickers/chatgpt_emphasis_vertical_marker.json
+        asset-library/stickers/chatgpt_interface_comparison_bracket.json
+        asset-library/stickers/chatgpt_interface_corner_measure.json
+        asset-library/stickers/chatgpt_interface_frame_corners.json
+        asset-library/stickers/chatgpt_interface_grid_pop.json
+        asset-library/stickers/chatgpt_interface_loading_dash.json
+        asset-library/stickers/chatgpt_interface_progress_arc.json
+        asset-library/stickers/chatgpt_interface_reveal_window.json
+        asset-library/stickers/chatgpt_interface_ruler_ticks.json
+        asset-library/stickers/chatgpt_interface_timeline_scrub.json
+        asset-library/stickers/chatgpt_interface_vertical_level.json
+        asset-library/stickers/chatgpt_pointer_bullseye_seek.json
+        asset-library/stickers/chatgpt_pointer_crosshair_lock.json
+        asset-library/stickers/chatgpt_pointer_drag_grip.json
+        asset-library/stickers/chatgpt_pointer_finger_poke.json
+        asset-library/stickers/chatgpt_pointer_hand_tap.json
+        asset-library/stickers/chatgpt_pointer_hold_progress.json
+        asset-library/stickers/chatgpt_pointer_look_here_eye.json
+        asset-library/stickers/chatgpt_pointer_map_drop.json
+        asset-library/stickers/chatgpt_pointer_pinch_hint.json
+        asset-library/stickers/chatgpt_pointer_pointer_drag.json
+        asset-library/stickers/chatgpt_pointer_swipe_direction.json
+        asset-library/stickers/chatgpt_pointer_tap_ripple.json
+        asset-library/stickers/chatgpt_social_applause_rays.json
+        asset-library/stickers/chatgpt_social_bookmark_slide.json
+        asset-library/stickers/chatgpt_social_bookmark_unfold.json
+        asset-library/stickers/chatgpt_social_folded_comment.json
+        asset-library/stickers/chatgpt_social_mood_reaction.json
+        asset-library/stickers/chatgpt_social_quote_pair.json
+        asset-library/stickers/chatgpt_social_reply_branch.json
+        asset-library/stickers/chatgpt_social_reply_stack.json
+        asset-library/stickers/chatgpt_social_star_rating.json
+        asset-library/stickers/chatgpt_social_thought_trail.json
+        asset-library/stickers/chatgpt_underline_chevron_wave.json
+        asset-library/stickers/chatgpt_underline_curved_bracket.json
+        asset-library/stickers/chatgpt_underline_highlighter_bar.json
+        asset-library/stickers/chatgpt_underline_ink_scribble.json
+        asset-library/stickers/chatgpt_underline_living_squiggle.json
+        asset-library/stickers/chatgpt_underline_marching_dash.json
+        asset-library/stickers/chatgpt_underline_paired_lines.json
+        asset-library/stickers/chatgpt_underline_single_stroke.json
+        asset-library/stickers/chatgpt_underline_spark_end.json
+        asset-library/stickers/chatgpt_underline_spring_settle.json
+        asset-library/stickers/chatgpt_underline_thick_marker.json
+        asset-library/stickers/chatgpt_underline_wave_runner.json
+        asset-library/stickers/chatgpt_weather_concern_mood.json
+        asset-library/stickers/chatgpt_weather_crescent_shine.json
+        asset-library/stickers/chatgpt_weather_droplet_glow.json
+        asset-library/stickers/chatgpt_weather_rain_cloud.json
+        asset-library/stickers/chatgpt_weather_smiling_mood.json
+        asset-library/stickers/chatgpt_weather_snow_crystal.json
+        asset-library/stickers/chatgpt_weather_sunrise_arc.json
+        asset-library/stickers/chatgpt_weather_temperature_rise.json
+        asset-library/stickers/chatgpt_weather_umbrella_open.json
+        asset-library/stickers/chatgpt_weather_wind_gust.json
+        asset-library/stickers/chatgpt_x_check_pulse.json
+        asset-library/stickers/chatgpt_x_checkbox_confirm.json
+        asset-library/stickers/chatgpt_x_correct_double_tick.json
+        asset-library/stickers/chatgpt_x_denied_ring.json
+        asset-library/stickers/chatgpt_x_editor_strikethrough.json
+        asset-library/stickers/chatgpt_x_exclamation_stack.json
+        asset-library/stickers/chatgpt_x_plus_to_minus.json
+        asset-library/stickers/chatgpt_x_question_pop.json
+        asset-library/stickers/chatgpt_x_seal_x.json
+        asset-library/stickers/chatgpt_x_strike_slash.json
+        asset-library/stickers/chatgpt_x_tick_circle.json
+        asset-library/stickers/chatgpt_x_two_stroke_x.json
         asset-library/titles/chapter-line.json
         asset-library/titles/corner-tag.json
         asset-library/titles/lower-third-slide.json
@@ -3375,11 +3490,13 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         drift_stage_packages(drift effect-templates ONLY ${DRIFT_CORE_EFFECT_TEMPLATES})
         drift_stage_packages(drift transitions ONLY ${DRIFT_CORE_TRANSITIONS})
         drift_stage_packages(drift audio-effects ONLY ${DRIFT_CORE_AUDIO_EFFECTS})
+        drift_stage_packages(drift looks ONLY ${DRIFT_CORE_LOOKS})
     else()
         drift_copy_effects(drift)
         drift_copy_effect_templates(drift)
         drift_copy_transitions(drift)
         drift_copy_audio_effects(drift)
+        drift_stage_packages(drift looks)
     endif()
     drift_bundle_onnxruntime(drift)
     # Dafin: the fonts the ChatGPT title templates use that Fonts Essentials does not have (OFL,
@@ -3437,7 +3554,7 @@ else()
     # supersede the bundled copies.
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/title-fonts/
             DESTINATION ${CMAKE_INSTALL_BINDIR}/fonts COMPONENT drift)
-    foreach(_assetdir effects transitions effect-templates audio-effects)
+    foreach(_assetdir effects transitions effect-templates audio-effects looks)
         if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
             string(TOUPPER "${_assetdir}" _upper)
             string(REPLACE "-" "_" _upper "${_upper}")

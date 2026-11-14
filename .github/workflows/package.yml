@@ -921,7 +921,7 @@ jobs:
           Copy-Item .deps\ffmpeg\bin\*.dll dist\bin -Force
           # Bundled effect/transition/template packages: a POST_BUILD step already put them beside
           # the exe, and the app resolves them relative to it.
-          foreach ($dir in "effects", "transitions", "effect-templates", "audio-effects", "fonts") {
+          foreach ($dir in "effects", "transitions", "effect-templates", "audio-effects", "looks", "fonts") {
             if (Test-Path "build\$dir") {
               Copy-Item "build\$dir" dist\bin -Recurse -Force
             }

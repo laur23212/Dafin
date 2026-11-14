@@ -1153,3 +1153,243 @@ ChatGPT-batch-10,effect template,chatgpt.stack.concert-ambient-spotlight,Dafin_B
 ChatGPT-batch-10,effect template,chatgpt.stack.paper-keepsake,Dafin_Batch10,"Paper Keepsake",,yes,"validator/harness checks passed",ACCEPTED,3,
 ChatGPT-batch-10,effect template,chatgpt.stack.dim-jewelry-counter,Dafin_Batch10,"Dim Jewelry Counter",,yes,"validator/harness checks passed",ACCEPTED,3,
 ChatGPT-batch-10,effect template,chatgpt.stack.mineral-poster-cut,Dafin_Batch10,"Mineral Poster Cut",,yes,"validator/harness checks passed",ACCEPTED,3,
+ChatGPT-batch-11,sticker,chatgpt-arrow-route-trace,Dafin_Batch11,Route Trace Arrow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-arc-turn,Dafin_Batch11,Arc Turn Arrow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-double-axis,Dafin_Batch11,Dual Direction Axis,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-detour-zigzag,Dafin_Batch11,Detour Zigzag,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-gesture-scribble,Dafin_Batch11,Hand-Gesture Arrow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-direction-block,Dafin_Batch11,Bold Direction Block,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-precision-needle,Dafin_Batch11,Precision Needle,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-threading-loop,Dafin_Batch11,Threading Loop Arrow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-downshift-bounce,Dafin_Batch11,Downshift Bounce Arrow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-edge-swoop,Dafin_Batch11,Edge Swoop Arrow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-split-fork,Dafin_Batch11,Branch Decision Arrows,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-arrow-return-u-turn,Dafin_Batch11,Return U-Turn,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-orbit-trace,Dafin_Batch11,Orbit Trace,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-double-encircle,Dafin_Batch11,Nested Double Circle,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-rough-loop,Dafin_Batch11,Organic Scribble Loop,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-orbit-dots,Dafin_Batch11,Orbiting Dot Ring,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-pulse-target,Dafin_Batch11,Target Pulse Ring,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-water-ripple,Dafin_Batch11,Wide Water Ripple,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-dash-spinner,Dafin_Batch11,Dashed Spinner Dial,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-closing-gap,Dafin_Batch11,Gap Closing Ring,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-spotlight-oval,Dafin_Batch11,Spotlight Oval,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-corner-brackets,Dafin_Batch11,Corner Ring Brackets,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-rounded-highlight,Dafin_Batch11,Rounded Box Spotlight,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-circle-offset-eclipse,Dafin_Batch11,Eclipse Encircle,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-two-stroke-x,Dafin_Batch11,Cross in Two Strokes,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-seal-x,Dafin_Batch11,Stamped Rejection Seal,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-editor-strikethrough,Dafin_Batch11,Editorial Cross-Out,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-check-pulse,Dafin_Batch11,Check and Confirm,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-tick-circle,Dafin_Batch11,Circled Tick Sweep,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-denied-ring,Dafin_Batch11,Denied Ring,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-plus-to-minus,Dafin_Batch11,Plus to Minus,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-question-pop,Dafin_Batch11,Question Marker,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-exclamation-stack,Dafin_Batch11,Exclamation Emphasis,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-strike-slash,Dafin_Batch11,Single Correction Slash,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-correct-double-tick,Dafin_Batch11,Double-Tick Verified,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-x-checkbox-confirm,Dafin_Batch11,Checkbox Fill Confirm,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-pointer-drag,Dafin_Batch11,Object Drag Cursor,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-hand-tap,Dafin_Batch11,Hand Tap Pad,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-finger-poke,Dafin_Batch11,Index Finger Poke,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-tap-ripple,Dafin_Batch11,Concentric Tap Ripple,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-crosshair-lock,Dafin_Batch11,Crosshair Focus Lock,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-bullseye-seek,Dafin_Batch11,Bullseye Seek,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-hold-progress,Dafin_Batch11,Hold-to-Confirm Progress,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-swipe-direction,Dafin_Batch11,Swipe Gesture Hint,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-drag-grip,Dafin_Batch11,Adjustable Drag Handle,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-map-drop,Dafin_Batch11,Map Marker Drop,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-look-here-eye,Dafin_Batch11,Attention Eye,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-pointer-pinch-hint,Dafin_Batch11,Pinch Gesture,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-single-stroke,Dafin_Batch11,Underline Draw,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-wave-runner,Dafin_Batch11,Wave Underline,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-paired-lines,Dafin_Batch11,Double Rule,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-ink-scribble,Dafin_Batch11,Scribbled Underline,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-thick-marker,Dafin_Batch11,Broad Marker Underline,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-marching-dash,Dafin_Batch11,Marching Dashes,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-chevron-wave,Dafin_Batch11,Chevron Zigzag Rule,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-spring-settle,Dafin_Batch11,Bouncing Underline,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-highlighter-bar,Dafin_Batch11,Highlighter Sweep,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-living-squiggle,Dafin_Batch11,Animated Squiggle,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-spark-end,Dafin_Batch11,Spark-Ended Rule,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-underline-curved-bracket,Dafin_Batch11,Bracketed Underline,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-radial-meter,Dafin_Batch11,Radial Metric Burst,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-high-priority-bars,Dafin_Batch11,High Priority Bars,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-diamond-frame,Dafin_Batch11,Diamond Attention,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-arrowhead-burst,Dafin_Batch11,Directional Burst,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-focus-explode,Dafin_Batch11,Focus Explosion,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-vertical-marker,Dafin_Batch11,Margin Marker,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-contrast-diamond,Dafin_Batch11,Contrast Diamond,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-data-fan,Dafin_Batch11,Data Fan Emphasis,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-impact-chevrons,Dafin_Batch11,Impact Chevrons,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-emphasis-banner-tuck,Dafin_Batch11,Banner Tuck,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-thought-trail,Dafin_Batch11,Thought Trail,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-quote-pair,Dafin_Batch11,Opening Quote Pair,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-reply-branch,Dafin_Batch11,Threaded Reply Branch,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-folded-comment,Dafin_Batch11,Folded Comment Card,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-reply-stack,Dafin_Batch11,Stacked Replies,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-star-rating,Dafin_Batch11,Five-Star Rating,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-applause-rays,Dafin_Batch11,Appreciation Rays,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-bookmark-slide,Dafin_Batch11,Bookmark Page Tab,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-bookmark-unfold,Dafin_Batch11,Unfolding Bookmark,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-social-mood-reaction,Dafin_Batch11,Reply Sentiment Meter,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-progress-arc,Dafin_Batch11,Segmented Progress Arc,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-timeline-scrub,Dafin_Batch11,Timeline Playhead Sweep,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-vertical-level,Dafin_Batch11,Vertical Level Meter,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-loading-dash,Dafin_Batch11,Corner Dash Loader,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-frame-corners,Dafin_Batch11,Inset Frame Corners,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-reveal-window,Dafin_Batch11,Window Frame Draw,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-corner-measure,Dafin_Batch11,Corner Ruler,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-ruler-ticks,Dafin_Batch11,Distance Tick Strip,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-grid-pop,Dafin_Batch11,Layout Grid,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-interface-comparison-bracket,Dafin_Batch11,Side-by-Side Comparison,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-sunrise-arc,Dafin_Batch11,Simple Sunrise,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-crescent-shine,Dafin_Batch11,Crescent Sky,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-rain-cloud,Dafin_Batch11,Light Rain Forecast,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-wind-gust,Dafin_Batch11,Gentle Wind Ribbons,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-snow-crystal,Dafin_Batch11,Crystal Snow,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-temperature-rise,Dafin_Batch11,Temperature Rise,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-droplet-glow,Dafin_Batch11,Water Drop,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-smiling-mood,Dafin_Batch11,Friendly Smile,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-concern-mood,Dafin_Batch11,Concerned Expression,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,sticker,chatgpt-weather-umbrella-open,Dafin_Batch11,Umbrella Opening,,yes,"rlottie 5 frames, slots recolour",ACCEPTED,4,
+ChatGPT-batch-11,look,airy_white_balance,Dafin_Batch11,Airy White Balance,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,amber_interior,Dafin_Batch11,Amber Interior,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,balanced_flat_restore,Dafin_Batch11,Balanced Flat Restore,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,balanced_panchrome,Dafin_Batch11,Balanced Panchrome,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,bronze_skinlight,Dafin_Batch11,Bronze Skinlight,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,clean_product_definition,Dafin_Batch11,Clean Product Definition,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,clear_morning_color,Dafin_Batch11,Clear Morning Color,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,coastal_amber_contrast,Dafin_Batch11,Coastal Amber Contrast,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,contrast_first_restore,Dafin_Batch11,Contrast First Restore,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,cool_archive_sheet,Dafin_Batch11,Cool Archive Sheet,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,copper_filter_monochrome,Dafin_Batch11,Copper Filter Monochrome,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,copper_shadow_evening,Dafin_Batch11,Copper Shadow Evening,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,cyan_lemon_contrast,Dafin_Batch11,Cyan Lemon Contrast,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,deep_botanical_green,Dafin_Batch11,Deep Botanical Green,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,dense_midtone_print,Dafin_Batch11,Dense Midtone Print,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,electric_dusk_rose,Dafin_Batch11,Electric Dusk Rose,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,faded_walnut_print,Dafin_Batch11,Faded Walnut Print,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,golden_paper_memory,Dafin_Batch11,Golden Paper Memory,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,green_garden_natural,Dafin_Batch11,Green Garden Natural,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,harbor_twilight,Dafin_Batch11,Harbor Twilight,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,leaf_detail_monochrome,Dafin_Batch11,Leaf Detail Monochrome,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,lilac_and_honey,Dafin_Batch11,Lilac and Honey,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,low_contrast_print,Dafin_Batch11,Low Contrast Print,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,natural_aqua_bronze,Dafin_Batch11,Natural Aqua Bronze,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,natural_daylight_tidy,Dafin_Batch11,Natural Daylight Tidy,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,open_negative,Dafin_Batch11,Open Negative,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,portrait_midtone_care,Dafin_Batch11,Portrait Midtone Care,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,rain_window_blue,Dafin_Batch11,Rain Window Blue,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,shadow_detail_restore,Dafin_Batch11,Shadow Detail Restore,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,silver_high_key,Dafin_Batch11,Silver High Key,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,soft_cyan_skinlight,Dafin_Batch11,Soft Cyan Skinlight,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,soft_flat_recovery,Dafin_Batch11,Soft Flat Recovery,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,soft_indoor_balance,Dafin_Batch11,Soft Indoor Balance,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,soft_pastel_keepsake,Dafin_Batch11,Soft Pastel Keepsake,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,soft_silver_curve,Dafin_Batch11,Soft Silver Curve,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,soft_slate_cinema,Dafin_Batch11,Soft Slate Cinema,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,steel_and_copper,Dafin_Batch11,Steel and Copper,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,stormcloud_muted,Dafin_Batch11,Stormcloud Muted,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,sunlit_neutral_lift,Dafin_Batch11,Sunlit Neutral Lift,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,look,verdigris_duotone,Dafin_Batch11,Verdigris Duotone,,yes,33^3 cube checks,ACCEPTED,4,
+ChatGPT-batch-11,sound,chatgpt.sfx.whooshes_transitions.paper_fold_passage,Dafin_Batch11,Paper Fold Passage,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.whooshes_transitions.map_corner_handoff,Dafin_Batch11,Map Corner Handoff,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.whooshes_transitions.glass_card_exchange,Dafin_Batch11,Glass Card Exchange,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.whooshes_transitions.open_diagram_sweep,Dafin_Batch11,Open Diagram Sweep,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.whooshes_transitions.storyboard_page_thread,Dafin_Batch11,Storyboard Page Thread,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.air_whooshes.pen_trail_air,Dafin_Batch11,Pen Trail Air,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.air_whooshes.subtitle_feather_breath,Dafin_Batch11,Subtitle Feather Breath,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.air_whooshes.needle_guide_air,Dafin_Batch11,Needle Guide Air,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.air_whooshes.soft_oval_exhale,Dafin_Batch11,Soft Oval Exhale,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.air_whooshes.vector_margin_lift,Dafin_Batch11,Vector Margin Lift,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.reverse_whooshes.bookmarked_pullback,Dafin_Batch11,Bookmarked Pullback,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.reverse_whooshes.arrow_tail_rewind,Dafin_Batch11,Arrow Tail Rewind,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.reverse_whooshes.circled_note_intake,Dafin_Batch11,Circled Note Intake,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.reverse_whooshes.framed_figure_reverse,Dafin_Batch11,Framed Figure Reverse,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.reverse_whooshes.text_guide_recede,Dafin_Batch11,Text Guide Recede,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.directional_swishes.ruler_measure_pass,Dafin_Batch11,Ruler Measure Pass,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.directional_swishes.zigzag_detour_flick,Dafin_Batch11,Zigzag Detour Flick,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.directional_swishes.corner_mark_sweep,Dafin_Batch11,Corner Mark Sweep,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.directional_swishes.dual_direction_exchange,Dafin_Batch11,Dual Direction Exchange,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.directional_swishes.pivot_line_dash,Dafin_Batch11,Pivot Line Dash,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.stylized_whooshes.gel_surface_ribbon,Dafin_Batch11,Gel Surface Ribbon,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.stylized_whooshes.fiber_orbit_draw,Dafin_Batch11,Fiber Orbit Draw,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.stylized_whooshes.aqua_caption_stroke,Dafin_Batch11,Aqua Caption Stroke,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.stylized_whooshes.satin_banner_whirl,Dafin_Batch11,Satin Banner Whirl,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.stylized_whooshes.prismatic_card_flythrough,Dafin_Batch11,Prismatic Card Flythrough,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_motion_swishes.footnote_slide_join,Dafin_Batch11,Footnote Slide Join,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_motion_swishes.chapter_label_turn,Dafin_Batch11,Chapter Label Turn,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_motion_swishes.question_card_index,Dafin_Batch11,Question Card Index,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_motion_swishes.two_column_word_move,Dafin_Batch11,Two Column Word Move,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_motion_swishes.short_quote_ribbon,Dafin_Batch11,Short Quote Ribbon,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_sticker_swishes.circle_pen_tracer,Dafin_Batch11,Circle Pen Tracer,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_sticker_swishes.dry_check_brush,Dafin_Batch11,Dry Check Brush,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_sticker_swishes.arrow_quill_accent,Dafin_Batch11,Arrow Quill Accent,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_sticker_swishes.dashed_underline_rattle,Dafin_Batch11,Dashed Underline Rattle,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.text_sticker_swishes.second_strike_x,Dafin_Batch11,Second Strike X,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cinematic_impacts.chapter_divider_landing,Dafin_Batch11,Chapter Divider Landing,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cinematic_impacts.photo_album_shut,Dafin_Batch11,Photo Album Shut,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cinematic_impacts.data_section_settle,Dafin_Batch11,Data Section Settle,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cinematic_impacts.low_frame_turn,Dafin_Batch11,Low Frame Turn,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cinematic_impacts.paper_exhibit_drop,Dafin_Batch11,Paper Exhibit Drop,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.risers_downers.chart_column_assembly,Dafin_Batch11,Chart Column Assembly,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.risers_downers.digital_card_anticipation,Dafin_Batch11,Digital Card Anticipation,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.risers_downers.diagram_depth_build,Dafin_Batch11,Diagram Depth Build,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.risers_downers.inward_camera_mark,Dafin_Batch11,Inward Camera Mark,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.risers_downers.graphic_title_settle,Dafin_Batch11,Graphic Title Settle,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_clicks_pops.timeline_marker_placed,Dafin_Batch11,Timeline Marker Placed,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_clicks_pops.scale_anchor_snapped,Dafin_Batch11,Scale Anchor Snapped,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_clicks_pops.keyframe_diamond_set,Dafin_Batch11,Keyframe Diamond Set,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_clicks_pops.guided_handle_grab,Dafin_Batch11,Guided Handle Grab,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_clicks_pops.grid_edge_landed,Dafin_Batch11,Grid Edge Landed,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_tactile_clicks.felt_stylus_touch,Dafin_Batch11,Felt Stylus Touch,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_tactile_clicks.paper_checkbox_imprint,Dafin_Batch11,Paper Checkbox Imprint,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_tactile_clicks.ceramic_cursor_tile,Dafin_Batch11,Ceramic Cursor Tile,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_tactile_clicks.desk_ruler_click,Dafin_Batch11,Desk Ruler Click,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_tactile_clicks.card_stack_seat,Dafin_Batch11,Card Stack Seat,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_bubble_pops.gel_stroke_bloom,Dafin_Batch11,Gel Stroke Bloom,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_bubble_pops.liquid_dot_emphasis,Dafin_Batch11,Liquid Dot Emphasis,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_bubble_pops.soft_ellipse_bead,Dafin_Batch11,Soft Ellipse Bead,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_bubble_pops.jelly_badge_close,Dafin_Batch11,Jelly Badge Close,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_bubble_pops.air_cushion_confirmation,Dafin_Batch11,Air Cushion Confirmation,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_toggles_switches.layer_eye_enable,Dafin_Batch11,Layer Eye Enable,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_toggles_switches.magnet_snap_switch,Dafin_Batch11,Magnet Snap Switch,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_toggles_switches.curve_point_armed,Dafin_Batch11,Curve Point Armed,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_toggles_switches.selection_group_change,Dafin_Batch11,Selection Group Change,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_toggles_switches.range_marker_release,Dafin_Batch11,Range Marker Release,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.notifications_bells.footnote_acknowledgement,Dafin_Batch11,Footnote Acknowledgement,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.notifications_bells.source_credit_saved,Dafin_Batch11,Source Credit Saved,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.notifications_bells.chapter_pin_arrival,Dafin_Batch11,Chapter Pin Arrival,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.notifications_bells.answer_card_reveal,Dafin_Batch11,Answer Card Reveal,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.notifications_bells.citation_mark_complete,Dafin_Batch11,Citation Mark Complete,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_notifications_expanded.storyboard_ready_cue,Dafin_Batch11,Storyboard Ready Cue,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_notifications_expanded.review_thread_resolved,Dafin_Batch11,Review Thread Resolved,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_notifications_expanded.motion_trace_locked,Dafin_Batch11,Motion Trace Locked,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_notifications_expanded.page_sequence_saved,Dafin_Batch11,Page Sequence Saved,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_notifications_expanded.preview_card_loaded,Dafin_Batch11,Preview Card Loaded,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_feedback_status.vector_path_closed,Dafin_Batch11,Vector Path Closed,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_feedback_status.text_span_updated,Dafin_Batch11,Text Span Updated,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_feedback_status.opacity_ramp_set,Dafin_Batch11,Opacity Ramp Set,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_feedback_status.layout_compare_valid,Dafin_Batch11,Layout Compare Valid,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_feedback_status.tracking_node_accepted,Dafin_Batch11,Tracking Node Accepted,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_arcade_game.tactical_slot_anchor,Dafin_Batch11,Tactical Slot Anchor,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_arcade_game.metric_meter_charged,Dafin_Batch11,Metric Meter Charged,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_arcade_game.grid_tile_equipped,Dafin_Batch11,Grid Tile Equipped,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_arcade_game.power_cell_banked,Dafin_Batch11,Power Cell Banked,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.ui_arcade_game.digital_orbit_captured,Dafin_Batch11,Digital Orbit Captured,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cartoon_comedy.rubber_ruler_flex,Dafin_Batch11,Rubber Ruler Flex,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cartoon_comedy.sticky_note_curl,Dafin_Batch11,Sticky Note Curl,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cartoon_comedy.bouncy_pen_lid,Dafin_Batch11,Bouncy Pen Lid,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cartoon_comedy.paper_tab_spring,Dafin_Batch11,Paper Tab Spring,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.cartoon_comedy.tiny_wobbly_badge,Dafin_Batch11,Tiny Wobbly Badge,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.sci_fi_magic.quantum_orbit_scribble,Dafin_Batch11,Quantum Orbit Scribble,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.sci_fi_magic.energy_bracket_close,Dafin_Batch11,Energy Bracket Close,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.sci_fi_magic.plasma_target_thread,Dafin_Batch11,Plasma Target Thread,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.sci_fi_magic.violet_celestial_trace,Dafin_Batch11,Violet Celestial Trace,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.sci_fi_magic.spectral_annotation_wake,Dafin_Batch11,Spectral Annotation Wake,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.glitch_digital.bitmap_margin_misalign,Dafin_Batch11,Bitmap Margin Misalign,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.glitch_digital.cursor_raster_fragment,Dafin_Batch11,Cursor Raster Fragment,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.glitch_digital.pixel_frame_skitter,Dafin_Batch11,Pixel Frame Skitter,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.glitch_digital.code_bracket_misfire,Dafin_Batch11,Code Bracket Misfire,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending
+ChatGPT-batch-11,sound,chatgpt.sfx.glitch_digital.datagrid_zipper_skip,Dafin_Batch11,Datagrid Zipper Skip,,yes,format/peak/dc/hash checks,DEFERRED,4,listening review pending

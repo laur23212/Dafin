@@ -1,0 +1,6 @@
+{
+  "name": "Shadow Detail Restore",
+  "category": "Log Recovery",
+  "description": "Flat recording recovery prioritizing open shadows and modest saturation.",
+  "order": 1390
+}

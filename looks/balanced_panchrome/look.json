@@ -1,0 +1,6 @@
+{
+  "name": "Balanced Panchrome",
+  "category": "Black & White",
+  "description": "Natural monochrome using luminance-balanced red, green and blue contributions.",
+  "order": 1080
+}
