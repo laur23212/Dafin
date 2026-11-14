@@ -247,3 +247,23 @@ All 170 items went in: 60 effects (15 smart), 30 transitions, 40 titles, 15 text
   scenes without the flaw they fix.
 - Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.
 - ChatGPT also sent two extra preview photographs. They are not Dafin assets and were not added.
+
+## Batch 11 from ChatGPT (14 November 2026)
+
+100 stickers and 40 looks went in. 100 sounds are held for a listening review.
+
+- Stickers: rendered with rlottie at five times (0, 25, 50, 75 %, last frame) by
+  `tools/asset-audit/sticker_audit.py`: all 100 move, end on a non-empty pose, stay inside the canvas
+  margin, and both colour slots change the picture. Two rlottie quirks are handled in the tool: it ignores
+  slots (the tool pastes the slot values in) and it draws nothing for a property whose last keyframe carries
+  easing handles (the tool and the integrated files drop those handles, which have no segment to shape).
+  Dafin itself draws with Skottie, which resolves slots; it was not run here.
+- ChatGPT's own check used a vector approximation, not a Lottie player (its NOTES.md says so).
+- Looks: 40 cubes of 33 points, four in each of the ten categories. None has a clipped value, all grey
+  ramps rise steadily, 20 deliberate tints carry a small grey cast (up to 0.08), and the black-and-white ones are neutral.
+  Several are quiet (Natural Aqua Bronze moves a sample colour by only 1/255), and the closest pairs are
+  Clear Morning Color / Shadow Detail Restore and Clean Product Definition / Clear Morning Color.
+- Sounds: all 100 pass the script checks (format, peak, DC, length, hashes, no clash with the 335 installed
+  or the 160 earlier candidates). 9 have a very sharp sample jump and need a listen for clicks
+  (marked in LISTENING_LIST.csv). Not in Dafin.
+- Not tested: the full app, Skottie playback, the Looks panel, tst_engine, 4K speed.

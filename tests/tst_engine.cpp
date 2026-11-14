@@ -573,6 +573,7 @@ private slots:
     void colorGradeDefaultsAreIdentity();
     void vignetteDefaultsMatchLegacy();
     void lookCatalogFindsPacksAndUserLooks();
+    void bundledLooksLoadAndChangeTheColours();
 
 private:
     static QString makeColorSegmentsVideo(QTemporaryDir &dir);
@@ -18691,6 +18692,39 @@ void EngineTest::vignetteDefaultsMatchLegacy()
                                     .arg(vig)));
         }
     }
+}
+
+// The 40 looks shipped in <repo>/looks (ChatGPT batch 11): each parses as a 33^3 cube, has a name and
+// one of the ten categories, and changes a mid-grey-and-colour sample. Nothing is clipped to black.
+void EngineTest::bundledLooksLoadAndChangeTheColours()
+{
+#ifndef DRIFT_TEST_LOOKS_DIR
+    QSKIP("looks dir not configured");
+#else
+    drift::reloadLookCatalog({QStringLiteral(DRIFT_TEST_LOOKS_DIR)});
+    const QList<drift::LookEntry> looks = drift::lookCatalog();
+    QCOMPARE(looks.size(), 40);
+    const QStringList categories{QStringLiteral("Cinematic"), QStringLiteral("Film"), QStringLiteral("Black & White"),
+                                 QStringLiteral("Vintage"), QStringLiteral("Moody"), QStringLiteral("Bright & Clean"),
+                                 QStringLiteral("Teal & Orange"), QStringLiteral("Creative"), QStringLiteral("Everyday"),
+                                 QStringLiteral("Log Recovery")};
+    for (const drift::LookEntry &look : looks) {
+        QVERIFY2(categories.contains(look.category), qPrintable(look.id + ": " + look.category));
+        QVERIFY2(!look.label.isEmpty(), qPrintable(look.id));
+        drift::CubeLut lut;
+        QString error;
+        QVERIFY2(drift::loadCubeFile(look.cubePath, &lut, &error), qPrintable(look.id + ": " + error));
+        QCOMPARE(lut.size, 33);
+        // Four samples (orange, grey, teal, yellow): the quietest look still moves them by 29 in total.
+        int change = 0;
+        for (const QRgb in : {qRgb(180, 120, 90), qRgb(128, 128, 128), qRgb(60, 140, 160), qRgb(220, 200, 60)}) {
+            const QRgb out = drift::applyLut(lut, in, 1.0f);
+            change += qAbs(qRed(out) - qRed(in)) + qAbs(qGreen(out) - qGreen(in)) + qAbs(qBlue(out) - qBlue(in));
+        }
+        QVERIFY2(change >= 12, qPrintable(look.id + " does not change the colour"));
+    }
+    drift::reloadLookCatalog({});
+#endif
 }
 
 void EngineTest::lookCatalogFindsPacksAndUserLooks()
