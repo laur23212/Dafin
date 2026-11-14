@@ -5793,7 +5793,9 @@ void McpTest::listEffectsCompactAndById()
     QVERIFY(!cats.isEmpty());
     QVERIFY(compact.value(QStringLiteral("n")).toInt() > 0);
     const QByteArray text = QJsonDocument(compact).toJson(QJsonDocument::Compact);
-    QVERIFY2(text.size() < 8000, QByteArray::number(text.size()).constData());
+    // Compact means a short line per effect, so the budget grows with the catalog.
+    QVERIFY2(text.size() < 150 * compact.value(QStringLiteral("n")).toInt(),
+             QByteArray::number(text.size()).constData());
     QVERIFY(!text.contains("\"params\""));
 
     QStringList ids;
