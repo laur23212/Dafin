@@ -1,0 +1,56 @@
+{
+  "id": "chatgpt.fx.masked-speed-tunnel",
+  "displayName": "Masked Speed Tunnel",
+  "category": "impact",
+  "description": "Directional speed-line pull affects the original background while keeping the provided masked subject sharp; no tracking claims.",
+  "order": 7607,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "speed",
+      "displayName": "Background streaks",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.66,
+      "group": "Controls"
+    },
+    {
+      "identifier": "reach",
+      "displayName": "Streak length",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.57,
+      "group": "Controls"
+    },
+    {
+      "identifier": "softEdge",
+      "displayName": "Subject matte softness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.poolside-light-play",
+  "displayName": "Poolside Light Play",
+  "category": "cinematic",
+  "order": 7902,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.shallow-water-caustics",
+      "params": {
+        "brightness": 0.64,
+        "speed": 0.24
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.oil-film-iridescence",
+      "params": {
+        "strength": 0.18,
+        "threshold": 0.79
+      }
+    }
+  ]
+}

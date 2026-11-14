@@ -384,6 +384,9 @@ set(DAFIN_HANDOFF_EFFECTS
     subject_pop_muted_surroundings subject_shaped_spotlight
     depth_topography_ink edge_color_defringe flat_gradient_deband highlight_shoulder
     original_grade_comparison rolling_skew_balance vertical_side_reflections
+    blueprint_drafting led_stage_screen mixed_lighting_soft_balance oil_film_iridescence
+    shallow_water_caustics tritone_exposure_map window_lattice_shadows masked_floor_reflection
+    masked_speed_tunnel
     indexed_palette_dither watercolor_pigment_wash gamut_soft_knee channel_routing_lab
     surface_emboss_relief practical_lamp_flicker sky_blue_balance mask_ambient_match
     depth_stereo_anaglyph depth_edge_contact mask_ink_wash_window
@@ -403,7 +406,8 @@ set(DAFIN_HANDOFF_TRANSITIONS
     editorial_card_retreat left_hinge_turn glass_ribbon_handoff origami_fan_reveal
     clock_dial_sweep print_dot_reveal circular_waterline
     woven_fabric_interlace curtain_pleat_pull zipper_seam_open spiral_groove_reveal
-    torn_paper_column prism_column_flip)
+    torn_paper_column prism_column_flip ice_crystal_growth route_line_reveal
+    camera_roll_handoff tape_splice_handoff tile_card_flip_cascade)
 list(APPEND DRIFT_CORE_EFFECTS ${DAFIN_HANDOFF_EFFECTS})
 list(APPEND DRIFT_CORE_TRANSITIONS ${DAFIN_HANDOFF_TRANSITIONS})
 set(DRIFT_CORE_AUDIO_EFFECTS "")
@@ -414,7 +418,9 @@ set(DRIFT_CORE_EFFECT_TEMPLATES clear_weathered_footage clean_gradient_capture
     close_detail_finish fabric_story moody_clouds rainy_product_window
     single_clip_proof subject_wrap_finish thermal_graphics
     anaglyph_object_depth broadcast_color_safety digital_palette_poster practical_noir_lighting
-    reversed_channel_print subject_color_integration watercolor_postcard)
+    reversed_channel_print subject_color_integration watercolor_postcard
+    architectural_blueprint color_consistent_rooms poolside_light_play protected_speed_promo
+    studio_tritone_print)
 find_package(OnnxRuntime QUIET)
 if(DRIFT_BUNDLE_ONNXRUNTIME AND OnnxRuntime_FOUND AND NOT ONNXRUNTIME_RUNTIME_LIBS
    AND DRIFT_FETCH_ONNXRUNTIME)

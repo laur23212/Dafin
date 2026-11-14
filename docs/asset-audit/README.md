@@ -206,3 +206,13 @@ Masked Ambient Colour Match, Depth Stereo Anaglyph, Depth Contact Shading, Maske
 
 - Smart effects pass the picture through without a mask or depth map.
 - Not tested: the full app, tst_editorstate and tst_engine, real masks and depth maps, 4K speed.
+
+## Batch 07 from ChatGPT (14 November 2026)
+
+All 25 assets are in: 9 effects (Tritone Exposure Map, Blueprint Drafting, Oil-Film Iridescence, Shallow Water
+Caustics, LED Stage Screen, Mixed Lighting Soft Balance, Window Lattice Shadows, and the mask effects Masked
+Speed Tunnel and Masked Floor Reflection), 3 transitions (Tile Card Flip Cascade, Camera Roll Handoff, Tape
+Splice Handoff), 8 titles and 5 effect templates. No new fonts were needed.
+
+- The two mask effects pass the picture through without a mask.
+- Not tested: the full app, tst_editorstate and tst_engine, real masks, 4K speed (LED Stage Screen may alias).

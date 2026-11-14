@@ -1,0 +1,64 @@
+{
+  "id": "chatgpt.fx.blueprint-drafting",
+  "displayName": "Blueprint Drafting",
+  "category": "retro",
+  "description": "Turns imagery into pale cyan drafting edges over blueprint blue, with low-contrast measurement graph paper. Suitable for architecture and tutorial cutaways.",
+  "order": 7601,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "lineStrength",
+      "displayName": "Drafting lines",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.86,
+      "group": "Controls"
+    },
+    {
+      "identifier": "detailThreshold",
+      "displayName": "Edge threshold",
+      "type": "float",
+      "minValue": 0.02,
+      "maxValue": 0.65,
+      "defaultValue": 0.22,
+      "group": "Controls"
+    },
+    {
+      "identifier": "gridAmount",
+      "displayName": "Blueprint grid",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 0.7,
+      "defaultValue": 0.23,
+      "group": "Controls"
+    },
+    {
+      "identifier": "paperTint",
+      "displayName": "Dark blue ink",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.5,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

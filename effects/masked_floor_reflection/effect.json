@@ -1,0 +1,65 @@
+{
+  "id": "chatgpt.fx.masked-floor-reflection",
+  "displayName": "Masked Floor Reflection",
+  "category": "dreamy",
+  "description": "Copies only the existing masked silhouette into a fading reflection below an adjustable horizon for stylized product or performance scenes.",
+  "order": 7608,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Reflection opacity",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.84,
+      "group": "Controls"
+    },
+    {
+      "identifier": "horizon",
+      "displayName": "Reflection baseline",
+      "type": "float",
+      "minValue": 0.3,
+      "maxValue": 0.85,
+      "defaultValue": 0.54,
+      "group": "Controls"
+    },
+    {
+      "identifier": "falloff",
+      "displayName": "Reflection fade",
+      "type": "float",
+      "minValue": 0.15,
+      "maxValue": 1,
+      "defaultValue": 0.86,
+      "group": "Controls"
+    },
+    {
+      "identifier": "ripple",
+      "displayName": "Mirror waviness",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.29,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp",
+  "requires": "mask"
+}

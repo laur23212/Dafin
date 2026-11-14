@@ -1,0 +1,23 @@
+{
+  "id": "chatgpt.stack.protected-speed-promo",
+  "displayName": "Protected Speed Promo",
+  "category": "hype",
+  "order": 7904,
+  "sync": "clip",
+  "layers": [
+    {
+      "effectId": "chatgpt.fx.masked-speed-tunnel",
+      "params": {
+        "speed": 0.72,
+        "reach": 0.7
+      }
+    },
+    {
+      "effectId": "chatgpt.fx.oil-film-iridescence",
+      "params": {
+        "strength": 0.22,
+        "threshold": 0.74
+      }
+    }
+  ]
+}

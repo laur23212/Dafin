@@ -1,0 +1,64 @@
+{
+  "id": "chatgpt.fx.mixed-lighting-soft-balance",
+  "displayName": "Mixed Lighting Soft Balance",
+  "category": "color",
+  "description": "Balances warm bright-room contamination against cool low-light shadows with separate smoothly blended controls, not a global white-balance change.",
+  "order": 7605,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Mixed-light correction",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.68,
+      "group": "Controls"
+    },
+    {
+      "identifier": "shadowNeutral",
+      "displayName": "Blue-shadow neutralisation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.42,
+      "group": "Controls"
+    },
+    {
+      "identifier": "highlightNeutral",
+      "displayName": "Amber-highlight neutralisation",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.51,
+      "group": "Controls"
+    },
+    {
+      "identifier": "pivot",
+      "displayName": "Light split point",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 0.8,
+      "defaultValue": 0.5,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

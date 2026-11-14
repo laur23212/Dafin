@@ -1,0 +1,76 @@
+{
+  "id": "chatgpt.fx.tritone-exposure-map",
+  "displayName": "Tritone Exposure Map",
+  "category": "color",
+  "description": "Three independently editable shadow, midtone and highlight inks for album art and graphic print edits, not a two-color duotone.",
+  "order": 7600,
+  "backend": "gpu",
+  "parameters": [
+    {
+      "identifier": "strength",
+      "displayName": "Ink strength",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.88,
+      "group": "Controls"
+    },
+    {
+      "identifier": "midpoint",
+      "displayName": "Midtone center",
+      "type": "float",
+      "minValue": 0.2,
+      "maxValue": 0.8,
+      "defaultValue": 0.5,
+      "group": "Controls"
+    },
+    {
+      "identifier": "blendWidth",
+      "displayName": "Ink transition softness",
+      "type": "float",
+      "minValue": 0.07,
+      "maxValue": 0.4,
+      "defaultValue": 0.24,
+      "group": "Controls"
+    },
+    {
+      "identifier": "shadowInk",
+      "displayName": "Shadow ink",
+      "type": "color",
+      "defaultValue": "#172f52",
+      "group": "Colour"
+    },
+    {
+      "identifier": "midInk",
+      "displayName": "Midtone ink",
+      "type": "color",
+      "defaultValue": "#b35d67",
+      "group": "Colour"
+    },
+    {
+      "identifier": "lightInk",
+      "displayName": "Highlight ink",
+      "type": "color",
+      "defaultValue": "#f5d99a",
+      "group": "Colour"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture"
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "thumbnail": "thumbnail.webp"
+}

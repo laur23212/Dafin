@@ -1,0 +1,139 @@
+{
+  "format": 1,
+  "id": "chatgpt.species-field-label",
+  "label": "Species Field Label",
+  "description": "Calm natural-history identification text for flora, fauna and environmental footage; one editable line.",
+  "category": "nature",
+  "tags": [
+    "species-field-label",
+    "dafin-v7",
+    "editorial"
+  ],
+  "kind": "lower-third",
+  "sampleText": "LAURUS NOBILIS",
+  "requires": {
+    "fonts": [
+      "DM Sans"
+    ]
+  },
+  "style": {
+    "fontFamily": "DM Sans",
+    "fontWeight": 700,
+    "pixelSize": 63,
+    "italic": false,
+    "align": "left",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.13,
+    "letterSpacing": 1,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#000000"
+        },
+        "offsetX": 1,
+        "offsetY": 4,
+        "blur": 10,
+        "opacity": 0.42
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#eefff0"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.14,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#c2173328",
+    "boxPadding": 16,
+    "boxRadius": 7,
+    "underlineEnabled": true,
+    "underlineColor": "#a2e1a2",
+    "underlineWidth": 3,
+    "underlineOffset": 8,
+    "underlineReveal": 1
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "words",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "size",
+      "label": "Font size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 24,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "text_colour",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "box_colour",
+      "label": "Panel colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "box_toggle",
+      "label": "Show panel",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "accent_colour",
+      "label": "Accent colour",
+      "type": "color",
+      "bind": "underline.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.18,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

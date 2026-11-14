@@ -1,0 +1,61 @@
+{
+  "id": "chatgpt.tr.tile-card-flip-cascade",
+  "displayName": "Tile Card Flip Cascade",
+  "category": "geometric",
+  "description": "A sequence of small rectangular cards flips from the outgoing clip to the incoming clip across a diagonal cascade.",
+  "order": 7700,
+  "audioCurve": "crossfade",
+  "parameters": [
+    {
+      "identifier": "tiles",
+      "displayName": "Tiles per frame",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.55,
+      "group": "Controls"
+    },
+    {
+      "identifier": "cascade",
+      "displayName": "Cascade delay",
+      "type": "float",
+      "minValue": 0.1,
+      "maxValue": 1,
+      "defaultValue": 0.65,
+      "group": "Controls"
+    },
+    {
+      "identifier": "hinge",
+      "displayName": "Flip depth",
+      "type": "float",
+      "minValue": 0,
+      "maxValue": 1,
+      "defaultValue": 0.56,
+      "group": "Controls"
+    }
+  ],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  },
+  "previewStrip": "preview_strip.webp",
+  "previewFrames": 12
+}
