@@ -1,0 +1,497 @@
+{
+ "format": 1,
+ "themes": [
+  {
+   "id": "dafin-laurel-signature",
+   "label": "Laurel Signature",
+   "group": "Studio",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-slate-studio",
+   "label": "Slate Studio",
+   "group": "Studio",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-noir-burgundy",
+   "label": "Noir Burgundy",
+   "group": "Studio",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-paper-day",
+   "label": "Paper Day",
+   "group": "Studio",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-arctic-day",
+   "label": "Arctic Day",
+   "group": "Studio",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-amber-crt",
+   "label": "Amber CRT",
+   "group": "Retro",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-terminal-phosphor",
+   "label": "Terminal Phosphor",
+   "group": "Retro",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-vhs-afterglow",
+   "label": "VHS Afterglow",
+   "group": "Retro",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-arcade-night",
+   "label": "Arcade Night",
+   "group": "Retro",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-cassette-cream",
+   "label": "Cassette Cream",
+   "group": "Retro",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-neon-circuit",
+   "label": "Neon Circuit",
+   "group": "Future",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-holographic-ice",
+   "label": "Holographic Ice",
+   "group": "Future",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-orbital-command",
+   "label": "Orbital Command",
+   "group": "Future",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-plasma-violet",
+   "label": "Plasma Violet",
+   "group": "Future",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-synthwave-horizon",
+   "label": "Synthwave Horizon",
+   "group": "Future",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-quantum-white",
+   "label": "Quantum White",
+   "group": "Future",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-rose-macaron",
+   "label": "Rose Macaron",
+   "group": "Soft & Playful",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-lavender-lullaby",
+   "label": "Lavender Lullaby",
+   "group": "Soft & Playful",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-mint-mochi",
+   "label": "Mint Mochi",
+   "group": "Soft & Playful",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-peachy-sunshine",
+   "label": "Peachy Sunshine",
+   "group": "Soft & Playful",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-starlight-pop",
+   "label": "Starlight Pop",
+   "group": "Soft & Playful",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-beige-desktop-95",
+   "label": "Beige Desktop 95",
+   "group": "Retro & Nostalgic",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-cherry-diner",
+   "label": "Cherry Diner",
+   "group": "Retro & Nostalgic",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-midcentury-olive",
+   "label": "Midcentury Olive",
+   "group": "Retro & Nostalgic",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-y2k-liquid-metal",
+   "label": "Y2K Liquid Metal",
+   "group": "Retro & Nostalgic",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-pixel-orchard",
+   "label": "Pixel Orchard",
+   "group": "Retro & Nostalgic",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-brasswork-steampunk",
+   "label": "Brasswork Steampunk",
+   "group": "Industrial & Fantasy",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-clockwork-parchment",
+   "label": "Clockwork Parchment",
+   "group": "Industrial & Fantasy",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-diesel-forge",
+   "label": "Diesel Forge",
+   "group": "Industrial & Fantasy",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-gothic-velvet",
+   "label": "Gothic Velvet",
+   "group": "Industrial & Fantasy",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-alchemists-study",
+   "label": "Alchemist’s Study",
+   "group": "Industrial & Fantasy",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-cottagecore-fern",
+   "label": "Cottagecore Fern",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-coastal-sketchbook",
+   "label": "Coastal Sketchbook",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-dark-academia",
+   "label": "Dark Academia",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-comic-colorblock",
+   "label": "Comic Colorblock",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-blueprint-precision",
+   "label": "Blueprint Precision",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-desert-clay",
+   "label": "Desert Clay",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-celestial-observatory",
+   "label": "Celestial Observatory",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-persona-zen-ink",
+   "label": "Zen Ink",
+   "group": "Artistic & Lifestyle",
+   "kind": "color"
+  },
+  {
+   "id": "dafin-romanian-core",
+   "label": "Romanian Core",
+   "group": "Romanian",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-skin-coolwave-2000",
+   "label": "CoolWave 2000",
+   "group": "Retro & Aero",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-skin-aero-lagoon",
+   "label": "Aero Lagoon",
+   "group": "Retro & Aero",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-skin-rose-bubble",
+   "label": "Rose Bubble",
+   "group": "Retro & Aero",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-skin-brass-and-cogs",
+   "label": "Brass & Cogs",
+   "group": "Retro & Aero",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-neon-afterhours",
+   "label": "Neon Afterhours",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-fjord-quiet",
+   "label": "Fjord Quiet",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-fluent-aurora",
+   "label": "Fluent Aurora",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-foundry-hmi",
+   "label": "Foundry HMI",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-signal-clarity",
+   "label": "Signal Clarity",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-hearth-solar",
+   "label": "Hearth Solar",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-sugar-confetti",
+   "label": "Sugar Confetti",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-graphite-paper",
+   "label": "Graphite Paper",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-phosphor-1983",
+   "label": "Phosphor 1983",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-synth-grid-1988",
+   "label": "Synth Grid 1988",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-workbench-1994",
+   "label": "Workbench 1994",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-plum-shareware-1998",
+   "label": "Plum Shareware 1998",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-aqua-browser-2003",
+   "label": "Aqua Browser 2003",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-media-lacquer-2007",
+   "label": "Media Lacquer 2007",
+   "group": "Personality",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-deco-midnight-marquee",
+   "label": "Midnight Marquee",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-liquid-cyber-chrome",
+   "label": "Liquid Cyber-Chrome",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-memphis-carnival",
+   "label": "Memphis Carnival",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-clay-neumorph",
+   "label": "Cloud Clay",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-drop-culture",
+   "label": "Drop Culture",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-rice-paper-zen",
+   "label": "Rice Paper Zen",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-victorian-gearworks",
+   "label": "Victorian Gearworks",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-sunleaf-utopia",
+   "label": "Sunleaf Utopia",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-ghost-terminal-crt",
+   "label": "Ghost Terminal",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-velvet-grimoire",
+   "label": "Velvet Grimoire",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-atomic-lounge",
+   "label": "Atomic Lounge",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-panel-pow",
+   "label": "Panel POW!",
+   "group": "Artistic",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-blueprint-draftroom",
+   "label": "Blueprint Draftroom",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-clay-toybox",
+   "label": "Clay Toybox",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-groovy-orbit",
+   "label": "Groovy Orbit",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-riso-pressroom",
+   "label": "Riso Pressroom",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-nouveau-atrium",
+   "label": "Nouveau Atrium",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-cassette-odyssey",
+   "label": "Cassette Odyssey",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-punk-photocopy",
+   "label": "Punk Photocopy",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-atelier-chronometer",
+   "label": "Atelier Chronometer",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-kawaii-starlight",
+   "label": "Kawaii Starlight",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-concrete-monolith",
+   "label": "Concrete Monolith",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-nordic-stitch",
+   "label": "Nordic Stitch",
+   "group": "Imaginative",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-qml-v6-abyss-lantern",
+   "label": "Abyss Lantern",
+   "group": "Imaginative",
+   "kind": "qml"
+  }
+ ]
+}

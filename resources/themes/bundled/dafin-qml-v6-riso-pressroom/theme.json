@@ -1,0 +1,175 @@
+{
+  "name": "dafin-qml-v6-riso-pressroom",
+  "schemaVersion": 1,
+  "extends": "light",
+  "variant": "light",
+  "palette": {
+    "appBackground": "#F3E9D9",
+    "foreground": "#263334",
+    "border": "#536363",
+    "accent": "#F0DFCC",
+    "accentForeground": "#263334",
+    "mutedForeground": "#5F6964",
+    "popoverHover": "#E9C0BB",
+    "panelBackground": "#FFF6E9",
+    "panelForeground": "#263334",
+    "panelBorder": "#536363",
+    "panelAccent": "#F0DFCC",
+    "panelAccentForeground": "#263334",
+    "panelMuted": "#EADBC9",
+    "panelSecondaryBg": "#F0DFCC",
+    "panelSecondaryBorder": "#C21F64",
+    "panelSecondaryForeground": "#263334",
+    "sliderTrack": "#536363",
+    "scrollbarTrack": "#EADBC9",
+    "scrollbarHandle": "#536363",
+    "scrollbarHandleHover": "#C21F64",
+    "scrollbarHandlePressed": "#A51C50",
+    "sheetHandle": "#536363",
+    "primary": "#A51C50",
+    "primaryForeground": "#FFFFFF",
+    "accentOnPanel": "#A51C50",
+    "skeleton": "#F0DFCC",
+    "skeletonHighlight": "#FAEFE0",
+    "exportGradientTop": "#614A6A",
+    "exportGradientBottom": "#A51C50",
+    "exportGlow": "#C21F64",
+    "snapGuide": "#C21F64",
+    "textStylePreviewBg": "#EADBC9",
+    "textStylePreviewBorder": "#536363",
+    "clipVideoPlaceholder": "#EADBC9",
+    "clipVideoOverview": "#536363",
+    "previewLetterbox": "#121315",
+    "searchHighlight": "#60C21F64",
+    "timelineHeaderBackground": "#F0DFCC",
+    "clipText": "#616D8A",
+    "clipSubtitle": "#2E8C96",
+    "clipAudio": "#926EC1",
+    "clipGraphic": "#BB7185",
+    "clipEffect": "#468BBB",
+    "clipComposite": "#B69B56",
+    "clipAdjustmentAudio": "#9A74C3",
+    "clipAdjustmentMask": "#BA9865",
+    "clipTransform": "#7EA95C",
+    "clipProxy": "#388F9B"
+  },
+  "semantic": {
+    "focusRing": "$palette.primary"
+  },
+  "components": {
+    "panelFrame": {
+      "radius": 2,
+      "borderWidth": 1
+    },
+    "previewPanel": {
+      "radius": 2
+    },
+    "assetsPanel": {
+      "radius": 2
+    },
+    "propertiesPanel": {
+      "radius": 2
+    },
+    "startScreenProjectRow": {
+      "radius": 4
+    },
+    "themedButton": {
+      "radius": 2,
+      "borderWidth": 1
+    },
+    "themedChip": {
+      "radius": 2
+    },
+    "iconButton": {
+      "radius": 2
+    },
+    "themedTextField": {
+      "radius": 2,
+      "borderWidthFocus": 2
+    },
+    "themedComboBox": {
+      "radius": 2
+    },
+    "themedContextMenu": {
+      "radius": 4
+    },
+    "themedDialog": {
+      "radius": 4
+    },
+    "themedToolTip": {
+      "radius": 2
+    },
+    "timelineClipItem": {
+      "radius": 0
+    },
+    "timelinePanel": {
+      "trackBackground": "$palette.panelAccent"
+    },
+    "timelineToolbar": {
+      "background": "$palette.panelBackground"
+    },
+    "editorHeader": {
+      "background": "$palette.appBackground"
+    },
+    "timelinePlayheadLine": {
+      "foreground": "$palette.snapGuide"
+    },
+    "themedSliderHandle": {
+      "radius": 2
+    }
+  },
+  "metrics": {
+    "radius": {
+      "xs": 0,
+      "sm": 2,
+      "md": 4,
+      "lg": 5
+    },
+    "controlHeight": {
+      "pointer": 32,
+      "touch": 44
+    },
+    "controlHeightSm": {
+      "pointer": 29,
+      "touch": 40
+    },
+    "iconButtonSize": {
+      "pointer": 31,
+      "touch": 44
+    },
+    "panelGap": 5,
+    "pagePadding": 14,
+    "borderWidth": 1,
+    "borderWidthFocus": 2,
+    "iconSize": {
+      "sm": 12,
+      "md": 14,
+      "base": 16,
+      "lg": 18,
+      "xl": 22
+    }
+  },
+  "typography": {
+    "fontSize": {
+      "xs": 12.0,
+      "sm": 13.2,
+      "base": 15.0,
+      "tiny": 10.0,
+      "tick": 10.5,
+      "card": 11.8
+    },
+    "monoFontFamily": "monospace"
+  },
+  "motion": {
+    "durationFast": 85,
+    "durationBase": 125,
+    "durationSlow": 160,
+    "durationPress": 90,
+    "pressScale": 1.0
+  },
+  "window": {
+    "translucent": false,
+    "backdrop": "none",
+    "backgroundOpacity": 1.0
+  }
+}

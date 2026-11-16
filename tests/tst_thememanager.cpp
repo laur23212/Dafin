@@ -26,6 +26,11 @@
 
 #include "ui/theme/ThemeManager.h"
 
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSignalSpy>
+
 class ThemeManagerTest : public QObject
 {
     Q_OBJECT
@@ -35,6 +40,10 @@ private slots:
     void init();
 
     void builtinsLoadDarkAndLight();
+    void bundledThemesAllLoad();
+    void bundledThemesStayPut();
+    void themeListIsCachedUntilRefresh();
+    void accentColorOverridesPrimary();
     void graphiteAndFrostAreBuiltins();
     void resolvesReferences();
     void extendsMergesOverBase();
@@ -89,7 +98,10 @@ void ThemeManagerTest::init()
     settings.remove(QStringLiteral("trusted"));
     settings.remove(QStringLiteral("selection"));
     settings.remove(QStringLiteral("hotReload"));
+    settings.remove(QStringLiteral("accent"));
     settings.sync();
+    // Only the bundled-theme tests point this at the source folder.
+    ThemeManager::setBundledThemesRoot(QString());
 }
 
 QString ThemeManagerTest::themesDir() const
@@ -1520,6 +1532,184 @@ void ThemeManagerTest::reducedMotionZeroesAnimationTokens()
         for (const char *key : {"durationFast", "durationBase", "durationSlow", "durationPress"})
             QVERIFY2(m.value(QLatin1String(key)).toInt() <= 250, key);
     }
+}
+
+namespace {
+QJsonArray bundledCatalog()
+{
+    QFile file(QStringLiteral(DAFIN_BUNDLED_THEMES_DIR "/catalog.json"));
+    if (!file.open(QIODevice::ReadOnly))
+        return {};
+    return QJsonDocument::fromJson(file.readAll()).object().value(QStringLiteral("themes")).toArray();
+}
+
+QVariantMap rowFor(const ThemeManager &manager, const QString &id)
+{
+    for (const QVariant &row : manager.themes()) {
+        const QVariantMap map = row.toMap();
+        if (map.value(QStringLiteral("id")).toString() == id)
+            return map;
+    }
+    return {};
+}
+} // namespace
+
+// Every theme that ships with Dafin loads through the real loader, keeps its folder name
+// as its theme name, lists with its catalog label and kind, and (QML skins) serves its
+// overrides without a trust prompt.
+void ThemeManagerTest::bundledThemesAllLoad()
+{
+    ThemeManager::setBundledThemesRoot(QStringLiteral(DAFIN_BUNDLED_THEMES_DIR));
+    const QJsonArray catalog = bundledCatalog();
+    QCOMPARE(catalog.size(), 82);
+
+    ThemeManager manager;
+    const QStringList available = manager.availableThemes();
+    QCOMPARE(available.mid(0, 4), (QStringList{QStringLiteral("dark"), QStringLiteral("light"),
+                                               QStringLiteral("graphite"), QStringLiteral("frost")}));
+    int qmlCount = 0;
+    for (const QJsonValue &value : catalog) {
+        const QJsonObject entry = value.toObject();
+        const QString id = entry.value(QStringLiteral("id")).toString();
+        const QString kind = entry.value(QStringLiteral("kind")).toString();
+        QVERIFY2(available.contains(id), qPrintable(id));
+        QVERIFY2(manager.select(id), qPrintable(id + QStringLiteral(": ") + manager.lastError()));
+        QCOMPARE(manager.currentTheme(), id);
+        QCOMPARE(manager.selection(), id);
+        QVERIFY2(manager.lastWarning().isEmpty(), qPrintable(id));
+        QVERIFY2(tokenColor(manager, "semantic.surface.app").isValid(), qPrintable(id));
+        QVERIFY2(tokenColor(manager, "semantic.primary").isValid(), qPrintable(id));
+
+        const QVariantMap colors = manager.previewColors(id);
+        QVERIFY2(colors.value(QStringLiteral("surface")).value<QColor>().isValid(), qPrintable(id));
+        QVERIFY2(colors.value(QStringLiteral("clipVideo")).value<QColor>().isValid(), qPrintable(id));
+
+        const QVariantMap row = rowFor(manager, id);
+        QCOMPARE(row.value(QStringLiteral("bundled")).toBool(), true);
+        QCOMPARE(row.value(QStringLiteral("removable")).toBool(), false);
+        QCOMPARE(row.value(QStringLiteral("builtIn")).toBool(), false);
+        QCOMPARE(row.value(QStringLiteral("label")).toString(), entry.value(QStringLiteral("label")).toString());
+        QCOMPARE(row.value(QStringLiteral("kind")).toString(), kind);
+        QVERIFY(manager.isThemeTrusted(id));
+
+        const QStringList slotNames = manager.overrideSlots(id);
+        if (kind == QLatin1String("qml")) {
+            ++qmlCount;
+            QVERIFY2(!slotNames.isEmpty(), qPrintable(id));
+            for (const QString &slot : slotNames) {
+                const QUrl url = manager.overrideUrl(slot);
+                QVERIFY2(!url.isEmpty(), qPrintable(id + QLatin1Char('/') + slot));
+                QVERIFY2(QFileInfo::exists(url.toLocalFile()), qPrintable(url.toString()));
+            }
+        } else {
+            QVERIFY2(slotNames.isEmpty(), qPrintable(id));
+            QVERIFY(manager.overrideUrl(QStringLiteral("ThemedButtonBackground")).isEmpty());
+        }
+        if (row.value(QStringLiteral("hasVariants")).toBool()) {
+            manager.setVariant(QStringLiteral("light"));
+            QCOMPARE(manager.selection(), id);
+            QCOMPARE(manager.effectiveVariant(), QStringLiteral("light"));
+            manager.setVariant(QStringLiteral("dark"));
+            QCOMPARE(manager.effectiveVariant(), QStringLiteral("dark"));
+        }
+    }
+    QCOMPARE(qmlCount, 43);
+}
+
+// Shipped themes cannot be removed, re-imported or shadowed, and a user copy that borrows
+// a shipped name never gets the shipped theme's QML trust.
+void ThemeManagerTest::bundledThemesStayPut()
+{
+    ThemeManager::setBundledThemesRoot(QStringLiteral(DAFIN_BUNDLED_THEMES_DIR));
+    const QString shipped = QStringLiteral("dafin-qml-v6-abyss-lantern");
+    QVERIFY(writeJson(shipped + QStringLiteral("/theme.json"), R"({
+        "name": "dafin-qml-v6-abyss-lantern",
+        "extends": "light"
+    })"));
+    const QString qmlPath = themesDir() + QLatin1Char('/') + shipped + QStringLiteral("/qml/ThemedButtonBackground.qml");
+    QVERIFY(QDir().mkpath(QFileInfo(qmlPath).path()));
+    {
+        QFile file(qmlPath);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("import QtQuick\nItem { property var control }\n");
+    }
+
+    ThemeManager manager;
+    QCOMPARE(manager.availableThemes().count(shipped), 1);
+    QVERIFY(!manager.removeTheme(shipped));
+    QVERIFY(manager.select(shipped));
+    // The shipped one (dark) wins over the user copy (light).
+    QCOMPARE(manager.effectiveVariant(), QStringLiteral("dark"));
+    QVERIFY(manager.overrideUrl(QStringLiteral("ThemedButtonBackground")).toString().contains(
+        QStringLiteral(DAFIN_BUNDLED_THEMES_DIR)));
+
+    // Loaded by path, the user copy is an ordinary untrusted theme.
+    QVERIFY(manager.loadTheme(themesDir() + QLatin1Char('/') + shipped));
+    QCOMPARE(manager.effectiveVariant(), QStringLiteral("light"));
+    QVERIFY(manager.overrideUrl(QStringLiteral("ThemedButtonBackground")).isEmpty());
+
+    QCOMPARE(manager.importTheme(QUrl::fromLocalFile(themesDir() + QLatin1Char('/') + shipped)), QString());
+    QVERIFY(manager.lastError().contains(QStringLiteral("ships with Dafin")));
+}
+
+// Choosing a theme must not rebuild the Appearance list; a file copied in shows up after
+// refreshThemes(), which signals only when something changed.
+void ThemeManagerTest::themeListIsCachedUntilRefresh()
+{
+    QVERIFY(writeJson("first.json", R"({ "name": "first", "extends": "dark" })"));
+    ThemeManager manager;
+    const int before = manager.themes().size();
+    QVERIFY(rowFor(manager, QStringLiteral("first")).value(QStringLiteral("removable")).toBool());
+
+    QSignalSpy listChanged(&manager, &ThemeManager::availableThemesChanged);
+    QVERIFY(manager.select(QStringLiteral("first")));
+    QVERIFY(manager.select(QStringLiteral("light")));
+    QCOMPARE(listChanged.count(), 0);
+
+    QVERIFY(writeJson("second.json", R"({ "name": "second", "extends": "light" })"));
+    QCOMPARE(manager.themes().size(), before);
+    manager.refreshThemes();
+    QCOMPARE(listChanged.count(), 1);
+    QCOMPARE(manager.themes().size(), before + 1);
+    manager.refreshThemes();
+    QCOMPARE(listChanged.count(), 1);
+
+    // A name lookup still finds a file added after the list was read.
+    QVERIFY(writeJson("third.json", R"({ "name": "third", "extends": "dark" })"));
+    QVERIFY(manager.select(QStringLiteral("third")));
+}
+
+void ThemeManagerTest::accentColorOverridesPrimary()
+{
+    ThemeManager manager;
+    const QColor themePrimary = tokenColor(manager, "semantic.primary");
+    QVERIFY(themePrimary.isValid());
+
+    QSignalSpy accentChanged(&manager, &ThemeManager::accentColorChanged);
+    manager.setAccentColor(QStringLiteral("#E0115F"));
+    QCOMPARE(accentChanged.count(), 1);
+    QCOMPARE(manager.accentColor(), QStringLiteral("#e0115f"));
+    QCOMPARE(tokenColor(manager, "semantic.primary"), QColor(QStringLiteral("#e0115f")));
+    QCOMPARE(tokenColor(manager, "semantic.focusRing"), QColor(QStringLiteral("#e0115f")));
+    QCOMPARE(tokenColor(manager, "semantic.primaryForeground"), QColor(QStringLiteral("#ffffff")));
+    // Tiles show the theme's own colour.
+    QCOMPARE(manager.previewColors(QStringLiteral("dark")).value(QStringLiteral("primary")).value<QColor>(),
+             themePrimary);
+
+    // Remembered, and kept across theme changes.
+    ThemeManager again;
+    QCOMPARE(again.accentColor(), QStringLiteral("#e0115f"));
+    QVERIFY(again.select(QStringLiteral("light")));
+    QCOMPARE(tokenColor(again, "semantic.primary"), QColor(QStringLiteral("#e0115f")));
+
+    manager.setAccentColor(QStringLiteral("#ffe600"));
+    QCOMPARE(tokenColor(manager, "semantic.primaryForeground"), QColor(QStringLiteral("#111111")));
+
+    manager.setAccentColor(QString());
+    QCOMPARE(manager.accentColor(), QString());
+    QCOMPARE(tokenColor(manager, "semantic.primary"), themePrimary);
+    manager.setAccentColor(QStringLiteral("not a colour"));
+    QCOMPARE(manager.accentColor(), QString());
 }
 
 QTEST_MAIN(ThemeManagerTest)

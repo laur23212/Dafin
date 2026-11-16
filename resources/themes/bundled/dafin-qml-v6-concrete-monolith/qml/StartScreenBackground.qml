@@ -1,0 +1,23 @@
+import QtQuick
+import Drift
+
+// Original visual-only Dafin skin. Trusted QML; no commands, I/O, or input handlers.
+Rectangle {
+    id: root
+    property var control
+    readonly property bool activeState: !!(control && (control.selected === true || control.active === true || control.visualFocus === true))
+    readonly property bool pressedState: !!(control && control.down === true)
+    radius: 0
+    color: "#727675"
+    border.width: 0
+    border.color: "#323638"
+    clip: true
+    gradient: Gradient {
+        GradientStop { position: 0; color: "#828584" }
+        GradientStop { position: 1; color: "#7A7E7D" }
+    }
+    Rectangle { x: 0; y: 0; width: parent.width; height: 4; color: "#63323739" }
+    Rectangle { x: 5; y: 8; width: Math.min(40,parent.width/5); height: 1; color: "#696D6F6E" }
+    Rectangle { x: Math.max(0,parent.width-20); y: Math.max(0,parent.height-14); width: 2; height: 2; color: "#74686A68" }
+    Rectangle { x: Math.max(0,parent.width-30); y: Math.max(0,parent.height-22); width: 1; height: 1; color: "#70686A68" }
+}

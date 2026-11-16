@@ -4,6 +4,18 @@ Drift paints from a JSON theme. `ThemeManager` (a C++ singleton) loads the docum
 
 Built-in themes (`dark`, `light`, `graphite`, `frost`) live in `resources/themes/<id>.json`. `graphite` and `frost` extend `dark` and `light` and use a translucent window. The shape is `resources/themes/theme.schema.json`. User themes live in `QStandardPaths::AppDataLocation + "/themes"`.
 
+## Themes that ship with Dafin
+
+`resources/themes/bundled/<name>/theme.json` (plus optional `qml/<Slot>.qml`) is compiled into the app as `:/themes/bundled`. The folder name must equal the theme's `name`. `catalog.json` there gives each theme a display `label`, a `group` and a `kind` (`color` or `qml`) and sets the order in Appearance; a folder it does not list still ships, after the listed ones. A new shipped theme is a folder plus a catalog entry (CMake globs the folder); `tst_thememanager` loads every one.
+
+Shipped themes behave like installed ones (single-variant themes follow their variant, dual-variant ones follow the toggle) but cannot be removed, and their QML runs without asking: it ships with the app. They win over an installed theme of the same name, which is hidden. Importing a theme with a shipped name is refused, and a user copy loaded by path never inherits the shipped theme's trust.
+
+`themes()` rows carry `bundled`, `removable`, `kind`, `label` and `group` for the Appearance grid. The list is read once and kept until a theme is imported, removed or trusted; `refreshThemes()` (called when Appearance opens) re-reads the folder and signals only if it changed. `previewColors` is cached per theme and side.
+
+## Accent color
+
+`ThemeManager.accentColor` (persisted as `Theme/accent`, empty for none) replaces `palette.primary` and `semantic.primary` in whatever theme is loaded, with `primaryForeground` set to near-black or white for contrast, before references are resolved. Everything that reads `semantic.primary` (buttons, selections, sliders, the focus ring) follows. Preview tiles show the theme's own colours. Colours drawn as literals inside a QML skin do not change.
+
 ## Layers
 
 A document is deep-merged in this order, then references are resolved:

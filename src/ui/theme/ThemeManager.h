@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QFileSystemWatcher>
+#include <QHash>
+#include <QSet>
 #include <QObject>
 #include <QQmlPropertyMap>
 #include <QStringList>
@@ -48,6 +50,9 @@ class ThemeManager : public QObject
     // build reads. It still loads; unknown keys are ignored.
     Q_PROPERTY(QString lastWarning READ lastWarning NOTIFY lastWarningChanged)
     Q_PROPERTY(bool hotReload READ hotReload WRITE setHotReload NOTIFY hotReloadChanged)
+    // Dafin: accent colour picked in Appearance, laid over whichever theme is on screen
+    // (semantic.primary and its foreground). Empty means the theme's own. Theme/accent.
+    Q_PROPERTY(QString accentColor READ accentColor WRITE setAccentColor NOTIFY accentColorChanged)
 
 public:
     // Bump when a release adds tokens a theme author should know about or changes
@@ -84,6 +89,16 @@ public:
     QString lastWarning() const { return m_lastWarning; }
     bool hotReload() const { return m_hotReload; }
     void setHotReload(bool enabled);
+    QString accentColor() const { return m_accentColor; }
+    void setAccentColor(const QString &color);
+
+    // Dafin: themes shipped inside the app (resources/themes/bundled, compiled to
+    // :/themes/bundled). They behave like installed themes but cannot be removed,
+    // and their QML is trusted because it ships with Dafin. Tests point this at a folder.
+    static void setBundledThemesRoot(const QString &root);
+    static QString bundledThemesRoot();
+    // Re-reads the themes folder (files copied in by hand while Dafin runs).
+    Q_INVOKABLE void refreshThemes();
 
     Q_INVOKABLE QVariant token(const QString &dottedPath) const;
     // Built-in dark/light documents, independent of whichever theme is active.
@@ -141,6 +156,7 @@ signals:
     void selectionChanged();
     void lastErrorChanged();
     void lastWarningChanged();
+    void accentColorChanged();
 
 private:
     struct Loaded {
@@ -166,7 +182,10 @@ private:
     QString locate(const QString &nameOrPath, QString *error) const;
     QString pathForThemeName(const QString &name, QString *error) const;
     QVariantMap compose(const QString &path, QStringList *stack, QString *error) const;
-    std::optional<Loaded> readTheme(const QString &nameOrPath, QString *error) const;
+    // userAccent: lay accentColor over the document. Previews pass false, and onlyPaths:
+    // the dotted tokens they draw, resolved alone instead of the whole document.
+    std::optional<Loaded> readTheme(const QString &nameOrPath, QString *error, bool userAccent = true,
+                                    const QStringList *onlyPaths = nullptr) const;
     void apply(const Loaded &loaded);
     void updateWatch();
     // Directory of qml overrides for a folder theme (theme.json). Empty otherwise.
@@ -175,6 +194,17 @@ private:
     bool isThemeWatchPath(const QString &path) const;
     QStringList readTrustedThemes() const;
     void writeTrustedThemes(const QStringList &names);
+    // Dafin: the theme list used to re-read every theme file per row, and every
+    // name lookup re-parsed the whole themes folder, so 80 themes froze the UI.
+    // Names, the Appearance rows and preview colours are now read once and kept
+    // until a theme is imported, removed or trusted, or refreshThemes() is called.
+    void ensureIndex() const;
+    void invalidateCatalog();
+    bool isBundledId(const QString &name) const;
+    QStringList overrideSlotsAt(const QString &themeJsonPath) const;
+    // Which qml/ slots the theme on screen may load; recomputed on apply and trust changes,
+    // so a ThemeSlot does not hit QSettings and the disk every time it asks.
+    void refreshOverrideCache();
 
     QQmlPropertyMap *m_palette = nullptr;
     QQmlPropertyMap *m_semantic = nullptr;
@@ -201,6 +231,21 @@ private:
     bool m_inReload = false;
     // DRIFT_THEME. The persisted selection stays as restorePersisted left it.
     bool m_sessionOverride = false;
+
+    mutable bool m_indexValid = false;
+    mutable QStringList m_bundledOrder;
+    mutable QHash<QString, QString> m_bundledPaths;
+    mutable QHash<QString, QVariantMap> m_bundledInfo;
+    mutable QStringList m_userOrder;
+    mutable QHash<QString, QString> m_userPaths;
+    mutable bool m_catalogValid = false;
+    mutable QVariantList m_catalog;
+    mutable QHash<QString, QVariantMap> m_previewCache;
+    mutable bool m_trustedLoaded = false;
+    mutable QStringList m_trustedCache;
+    QString m_overrideDir;
+    QSet<QString> m_overrideSlots;
+    QString m_accentColor;
 
 private slots:
     void onThemeFileChanged(const QString &path);

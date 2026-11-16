@@ -409,6 +409,7 @@ qt_add_executable(tst_thememanager
 target_include_directories(tst_thememanager PRIVATE ../src)
 target_compile_definitions(tst_thememanager PRIVATE
     "DRIFT_MAIN_CPP=\"${CMAKE_SOURCE_DIR}/src/app/main.cpp\""
+    "DAFIN_BUNDLED_THEMES_DIR=\"${CMAKE_SOURCE_DIR}/resources/themes/bundled\""
 )
 target_link_libraries(tst_thememanager PRIVATE Qt6::Test Qt6::Qml Qt6::Quick ZLIB::ZLIB)
 qt_add_resources(tst_thememanager "drift_themes"

@@ -390,7 +390,10 @@ void SearchIndex::addCommands()
         const QVariantMap theme = v.toMap();
         if (theme.value(QLatin1String("builtIn")).toBool())
             continue;
-        const QString name = theme.value(QLatin1String("name")).toString();
+        // Dafin: shipped themes carry a display label ("Abyss Lantern"), not just the id.
+        QString name = theme.value(QLatin1String("label")).toString();
+        if (name.isEmpty())
+            name = theme.value(QLatin1String("name")).toString();
         command(tr("Theme: %1").arg(name), QStringLiteral("appearance theme ") + name,
                 QStringLiteral("theme:") + theme.value(QLatin1String("id")).toString());
     }

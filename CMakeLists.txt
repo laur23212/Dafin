@@ -1823,6 +1823,18 @@ qt_add_resources(drift "drift_themes"
         resources/themes/theme.schema.json
 )
 
+# Dafin: themes that ship with the app (82 of them: palette themes plus QML skins).
+# Each is a folder named after the theme, holding theme.json and optional qml/<Slot>.qml;
+# catalog.json gives display names and groups. ThemeManager reads :/themes/bundled.
+file(GLOB_RECURSE DAFIN_BUNDLED_THEME_FILES RELATIVE "${CMAKE_SOURCE_DIR}" CONFIGURE_DEPENDS
+     "resources/themes/bundled/*.json"
+     "resources/themes/bundled/*.qml")
+qt_add_resources(drift "dafin_bundled_themes"
+    PREFIX "/themes/bundled"
+    BASE resources/themes/bundled
+    FILES ${DAFIN_BUNDLED_THEME_FILES}
+)
+
 # Built-in workspace presets. WorkspaceStore lists this directory, so a new preset is a
 # JSON file plus an entry here.
 qt_add_resources(drift "drift_workspaces"
@@ -2991,6 +3003,7 @@ qt_add_qml_module(drift
         src/qml/components/extras/ExtrasDetail.qml
         src/qml/components/extras/ExtrasInstallBar.qml
         src/qml/components/extras/ExtrasStore.qml
+        src/qml/components/shell/SettingsAccentPicker.qml
         src/qml/components/shell/SettingsThemeEntry.qml
         src/qml/components/shell/SettingsThemeList.qml
         src/qml/components/shell/SettingsTimelinePage.qml

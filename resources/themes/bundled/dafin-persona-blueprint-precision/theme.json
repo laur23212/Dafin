@@ -1,0 +1,131 @@
+{
+  "name": "dafin-persona-blueprint-precision",
+  "schemaVersion": 1,
+  "extends": "dark",
+  "variant": "dark",
+  "palette": {
+    "appBackground": "#101E33",
+    "foreground": "#F4FAFF",
+    "border": "#45658B",
+    "accent": "#1E395F",
+    "accentForeground": "#F4FAFF",
+    "mutedForeground": "#B6D4E9",
+    "popoverHover": "#2B4A74",
+    "panelBackground": "#162C4D",
+    "panelForeground": "#F4FAFF",
+    "panelBorder": "#45658B",
+    "panelAccent": "#1E395F",
+    "panelAccentForeground": "#F4FAFF",
+    "panelMuted": "#335177",
+    "panelSecondaryBg": "#25456E",
+    "panelSecondaryBorder": "#45658B",
+    "panelSecondaryForeground": "#F4FAFF",
+    "primary": "#7EDDF3",
+    "searchHighlight": "#4D7EDDF3",
+    "primaryForeground": "#08121B",
+    "accentOnPanel": "#7EDDF3",
+    "sliderTrack": "#324F75",
+    "scrollbarTrack": "#1E395F",
+    "scrollbarHandle": "#B6D4E9",
+    "scrollbarHandleHover": "#F4FAFF",
+    "scrollbarHandlePressed": "#7EDDF3",
+    "sheetHandle": "#B6D4E9",
+    "skeleton": "#1E395F",
+    "skeletonHighlight": "#2B4A74",
+    "textStylePreviewBorder": "#45658B",
+    "textStylePreviewBg": "#1E395F",
+    "panelWaveform": "#CFFFFFFF",
+    "exportGradientTop": "#95E3F5",
+    "exportGradientBottom": "#7EDDF3",
+    "exportGlow": "#7EDDF3",
+    "snapGuide": "#7EDDF3",
+    "clipVideoOverview": "#426A85",
+    "clipVideoPlaceholder": "#426A85",
+    "clipText": "#2D756F",
+    "clipSubtitle": "#3C7097",
+    "clipAudio": "#685492",
+    "clipEffect": "#516E91",
+    "clipGraphic": "#895772",
+    "clipComposite": "#775584",
+    "clipAdjustmentAudio": "#685492",
+    "clipAdjustmentMask": "#706180",
+    "clipTransform": "#3B727D",
+    "transitionOverlap": "#685492",
+    "clipProxy": "#2D756F",
+    "clipEditFriendly": "#3C7097",
+    "previewLetterbox": "#070A0E",
+    "timelineZoneMutedRed": "#463140",
+    "timelineZoneMutedYellow": "#45443D",
+    "timelineZoneMutedGreen": "#204749",
+    "timelineHeaderBackground": "#1E395F",
+    "categoryAmber": "#EDBA65",
+    "categoryCyan": "#67C8D7"
+  },
+  "metrics": {
+    "radius": {
+      "xs": 2,
+      "sm": 1,
+      "md": 6,
+      "lg": 11,
+      "pill": 999
+    },
+    "panelGap": 7,
+    "borderWidth": 1
+  },
+  "window": {
+    "translucent": false,
+    "backdrop": "none",
+    "backgroundOpacity": 1
+  },
+  "components": {
+    "panelFrame": {
+      "radius": 1,
+      "borderWidth": 1
+    },
+    "themedButton": {
+      "radius": 6,
+      "borderWidth": 1
+    },
+    "themedChip": {
+      "radius": 6,
+      "borderWidth": 1
+    },
+    "themedTextField": {
+      "radius": 6,
+      "borderWidth": 1
+    },
+    "themedContextMenu": {
+      "radius": 1,
+      "borderWidth": 1
+    },
+    "themedToolTip": {
+      "radius": 1
+    },
+    "driftAssetCard": {
+      "radius": 2,
+      "borderWidth": 1
+    },
+    "startScreenProjectRow": {
+      "radius": 1,
+      "borderWidth": 1
+    },
+    "timelineClipItem": {
+      "radius": 3,
+      "radiusXs": 2,
+      "selectionBorderWidth": 1.5
+    },
+    "previewPanel": {
+      "radius": 1
+    },
+    "assetsPanel": {
+      "radius": 1
+    }
+  },
+  "typography": {
+    "fontWeight": {
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    }
+  }
+}

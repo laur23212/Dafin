@@ -40,17 +40,63 @@ SettingsPage {
         return false
     }
 
+    // Dafin: one search for both grids; a theme copied into the folder by hand shows up
+    // when this page opens.
+    property string themeFilter: ""
+    Component.onCompleted: ThemeManager.refreshThemes()
+
+    readonly property var selectedRow: {
+        const themes = ThemeManager.themes
+        for (let i = 0; i < themes.length; ++i) {
+            if (themes[i].id === ThemeManager.selection)
+                return themes[i]
+        }
+        return null
+    }
+
     SettingsGroupHeader {
-        text: qsTr("Theme")
+        text: qsTr("Color themes")
         query: page.query
     }
 
     SettingsRow {
         stacked: true
-        title: qsTr("Color theme")
+        title: qsTr("Choose a color theme")
         searchId: "appearance-color-theme"
-        description: qsTr("Light and Dark follow your system. Other themes can be installed or imported.")
-        keywords: "dark light color"
+        description: qsTr("Colors, corners and spacing. System follows your light or dark setting.")
+        keywords: "dark light color theme palette"
+        query: page.query
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingLg
+
+            ThemedTextField {
+                width: Math.min(parent.width, 320)
+                placeholderText: qsTr("Search themes…")
+                text: page.themeFilter
+                onTextChanged: page.themeFilter = text
+            }
+
+            SettingsThemeList {
+                kind: "color"
+                filter: page.themeFilter
+                onThemeChosen: (themeId) => page.chooseTheme(themeId)
+            }
+        }
+    }
+
+    SettingsGroupHeader {
+        text: qsTr("QML themes")
+        query: page.query
+    }
+
+    SettingsRow {
+        stacked: true
+        title: qsTr("Choose a QML theme")
+        searchId: "appearance-qml-theme"
+        description: qsTr("Skins that also reshape buttons, panels, sliders and switches. The ones that come with Dafin are ready to use; an imported one asks before its QML runs.")
+        keywords: "qml skin theme shape retro"
         query: page.query
 
         Column {
@@ -58,9 +104,48 @@ SettingsPage {
             spacing: Theme.spacingLg
 
             SettingsThemeList {
+                kind: "qml"
+                filter: page.themeFilter
                 onThemeChosen: (themeId) => page.chooseTheme(themeId)
-                onRevokeTrust: (themeId) => ThemeManager.setThemeTrusted(themeId, false)
             }
+
+            ThemedButton {
+                visible: !!page.selectedRow && !!page.selectedRow.removable
+                         && !!page.selectedRow.hasOverrides && !!page.selectedRow.trusted
+                variant: "ghost"
+                text: qsTr("Stop running this theme's QML")
+                onClicked: ThemeManager.setThemeTrusted(ThemeManager.selection, false)
+            }
+        }
+    }
+
+    SettingsGroupHeader {
+        text: qsTr("Customize")
+        query: page.query
+    }
+
+    SettingsRow {
+        stacked: true
+        title: qsTr("Accent color")
+        searchId: "appearance-accent-color"
+        description: qsTr("Laid over any theme: buttons, selections, sliders and the focus ring. QML themes keep the colors drawn into their own shapes.")
+        keywords: "accent color colour highlight primary"
+        query: page.query
+
+        SettingsAccentPicker { }
+    }
+
+    SettingsRow {
+        stacked: true
+        title: qsTr("Your themes")
+        searchId: "appearance-theme-files"
+        description: qsTr("Import a theme file, folder or .zip, export the current theme, or remove one you imported.")
+        keywords: "import export remove theme folder"
+        query: page.query
+
+        Column {
+            width: parent.width
+            spacing: Theme.spacingLg
 
             ThemedLabel {
                 width: parent.width

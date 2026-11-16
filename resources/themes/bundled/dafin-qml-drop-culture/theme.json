@@ -1,0 +1,181 @@
+{
+  "name": "dafin-qml-drop-culture",
+  "schemaVersion": 1,
+  "extends": "dark",
+  "variant": "dark",
+  "palette": {
+    "appBackground": "#0B0C0D",
+    "foreground": "#FAFAFA",
+    "border": "#E8E8E8",
+    "accent": "#2A2A2C",
+    "accentForeground": "#FAFAFA",
+    "mutedForeground": "#C4C4C6",
+    "popoverHover": "#482328",
+    "panelBackground": "#18191B",
+    "panelForeground": "#FAFAFA",
+    "panelBorder": "#E8E8E8",
+    "panelAccent": "#2A2A2C",
+    "panelAccentForeground": "#FAFAFA",
+    "panelMuted": "#0E0F10",
+    "panelSecondaryBg": "#2A2A2C",
+    "panelSecondaryBorder": "#E60012",
+    "panelSecondaryForeground": "#FAFAFA",
+    "sliderTrack": "#E8E8E8",
+    "scrollbarTrack": "#0E0F10",
+    "scrollbarHandle": "#E8E8E8",
+    "scrollbarHandleHover": "#E60012",
+    "scrollbarHandlePressed": "#CB0012",
+    "sheetHandle": "#E8E8E8",
+    "primary": "#CB0012",
+    "primaryForeground": "#FFFFFF",
+    "accentOnPanel": "#CB0012",
+    "skeleton": "#2A2A2C",
+    "skeletonHighlight": "#1D1E20",
+    "exportGradientTop": "#DD5A26",
+    "exportGradientBottom": "#CB0012",
+    "exportGlow": "#E60012",
+    "snapGuide": "#E60012",
+    "textStylePreviewBg": "#0E0F10",
+    "textStylePreviewBorder": "#E8E8E8",
+    "clipVideoPlaceholder": "#0E0F10",
+    "clipVideoOverview": "#E8E8E8",
+    "previewLetterbox": "#030405",
+    "searchHighlight": "#60E60012",
+    "timelineHeaderBackground": "#2A2A2C",
+    "clipText": "#C4614C",
+    "clipSubtitle": "#C49A5B",
+    "clipAudio": "#926EC1",
+    "clipGraphic": "#BB7185",
+    "clipEffect": "#468BBB",
+    "clipComposite": "#B69B56",
+    "clipAdjustmentAudio": "#9A74C3",
+    "clipAdjustmentMask": "#BA9865",
+    "clipTransform": "#7EA95C",
+    "clipProxy": "#B58A65"
+  },
+  "semantic": {
+    "focusRing": "$palette.primary"
+  },
+  "components": {
+    "panelFrame": {
+      "radius": 0,
+      "borderWidth": 1
+    },
+    "previewPanel": {
+      "radius": 0
+    },
+    "assetsPanel": {
+      "radius": 0
+    },
+    "propertiesPanel": {
+      "radius": 0
+    },
+    "startScreenProjectRow": {
+      "radius": 0
+    },
+    "themedButton": {
+      "radius": 0,
+      "borderWidth": 1
+    },
+    "themedChip": {
+      "radius": 0
+    },
+    "iconButton": {
+      "radius": 0
+    },
+    "themedTextField": {
+      "radius": 0,
+      "borderWidthFocus": 2
+    },
+    "themedComboBox": {
+      "radius": 0
+    },
+    "themedContextMenu": {
+      "radius": 0
+    },
+    "themedDialog": {
+      "radius": 0
+    },
+    "themedToolTip": {
+      "radius": 0
+    },
+    "timelineClipItem": {
+      "radius": 0
+    },
+    "timelinePanel": {
+      "trackBackground": "$palette.panelAccent"
+    },
+    "timelineToolbar": {
+      "background": "$palette.panelBackground"
+    },
+    "editorHeader": {
+      "background": "$palette.appBackground"
+    },
+    "timelinePlayheadLine": {
+      "foreground": "$palette.snapGuide"
+    },
+    "themedSliderHandle": {
+      "radius": 0
+    }
+  },
+  "metrics": {
+    "radius": {
+      "xs": 0,
+      "sm": 0,
+      "md": 0,
+      "lg": 0
+    },
+    "controlHeight": {
+      "pointer": 31,
+      "touch": 44
+    },
+    "controlHeightSm": {
+      "pointer": 27,
+      "touch": 40
+    },
+    "iconButtonSize": {
+      "pointer": 30,
+      "touch": 44
+    },
+    "panelGap": 5,
+    "pagePadding": 12,
+    "borderWidth": 2,
+    "borderWidthFocus": 2,
+    "iconSize": {
+      "sm": 12,
+      "md": 14,
+      "base": 16,
+      "lg": 18,
+      "xl": 22
+    }
+  },
+  "typography": {
+    "fontSize": {
+      "xs": 12.0,
+      "sm": 13.2,
+      "base": 15.0,
+      "tiny": 10.0,
+      "tick": 10.5,
+      "card": 11.8
+    },
+    "monoFontFamily": "monospace",
+    "fontWeight": {
+      "regular": 500,
+      "medium": 600,
+      "semibold": 700,
+      "bold": 800
+    }
+  },
+  "motion": {
+    "durationFast": 160,
+    "durationBase": 240,
+    "durationSlow": 320,
+    "durationPress": 110,
+    "pressScale": 0.98
+  },
+  "window": {
+    "translucent": false,
+    "backdrop": "none",
+    "backgroundOpacity": 1
+  }
+}

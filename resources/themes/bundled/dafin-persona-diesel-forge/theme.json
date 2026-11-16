@@ -1,0 +1,140 @@
+{
+  "name": "dafin-persona-diesel-forge",
+  "schemaVersion": 1,
+  "extends": "dark",
+  "variant": "dark",
+  "palette": {
+    "appBackground": "#101619",
+    "foreground": "#EEF1EC",
+    "border": "#56636A",
+    "accent": "#2D3B42",
+    "accentForeground": "#EEF1EC",
+    "mutedForeground": "#B9C4C7",
+    "popoverHover": "#35464F",
+    "panelBackground": "#222B30",
+    "panelForeground": "#EEF1EC",
+    "panelBorder": "#56636A",
+    "panelAccent": "#2D3B42",
+    "panelAccentForeground": "#EEF1EC",
+    "panelMuted": "#4C5960",
+    "panelSecondaryBg": "#3E494C",
+    "panelSecondaryBorder": "#BB8E5C",
+    "panelSecondaryForeground": "#EEF1EC",
+    "primary": "#FFAA52",
+    "searchHighlight": "#4DFFAA52",
+    "primaryForeground": "#08121B",
+    "accentOnPanel": "#FFAA52",
+    "sliderTrack": "#424F56",
+    "scrollbarTrack": "#2D3B42",
+    "scrollbarHandle": "#B9C4C7",
+    "scrollbarHandleHover": "#EEF1EC",
+    "scrollbarHandlePressed": "#FFAA52",
+    "sheetHandle": "#B9C4C7",
+    "skeleton": "#2D3B42",
+    "skeletonHighlight": "#35464F",
+    "textStylePreviewBorder": "#56636A",
+    "textStylePreviewBg": "#2D3B42",
+    "panelWaveform": "#CFFFFFFF",
+    "exportGradientTop": "#FFB971",
+    "exportGradientBottom": "#FFAA52",
+    "exportGlow": "#FFAA52",
+    "snapGuide": "#FFAA52",
+    "clipVideoOverview": "#4A6876",
+    "clipVideoPlaceholder": "#4A6876",
+    "clipText": "#367264",
+    "clipSubtitle": "#386F91",
+    "clipAudio": "#6A5187",
+    "clipEffect": "#676B7C",
+    "clipGraphic": "#825963",
+    "clipComposite": "#755577",
+    "clipAdjustmentAudio": "#6A5187",
+    "clipAdjustmentMask": "#76616E",
+    "clipTransform": "#4A6F6E",
+    "transitionOverlap": "#6A5187",
+    "clipProxy": "#367264",
+    "clipEditFriendly": "#386F91",
+    "previewLetterbox": "#070A0E",
+    "timelineZoneMutedRed": "#4C3032",
+    "timelineZoneMutedYellow": "#4A4430",
+    "timelineZoneMutedGreen": "#25463C",
+    "timelineHeaderBackground": "#2D3B42",
+    "categoryAmber": "#EDBA65",
+    "categoryCyan": "#67C8D7"
+  },
+  "metrics": {
+    "radius": {
+      "xs": 1,
+      "sm": 2,
+      "md": 3,
+      "lg": 4,
+      "pill": 999
+    },
+    "panelGap": 5,
+    "borderWidth": 2
+  },
+  "window": {
+    "translucent": false,
+    "backdrop": "none",
+    "backgroundOpacity": 1
+  },
+  "components": {
+    "panelFrame": {
+      "radius": 2,
+      "borderWidth": 2
+    },
+    "themedButton": {
+      "radius": 3,
+      "borderWidth": 2
+    },
+    "themedChip": {
+      "radius": 3,
+      "borderWidth": 2
+    },
+    "themedTextField": {
+      "radius": 3,
+      "borderWidth": 2
+    },
+    "themedContextMenu": {
+      "radius": 2,
+      "borderWidth": 2
+    },
+    "themedToolTip": {
+      "radius": 2
+    },
+    "driftAssetCard": {
+      "radius": 2,
+      "borderWidth": 2
+    },
+    "startScreenProjectRow": {
+      "radius": 2,
+      "borderWidth": 2
+    },
+    "timelineClipItem": {
+      "radius": 2,
+      "radiusXs": 1,
+      "selectionBorderWidth": 2
+    },
+    "previewPanel": {
+      "radius": 2
+    },
+    "assetsPanel": {
+      "radius": 2
+    },
+    "timelinePanel": {
+      "trackBackground": "$palette.panelAccent"
+    },
+    "timelineToolbar": {
+      "background": "$palette.panelBackground"
+    },
+    "editorHeader": {
+      "background": "$palette.appBackground"
+    }
+  },
+  "typography": {
+    "fontWeight": {
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    }
+  }
+}
