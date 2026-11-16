@@ -2441,6 +2441,29 @@ QJsonObject McpDispatcher::applyOneExtended(const QString &tool, const QJsonObje
         return m_controller->mcp()->getTranscript({}, ref.track, ref.clip, 0, 0, args);
     }
 
+    // Dafin: protected source ranges and the edition link (McpSafety.cpp).
+    if (tool == QLatin1String("set_protected_ranges"))
+        return m_controller->mcp()->setProtectedRanges(args.value(QStringLiteral("ranges")).toArray());
+    if (tool == QLatin1String("list_protected_ranges"))
+        return m_controller->mcp()->listProtectedRanges(argString(args, QStringLiteral("asset")));
+    if (tool == QLatin1String("link_variant")) {
+        QString asset = argString(args, QStringLiteral("asset"));
+        if (asset.isEmpty() && args.contains(QStringLiteral("clip"))) {
+            const ClipRef ref = resolveClip(args);
+            if (!ref.valid())
+                return clipRefError(args);
+            asset = m_controller->project()->tracks().at(ref.track).clips.at(ref.clip).assetId;
+        }
+        return m_controller->mcp()->linkVariant(
+            asset, jsonNumber(args.value(QStringLiteral("start")), -1), jsonNumber(args.value(QStringLiteral("end")), -1),
+            argString(args, QStringLiteral("other_project")), argString(args, QStringLiteral("expect_hash")),
+            jsonNumber(args.value(QStringLiteral("expect_start")), 0), jsonNumber(args.value(QStringLiteral("expect_end")), 0));
+    }
+    if (tool == QLatin1String("get_variant_link"))
+        return m_controller->mcp()->getVariantLink();
+    if (tool == QLatin1String("clear_variant_link"))
+        return m_controller->mcp()->clearVariantLink();
+
     if (tool == QLatin1String("keep_ranges")) {
         const ClipRef ref = resolveClip(args);
         if (!ref.valid())

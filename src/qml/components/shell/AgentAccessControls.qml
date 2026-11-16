@@ -50,6 +50,14 @@ Column {
         onToggled: EditorState.mcp.startOnLaunch = checked
     }
 
+    // Dafin: on by default. Only this switch changes it; no agent op can.
+    ThemedSwitch {
+        checked: EditorState.mcp.confirmIrreversible
+        text: qsTr("Ask before irreversible agent actions")
+        tooltip: qsTr("Before an agent overwrites a file, replaces the project from a snapshot, changes your snapping or shortcuts, or removes protected footage, Dafin asks you first.")
+        onToggled: EditorState.mcp.confirmIrreversible = checked
+    }
+
     ThemedLabel {
         width: parent.width
         visible: EditorState.mcp.error.length > 0

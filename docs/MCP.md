@@ -197,7 +197,7 @@ Pinned endpoints (`/mcp/timeline`, `/mcp/project`, …) list that toolbox’s op
 | Export | `export_video` is async — poll `inspect().export` or `export_status`. The output path is normalised, so use the `path` echoed back. Named sizes: `list_export_presets` + `export_with_preset` |
 | Atomicity | `apply` is **not** atomic: on failure the ops before it stay applied. The failure reply is `{ok:false, error:"apply_failed", stopped:<index>, tool, failed:<that op's error>, done:[results of the ops that ran]}` — `done` never contains the failed op. An ops array cannot reference an id produced earlier in the same batch — end the batch after `set_speed_curve` |
 | Undo | One batch = one undo step. Linear history (no branches): `list_history({limit})` returns the newest `limit` (default 20) versions as `{index, label, short}` plus the HEAD `hash`/`short` and `total` (index 0 = Origin). `undo_to({index})` or `undo_to({hash})` jumps (a ≥8-char prefix such as `short` works); the next edit drops redo. `take_snapshot` writes compact project JSON named `<hash>.json` (file SHA-256 = history hash). Ops outside the stack (and all read-only ops): `import_media`, `import_media_bytes`, `seek`, `play`, `pause`, `undo`, `redo`, `undo_to`, `take_snapshot`, `restore_snapshot`, `set_overlap`, `set_ripple`, `set_snap`, `set_loop_work_area`, `export_video`, `save_project`, `quit_instance`, `set_theme`, `export_theme`, `import_theme`, `select_theme`, `set_preview_view`, `set_shortcut`, `reset_shortcuts`, `set_beat_layers`, `detect_beats`, `list_speed_curve`, `list_fade_curve`, `install_addon`, `install_addons`, `cancel_addon_install`, `set_acceleration`, `switch_angle`, `end_multicam`, `market_install` (alias `market_download`), `market_cancel_download`, `market_retry_download`, `market_open`, and the preset-store ops `rename/delete/export/import_user_text_preset`, `rename/delete/export_text_animation_preset`, `import_effect`, `rename/delete/export/import_effect_preset`. **`set_beat_layers` changes the user's own snapping and cannot be undone** |
-| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `rate_limited`, `app_too_old`, `quota_exceeded`, `install_timeout`, `download_failed`. `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
+| Errors | `{ok:false, error:<code>, detail:<text>}` — `bad_args`, `not_found`, `type_mismatch`, `unknown_op` (the detail suggests the nearest op names and their toolbox), `unknown_toolbox`, `wrong_endpoint`, `wrong_toolbox`, `apply_failed`, `import_failed`, `import_timeout`, `export_busy`, `export_failed`, `export_timeout`, `capture_failed`, `conflict`, `unsupported` (a build without the vector renderer), and from the market toolbox `market_unavailable`, `consent_required`, `market_error`, `rate_limited`, `app_too_old`, `quota_exceeded`, `install_timeout`, `download_failed`; Dafin's safety gates add `protected_range`, `not_confirmed`, `busy`, `source_mismatch`, `range_mismatch` (see [Safety gates](#safety-gates-dafin)). `type_mismatch` is also the answer when an op gets the wrong **kind** of clip (a shape to `apply_text_preset`, a title to `set_shape_style`, an image to `set_clip_orientation`) |
 | UI themes | No op edits theme tokens. `export_theme({path, name, theme?, mode?})` writes a copy (`copy`: every resolved token; `starter`: `extends` + core palette, metrics, typography, motion, window) to a file; edit it with your own file tools, then `import_theme({path, replace:true, select:true})`. Import errors name the bad key; fix and re-import. `list_themes` / `select_theme` switch between installed themes. Built-in ids (`dark`, `light`, `graphite`, `frost`) and `system` are reserved and cannot be imported or removed. Format: `docs/theming.md` |
 | Change detection | Every `inspect` includes `revision`; pass `since:<revision>` to get `{unchanged:true}` when state is current |
 | Media import | Absolute paths or `file://`, or `import_media_bytes` (base64 — always pass an explicit `path`). **No directory listing.** If the user gave a fuzzy name (`GX010023.mp4` in Downloads), glob/search with **your own filesystem tools**, then pass the hits to `import_media` and confirm `missing:[]` is empty |
@@ -908,6 +908,33 @@ Then verify visually — `capture` is a homepage tool and returns `unknown_op` i
 calls every read tool plus a sample of ops, and prints the reply size of each in characters
 (≈ tokens × 4). `--out DIR` saves the replies and returned images; `--calls FILE` runs your own
 list. Run it after touching the MCP layer to see what an agent will pay.
+
+## Safety gates (Dafin)
+
+**Protected ranges.** `set_protected_ranges({ranges:[{asset|clip, start, end, reason}]})` replaces
+the list of source stretches that agent cuts must keep; times are **source seconds** (the
+`get_transcript({asset})` clock), so they survive every move, trim and reorder.
+`list_protected_ranges({asset?})` reads them. `cut_words` (dry runs too), `keep_ranges` and
+`remove_silence` refuse a cut that would remove any part of one with `protected_range` and a
+`protected` list, and change nothing; move the cut instead. Reordering is not removal. Adding
+ranges is free; removing or changing one asks the user (below). One undo step each.
+
+**Ask before irreversible actions.** With the editor open and Settings › Agent access › *Ask
+before irreversible agent actions* on (the default), these wait for the user's click in a dialog:
+`set_beat_layers`, `restore_snapshot`, `reset_shortcuts`, `import_theme` with `replace:true`,
+`export_video` onto an existing file, and `set_protected_ranges` that drops or changes a range.
+Declined, dismissed or unanswered for 60 s: `{ok:false, error:"not_confirmed"}`; a second one
+while the first waits: `busy`. No argument confirms (`confirm:true` comes back in `ignored`).
+Headless instances have no dialog and run these as before.
+
+**Edition link.** `link_variant({asset|clip, start, end, other_project, expect_hash?,
+expect_start?, expect_end?})` records that this project is another edition of the same material,
+identified by the source file's **content** (`hash`: SHA-256 of size + first/middle/last MiB),
+never its title or name. Link the first edition, read `get_variant_link` there, and pass its
+`hash`/`start`/`end` as the `expect_*` values when linking the second: a different file fails
+`source_mismatch`, non-overlapping ranges `range_mismatch`. `get_variant_link` reports
+`source_unchanged:false` once the file on disk changes. Each edition keeps its own layout,
+captions and history. `clear_variant_link` removes it.
 
 ## Security
 

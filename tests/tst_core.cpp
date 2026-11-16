@@ -40,6 +40,7 @@
 #include <QTemporaryDir>
 #include "core/edit/TimelineOps.h"
 #include "core/edit/CutOps.h"
+#include "core/edit/ProtectedRanges.h"
 #include "core/project/Transition.h"
 
 #include <cmath>
@@ -49,6 +50,15 @@ class CoreTest : public QObject
     Q_OBJECT
 
 private slots:
+    // Dafin: protected source ranges and sampled content hash
+    void protect_lossDetected();
+    void protect_reorderIsNotLoss();
+    void protect_alreadyOffTimelineIsNotLoss();
+    void protect_otherAssetIgnored();
+    void protect_tinyEdgeIgnored();
+    void protect_overlapsForPlannedCuts();
+    void protect_roundTripAndUndoHash();
+    void protect_contentHashIgnoresName();
     void imageSequencePathRoundTrip();
     void imageSequenceFpsRationals();
     void imageSequenceDisplayName();
@@ -8584,6 +8594,117 @@ void CoreTest::closeAllGapsAndMarkerColor()
     QCOMPARE(loaded.bookmarks()[0].color, QStringLiteral("#e5484d"));
     QVERIFY(loaded.bookmarks()[1].color.isEmpty());
 }
+
+// ---- Dafin: protected source ranges ----
+
+static drift::Clip protectClipOf(const QString &asset, double in, double out, double at)
+{
+    drift::Clip c;
+    c.id = QUuid::createUuid().toString();
+    c.assetId = asset;
+    c.srcIn = drift::secondsToUs(in);
+    c.srcOut = drift::secondsToUs(out);
+    c.timelineStart = drift::secondsToUs(at);
+    c.timelineDuration = c.srcOut - c.srcIn;
+    return c;
+}
+
+
+void CoreTest::protect_lossDetected()
+{
+    drift::Project before;
+    before.tracks()[0].clips = {protectClipOf("a", 0, 10, 0)};
+    drift::ProtectedRange r{"a", drift::secondsToUs(4), drift::secondsToUs(6), "warning"};
+    drift::Project cut = before;
+    cut.tracks()[0].clips = {protectClipOf("a", 0, 5, 0), protectClipOf("a", 7, 10, 5)}; // removes 5-7
+    auto loss = drift::protectedLoss({r}, before, cut);
+    QCOMPARE(loss.size(), 1);
+    QCOMPARE(loss[0].lost.size(), 1);
+    QCOMPARE(loss[0].lost[0].startUs, drift::secondsToUs(5));
+    QCOMPARE(loss[0].lost[0].endUs, drift::secondsToUs(6));
+}
+
+void CoreTest::protect_reorderIsNotLoss()
+{
+    drift::Project before;
+    before.tracks()[0].clips = {protectClipOf("a", 0, 10, 0)};
+    drift::ProtectedRange r{"a", drift::secondsToUs(4), drift::secondsToUs(6), {}};
+    drift::Project after = before;
+    after.tracks()[0].clips = {protectClipOf("a", 5, 10, 0), protectClipOf("a", 0, 5, 5)}; // reordered, nothing removed
+    QVERIFY(drift::protectedLoss({r}, before, after).isEmpty());
+}
+
+void CoreTest::protect_alreadyOffTimelineIsNotLoss()
+{
+    drift::Project before;
+    before.tracks()[0].clips = {protectClipOf("a", 0, 3, 0)};
+    drift::ProtectedRange r{"a", drift::secondsToUs(4), drift::secondsToUs(6), {}};
+    drift::Project after;
+    after.tracks()[0].clips = {protectClipOf("a", 0, 2, 0)};
+    QVERIFY(drift::protectedLoss({r}, before, after).isEmpty());
+}
+
+void CoreTest::protect_otherAssetIgnored()
+{
+    drift::Project before;
+    before.tracks()[0].clips = {protectClipOf("a", 0, 10, 0), protectClipOf("b", 0, 10, 10)};
+    drift::ProtectedRange r{"a", drift::secondsToUs(4), drift::secondsToUs(6), {}};
+    drift::Project after = before;
+    after.tracks()[0].clips = {protectClipOf("a", 0, 10, 0)};
+    QVERIFY(drift::protectedLoss({r}, before, after).isEmpty());
+}
+
+void CoreTest::protect_tinyEdgeIgnored()
+{
+    drift::Project before;
+    before.tracks()[0].clips = {protectClipOf("a", 0, 10, 0)};
+    drift::ProtectedRange r{"a", drift::secondsToUs(4), drift::secondsToUs(6), {}};
+    drift::Project after;
+    after.tracks()[0].clips = {protectClipOf("a", 0, 3.995, 0), protectClipOf("a", 4.0, 10, 4)}; // 5 ms gap at edge
+    QVERIFY(drift::protectedLoss({r}, before, after).isEmpty());
+}
+
+void CoreTest::protect_overlapsForPlannedCuts()
+{
+    drift::ProtectedRange r{"a", drift::secondsToUs(4), drift::secondsToUs(6), {}};
+    QCOMPARE(drift::protectedOverlaps({r}, "a", {{drift::secondsToUs(5.5), drift::secondsToUs(8)}}).size(), 1);
+    QCOMPARE(drift::protectedOverlaps({r}, "a", {{drift::secondsToUs(6), drift::secondsToUs(8)}}).size(), 0);
+    QCOMPARE(drift::protectedOverlaps({r}, "b", {{drift::secondsToUs(4), drift::secondsToUs(6)}}).size(), 0);
+}
+
+void CoreTest::protect_roundTripAndUndoHash()
+{
+    drift::Project p;
+    const QString h0 = p.contentHash();
+    QVERIFY(!p.toJson().contains("protectedRanges"));
+    p.setProtectedRanges({{"a", 1, 2, "x"}});
+    QVERIFY(p.contentHash() != h0);
+    QString e;
+    drift::Project back = drift::Project::fromJson(p.toJson(), &e);
+    QVERIFY2(e.isEmpty(), qPrintable(e));
+    QCOMPARE(back.protectedRanges().size(), 1);
+    QVERIFY(back.protectedRanges()[0] == p.protectedRanges()[0]);
+    QCOMPARE(back.contentHash(), p.contentHash());
+}
+
+void CoreTest::protect_contentHashIgnoresName()
+{
+    QTemporaryDir d;
+    QByteArray data(3 << 20, 'x');
+    for (int i = 0; i < data.size(); i += 4096) data[i] = char(i / 4096);
+    auto write = [&](const QString &n, const QByteArray &b) { QFile f(d.filePath(n)); f.open(QIODevice::WriteOnly); f.write(b); };
+    write("one.mp4", data);
+    write("two.mp4", data);
+    QByteArray other = data; other[(3 << 20) / 2] = 'Z';
+    write("one-other.mp4", other);
+    qint64 size = 0;
+    const QString h = drift::sampledContentHash(d.filePath("one.mp4"), &size);
+    QCOMPARE(size, qint64(3 << 20));
+    QCOMPARE(drift::sampledContentHash(d.filePath("two.mp4")), h);
+    QVERIFY(drift::sampledContentHash(d.filePath("one-other.mp4")) != h);
+    QVERIFY(drift::sampledContentHash(d.filePath("missing.mp4")).isEmpty());
+}
+
 
 QTEST_MAIN(CoreTest)
 #include "tst_core.moc"

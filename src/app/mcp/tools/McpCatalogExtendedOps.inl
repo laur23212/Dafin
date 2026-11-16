@@ -870,6 +870,53 @@
                {QStringLiteral("declick"), propWithDefault(numberProp(QStringLiteral("Audio ramp at each cut, seconds; 0 = off"), 0, 0.5), 0.03)},
                {QStringLiteral("dry_run"), propWithDefault(boolProp(QStringLiteral("Report the cuts without making them")), false)}},
               clipRefProps())) },
+        { "set_protected_ranges", "timeline", "Protect source footage from cuts",
+          "Dafin. Replace the project's list of protected source ranges: stretches of a source file "
+          "that cut_words, keep_ranges and remove_silence must keep (a safety warning, a backup step, "
+          "the moment a button is pressed). Each range: asset id (or clip uuid, whose asset is used), "
+          "start/end in SOURCE seconds (get_transcript({asset}) times), optional reason. A cut that "
+          "would remove any part of one fails protected_range (dry_run too); move the cut instead. "
+          "Adding ranges is free; removing or changing one asks the user in the editor first "
+          "(not_confirmed if they decline). One undo step. Returns {ranges, n}.",
+          objectSchema({{QStringLiteral("ranges"),
+                         arrayProp(objectSchema({{QStringLiteral("asset"), stringProp(QStringLiteral("Asset id"))},
+                                                 {QStringLiteral("clip"), stringProp(QStringLiteral("Clip uuid; its asset is used"))},
+                                                 {QStringLiteral("start"), numberProp(QStringLiteral("Source seconds"))},
+                                                 {QStringLiteral("end"), numberProp(QStringLiteral("Source seconds"))},
+                                                 {QStringLiteral("reason"), stringProp(QStringLiteral("Why it must stay, shown to the user"))}},
+                                                {QStringLiteral("start"), QStringLiteral("end")}),
+                                   QStringLiteral("The complete new list; [] removes all (asks the user)"))}},
+                       {QStringLiteral("ranges")}) },
+        { "list_protected_ranges", "timeline", "Read protected source footage",
+          "Dafin. The project's protected source ranges, optionally for one asset. Read-only. "
+          "Returns {ranges:[{asset, start, end, reason}], n}.",
+          objectSchema({{QStringLiteral("asset"), stringProp(QStringLiteral("Only this asset id"))}}),
+          true, false, true },
+        { "link_variant", "project", "Link this project to another edition",
+          "Dafin. Link this project to another edition of the same material (a 9:16 version of a "
+          "16:9 tutorial). Identified by the source file's CONTENT (sampled SHA-256 + size), never "
+          "by title or file name. Give asset (or clip) and the source range both editions share. "
+          "To link the second edition, first call get_variant_link in the first one and pass its "
+          "hash/start/end as expect_hash/expect_start/expect_end: a different file fails "
+          "source_mismatch, non-overlapping ranges fail range_mismatch. One undo step. Layout, "
+          "captions and history stay separate per project. Returns get_variant_link's reply.",
+          objectSchema({{QStringLiteral("asset"), stringProp(QStringLiteral("Asset id in this project"))},
+                        {QStringLiteral("clip"), stringProp(QStringLiteral("Clip uuid; its asset is used"))},
+                        {QStringLiteral("start"), numberProp(QStringLiteral("Shared range start, source seconds"))},
+                        {QStringLiteral("end"), numberProp(QStringLiteral("Shared range end, source seconds"))},
+                        {QStringLiteral("other_project"), stringProp(QStringLiteral("Path of the other edition's project file"))},
+                        {QStringLiteral("expect_hash"), stringProp(QStringLiteral("hash from get_variant_link in the other edition"))},
+                        {QStringLiteral("expect_start"), numberProp(QStringLiteral("start from the other edition"))},
+                        {QStringLiteral("expect_end"), numberProp(QStringLiteral("end from the other edition"))}},
+                       {QStringLiteral("start"), QStringLiteral("end"), QStringLiteral("other_project")}) },
+        { "get_variant_link", "project", "Read this project's edition link",
+          "Dafin. Returns {linked:false} or {linked:true, other_project, asset, hash, size, start, "
+          "end, source_unchanged} (source_unchanged:false = the file on disk is no longer the one "
+          "that was linked). Read-only.",
+          objectSchema({}), true, false, true },
+        { "clear_variant_link", "project", "Remove this project's edition link",
+          "Dafin. Removes the link set by link_variant. One undo step.",
+          objectSchema({}), false, false, true },
         { "keep_ranges", "transcript", "Keep only these source ranges of a clip",
           "Rebuild a clip from source-time ranges, in the order given (reordering is fine): an "
           "edit decision list for one clip. Ranges are source seconds (get_transcript({asset}) "

@@ -4,6 +4,7 @@
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
 #include "core/project/Transcript.h"
+#include "core/edit/ProtectedRanges.h"
 #include "app/online/CloudProviders.h"
 
 #include <QAbstractSocket>
@@ -229,6 +230,13 @@ private slots:
     void keepRangesRebuildsLinkedPair();
     void assembleAppendsMultiAssetEdl();
     void cutWordsByTextAndIndex();
+    // Dafin safety gates
+    void protectedRangesRoundTripAndOldFilesLoad();
+    void protectedRangeBlocksCutWordsAndKeepRanges();
+    void protectedRangeBlocksRemoveSilence();
+    void confirmGateNeedsARealClick();
+    void confirmReasonCoversOverwriteAndUnprotect();
+    void variantLinkMatchesContentNotTitle();
     void getWaveformImageReportsWords();
     void setEffectStringParamSetsFileParam();
     void addShapeReturnsMintedId();
@@ -8350,6 +8358,311 @@ void McpTest::getWaveformImageReportsWords()
     QCOMPARE(words.size(), 6);
     QCOMPARE(words.at(3).toObject().value(QStringLiteral("i")).toInt(), 3);
     QVERIFY(r.value(QStringLiteral("image")).toObject().value(QStringLiteral("lanes")).toArray().contains(QStringLiteral("words")));
+}
+
+// ---- Dafin safety gates ---------------------------------------------------------------------
+
+namespace {
+
+QString assetOfClip(const AppController &state, const QString &clipId)
+{
+    for (const drift::Track &t : state.project()->tracks())
+        for (const drift::Clip &c : t.clips)
+            if (c.id == clipId)
+                return c.assetId;
+    return {};
+}
+
+QJsonObject protectArgs(const QString &asset, double a, double b, const QString &reason = {})
+{
+    return {{QStringLiteral("ranges"),
+             QJsonArray{QJsonObject{{QStringLiteral("asset"), asset},
+                                    {QStringLiteral("start"), a},
+                                    {QStringLiteral("end"), b},
+                                    {QStringLiteral("reason"), reason}}}}};
+}
+
+QString errorOf(const QJsonObject &r)
+{
+    return r.value(QStringLiteral("error")).toString();
+}
+
+QByteArray compact(const QJsonObject &r)
+{
+    return QJsonDocument(r).toJson(QJsonDocument::Compact);
+}
+
+} // namespace
+
+void McpTest::protectedRangesRoundTripAndOldFilesLoad()
+{
+    drift::Project project;
+    // A project without protection saves exactly as before: no new keys.
+    QVERIFY(!project.toJson().contains(QStringLiteral("protectedRanges")));
+    QVERIFY(!project.toJson().contains(QStringLiteral("variantLink")));
+
+    drift::ProtectedRange range;
+    range.assetId = QStringLiteral("a1");
+    range.srcStartUs = drift::secondsToUs(2.0);
+    range.srcEndUs = drift::secondsToUs(3.5);
+    range.reason = QStringLiteral("Backup warning");
+    project.setProtectedRanges({range});
+    drift::VariantLink link;
+    link.otherProject = QStringLiteral("/tmp/portrait.drift");
+    link.assetId = QStringLiteral("a1");
+    link.contentHash = QStringLiteral("abc");
+    link.contentSize = 42;
+    link.srcEndUs = drift::secondsToUs(10.0);
+    project.setVariantLink(link);
+
+    // Part of the undoable state (toJson(false)), so it changes the history hash.
+    QVERIFY(project.toJson(false).contains(QStringLiteral("protectedRanges")));
+    QString error;
+    const drift::Project back = drift::Project::fromJson(project.toJson(), &error);
+    QVERIFY2(error.isEmpty(), qPrintable(error));
+    QCOMPARE(back.protectedRanges().size(), 1);
+    QVERIFY(back.protectedRanges().first() == range);
+    QVERIFY(back.variantLink() == link);
+
+    QJsonObject old = project.toJson();
+    old.remove(QStringLiteral("protectedRanges"));
+    old.remove(QStringLiteral("variantLink"));
+    const drift::Project older = drift::Project::fromJson(old, &error);
+    QVERIFY(older.protectedRanges().isEmpty());
+    QVERIFY(!older.variantLink().isSet());
+}
+
+void McpTest::protectedRangeBlocksCutWordsAndKeepRanges()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    const QString source = dir.filePath(QStringLiteral("half-tone.wav"));
+    QVERIFY(writeHalfSilentTone(source));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = placeWithTranscript(dispatcher, state, source);
+    QVERIFY(!clip.isEmpty());
+    const QString asset = assetOfClip(state, clip);
+
+    // "Second phrase here." (2.0-3.1 s) is the warning that must stay. Adding it asks nobody.
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_protected_ranges"),
+                                        protectArgs(asset, 2.0, 3.1, QStringLiteral("warning")));
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), compact(r));
+    QCOMPARE(r.value(QStringLiteral("n")).toInt(), 1);
+    const QString hashBefore = state.project()->contentHash();
+
+    const QJsonObject phraseCut{{QStringLiteral("clip"), clip}, {QStringLiteral("text"), QStringLiteral("phrase")}};
+    QJsonObject dry = phraseCut;
+    dry.insert(QStringLiteral("dry_run"), true);
+    r = dispatcher.applyOne(QStringLiteral("cut_words"), dry);
+    QCOMPARE(errorOf(r), QStringLiteral("protected_range"));
+    QCOMPARE(r.value(QStringLiteral("protected")).toArray().size(), 1);
+    r = dispatcher.applyOne(QStringLiteral("cut_words"), phraseCut);
+    QCOMPARE(errorOf(r), QStringLiteral("protected_range"));
+    QCOMPARE(state.project()->contentHash(), hashBefore);
+
+    // A cut outside the protected footage still works.
+    r = dispatcher.applyOne(QStringLiteral("cut_words"),
+                            {{QStringLiteral("clip"), clip}, {QStringLiteral("text"), QStringLiteral("um")}});
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), compact(r));
+
+    // keep_ranges that would drop the warning (rebuilding the piece that plays it from 0-1 s
+    // only) is refused and leaves the project as it was.
+    const QString playsWarning = clipsOnTrackOf(state, clip).last().id;
+    const QString hashMid = state.project()->contentHash();
+    r = dispatcher.applyOne(QStringLiteral("keep_ranges"),
+                            {{QStringLiteral("clip"), playsWarning},
+                             {QStringLiteral("ranges"), QJsonArray{QJsonObject{{QStringLiteral("start"), 0.0},
+                                                                               {QStringLiteral("end"), 1.0}}}}});
+    QCOMPARE(errorOf(r), QStringLiteral("protected_range"));
+    QCOMPARE(state.project()->contentHash(), hashMid);
+}
+
+void McpTest::protectedRangeBlocksRemoveSilence()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    const QString source = dir.filePath(QStringLiteral("gap.wav"));
+    QVERIFY(writeToneGapTone(source));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = importAndPlace(dispatcher, source, 0.0);
+    QVERIFY(!clip.isEmpty());
+
+    // A deliberate pause (the gap) the creator wants kept.
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_protected_ranges"),
+                                        protectArgs(assetOfClip(state, clip), 1.3, 2.0));
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), compact(r));
+    const QString hashBefore = state.project()->contentHash();
+    r = dispatcher.applyOne(QStringLiteral("remove_silence"), {{QStringLiteral("clip"), clip}});
+    QCOMPARE(errorOf(r), QStringLiteral("protected_range"));
+    QCOMPARE(state.project()->contentHash(), hashBefore);
+    QCOMPARE(clipsOnTrackOf(state, clip).size(), 1);
+}
+
+void McpTest::confirmGateNeedsARealClick()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    const QString source = dir.filePath(QStringLiteral("gap.wav"));
+    QVERIFY(writeToneGapTone(source));
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    McpController *mcp = state.mcp();
+    const QString clip = importAndPlace(dispatcher, source, 0.0);
+    const QString asset = assetOfClip(state, clip);
+    const QJsonObject unprotect{{QStringLiteral("ranges"), QJsonArray{}}};
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_protected_ranges"), protectArgs(asset, 0.2, 0.8))
+                .value(QStringLiteral("ok")).toBool());
+
+    // No dialog registered (headless, tests): the gate is not armed, nothing waits.
+    const bool wasOn = mcp->confirmIrreversible();
+    const auto restore = qScopeGuard([&] { mcp->setConfirmIrreversible(wasOn); });
+    mcp->setConfirmIrreversible(true);
+    mcp->registerConfirmUi();
+    mcp->setConfirmTimeoutMs(50);
+
+    // Nobody answers: refused after the timeout. A forged "confirm" argument changes nothing.
+    QString lastId;
+    int asked = 0;
+    auto conn = QObject::connect(mcp, &McpController::confirmationRequested, mcp,
+                                 [&](const QString &id, const QString &, const QString &) {
+                                     lastId = id;
+                                     ++asked;
+                                 });
+    QJsonObject forged = unprotect;
+    forged.insert(QStringLiteral("confirm"), true);
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("set_protected_ranges"), forged);
+    QCOMPARE(errorOf(r), QStringLiteral("not_confirmed"));
+    QCOMPARE(asked, 1);
+    QCOMPARE(state.project()->protectedRanges().size(), 1);
+    // The old request id is dead: answering it now does nothing.
+    mcp->answerConfirmation(lastId, true);
+    QObject::disconnect(conn);
+
+    // A wrong id is ignored; the real one with "Don't allow" is a refusal.
+    conn = QObject::connect(mcp, &McpController::confirmationRequested, mcp,
+                            [&](const QString &id, const QString &, const QString &) {
+                                mcp->answerConfirmation(QStringLiteral("not-the-id"), true);
+                                mcp->answerConfirmation(id, false);
+                            });
+    r = dispatcher.applyOne(QStringLiteral("set_protected_ranges"), unprotect);
+    QCOMPARE(errorOf(r), QStringLiteral("not_confirmed"));
+    QVERIFY(r.value(QStringLiteral("detail")).toString().contains(QStringLiteral("declined")));
+    QObject::disconnect(conn);
+
+    // Inside an apply batch the same gate applies.
+    r = dispatcher.apply({{QStringLiteral("ops"),
+                           QJsonArray{QJsonObject{{QStringLiteral("tool"), QStringLiteral("set_protected_ranges")},
+                                                  {QStringLiteral("args"), unprotect}}}}});
+    QVERIFY(!r.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(state.project()->protectedRanges().size(), 1);
+
+    // The real click allows it.
+    conn = QObject::connect(mcp, &McpController::confirmationRequested, mcp,
+                            [&](const QString &id, const QString &, const QString &) {
+                                mcp->answerConfirmation(id, true);
+                            });
+    r = dispatcher.applyOne(QStringLiteral("set_protected_ranges"), unprotect);
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), compact(r));
+    QVERIFY(state.project()->protectedRanges().isEmpty());
+    QObject::disconnect(conn);
+
+    // Adding protection never asks; with the setting off nothing asks.
+    asked = 0;
+    conn = QObject::connect(mcp, &McpController::confirmationRequested, mcp,
+                            [&](const QString &, const QString &, const QString &) { ++asked; });
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_protected_ranges"), protectArgs(asset, 0.2, 0.8))
+                .value(QStringLiteral("ok")).toBool());
+    mcp->setConfirmIrreversible(false);
+    QVERIFY(dispatcher.applyOne(QStringLiteral("set_protected_ranges"), unprotect)
+                .value(QStringLiteral("ok")).toBool());
+    QCOMPARE(asked, 0);
+    QObject::disconnect(conn);
+}
+
+void McpTest::confirmReasonCoversOverwriteAndUnprotect()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    McpController *mcp = state.mcp();
+    QTemporaryDir dir;
+    const QString existing = dir.filePath(QStringLiteral("out.mp4"));
+    QFile f(existing);
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write("x");
+    f.close();
+    QVERIFY(!mcp->confirmReason(QStringLiteral("export_video"), {{QStringLiteral("path"), existing}}).isEmpty());
+    QVERIFY(mcp->confirmReason(QStringLiteral("export_video"),
+                               {{QStringLiteral("path"), dir.filePath(QStringLiteral("new.mp4"))}})
+                .isEmpty());
+    QVERIFY(!mcp->confirmReason(QStringLiteral("set_beat_layers"), {}).isEmpty());
+    QVERIFY(!mcp->confirmReason(QStringLiteral("restore_snapshot"), {}).isEmpty());
+    QVERIFY(!mcp->confirmReason(QStringLiteral("reset_shortcuts"), {}).isEmpty());
+    QVERIFY(!mcp->confirmReason(QStringLiteral("import_theme"), {{QStringLiteral("replace"), true}}).isEmpty());
+    QVERIFY(mcp->confirmReason(QStringLiteral("import_theme"), {}).isEmpty());
+    // Ordinary, undoable edits never ask.
+    QVERIFY(mcp->confirmReason(QStringLiteral("cut_words"), {}).isEmpty());
+    QVERIFY(mcp->confirmReason(QStringLiteral("add_track"), {}).isEmpty());
+}
+
+void McpTest::variantLinkMatchesContentNotTitle()
+{
+    if (ffmpegPath().isEmpty())
+        QSKIP("ffmpeg not available to generate a test clip");
+    QTemporaryDir dir;
+    const QString landscape = dir.filePath(QStringLiteral("tutorial.wav"));
+    QVERIFY(writeToneGapTone(landscape));
+    // The same recording under another name, and a different recording under the same name.
+    const QString copy = dir.filePath(QStringLiteral("renamed copy.wav"));
+    QVERIFY(QFile::copy(landscape, copy));
+    QDir(dir.path()).mkdir(QStringLiteral("other"));
+    const QString sameTitle = dir.filePath(QStringLiteral("other/tutorial.wav"));
+    QVERIFY(writeHalfSilentTone(sameTitle));
+
+    const QString hash = drift::sampledContentHash(landscape);
+    QVERIFY(!hash.isEmpty());
+    QCOMPARE(drift::sampledContentHash(copy), hash);
+    QVERIFY(drift::sampledContentHash(sameTitle) != hash);
+
+    AssetLibrary library;
+    AppController state(&library);
+    drift::mcp::McpDispatcher dispatcher(&state);
+    const QString clip = importAndPlace(dispatcher, copy, 0.0);
+    const QJsonObject base{{QStringLiteral("clip"), clip},
+                           {QStringLiteral("start"), 0.0},
+                           {QStringLiteral("end"), 3.0},
+                           {QStringLiteral("other_project"), dir.filePath(QStringLiteral("landscape.drift"))}};
+
+    QJsonObject args = base;
+    args.insert(QStringLiteral("expect_hash"), drift::sampledContentHash(sameTitle));
+    QCOMPARE(errorOf(dispatcher.applyOne(QStringLiteral("link_variant"), args)), QStringLiteral("source_mismatch"));
+
+    args = base;
+    args.insert(QStringLiteral("expect_hash"), hash);
+    args.insert(QStringLiteral("expect_start"), 5.0);
+    args.insert(QStringLiteral("expect_end"), 9.0);
+    QCOMPARE(errorOf(dispatcher.applyOne(QStringLiteral("link_variant"), args)), QStringLiteral("range_mismatch"));
+
+    args = base;
+    args.insert(QStringLiteral("expect_hash"), hash);
+    args.insert(QStringLiteral("expect_start"), 0.5);
+    args.insert(QStringLiteral("expect_end"), 3.0);
+    QJsonObject r = dispatcher.applyOne(QStringLiteral("link_variant"), args);
+    QVERIFY2(r.value(QStringLiteral("ok")).toBool(), compact(r));
+    QVERIFY(r.value(QStringLiteral("linked")).toBool());
+    QCOMPARE(r.value(QStringLiteral("hash")).toString(), hash);
+    QVERIFY(r.value(QStringLiteral("source_unchanged")).toBool());
+
+    r = dispatcher.applyOne(QStringLiteral("clear_variant_link"), {});
+    QVERIFY(r.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.project()->variantLink().isSet());
 }
 
 QTEST_MAIN(McpTest)

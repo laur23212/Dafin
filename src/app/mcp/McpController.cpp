@@ -192,6 +192,8 @@ McpController::McpController(AppController *app, QObject *parent)
     m_codexModel = QSettings().value(QStringLiteral("mcp/codexModel")).toString();
     if (!validCodexModel(m_codexModel))
         m_codexModel.clear();
+    m_confirmIrreversible =
+        QSettings().value(QStringLiteral("mcp/confirmIrreversible"), true).toBool();
 }
 
 McpController::~McpController()
@@ -3300,6 +3302,8 @@ QJsonObject McpController::removeSilence(int trackIndex, int clipIndex, double t
     }
 
     if (changed) {
+        if (const QJsonObject refused = refuseProtectedLoss(before); !refused.isEmpty())
+            return refused;
         m_app->pushProjectEdit(before, AppController::tr("Remove silence"));
         m_app->finishEdit(AppController::tr("Remove silence"));
     }
@@ -5967,6 +5971,8 @@ QJsonObject McpController::keepRanges(int trackIndex, int clipIndex, const QJson
                        : error);
     if (replaced.ids.isEmpty())
         return err("bad_args", buildError.isEmpty() ? QStringLiteral("Nothing left to keep") : buildError);
+    if (const QJsonObject refused = refuseProtectedLoss(before); !refused.isEmpty())
+        return refused;
     m_app->pushProjectEdit(before, AppController::tr("Keep ranges"));
     m_app->finishEdit(AppController::tr("Keep ranges"));
 
@@ -6202,6 +6208,7 @@ QJsonObject McpController::cutWords(int trackIndex, int clipIndex, const QJsonOb
         return err("not_found", QStringLiteral("Those words aren't in the part of the media this clip plays"));
 
     QList<drift::TimeRangeUs> removedTimeline;
+    QList<drift::TimeRangeUs> removedSource;
     QJsonArray plan;
     QJsonArray removedWords;
     for (const auto &[a, b] : std::as_const(runs)) {
@@ -6227,6 +6234,7 @@ QJsonObject McpController::cutWords(int trackIndex, int clipIndex, const QJsonOb
         if (!drift::sourceRangeToTimeline(clip, {cutS, cutE}, tl))
             continue;
         removedTimeline.append(tl);
+        removedSource.append({cutS, cutE});
         QStringList said;
         for (int p = a; p <= b; ++p) {
             said.append(t->words.at(speech.at(p)).text);
@@ -6237,6 +6245,9 @@ QJsonObject McpController::cutWords(int trackIndex, int clipIndex, const QJsonOb
                                 {QStringLiteral("end"), drift::usToSeconds(tl.endUs)},
                                 {QStringLiteral("text"), said.join(QLatin1Char(' '))}});
     }
+    // Dafin: same refusal for a dry run, so a plan never shows a cut that would be refused.
+    if (const QJsonObject refused = refuseProtectedCuts(clip.assetId, removedSource); !refused.isEmpty())
+        return refused;
     QJsonObject result{{QStringLiteral("removed"), plan}, {QStringLiteral("removed_words"), removedWords}};
     if (dryRun) {
         result.insert(QStringLiteral("dry_run"), true);
@@ -6253,6 +6264,8 @@ QJsonObject McpController::cutWords(int trackIndex, int clipIndex, const QJsonOb
             [&kept, declickUs](const drift::Clip &member) { return drift::packedSegments(member, kept, declickUs); },
             true, &replaced, &error))
         return err("bad_args", error);
+    if (const QJsonObject refused = refuseProtectedLoss(before); !refused.isEmpty())
+        return refused;
     m_app->pushProjectEdit(before, AppController::tr("Cut words"));
     m_app->finishEdit(AppController::tr("Cut words"));
     result.insert(QStringLiteral("clips"), QJsonArray::fromStringList(replaced.ids));

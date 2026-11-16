@@ -752,6 +752,7 @@ add_library(driftcore STATIC
     src/core/project/SubtitleTiming.cpp
     src/core/project/Transcript.h
     src/core/project/Transcript.cpp
+    src/core/project/ProtectedRange.h
     src/core/project/TranscriptEdit.h
     src/core/project/TranscriptEdit.cpp
     src/core/project/GuideSet.h
@@ -840,6 +841,8 @@ add_library(driftcore STATIC
     src/core/edit/MaskSpace.cpp
     src/core/edit/CutOps.h
     src/core/edit/CutOps.cpp
+    src/core/edit/ProtectedRanges.h
+    src/core/edit/ProtectedRanges.cpp
     src/core/edit/commands/ProjectCommands.h
     src/core/edit/commands/ProjectCommands.cpp
 )
@@ -1486,6 +1489,7 @@ target_sources(driftapp PRIVATE
     src/app/mcp/AgentImageLog.cpp
     src/app/mcp/McpController.h
     src/app/mcp/McpController.cpp
+    src/app/mcp/McpSafety.cpp
     src/app/editor/PreferencesController.h
     src/app/editor/PreferencesController.cpp
     src/app/StartupGuard.h
@@ -2687,6 +2691,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/WhatsNewDialog.qml
         src/qml/components/dialogs/DebugInfoDialog.qml
         src/qml/components/dialogs/LogViewerDialog.qml
+        src/qml/components/dialogs/AgentConfirmDialog.qml
         src/qml/components/dialogs/ThemeTrustDialog.qml
         src/qml/components/preview/PlaybackStatsOverlay.qml
         src/qml/components/preview/transport/PreviewTransportTimecode.qml

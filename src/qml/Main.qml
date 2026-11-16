@@ -525,6 +525,9 @@ ApplicationWindow {
 
     ProjectLoadDialog { }
 
+    // Dafin: the agent confirm gate (McpController::confirmGate) asks through this.
+    AgentConfirmDialog { }
+
     LazyLoader {
         id: recoveryDialogLoader
         sourceComponent: Component {

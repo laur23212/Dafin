@@ -2,6 +2,7 @@
 
 #include "app/mcp/AgentImageLog.h"
 #include "app/mcp/McpUsage.h"
+#include "core/edit/CutOps.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 
@@ -65,6 +66,9 @@ class McpController : public QObject
     // Web access for website assistants such as ChatGPT. Off at every launch.
     Q_PROPERTY(bool webAccess READ webAccess WRITE setWebAccess NOTIFY webAccessChanged)
     Q_PROPERTY(QString webPath READ webPath NOTIFY webAccessChanged)
+    // Dafin: ask the user (a real button in the editor) before an agent runs an op that cannot be
+    // undone. On by default. Only the Settings switch changes it; no MCP op can.
+    Q_PROPERTY(bool confirmIrreversible READ confirmIrreversible WRITE setConfirmIrreversible NOTIFY confirmIrreversibleChanged)
 
 public:
     explicit McpController(AppController *app, QObject *parent = nullptr);
@@ -250,6 +254,34 @@ public:
     QJsonObject assemble(const QJsonArray &edl, int trackIndex, bool atGiven, double atSeconds,
                             double padding, double declick);
     QJsonObject cutWords(int trackIndex, int clipIndex, const QJsonObject &args);
+
+    // Dafin: protected ranges (see core/project/ProtectedRange.h) and the edition link.
+    QJsonObject setProtectedRanges(const QJsonArray &ranges);
+    QJsonObject listProtectedRanges(const QString &assetId) const;
+    QJsonObject linkVariant(const QString &assetId, double srcStart, double srcEnd,
+                            const QString &otherProject, const QString &expectHash,
+                            double expectStart, double expectEnd);
+    QJsonObject getVariantLink() const;
+    QJsonObject clearVariantLink();
+    // {} when an edit (m_project vs `before`) keeps all protected footage; otherwise rolls the
+    // project back to `before` and returns the protected_range error. Call before the undo push.
+    QJsonObject refuseProtectedLoss(const drift::Project &before);
+    // {} when none of these planned source cuts of `assetId` touch a protected range.
+    QJsonObject refuseProtectedCuts(const QString &assetId, const QList<drift::TimeRangeUs> &removedSource) const;
+
+    // Dafin: the confirm gate. Returns {} when `tool` may run; otherwise the error reply.
+    // Every agent op passes through it (McpDispatcher::applyOne). Armed only once the GUI's
+    // dialog has registered (registerConfirmUi): headless runs and tests have no one to ask and
+    // keep their old behaviour.
+    QJsonObject confirmGate(const QString &tool, const QJsonObject &args);
+    // Non-empty when `tool` with `args` cannot be undone or removes a safeguard; shown to the user.
+    QString confirmReason(const QString &tool, const QJsonObject &args) const;
+    bool confirmIrreversible() const { return m_confirmIrreversible; }
+    Q_INVOKABLE void setConfirmIrreversible(bool enabled);
+    Q_INVOKABLE void registerConfirmUi() { m_confirmUiRegistered = true; }
+    // Only the dialog's button handlers call this. It is not an MCP op, so an agent cannot.
+    Q_INVOKABLE void answerConfirmation(const QString &requestId, bool allow);
+    void setConfirmTimeoutMs(int ms) { m_confirmTimeoutMs = ms; }
     QJsonObject ttsGenerate(const QJsonObject &args);
     QJsonObject sfxGenerate(const QJsonObject &args);
     QJsonObject listVoices(const QJsonObject &args) const;
@@ -356,6 +388,12 @@ signals:
     void runningChanged();
     void errorChanged();
     void startOnLaunchChanged();
+    void confirmIrreversibleChanged();
+    // Show the confirm dialog for this request; `reason` says what cannot be undone.
+    void confirmationRequested(const QString &requestId, const QString &tool, const QString &reason);
+    // The request ended without an answer from the dialog (timeout): close it.
+    void confirmationClosed(const QString &requestId);
+    void confirmationAnswered();
     void toolLogChanged();
     void usageChanged();
     void assistantModelChanged();
@@ -404,6 +442,12 @@ private:
     std::shared_ptr<AudioSearchIndex> m_audioSearchIndex;
     QString m_audioSearchKey;
     bool m_mcpStartOnLaunch = false;
+    bool m_confirmIrreversible = true;
+    bool m_confirmUiRegistered = false;
+    int m_confirmTimeoutMs = 60000;
+    QString m_pendingConfirmId;
+    enum class ConfirmAnswer { Pending, Allowed, Denied };
+    ConfirmAnswer m_confirmAnswer = ConfirmAnswer::Pending;
     bool m_undoSuspended = false;
     int m_batchDepth = 0;
     drift::Project m_batchBefore;

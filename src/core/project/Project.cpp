@@ -948,6 +948,7 @@ Project Project::detachedCopy() const
     out.m_binFoldersById.detach();
     out.m_transcripts.detach();
     out.m_workspaces.detach();
+    out.m_protectedRanges.detach();
     for (TimelineWorkspace &workspace : out.m_workspaces) {
         workspace.tracks.detach();
         for (Track &track : workspace.tracks)
@@ -1519,6 +1520,14 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
         project.m_id = savedId;
     project.m_author = object.value(QStringLiteral("author")).toString();
     project.m_description = object.value(QStringLiteral("description")).toString();
+    // Dafin: written only when set, so older files simply have none.
+    for (const QJsonValue &value : object.value(QStringLiteral("protectedRanges")).toArray()) {
+        const ProtectedRange range = ProtectedRange::fromJson(value.toObject());
+        if (range.isValid())
+            project.m_protectedRanges.append(range);
+    }
+    if (object.contains(QStringLiteral("variantLink")))
+        project.m_variantLink = VariantLink::fromJson(object.value(QStringLiteral("variantLink")).toObject());
     const QDateTime created =
         QDateTime::fromString(object.value(QStringLiteral("createdAt")).toString(), Qt::ISODate);
     if (created.isValid())
@@ -1645,6 +1654,16 @@ QJsonObject Project::toJson(bool includeTranscripts) const
         root.insert(QStringLiteral("workAreaInUs"), static_cast<double>(m_workAreaInUs));
         root.insert(QStringLiteral("workAreaOutUs"), static_cast<double>(m_workAreaOutUs));
     }
+    // Dafin: undoable state, so it is in toJson(false) too. Written only when set, so a project
+    // without them saves exactly as before.
+    if (!m_protectedRanges.isEmpty()) {
+        QJsonArray ranges;
+        for (const ProtectedRange &range : m_protectedRanges)
+            ranges.append(range.toJson());
+        root.insert(QStringLiteral("protectedRanges"), ranges);
+    }
+    if (m_variantLink.isSet())
+        root.insert(QStringLiteral("variantLink"), m_variantLink.toJson());
     // Dafin: workspaces travel with the file, not with each undo state (see workspaces()).
     if (includeTranscripts)
         workspacesToJson(*this, root, tracksToJson);

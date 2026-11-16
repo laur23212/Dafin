@@ -1499,6 +1499,7 @@ QJsonObject catalogPayload(const QJsonObject &args)
              QStringLiteral("set_transform writes at the playhead and becomes a keyframe when the property is animated or autoKey is on."),
              QStringLiteral("set_mask and set_subtitle_cues replace the whole mask / cue list; read the current one from inspect first."),
              QStringLiteral("Segmentation, denoise and face detection expose no progress field; diff inspect to detect completion."),
+             QStringLiteral("Dafin: cut_words, keep_ranges and remove_silence refuse cuts into protected source ranges (protected_range; see list_protected_ranges). With the editor open, irreversible ops (set_beat_layers, restore_snapshot, reset_shortcuts, import_theme replace, export_video over an existing file, removing a protected range) wait for the user's click and fail not_confirmed if declined; no argument confirms."),
              QStringLiteral("Outside the undo stack (as are all read-only ops): %1. set_beat_layers changes the user's own snapping and cannot be undone.")
                  .arg(undoExemptOps().join(QStringLiteral(", "))),
              QStringLiteral("set_speed_curve returns a new clip id and the old UUID stops resolving; end the apply batch after it."),

@@ -758,6 +758,10 @@ QJsonObject McpDispatcher::applyOne(const QString &tool, const QJsonObject &args
     const QJsonObject invalid = validateArgs(tool, opInputSchema(tool), checked, &ignored);
     if (!invalid.isEmpty())
         return invalid;
+    // Dafin: ops that cannot be undone, or remove a safeguard, wait for the user's click in the
+    // editor. Every agent call (direct, inside apply, from any client) comes through here.
+    if (const QJsonObject refused = m_controller->mcp()->confirmGate(tool, checked); !refused.isEmpty())
+        return refused;
     QJsonObject result = applyOneUnchecked(tool, checked);
     if (!ignored.isEmpty() && result.value(QStringLiteral("ok")).toBool())
         result.insert(QStringLiteral("ignored"), QJsonArray::fromStringList(ignored));

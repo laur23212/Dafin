@@ -2,6 +2,7 @@
 
 #include "core/project/BinFolder.h"
 #include "core/project/media/MediaAsset.h"
+#include "core/project/ProtectedRange.h"
 #include "core/project/Transcript.h"
 #include "core/project/Track.h"
 #include "core/base/Time.h"
@@ -166,6 +167,13 @@ public:
 
     QString description() const { return m_description; }
     void setDescription(const QString &description) { m_description = description; }
+
+    // Dafin: source stretches agent cuts must keep, and the link to another edition of the same
+    // material (see ProtectedRange.h). Both are undoable project state.
+    const QList<ProtectedRange> &protectedRanges() const { return m_protectedRanges; }
+    void setProtectedRanges(const QList<ProtectedRange> &ranges) { m_protectedRanges = ranges; }
+    const VariantLink &variantLink() const { return m_variantLink; }
+    void setVariantLink(const VariantLink &link) { m_variantLink = link; }
 
     QDateTime createdAt() const { return m_createdAt; }
     void setCreatedAt(const QDateTime &createdAt) { m_createdAt = createdAt; }
@@ -349,6 +357,8 @@ private:
     QString m_id;
     QString m_author;
     QString m_description;
+    QList<ProtectedRange> m_protectedRanges;
+    VariantLink m_variantLink;
     QDateTime m_createdAt;
     QDateTime m_modifiedAt;
     int m_fps = 30;
