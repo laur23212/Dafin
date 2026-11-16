@@ -545,6 +545,20 @@ if(TARGET Qt6::QuickTest)
 endif()
 set_tests_properties(OnlineAssets PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen;DAFIN_PLAIN_SECRETS=1")
 
+# The whole QML shell has to build. A property that overrides one of Item's FINAL properties
+# (`layer`, say) or a type that is missing makes Qt log "Cannot override FINAL property" or
+# "Type X unavailable", and the interface does not load. No other test reaches every dialog and
+# panel, so this one starts the real app (--check-qml: its own settings folders, no first-run
+# page, quits by itself) and fails on those messages or on an interface that cannot be built.
+# Linux only: it needs a display (CI runs ctest under xvfb), and the QML errors are the same
+# on every platform.
+if(TARGET drift AND UNIX AND NOT APPLE AND NOT ANDROID)
+    add_test(NAME ShellQmlLoads COMMAND drift --check-qml --verbose)
+    set_tests_properties(ShellQmlLoads PROPERTIES
+        TIMEOUT 180
+        FAIL_REGULAR_EXPRESSION "Cannot override FINAL;Type [A-Za-z0-9_.]+ unavailable;is not a type;could not build its interface")
+endif()
+
 qt_add_executable(tst_searchindex tst_searchindex.cpp ../src/app/editor/SearchIndex.cpp)
 target_include_directories(tst_searchindex PRIVATE ../src)
 target_link_libraries(tst_searchindex PRIVATE Qt6::Test Qt6::Core)

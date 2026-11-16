@@ -560,6 +560,12 @@ int main(int argc, char *argv[])
             return drift::worker::runExportWorker(argc, argv);
     }
 #endif
+    // Dafin: --check-qml builds the whole QML shell, logs every QML error, and quits by itself
+    // (the ShellQmlLoads test). Its own settings and data folders, so it never touches the real ones.
+    for (int i = 1; i < argc; ++i) {
+        if (qstrcmp(argv[i], "--check-qml") == 0)
+            QStandardPaths::setTestModeEnabled(true);
+    }
     // Dafin: before anything can go wrong, so a crash leaves a report (Windows).
     dafin::installCrashReport();
     forceStderrLogging();
@@ -1018,7 +1024,9 @@ int main(int argc, char *argv[])
         return allSaved ? 0 : 1;
     }
 #endif
-    const bool showSetup = PreferencesController::quickSetupNeeded();
+    // Dafin: --check-qml goes straight to the shell, whatever the first-run state.
+    const bool checkQml = app.arguments().contains(QStringLiteral("--check-qml"));
+    const bool showSetup = !checkQml && PreferencesController::quickSetupNeeded();
     // Shell.qml is not a window itself; the shell window it builds is its host. QuickSetup.qml is
     // a window, so it has no host.
     const auto windowOf = [](QObject *root) -> QQuickWindow * {
@@ -1083,7 +1091,7 @@ int main(int argc, char *argv[])
         Q_UNUSED(window) Q_UNUSED(first) Q_UNUSED(editor)
 #endif
     };
-    const auto loadShell = [&engine, resolvedShell, windowOf, hookWindow](bool first) {
+    const auto loadShell = [&engine, resolvedShell, windowOf, hookWindow, checkQml](bool first) {
         engine.setInitialProperties({{QStringLiteral("shellPreference"), resolvedShell}});
         const qsizetype rootsBefore = engine.rootObjects().size();
         engine.loadFromModule("Drift", "Shell");
@@ -1105,6 +1113,8 @@ int main(int argc, char *argv[])
             if (lines.isEmpty())
                 lines << QStringLiteral("No error was reported.");
             qCritical("Dafin could not build its interface:\n%s", qUtf8Printable(lines.join(QLatin1Char('\n'))));
+            if (checkQml)
+                std::exit(1); // no message box: nobody is there to close it
             QMessageBox::critical(nullptr, QStringLiteral("Dafin"),
                                   QStringLiteral("Dafin could not build its interface.\n\n%1")
                                       .arg(lines.mid(0, 12).join(QLatin1Char('\n'))));
@@ -1139,6 +1149,9 @@ int main(int argc, char *argv[])
         step(StartupSplash::tr("Building the interface…"), 0.5);
         loadShell(true);
         step(StartupSplash::tr("Opening the editor…"), 1.0);
+        // The shell is built; give its windows and Loaders a moment to create their children.
+        if (checkQml)
+            QTimer::singleShot(4000, &app, [] { QCoreApplication::exit(0); });
     }
     // Dafin: test the GPU encoders once per GPU/driver (EncoderProbe.h), a few seconds after the
     // editor is up so the test encodes don't compete with opening the first project.

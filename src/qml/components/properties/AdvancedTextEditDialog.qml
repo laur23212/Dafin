@@ -25,7 +25,7 @@ ThemedDialog {
     closePolicy: Popup.CloseOnEscape
 
     property int track: -1
-    property int clip: -1
+    property int clipId: -1
     property int undoStart: 0
     property real playheadBefore: 0
     property bool wasPlaying: false
@@ -59,7 +59,7 @@ ThemedDialog {
 
     readonly property var clipRange: {
         void root.revision
-        return root.track >= 0 ? EditorState.clipTimelineRange(root.track, root.clip) : ({})
+        return root.track >= 0 ? EditorState.clipTimelineRange(root.track, root.clipId) : ({})
     }
     readonly property real clipStart: Number(root.clipRange.startSeconds) || 0
     readonly property real clipEnd: Math.max(root.clipStart + 0.04, Number(root.clipRange.endSeconds) || 0)
@@ -72,7 +72,7 @@ ThemedDialog {
         if (EditorState.selectedTrack !== trackIndex || EditorState.selectedClip !== clipIndex)
             EditorState.selectClip(trackIndex, clipIndex)
         root.track = trackIndex
-        root.clip = clipIndex
+        root.clipId = clipIndex
         root.tab = "customize"
         root.wasPlaying = EditorState.playing
         EditorState.playing = false
@@ -132,7 +132,7 @@ ThemedDialog {
     // ----- writing -----------------------------------------------------------------------------
 
     function setStyle(patch) {
-        EditorState.setTextStyle(root.track, root.clip, patch)
+        EditorState.setTextStyle(root.track, root.clipId, patch)
     }
     function setStyleKey(key, value) {
         const patch = {}
@@ -158,11 +158,11 @@ ThemedDialog {
 
     function setLayer(layer, patch) {
         if (layer)
-            EditorState.setStyleLayer(root.track, root.clip, layer.id, patch)
+            EditorState.setStyleLayer(root.track, root.clipId, layer.id, patch)
     }
     function previewLayer(layer, patch) {
         if (layer)
-            EditorState.previewSetStyleLayer(root.track, root.clip, layer.id, patch)
+            EditorState.previewSetStyleLayer(root.track, root.clipId, layer.id, patch)
     }
     // A switch that has no layer behind it yet makes one with the editor's defaults.
     function switchLayer(kind, on) {
@@ -172,7 +172,7 @@ ThemedDialog {
             return
         }
         if (on)
-            EditorState.addStyleLayer(root.track, root.clip, kind)
+            EditorState.addStyleLayer(root.track, root.clipId, kind)
     }
 
     function setBold(on) {
@@ -200,7 +200,7 @@ ThemedDialog {
             return
         textCommit.stop()
         if (textBox.text !== (root.clipData.textContent || ""))
-            EditorState.commitTextEdit(root.track, root.clip, textBox.text)
+            EditorState.commitTextEdit(root.track, root.clipId, textBox.text)
     }
 
     function formatTime(seconds) {
@@ -213,7 +213,7 @@ ThemedDialog {
     Timer {
         id: textCommit
         interval: 350
-        onTriggered: EditorState.commitTextEdit(root.track, root.clip, textBox.text)
+        onTriggered: EditorState.commitTextEdit(root.track, root.clipId, textBox.text)
     }
 
     // The little player loops over the clip instead of running on into the rest of the project.
@@ -379,14 +379,14 @@ ThemedDialog {
     component LayerRow: ValueRow {
         id: lr
         property var dlg: null
-        property var layer: null
+        property var layerData: null
         property string field: ""
-        value: lr.layer ? (Number(lr.layer[lr.field]) || 0) : 0
-        enabled: !!lr.layer && lr.layer.enabled !== false
+        value: lr.layerData ? (Number(lr.layerData[lr.field]) || 0) : 0
+        enabled: !!lr.layerData && lr.layerData.enabled !== false
         onDragStarted: EditorState.beginPreviewDrag(qsTr("Adjust %1").arg(lr.label.toLowerCase()))
-        onLive: v => { const p = {}; p[lr.field] = v; lr.dlg.previewLayer(lr.layer, p) }
+        onLive: v => { const p = {}; p[lr.field] = v; lr.dlg.previewLayer(lr.layerData, p) }
         onDragEnded: EditorState.commitPreviewDrag()
-        onCommit: v => { const p = {}; p[lr.field] = v; lr.dlg.setLayer(lr.layer, p) }
+        onCommit: v => { const p = {}; p[lr.field] = v; lr.dlg.setLayer(lr.layerData, p) }
     }
 
     // A text style value: one undo step per drag.
@@ -746,42 +746,42 @@ ThemedDialog {
 
                         Section {
                             id: fillSection
-                            readonly property var layer: root.frontLayer("fill")
+                            readonly property var fxLayer: root.frontLayer("fill")
                             title: qsTr("Fill")
-                            isOn: root.layerOn(layer)
+                            isOn: root.layerOn(fillSection.fxLayer)
                             onSwitched: checked => root.switchLayer("fill", checked)
 
                             ColorRow {
-                                hex: fillSection.layer && fillSection.layer.paint
-                                     ? (fillSection.layer.paint.color || "#ffffffff") : "#ffffffff"
-                                onPicked: value => root.setLayer(fillSection.layer, { "paint": { "kind": "solid", "color": value } })
+                                hex: fillSection.fxLayer && fillSection.fxLayer.paint
+                                     ? (fillSection.fxLayer.paint.color || "#ffffffff") : "#ffffffff"
+                                onPicked: value => root.setLayer(fillSection.fxLayer, { "paint": { "kind": "solid", "color": value } })
                             }
-                            LayerRow { dlg: root; layer: fillSection.layer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
-                            LayerRow { dlg: root; layer: fillSection.layer; field: "blur"; label: qsTr("Blur"); to: 40; stepSize: 0.5; decimals: 1 }
+                            LayerRow { dlg: root; layerData: fillSection.fxLayer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
+                            LayerRow { dlg: root; layerData: fillSection.fxLayer; field: "blur"; label: qsTr("Blur"); to: 40; stepSize: 0.5; decimals: 1 }
                         }
 
                         Section {
                             id: outlineSection
-                            readonly property var layer: root.frontLayer("stroke")
+                            readonly property var fxLayer: root.frontLayer("stroke")
                             title: qsTr("Outline")
-                            isOn: root.layerOn(layer)
+                            isOn: root.layerOn(outlineSection.fxLayer)
                             onSwitched: checked => root.switchLayer("stroke", checked)
 
                             ColorRow {
-                                hex: outlineSection.layer && outlineSection.layer.paint
-                                     ? (outlineSection.layer.paint.color || "#ff000000") : "#ff000000"
-                                onPicked: value => root.setLayer(outlineSection.layer, { "paint": { "kind": "solid", "color": value } })
+                                hex: outlineSection.fxLayer && outlineSection.fxLayer.paint
+                                     ? (outlineSection.fxLayer.paint.color || "#ff000000") : "#ff000000"
+                                onPicked: value => root.setLayer(outlineSection.fxLayer, { "paint": { "kind": "solid", "color": value } })
                             }
-                            LayerRow { dlg: root; layer: outlineSection.layer; field: "width"; label: qsTr("Width"); to: 40; stepSize: 0.5; decimals: 1; unit: " px" }
-                            LayerRow { dlg: root; layer: outlineSection.layer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
-                            LayerRow { dlg: root; layer: outlineSection.layer; field: "blur"; label: qsTr("Blur"); to: 30; stepSize: 0.5; decimals: 1 }
+                            LayerRow { dlg: root; layerData: outlineSection.fxLayer; field: "width"; label: qsTr("Width"); to: 40; stepSize: 0.5; decimals: 1; unit: " px" }
+                            LayerRow { dlg: root; layerData: outlineSection.fxLayer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
+                            LayerRow { dlg: root; layerData: outlineSection.fxLayer; field: "blur"; label: qsTr("Blur"); to: 30; stepSize: 0.5; decimals: 1 }
                         }
 
                         Section {
                             id: shadowSection
-                            readonly property var layer: root.frontLayer("shadow")
-                            readonly property real ox: shadowSection.layer ? (Number(shadowSection.layer.offsetX) || 0) : 0
-                            readonly property real oy: shadowSection.layer ? (Number(shadowSection.layer.offsetY) || 0) : 0
+                            readonly property var fxLayer: root.frontLayer("shadow")
+                            readonly property real ox: shadowSection.fxLayer ? (Number(shadowSection.fxLayer.offsetX) || 0) : 0
+                            readonly property real oy: shadowSection.fxLayer ? (Number(shadowSection.fxLayer.offsetY) || 0) : 0
                             readonly property real distance: Math.sqrt(ox * ox + oy * oy)
                             // 0° points right, 90° down, as the offset is drawn.
                             readonly property real angle: {
@@ -793,16 +793,16 @@ ThemedDialog {
                                 return { "offsetX": distance * Math.cos(r), "offsetY": distance * Math.sin(r) }
                             }
                             title: qsTr("Shadow")
-                            isOn: root.layerOn(layer)
+                            isOn: root.layerOn(shadowSection.fxLayer)
                             onSwitched: checked => root.switchLayer("shadow", checked)
 
                             ColorRow {
-                                hex: shadowSection.layer && shadowSection.layer.paint
-                                     ? (shadowSection.layer.paint.color || "#ff000000") : "#ff000000"
-                                onPicked: value => root.setLayer(shadowSection.layer, { "paint": { "kind": "solid", "color": value } })
+                                hex: shadowSection.fxLayer && shadowSection.fxLayer.paint
+                                     ? (shadowSection.fxLayer.paint.color || "#ff000000") : "#ff000000"
+                                onPicked: value => root.setLayer(shadowSection.fxLayer, { "paint": { "kind": "solid", "color": value } })
                             }
-                            LayerRow { dlg: root; layer: shadowSection.layer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
-                            LayerRow { dlg: root; layer: shadowSection.layer; field: "blur"; label: qsTr("Blur"); to: 60; stepSize: 0.5; decimals: 1 }
+                            LayerRow { dlg: root; layerData: shadowSection.fxLayer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
+                            LayerRow { dlg: root; layerData: shadowSection.fxLayer; field: "blur"; label: qsTr("Blur"); to: 60; stepSize: 0.5; decimals: 1 }
                             ValueRow {
                                 label: qsTr("Distance")
                                 to: 80
@@ -811,9 +811,9 @@ ThemedDialog {
                                 value: shadowSection.distance
                                 enabled: shadowSection.isOn
                                 onDragStarted: EditorState.beginPreviewDrag(qsTr("Adjust shadow"))
-                                onLive: v => root.previewLayer(shadowSection.layer, shadowSection.offsets(v, shadowSection.angle))
+                                onLive: v => root.previewLayer(shadowSection.fxLayer, shadowSection.offsets(v, shadowSection.angle))
                                 onDragEnded: EditorState.commitPreviewDrag()
-                                onCommit: v => root.setLayer(shadowSection.layer, shadowSection.offsets(v, shadowSection.angle))
+                                onCommit: v => root.setLayer(shadowSection.fxLayer, shadowSection.offsets(v, shadowSection.angle))
                             }
                             ValueRow {
                                 label: qsTr("Angle")
@@ -824,27 +824,27 @@ ThemedDialog {
                                 value: shadowSection.distance > 0.01 ? shadowSection.angle : 90
                                 enabled: shadowSection.isOn
                                 onDragStarted: EditorState.beginPreviewDrag(qsTr("Adjust shadow"))
-                                onLive: v => root.previewLayer(shadowSection.layer, shadowSection.offsets(Math.max(shadowSection.distance, 4), v))
+                                onLive: v => root.previewLayer(shadowSection.fxLayer, shadowSection.offsets(Math.max(shadowSection.distance, 4), v))
                                 onDragEnded: EditorState.commitPreviewDrag()
-                                onCommit: v => root.setLayer(shadowSection.layer, shadowSection.offsets(Math.max(shadowSection.distance, 4), v))
+                                onCommit: v => root.setLayer(shadowSection.fxLayer, shadowSection.offsets(Math.max(shadowSection.distance, 4), v))
                             }
                         }
 
                         Section {
                             id: glowSection
-                            readonly property var layer: root.frontLayer("glow")
+                            readonly property var fxLayer: root.frontLayer("glow")
                             title: qsTr("Glow")
-                            isOn: root.layerOn(layer)
+                            isOn: root.layerOn(glowSection.fxLayer)
                             open: isOn
                             onSwitched: checked => root.switchLayer("glow", checked)
 
                             ColorRow {
-                                hex: glowSection.layer && glowSection.layer.paint
-                                     ? (glowSection.layer.paint.color || "#ffffffff") : "#ffffffff"
-                                onPicked: value => root.setLayer(glowSection.layer, { "paint": { "kind": "solid", "color": value } })
+                                hex: glowSection.fxLayer && glowSection.fxLayer.paint
+                                     ? (glowSection.fxLayer.paint.color || "#ffffffff") : "#ffffffff"
+                                onPicked: value => root.setLayer(glowSection.fxLayer, { "paint": { "kind": "solid", "color": value } })
                             }
-                            LayerRow { dlg: root; layer: glowSection.layer; field: "blur"; label: qsTr("Size"); to: 80; stepSize: 0.5; decimals: 1 }
-                            LayerRow { dlg: root; layer: glowSection.layer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
+                            LayerRow { dlg: root; layerData: glowSection.fxLayer; field: "blur"; label: qsTr("Size"); to: 80; stepSize: 0.5; decimals: 1 }
+                            LayerRow { dlg: root; layerData: glowSection.fxLayer; field: "opacity"; label: qsTr("Opacity"); displayScale: 100; unit: "%" }
                         }
 
                         Section {
