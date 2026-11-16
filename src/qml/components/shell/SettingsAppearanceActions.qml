@@ -15,7 +15,7 @@ Column {
         const themes = ThemeManager.themes
         for (let i = 0; i < themes.length; ++i) {
             if (themes[i].id === ThemeManager.selection)
-                return !themes[i].builtIn
+                return !!themes[i].removable
         }
         return true
     }

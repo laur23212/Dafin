@@ -1,0 +1,136 @@
+{
+  "name": "dafin-persona-coastal-sketchbook",
+  "schemaVersion": 1,
+  "extends": "light",
+  "variant": "light",
+  "palette": {
+    "appBackground": "#F3F5F0",
+    "foreground": "#203E47",
+    "border": "#B3CCC6",
+    "accent": "#D8E6E1",
+    "accentForeground": "#203E47",
+    "mutedForeground": "#4F7079",
+    "popoverHover": "#D0E3DC",
+    "panelBackground": "#E8EEE7",
+    "panelForeground": "#203E47",
+    "panelBorder": "#B3CCC6",
+    "panelAccent": "#D8E6E1",
+    "panelAccentForeground": "#203E47",
+    "panelMuted": "#C4D8D2",
+    "panelSecondaryBg": "#D6E5DC",
+    "panelSecondaryBorder": "#B3CCC6",
+    "panelSecondaryForeground": "#203E47",
+    "primary": "#17657A",
+    "searchHighlight": "#4D17657A",
+    "primaryForeground": "#FFFFFF",
+    "accentOnPanel": "#17657A",
+    "sliderTrack": "#C6D9D4",
+    "scrollbarTrack": "#D8E6E1",
+    "scrollbarHandle": "#4F7079",
+    "scrollbarHandleHover": "#203E47",
+    "scrollbarHandlePressed": "#17657A",
+    "sheetHandle": "#4F7079",
+    "skeleton": "#D8E6E1",
+    "skeletonHighlight": "#D0E3DC",
+    "textStylePreviewBorder": "#B3CCC6",
+    "textStylePreviewBg": "#1A2028",
+    "panelWaveform": "#CC1A2833",
+    "exportGradientTop": "#418192",
+    "exportGradientBottom": "#17657A",
+    "exportGlow": "#17657A",
+    "snapGuide": "#17657A",
+    "clipVideoOverview": "#486F89",
+    "clipVideoPlaceholder": "#486F89",
+    "clipText": "#377567",
+    "clipSubtitle": "#3E6C96",
+    "clipAudio": "#6A548C",
+    "clipEffect": "#556F86",
+    "clipGraphic": "#845D6E",
+    "clipComposite": "#76587E",
+    "clipAdjustmentAudio": "#6A548C",
+    "clipAdjustmentMask": "#6F6579",
+    "clipTransform": "#437373",
+    "transitionOverlap": "#6A548C",
+    "clipProxy": "#377567",
+    "clipEditFriendly": "#3E6C96",
+    "previewLetterbox": "#111418",
+    "timelineZoneMutedRed": "#F1D7D0",
+    "timelineZoneMutedYellow": "#F2E6C8",
+    "timelineZoneMutedGreen": "#D9E9DA",
+    "timelineHeaderBackground": "#D8E6E1",
+    "categoryAmber": "#C97829",
+    "categoryCyan": "#2C8392"
+  },
+  "metrics": {
+    "radius": {
+      "xs": 4,
+      "sm": 11,
+      "md": 17,
+      "lg": 23,
+      "pill": 999
+    },
+    "panelGap": 7,
+    "borderWidth": 1
+  },
+  "window": {
+    "translucent": false,
+    "backdrop": "none",
+    "backgroundOpacity": 1
+  },
+  "components": {
+    "panelFrame": {
+      "radius": 11,
+      "borderWidth": 1
+    },
+    "themedButton": {
+      "radius": 12,
+      "borderWidth": 1
+    },
+    "themedChip": {
+      "radius": 12,
+      "borderWidth": 1
+    },
+    "themedTextField": {
+      "radius": 12,
+      "borderWidth": 1
+    },
+    "themedContextMenu": {
+      "radius": 11,
+      "borderWidth": 1
+    },
+    "themedToolTip": {
+      "radius": 11
+    },
+    "driftAssetCard": {
+      "radius": 11,
+      "borderWidth": 1
+    },
+    "startScreenProjectRow": {
+      "radius": 11,
+      "borderWidth": 1
+    },
+    "timelineClipItem": {
+      "radius": 5,
+      "radiusXs": 4,
+      "selectionBorderWidth": 1.5
+    },
+    "previewPanel": {
+      "radius": 11
+    },
+    "assetsPanel": {
+      "radius": 11
+    }
+  },
+  "typography": {
+    "fontWeight": {
+      "medium": 500,
+      "semibold": 500,
+      "bold": 700
+    }
+  },
+  "motion": {
+    "durationFast": 110,
+    "durationBase": 165,
+    "durationSlow": 250
+  }
+}

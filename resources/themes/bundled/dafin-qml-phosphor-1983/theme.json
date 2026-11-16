@@ -1,0 +1,175 @@
+{
+  "name": "dafin-qml-phosphor-1983",
+  "schemaVersion": 1,
+  "extends": "dark",
+  "variant": "dark",
+  "palette": {
+    "appBackground": "#050C08",
+    "foreground": "#9DFFB8",
+    "border": "#2D7250",
+    "accent": "#0C2113",
+    "accentForeground": "#9DFFB8",
+    "mutedForeground": "#71BA8A",
+    "popoverHover": "#1E452B",
+    "panelBackground": "#07150D",
+    "panelForeground": "#9DFFB8",
+    "panelBorder": "#2D7250",
+    "panelAccent": "#0C2113",
+    "panelAccentForeground": "#9DFFB8",
+    "panelMuted": "#010904",
+    "panelSecondaryBg": "#0C2113",
+    "panelSecondaryBorder": "#7EFFAA",
+    "panelSecondaryForeground": "#9DFFB8",
+    "sliderTrack": "#2D7250",
+    "scrollbarTrack": "#010904",
+    "scrollbarHandle": "#2D7250",
+    "scrollbarHandleHover": "#7EFFAA",
+    "scrollbarHandlePressed": "#8BFFAA",
+    "sheetHandle": "#2D7250",
+    "primary": "#8BFFAA",
+    "primaryForeground": "#061208",
+    "accentOnPanel": "#8BFFAA",
+    "skeleton": "#0C2113",
+    "skeletonHighlight": "#08190F",
+    "exportGradientTop": "#66DB91",
+    "exportGradientBottom": "#8BFFAA",
+    "exportGlow": "#7EFFAA",
+    "snapGuide": "#7EFFAA",
+    "textStylePreviewBg": "#010904",
+    "textStylePreviewBorder": "#2D7250",
+    "clipVideoPlaceholder": "#010904",
+    "clipVideoOverview": "#2D7250",
+    "previewLetterbox": "#030405",
+    "searchHighlight": "#607EFFAA",
+    "timelineHeaderBackground": "#0C2113",
+    "clipText": "#4DD784",
+    "clipSubtitle": "#38C073",
+    "clipAudio": "#38C673",
+    "clipGraphic": "#2EA35F",
+    "clipEffect": "#2EA15E",
+    "clipComposite": "#47CF7D",
+    "clipAdjustmentAudio": "#38C673",
+    "clipAdjustmentMask": "#38C673",
+    "clipTransform": "#38C673",
+    "clipProxy": "#38C673"
+  },
+  "semantic": {
+    "focusRing": "$palette.primary"
+  },
+  "components": {
+    "panelFrame": {
+      "radius": 0,
+      "borderWidth": 1
+    },
+    "previewPanel": {
+      "radius": 0
+    },
+    "assetsPanel": {
+      "radius": 0
+    },
+    "propertiesPanel": {
+      "radius": 0
+    },
+    "startScreenProjectRow": {
+      "radius": 0
+    },
+    "themedButton": {
+      "radius": 0,
+      "borderWidth": 1
+    },
+    "themedChip": {
+      "radius": 0
+    },
+    "iconButton": {
+      "radius": 0
+    },
+    "themedTextField": {
+      "radius": 0,
+      "borderWidthFocus": 2
+    },
+    "themedComboBox": {
+      "radius": 0
+    },
+    "themedContextMenu": {
+      "radius": 0
+    },
+    "themedDialog": {
+      "radius": 0
+    },
+    "themedToolTip": {
+      "radius": 0
+    },
+    "timelineClipItem": {
+      "radius": 0
+    },
+    "timelinePanel": {
+      "trackBackground": "$palette.panelAccent"
+    },
+    "timelineToolbar": {
+      "background": "$palette.panelBackground"
+    },
+    "editorHeader": {
+      "background": "$palette.appBackground"
+    },
+    "timelinePlayheadLine": {
+      "foreground": "$palette.snapGuide"
+    },
+    "themedSliderHandle": {
+      "radius": 0
+    }
+  },
+  "metrics": {
+    "radius": {
+      "xs": 0,
+      "sm": 0,
+      "md": 0,
+      "lg": 0
+    },
+    "controlHeight": {
+      "pointer": 30,
+      "touch": 44
+    },
+    "controlHeightSm": {
+      "pointer": 27,
+      "touch": 40
+    },
+    "iconButtonSize": {
+      "pointer": 29,
+      "touch": 44
+    },
+    "panelGap": 5,
+    "pagePadding": 12,
+    "borderWidth": 1,
+    "borderWidthFocus": 2,
+    "iconSize": {
+      "sm": 12,
+      "md": 14,
+      "base": 16,
+      "lg": 18,
+      "xl": 22
+    }
+  },
+  "typography": {
+    "fontSize": {
+      "xs": 11.6,
+      "sm": 12.3,
+      "base": 14.2,
+      "tiny": 9.5,
+      "tick": 9.5,
+      "card": 11.3
+    },
+    "monoFontFamily": "monospace"
+  },
+  "motion": {
+    "durationFast": 0,
+    "durationBase": 0,
+    "durationSlow": 0,
+    "durationPress": 0,
+    "pressScale": 1.0
+  },
+  "window": {
+    "translucent": false,
+    "backdrop": "none",
+    "backgroundOpacity": 1
+  }
+}

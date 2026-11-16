@@ -128,6 +128,45 @@ QString userThemesDirectory()
            + QStringLiteral("/themes");
 }
 
+QString &bundledRootStorage()
+{
+    static QString root = QStringLiteral(":/themes/bundled");
+    return root;
+}
+
+bool isUnderBundledRoot(const QString &path)
+{
+    const QString root = bundledRootStorage();
+    return !root.isEmpty() && path.startsWith(root + QLatin1Char('/'));
+}
+
+// qrc:/… for a file compiled into the app, file:/// otherwise.
+QUrl themeFileUrl(const QString &path)
+{
+    if (path.startsWith(QLatin1Char(':')))
+        return QUrl(QStringLiteral("qrc") + path);
+    return QUrl::fromLocalFile(QFileInfo(path).absoluteFilePath());
+}
+
+// Dafin: the Appearance accent colour replaces the theme's primary colour (buttons,
+// selection, focus ring, sliders: everything that reads semantic.primary), with a
+// readable foreground on top of it.
+void applyAccentOverride(QVariantMap *doc, const QString &color)
+{
+    const QColor accent(color);
+    if (!accent.isValid())
+        return;
+    const double luminance = 0.2126 * accent.redF() + 0.7152 * accent.greenF() + 0.0722 * accent.blueF();
+    const QString foreground = luminance > 0.55 ? QStringLiteral("#111111") : QStringLiteral("#ffffff");
+    const QString value = accent.name(QColor::HexRgb);
+    for (const char *group : {"palette", "semantic"}) {
+        QVariantMap map = doc->value(QLatin1String(group)).toMap();
+        map.insert(QStringLiteral("primary"), value);
+        map.insert(QStringLiteral("primaryForeground"), foreground);
+        doc->insert(QLatin1String(group), map);
+    }
+}
+
 // A content:// document id has no suffix, and importLocal chooses json vs zip
 // from the file name. Keep the provider's display name, and sniff when it has
 // neither extension.
@@ -232,7 +271,24 @@ bool isValidSlotName(const QString &slot)
     return re.match(slot).hasMatch();
 }
 
+QVariantMap readObjectUncached(const QString &path, QString *error, bool warn);
+
 QVariantMap readObject(const QString &path, QString *error, bool warn = true)
+{
+    // Dafin: a resource (":/…") never changes while the app runs, and dark.json is
+    // ~140 KB parsed again under every theme read. Keep the parsed copy.
+    if (!path.startsWith(QLatin1Char(':')))
+        return readObjectUncached(path, error, warn);
+    static QHash<QString, QVariantMap> cache;
+    if (const auto it = cache.constFind(path); it != cache.cend())
+        return *it;
+    const QVariantMap doc = readObjectUncached(path, error, warn);
+    if (error->isEmpty())
+        cache.insert(path, doc);
+    return doc;
+}
+
+QVariantMap readObjectUncached(const QString &path, QString *error, bool warn)
 {
     QFile file(path);
     if (file.exists() && file.size() > kMaxThemeFileBytes) {
@@ -461,6 +517,20 @@ QVariant resolveTree(const QVariant &value, const QVariantMap &root, QStringList
         return result;
     }
     return value;
+}
+
+QVariant coerceTree(const QVariant &value, const QString &path, const QString &filePath);
+
+// Writes value at a dotted path, creating the maps on the way.
+void insertPath(QVariantMap *root, const QStringList &parts, int index, const QVariant &value)
+{
+    if (index == parts.size() - 1) {
+        root->insert(parts.at(index), value);
+        return;
+    }
+    QVariantMap child = root->value(parts.at(index)).toMap();
+    insertPath(&child, parts, index + 1, value);
+    root->insert(parts.at(index), child);
 }
 
 QVariant coerceTree(const QVariant &value, const QString &path, const QString &filePath)
@@ -778,6 +848,9 @@ ThemeManager::ThemeManager(QObject *parent)
         QSettings settings;
         settings.beginGroup(QStringLiteral("Theme"));
         m_hotReload = settings.value(QStringLiteral("hotReload"), false).toBool();
+        const QString accent = settings.value(QStringLiteral("accent")).toString().trimmed();
+        if (QColor(accent).isValid())
+            m_accentColor = QColor(accent).name(QColor::HexRgb);
     }
 
     QString error;
@@ -807,44 +880,181 @@ ThemeManager::ThemeManager(QObject *parent)
 
 QStringList ThemeManager::availableThemes() const
 {
+    // Re-read the folder: callers outside the Appearance grid expect a file copied
+    // in by hand to show up. The Appearance grid reads the cached themes() instead.
+    const QStringList before = m_userOrder;
+    m_indexValid = false;
+    ensureIndex();
+    if (before != m_userOrder) {
+        m_catalogValid = false;
+        m_previewCache.clear();
+    }
     QStringList names;
     for (const BuiltinTheme &theme : kBuiltinThemes)
         names.append(QString::fromLatin1(theme.id));
-    QStringList user;
+    names.append(m_bundledOrder);
+    QStringList user = m_userOrder;
+    user.sort();
+    names.append(user);
+    return names;
+}
+
+void ThemeManager::ensureIndex() const
+{
+    if (m_indexValid)
+        return;
+    m_indexValid = true;
+
+    m_bundledOrder.clear();
+    m_bundledPaths.clear();
+    m_bundledInfo.clear();
+    const QString root = bundledThemesRoot();
+    const QDir bundledDir(root);
+    if (!root.isEmpty() && bundledDir.exists()) {
+        QString error;
+        const QVariantMap catalog = readObject(bundledDir.filePath(QStringLiteral("catalog.json")), &error, false);
+        QStringList ordered;
+        const QVariantList entries = catalog.value(QStringLiteral("themes")).toList();
+        for (const QVariant &entry : entries) {
+            const QVariantMap info = entry.toMap();
+            const QString id = info.value(QStringLiteral("id")).toString();
+            if (id.isEmpty() || ordered.contains(id))
+                continue;
+            ordered.append(id);
+            m_bundledInfo.insert(id, info);
+        }
+        // A folder the catalog does not list still ships, after the listed ones.
+        const QStringList folders = bundledDir.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        for (const QString &folder : folders) {
+            if (!ordered.contains(folder))
+                ordered.append(folder);
+        }
+        // The folder name is the theme name (checked by tst_thememanager), so no
+        // theme file is opened here.
+        for (const QString &id : ordered) {
+            const QString path = bundledDir.filePath(id) + QStringLiteral("/theme.json");
+            if (!isSafeThemeId(id) || !QFile::exists(path))
+                continue;
+            m_bundledOrder.append(id);
+            m_bundledPaths.insert(id, path);
+        }
+    }
+
+    m_userOrder.clear();
+    m_userPaths.clear();
     const QDir dir(userThemesDirectory());
     if (!dir.exists())
-        return names;
-
+        return;
     const QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
     for (const QFileInfo &info : entries) {
         QString path;
+        QString fallback;
         if (info.isDir()) {
             path = info.filePath() + QStringLiteral("/theme.json");
             if (!QFile::exists(path))
                 continue;
+            fallback = info.fileName();
         } else if (info.suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0) {
             path = info.absoluteFilePath();
+            fallback = info.completeBaseName();
         } else {
             continue;
         }
-
         QString name = readThemeName(path);
         if (name.isEmpty())
-            name = info.isDir() ? info.fileName() : info.completeBaseName();
+            name = fallback;
         if (isBuiltinId(name)) {
             qWarning("theme: user theme \"%s\" collides with a built-in (%s)", qPrintable(name),
                      qPrintable(path));
             continue;
         }
-        if (names.contains(name) || user.contains(name)) {
-            qWarning("theme: duplicate theme name \"%s\" (%s)", qPrintable(name), qPrintable(path));
+        // An imported copy of a theme Dafin now ships: the shipped one is used.
+        if (m_bundledPaths.contains(name))
+            continue;
+        if (!isSafeThemeId(name) || m_userPaths.contains(name)) {
+            if (m_userPaths.contains(name))
+                qWarning("theme: duplicate theme name \"%s\" (%s)", qPrintable(name), qPrintable(path));
             continue;
         }
-        user.append(name);
+        m_userOrder.append(name);
+        m_userPaths.insert(name, path);
     }
-    user.sort();
-    names.append(user);
-    return names;
+}
+
+void ThemeManager::invalidateCatalog()
+{
+    m_indexValid = false;
+    m_catalogValid = false;
+    m_previewCache.clear();
+    emit availableThemesChanged();
+}
+
+void ThemeManager::refreshThemes()
+{
+    // Cheap when nothing changed: only the user folder's theme names are read, and
+    // the grid is rebuilt only when that set differs.
+    const QStringList before = m_userOrder;
+    const QHash<QString, QString> beforePaths = m_userPaths;
+    m_indexValid = false;
+    ensureIndex();
+    if (m_catalogValid && before == m_userOrder && beforePaths == m_userPaths)
+        return;
+    m_catalogValid = false;
+    m_previewCache.clear();
+    emit availableThemesChanged();
+}
+
+bool ThemeManager::isBundledId(const QString &name) const
+{
+    ensureIndex();
+    return m_bundledPaths.contains(name);
+}
+
+void ThemeManager::setBundledThemesRoot(const QString &root)
+{
+    bundledRootStorage() = root;
+}
+
+QString ThemeManager::bundledThemesRoot()
+{
+    return bundledRootStorage();
+}
+
+void ThemeManager::setAccentColor(const QString &color)
+{
+    const QColor parsed(color.trimmed());
+    const QString value = parsed.isValid() ? parsed.name(QColor::HexRgb) : QString();
+    if (value == m_accentColor)
+        return;
+    m_accentColor = value;
+    QSettings settings;
+    settings.beginGroup(QStringLiteral("Theme"));
+    if (value.isEmpty())
+        settings.remove(QStringLiteral("accent"));
+    else
+        settings.setValue(QStringLiteral("accent"), value);
+    emit accentColorChanged();
+    reload();
+}
+
+void ThemeManager::refreshOverrideCache()
+{
+    m_overrideDir.clear();
+    m_overrideSlots.clear();
+    if (!m_userTheme || !isFolderTheme(m_sourcePath))
+        return;
+    ensureIndex();
+    // Shipped QML is trusted only at the shipped path, never a user copy that
+    // borrows a shipped theme's name.
+    const QString bundledPath = m_bundledPaths.value(m_currentTheme);
+    const bool shipped = !bundledPath.isEmpty()
+                         && QFileInfo(bundledPath).absoluteFilePath() == QFileInfo(m_sourcePath).absoluteFilePath();
+    if (!shipped && !readTrustedThemes().contains(m_currentTheme))
+        return;
+    m_overrideDir = themeQmlDirectory(m_sourcePath);
+    const QStringList names = overrideSlotsAt(m_sourcePath);
+    for (const QString &name : names)
+        m_overrideSlots.insert(name);
 }
 
 QVariant ThemeManager::token(const QString &dottedPath) const
@@ -948,14 +1158,9 @@ bool ThemeManager::applySessionOverride(const QString &nameOrPath)
 
 QUrl ThemeManager::overrideUrl(const QString &slot) const
 {
-    if (!isValidSlotName(slot) || !m_userTheme || !isFolderTheme(m_sourcePath))
+    if (m_overrideDir.isEmpty() || !isValidSlotName(slot) || !m_overrideSlots.contains(slot))
         return {};
-    if (!isThemeTrusted(m_currentTheme))
-        return {};
-    const QString qmlFile = QDir(themeQmlDirectory(m_sourcePath)).filePath(slot + QStringLiteral(".qml"));
-    if (!QFileInfo::exists(qmlFile))
-        return {};
-    return QUrl::fromLocalFile(QFileInfo(qmlFile).absoluteFilePath());
+    return themeFileUrl(m_overrideDir + QLatin1Char('/') + slot + QStringLiteral(".qml"));
 }
 
 bool ThemeManager::isThemeTrusted(const QString &name) const
@@ -963,13 +1168,15 @@ bool ThemeManager::isThemeTrusted(const QString &name) const
     const QString theme = name.trimmed();
     if (theme.isEmpty())
         return false;
+    if (isBundledId(theme))
+        return true;
     return readTrustedThemes().contains(theme);
 }
 
 void ThemeManager::setThemeTrusted(const QString &name, bool trusted)
 {
     const QString theme = name.trimmed();
-    if (theme.isEmpty())
+    if (theme.isEmpty() || isBundledId(theme))
         return;
     QStringList names = readTrustedThemes();
     const bool listed = names.contains(theme);
@@ -980,16 +1187,25 @@ void ThemeManager::setThemeTrusted(const QString &name, bool trusted)
     else
         names.removeAll(theme);
     writeTrustedThemes(names);
-    emit availableThemesChanged();
-    if (theme == m_currentTheme)
+    invalidateCatalog();
+    if (theme == m_currentTheme) {
+        refreshOverrideCache();
         emit themeChanged();
+    }
 }
 
 QStringList ThemeManager::overrideSlots(const QString &name) const
 {
     QString error;
     const QString path = pathForThemeName(name.trimmed(), &error);
-    if (path.isEmpty() || !isFolderTheme(path))
+    if (path.isEmpty())
+        return {};
+    return overrideSlotsAt(path);
+}
+
+QStringList ThemeManager::overrideSlotsAt(const QString &path) const
+{
+    if (!isFolderTheme(path))
         return {};
     const QDir dir(themeQmlDirectory(path));
     if (!dir.exists())
@@ -1009,7 +1225,9 @@ QStringList ThemeManager::overrideSlots(const QString &name) const
 QString ThemeManager::themeQmlDirectory(const QString &themeJsonPath) const
 {
     const QFileInfo info(themeJsonPath);
-    if (info.fileName() != QLatin1String("theme.json") || themeJsonPath.startsWith(QLatin1Char(':')))
+    if (info.fileName() != QLatin1String("theme.json"))
+        return {};
+    if (themeJsonPath.startsWith(QLatin1Char(':')) && !isUnderBundledRoot(themeJsonPath))
         return {};
     return info.dir().absoluteFilePath(QStringLiteral("qml"));
 }
@@ -1040,9 +1258,13 @@ bool ThemeManager::isThemeWatchPath(const QString &path) const
 
 QStringList ThemeManager::readTrustedThemes() const
 {
-    QSettings settings;
-    settings.beginGroup(QStringLiteral("Theme"));
-    return settings.value(QStringLiteral("trusted")).toStringList();
+    if (!m_trustedLoaded) {
+        QSettings settings;
+        settings.beginGroup(QStringLiteral("Theme"));
+        m_trustedCache = settings.value(QStringLiteral("trusted")).toStringList();
+        m_trustedLoaded = true;
+    }
+    return m_trustedCache;
 }
 
 void ThemeManager::writeTrustedThemes(const QStringList &names)
@@ -1050,6 +1272,8 @@ void ThemeManager::writeTrustedThemes(const QStringList &names)
     QSettings settings;
     settings.beginGroup(QStringLiteral("Theme"));
     settings.setValue(QStringLiteral("trusted"), names);
+    m_trustedCache = names;
+    m_trustedLoaded = true;
 }
 
 void ThemeManager::setHotReload(bool enabled)
@@ -1136,32 +1360,29 @@ QString ThemeManager::pathForThemeName(const QString &name, QString *error) cons
     if (const QString builtin = builtinResource(name); !builtin.isEmpty())
         return builtin;
 
-    const QDir dir(userThemesDirectory());
-    if (dir.exists()) {
-        const QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-        for (const QFileInfo &info : entries) {
-            QString path;
-            QString fallback;
-            if (info.isDir()) {
-                path = info.filePath() + QStringLiteral("/theme.json");
-                if (!QFile::exists(path))
-                    continue;
-                fallback = info.fileName();
-            } else if (info.suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0) {
-                path = info.absoluteFilePath();
-                fallback = info.completeBaseName();
-            } else {
-                continue;
-            }
-            QString themeName = readThemeName(path);
-            if (themeName.isEmpty())
-                themeName = fallback;
-            if (themeName == name)
-                return path;
+    ensureIndex();
+    const auto find = [&]() -> QString {
+        if (const auto it = m_bundledPaths.constFind(name); it != m_bundledPaths.cend())
+            return *it;
+        if (const auto it = m_userPaths.constFind(name); it != m_userPaths.cend() && QFile::exists(*it))
+            return *it;
+        return {};
+    };
+    QString path = find();
+    if (path.isEmpty()) {
+        // A theme copied into the folder (or removed) while Dafin runs.
+        const QStringList before = m_userOrder;
+        m_indexValid = false;
+        ensureIndex();
+        if (before != m_userOrder) {
+            m_catalogValid = false;
+            m_previewCache.clear();
         }
+        path = find();
     }
-    *error = QStringLiteral("unknown theme \"%1\"").arg(name);
-    return {};
+    if (path.isEmpty())
+        *error = QStringLiteral("unknown theme \"%1\"").arg(name);
+    return path;
 }
 
 QVariantMap ThemeManager::compose(const QString &path, QStringList *stack, QString *error) const
@@ -1208,7 +1429,8 @@ QVariantMap ThemeManager::compose(const QString &path, QStringList *stack, QStri
     return doc;
 }
 
-std::optional<ThemeManager::Loaded> ThemeManager::readTheme(const QString &nameOrPath, QString *error) const
+std::optional<ThemeManager::Loaded> ThemeManager::readTheme(const QString &nameOrPath, QString *error,
+                                                           bool userAccent, const QStringList *onlyPaths) const
 {
     const QString path = locate(nameOrPath, error);
     if (path.isEmpty())
@@ -1297,10 +1519,28 @@ std::optional<ThemeManager::Loaded> ThemeManager::readTheme(const QString &nameO
     if (leafName.isEmpty())
         leafName = fallbackName(path);
     merged.insert(QStringLiteral("name"), leafName);
+    if (userAccent && !m_accentColor.isEmpty())
+        applyAccentOverride(&merged, m_accentColor);
 
-    QStringList refs;
-    const QVariant resolved = resolveTree(merged, merged, &refs, QString(), path);
-    const QVariant coerced = coerceTree(resolved, QString(), path);
+    QVariant coerced;
+    if (onlyPaths) {
+        // Dafin: preview tiles need a dozen tokens, not the whole resolved document.
+        QVariantMap partial;
+        for (const QString &wanted : *onlyPaths) {
+            QVariant raw;
+            if (!lookup(merged, wanted, &raw))
+                continue;
+            QStringList stack;
+            const QVariant value = coerceTree(resolveTree(raw, merged, &stack, wanted, path), wanted, path);
+            insertPath(&partial, wanted.split(QLatin1Char('.')), 0, value);
+        }
+        partial.insert(QStringLiteral("name"), merged.value(QStringLiteral("name")));
+        coerced = partial;
+    } else {
+        QStringList refs;
+        const QVariant resolved = resolveTree(merged, merged, &refs, QString(), path);
+        coerced = coerceTree(resolved, QString(), path);
+    }
     if (coerced.typeId() != QMetaType::QVariantMap) {
         *error = QStringLiteral("theme did not resolve to an object");
         qWarning("theme: %s (%s)", qPrintable(*error), qPrintable(path));
@@ -1359,8 +1599,10 @@ void ThemeManager::apply(const Loaded &loaded)
     }
 
     updateWatch();
+    refreshOverrideCache();
+    // Dafin: no availableThemesChanged here. The list does not depend on which
+    // theme is on screen, and rebuilding it on every switch froze Appearance.
     emit themeChanged();
-    emit availableThemesChanged();
     // setVariant/select/session override all land here. Emit only for a real
     // change so Theme.darkMode is not re-entered while it is writing the side back.
     if (m_effectiveVariant != previousVariant)
@@ -1410,44 +1652,26 @@ void ThemeManager::onThemeFileChanged(const QString &path)
     if (!m_hotReload || m_inReload || !isThemeWatchPath(path))
         return;
     m_inReload = true;
+    m_previewCache.clear();
+    m_catalogValid = false;
     reload();
     m_inReload = false;
 }
 
 QVariantList ThemeManager::themes() const
 {
+    if (m_catalogValid)
+        return m_catalog;
+    ensureIndex();
     QVariantList list;
     for (const BuiltinTheme &theme : kBuiltinThemes)
         list.append(themeRecord(QString::fromLatin1(theme.id), QString::fromLatin1(theme.resource), true));
-
-    const QDir dir(userThemesDirectory());
-    if (!dir.exists())
-        return list;
-
-    QStringList seen;
-    const QFileInfoList entries = dir.entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-    for (const QFileInfo &info : entries) {
-        QString path;
-        QString fallback;
-        if (info.isDir()) {
-            path = info.filePath() + QStringLiteral("/theme.json");
-            if (!QFile::exists(path))
-                continue;
-            fallback = info.fileName();
-        } else if (info.suffix().compare(QLatin1String("json"), Qt::CaseInsensitive) == 0) {
-            path = info.absoluteFilePath();
-            fallback = info.completeBaseName();
-        } else {
-            continue;
-        }
-        QString name = readThemeName(path);
-        if (name.isEmpty())
-            name = fallback;
-        if (!isSafeThemeId(name) || seen.contains(name))
-            continue;
-        seen.append(name);
-        list.append(themeRecord(name, path, false));
-    }
+    for (const QString &id : std::as_const(m_bundledOrder))
+        list.append(themeRecord(id, m_bundledPaths.value(id), false));
+    for (const QString &id : std::as_const(m_userOrder))
+        list.append(themeRecord(id, m_userPaths.value(id), false));
+    m_catalog = list;
+    m_catalogValid = true;
     return list;
 }
 
@@ -1477,13 +1701,33 @@ QVariantMap ThemeManager::themeRecord(const QString &id, const QString &path, bo
     if (raw.contains(QStringLiteral("window")))
         translucent = raw.value(QStringLiteral("window")).toMap().value(QStringLiteral("translucent")).toBool();
 
+    // Dafin: shipped themes, display names and the Color / QML split for the grid.
+    const bool bundled = !builtIn && m_bundledPaths.value(id) == path;
+    const QStringList slotNames = builtIn ? QStringList() : overrideSlotsAt(path);
+    const QVariantMap info = bundled ? m_bundledInfo.value(id) : QVariantMap();
+    QString label = info.value(QStringLiteral("label")).toString();
+    if (label.isEmpty())
+        label = raw.value(QStringLiteral("label")).toString().trimmed();
+    if (label.isEmpty())
+        label = name;
+    if (builtIn && !label.isEmpty())
+        label[0] = label.at(0).toUpper();
+    QString group = info.value(QStringLiteral("group")).toString();
+    if (group.isEmpty())
+        group = builtIn ? QStringLiteral("Dafin") : QStringLiteral("Installed");
+
     QVariantMap row;
     row.insert(QStringLiteral("id"), id);
     row.insert(QStringLiteral("name"), name);
     row.insert(QStringLiteral("variant"), variant);
     row.insert(QStringLiteral("builtIn"), builtIn);
-    row.insert(QStringLiteral("hasOverrides"), !overrideSlots(id).isEmpty());
-    row.insert(QStringLiteral("trusted"), isThemeTrusted(id));
+    row.insert(QStringLiteral("hasOverrides"), !slotNames.isEmpty());
+    row.insert(QStringLiteral("trusted"), bundled || readTrustedThemes().contains(id));
+    row.insert(QStringLiteral("bundled"), bundled);
+    row.insert(QStringLiteral("removable"), !builtIn && !bundled);
+    row.insert(QStringLiteral("kind"), slotNames.isEmpty() ? QStringLiteral("color") : QStringLiteral("qml"));
+    row.insert(QStringLiteral("label"), label);
+    row.insert(QStringLiteral("group"), group);
     row.insert(QStringLiteral("path"), builtIn ? path : QFileInfo(path).absoluteFilePath());
     row.insert(QStringLiteral("hasVariants"), hasDark && hasLight);
     row.insert(QStringLiteral("translucent"), translucent);
@@ -1497,16 +1741,38 @@ QVariantMap ThemeManager::previewColors(const QString &id) const
                               ? (m_requestedVariant == QLatin1String("light") ? QStringLiteral("light")
                                                                               : QStringLiteral("dark"))
                               : key;
+    const QString cacheKey = which + QLatin1Char('|') + m_requestedVariant;
+    if (const auto it = m_previewCache.constFind(cacheKey); it != m_previewCache.cend())
+        return *it;
     QString error;
-    const std::optional<Loaded> loaded = readTheme(which, &error);
+    // The theme's own colours: the accent picked in Appearance is not drawn into tiles.
+    static const QStringList wanted = {
+        QStringLiteral("semantic.surface.app"), QStringLiteral("semantic.surface.panel"),
+        QStringLiteral("semantic.accent"), QStringLiteral("semantic.foreground"),
+        QStringLiteral("semantic.primary"), QStringLiteral("semantic.panel.border"),
+        QStringLiteral("semantic.mutedForeground"), QStringLiteral("semantic.timeline.headerBackground"),
+        QStringLiteral("components.timelineClipItem.videoBackground"),
+        QStringLiteral("components.timelineClipItem.audioBackground"), QStringLiteral("metrics.radius.sm"),
+    };
+    const std::optional<Loaded> loaded = readTheme(which, &error, false, &wanted);
     if (!loaded)
         return {};
+    const QVariantMap &doc = loaded->document;
     QVariantMap colors;
-    colors.insert(QStringLiteral("surface"), lookupPath(loaded->document, QStringLiteral("semantic.surface.app")));
-    colors.insert(QStringLiteral("panel"), lookupPath(loaded->document, QStringLiteral("semantic.surface.panel")));
-    colors.insert(QStringLiteral("accent"), lookupPath(loaded->document, QStringLiteral("semantic.accent")));
-    colors.insert(QStringLiteral("foreground"), lookupPath(loaded->document, QStringLiteral("semantic.foreground")));
-    colors.insert(QStringLiteral("primary"), lookupPath(loaded->document, QStringLiteral("semantic.primary")));
+    colors.insert(QStringLiteral("surface"), lookupPath(doc, QStringLiteral("semantic.surface.app")));
+    colors.insert(QStringLiteral("panel"), lookupPath(doc, QStringLiteral("semantic.surface.panel")));
+    colors.insert(QStringLiteral("accent"), lookupPath(doc, QStringLiteral("semantic.accent")));
+    colors.insert(QStringLiteral("foreground"), lookupPath(doc, QStringLiteral("semantic.foreground")));
+    colors.insert(QStringLiteral("primary"), lookupPath(doc, QStringLiteral("semantic.primary")));
+    colors.insert(QStringLiteral("border"), lookupPath(doc, QStringLiteral("semantic.panel.border")));
+    colors.insert(QStringLiteral("muted"), lookupPath(doc, QStringLiteral("semantic.mutedForeground")));
+    colors.insert(QStringLiteral("timeline"), lookupPath(doc, QStringLiteral("semantic.timeline.headerBackground")));
+    colors.insert(QStringLiteral("clipVideo"),
+                  lookupPath(doc, QStringLiteral("components.timelineClipItem.videoBackground")));
+    colors.insert(QStringLiteral("clipAudio"),
+                  lookupPath(doc, QStringLiteral("components.timelineClipItem.audioBackground")));
+    colors.insert(QStringLiteral("radius"), lookupPath(doc, QStringLiteral("metrics.radius.sm")));
+    m_previewCache.insert(cacheKey, colors);
     return colors;
 }
 
@@ -1654,7 +1920,7 @@ bool ThemeManager::exportTheme(const QUrl &file)
 bool ThemeManager::removeTheme(const QString &id)
 {
     const QString theme = id.trimmed();
-    if (theme.isEmpty() || isBuiltinId(theme) || theme == QLatin1String("system")) {
+    if (theme.isEmpty() || isBuiltinId(theme) || theme == QLatin1String("system") || isBundledId(theme)) {
         setLastError(QStringLiteral("built-in themes cannot be removed"));
         return false;
     }
@@ -1678,7 +1944,7 @@ bool ThemeManager::removeTheme(const QString &id)
         loadTheme(side);
         emit selectionChanged();
     }
-    emit availableThemesChanged();
+    invalidateCatalog();
     setLastError({});
     return true;
 }
@@ -1761,7 +2027,7 @@ QString ThemeManager::importTheme(const QUrl &url, bool replace)
         if (m_currentTheme == id)
             reload();
     }
-    emit availableThemesChanged();
+    invalidateCatalog();
     return id;
 }
 
@@ -1813,6 +2079,10 @@ QString ThemeManager::importLocal(const QString &path, bool replace)
             setLastError(error.isEmpty() ? QStringLiteral("invalid theme") : error);
             return QString();
         }
+        if (isBundledId(loaded->name)) {
+            setLastError(QStringLiteral("“%1” already ships with Dafin").arg(loaded->name));
+            return QString();
+        }
         if (!isSafeThemeId(loaded->name)) {
             setLastError(QStringLiteral("theme name \"%1\" cannot be installed").arg(loaded->name));
             return QString();
@@ -1855,6 +2125,10 @@ QString ThemeManager::importLocal(const QString &path, bool replace)
     const std::optional<Loaded> loaded = readTheme(info.absoluteFilePath(), &error);
     if (!loaded) {
         setLastError(error.isEmpty() ? QStringLiteral("invalid theme") : error);
+        return {};
+    }
+    if (isBundledId(loaded->name)) {
+        setLastError(QStringLiteral("“%1” already ships with Dafin").arg(loaded->name));
         return {};
     }
     if (!isSafeThemeId(loaded->name)) {
