@@ -1333,6 +1333,7 @@ qt_add_executable(drift
     src/app/editor/sessions/PolylineDraft.cpp
     src/app/jobs/vision/SegmentationPlan.h
     src/app/mcp/McpDetail.h
+    src/app/mcp/McpUsage.h
     src/app/editor/AppControllerDetail.h
     src/app/editor/EditorState.h
     src/app/editor/LayoutStore.h
@@ -2474,6 +2475,7 @@ qt_add_qml_module(drift
         src/qml/components/panels/sourcelab/SourceLabProgressCard.qml
         src/qml/components/panels/sourcelab/SourceLabExportOptions.qml
         src/qml/components/panels/AgentLogPanel.qml
+        src/qml/components/panels/AgentUsageView.qml
         src/qml/components/panels/AgentViewsPanel.qml
         src/qml/components/panels/AudioSheetPanel.qml
         src/qml/components/ImageViewer.qml

@@ -117,6 +117,10 @@ private slots:
     void serverRequiresBearerToken();
     void serverInitializeWithToken();
     void serverNotificationReturns202();
+    void usageCountsCallsRetriesAndReplySizes();
+    void usageNamesTheClientAndMeasuresServerCalls();
+    void webAccessOpensOnlyTheSecretPathWhileOn();
+    void launchCommandsKeepToKnownModelNames();
     void mcpStartOnLaunchAppliesOnlyWhenInvoked();
     void mcpDisablingResetsStartOnLaunch();
     void applyUnknownOp();
@@ -274,7 +278,7 @@ static QJsonObject rpc(const QString &method, const QJsonObject &params = {}, in
 }
 
 static QByteArray httpPost(quint16 port, const QByteArray &auth, const QByteArray &body,
-                           int *statusOut = nullptr)
+                           int *statusOut = nullptr, const QByteArray &path = "/mcp")
 {
     QTcpSocket socket;
     QEventLoop loop;
@@ -286,7 +290,7 @@ static QByteArray httpPost(quint16 port, const QByteArray &auth, const QByteArra
     if (socket.state() != QAbstractSocket::ConnectedState)
         return {};
 
-    QByteArray req = "POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n";
+    QByteArray req = "POST " + path + " HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\n";
     if (!auth.isEmpty()) {
         req += "Authorization: ";
         req += auth;
@@ -1171,6 +1175,188 @@ void McpTest::serverNotificationReturns202()
     QCOMPARE(status, 202);
     state.mcp()->setEnabled(false);
     qunsetenv("DRIFT_MCP_SESSION_PATH");
+}
+
+// The monitor only reports what Dafin measures: calls, time, failures, repeated failures and
+// the size of Dafin's own replies. A call counts as a retry only when the same tool with the
+// same arguments had just failed.
+void McpTest::usageCountsCallsRetriesAndReplySizes()
+{
+    drift::mcp::McpUsage usage;
+    const QJsonObject textResult{
+        {QStringLiteral("content"),
+         QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                                {QStringLiteral("text"), QStringLiteral("12345678")}}}},
+    };
+    const QJsonObject imageResult{
+        {QStringLiteral("content"),
+         QJsonArray{QJsonObject{{QStringLiteral("type"), QStringLiteral("image")},
+                                {QStringLiteral("data"), QStringLiteral("AAAA")}},
+                    QJsonObject{{QStringLiteral("type"), QStringLiteral("text")},
+                                {QStringLiteral("text"), QStringLiteral("ab")}}}},
+    };
+    const QJsonObject argsA{{QStringLiteral("clip"), QStringLiteral("a")}};
+    const QJsonObject argsB{{QStringLiteral("clip"), QStringLiteral("b")}};
+
+    usage.record(QStringLiteral("apply"), argsA, textResult, false, 40);
+    usage.record(QStringLiteral("apply"), argsB, textResult, false, 10); // other args: not a retry
+    usage.record(QStringLiteral("apply"), argsA, textResult, true, 20);  // same args after a failure
+    usage.record(QStringLiteral("apply"), argsA, textResult, true, 20);  // the failure was cleared
+    usage.record(QStringLiteral("frames"), {}, imageResult, true, 300);
+
+    const QVariantMap totals = usage.totals();
+    QCOMPARE(totals.value(QStringLiteral("calls")).toInt(), 5);
+    QCOMPARE(totals.value(QStringLiteral("errors")).toInt(), 2);
+    QCOMPARE(totals.value(QStringLiteral("retries")).toInt(), 1);
+    QCOMPARE(totals.value(QStringLiteral("totalMs")).toInt(), 390);
+    QCOMPARE(totals.value(QStringLiteral("textBytes")).toInt(), 4 * 8 + 2);
+    QCOMPARE(totals.value(QStringLiteral("imageBytes")).toInt(), 4);
+    QCOMPARE(totals.value(QStringLiteral("approxTokens")).toInt(), (4 * 8 + 2 + 3) / 4);
+
+    const QVariantList rows = usage.rows();
+    QCOMPARE(rows.size(), 2);
+    QCOMPARE(rows.at(0).toMap().value(QStringLiteral("tool")).toString(), QStringLiteral("apply"));
+    QCOMPARE(rows.at(0).toMap().value(QStringLiteral("maxMs")).toInt(), 40);
+    QCOMPARE(rows.at(0).toMap().value(QStringLiteral("avgMs")).toInt(), 22);
+    QVERIFY(usage.report().contains(QStringLiteral("not sent to Dafin")));
+
+    usage.reset();
+    QVERIFY(usage.isEmpty());
+    QCOMPARE(usage.totals().value(QStringLiteral("calls")).toInt(), 0);
+}
+
+void McpTest::usageNamesTheClientAndMeasuresServerCalls()
+{
+    QTemporaryDir dir;
+    qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
+    AssetLibrary library;
+    AppController state(&library);
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const quint16 port = quint16(state.mcp()->port());
+    const QByteArray auth = "Bearer " + state.mcp()->token().toUtf8();
+    QVERIFY(state.mcp()->usageClient().isEmpty());
+
+    int status = 0;
+    httpPost(port, auth,
+             QJsonDocument(rpc(QStringLiteral("initialize"),
+                               {{QStringLiteral("clientInfo"),
+                                 QJsonObject{{QStringLiteral("name"), QStringLiteral("test-client")},
+                                             {QStringLiteral("version"), QStringLiteral("1.2")}}}}))
+                 .toJson(QJsonDocument::Compact),
+             &status);
+    QCOMPARE(status, 200);
+    QCOMPARE(state.mcp()->usageClient(), QStringLiteral("test-client 1.2"));
+
+    httpPost(port, auth,
+             QJsonDocument(rpc(QStringLiteral("tools/call"),
+                               {{QStringLiteral("name"), QStringLiteral("catalog")},
+                                {QStringLiteral("arguments"),
+                                 QJsonObject{{QStringLiteral("brief"), true}}}}))
+                 .toJson(QJsonDocument::Compact),
+             &status);
+    QCOMPARE(status, 200);
+    const QVariantMap totals = state.mcp()->usageTotals();
+    QCOMPARE(totals.value(QStringLiteral("calls")).toInt(), 1);
+    QCOMPARE(totals.value(QStringLiteral("errors")).toInt(), 0);
+    QVERIFY(totals.value(QStringLiteral("textBytes")).toInt() > 0);
+    QCOMPARE(state.mcp()->usageRows().at(0).toMap().value(QStringLiteral("tool")).toString(),
+             QStringLiteral("catalog"));
+
+    state.mcp()->resetUsage();
+    QCOMPARE(state.mcp()->usageTotals().value(QStringLiteral("calls")).toInt(), 0);
+    state.mcp()->setEnabled(false);
+    qunsetenv("DRIFT_MCP_SESSION_PATH");
+}
+
+// Web access is the one way to reach the editor without the bearer token, so it has to be
+// closed by default, closed again by the switch, and answer only for the right secret.
+void McpTest::webAccessOpensOnlyTheSecretPathWhileOn()
+{
+    QTemporaryDir dir;
+    qputenv("DRIFT_MCP_SESSION_PATH", dir.filePath(QStringLiteral("s.json")).toUtf8());
+    AssetLibrary library;
+    AppController state(&library);
+    state.mcp()->setEnabled(true);
+    QVERIFY2(state.mcp()->running(), qPrintable(state.mcp()->error()));
+    const quint16 port = quint16(state.mcp()->port());
+    const QByteArray ping =
+        QJsonDocument(rpc(QStringLiteral("initialize"))).toJson(QJsonDocument::Compact);
+
+    QVERIFY(!state.mcp()->webAccess());
+    QVERIFY(state.mcp()->webPath().isEmpty());
+    QVERIFY(state.mcp()->chatGptUrl(QStringLiteral("https://x.example.com")).isEmpty());
+
+    state.mcp()->setWebAccess(true);
+    QVERIFY(state.mcp()->webAccess());
+    const QString path = state.mcp()->webPath();
+    QVERIFY(path.startsWith(QStringLiteral("/w/")));
+    QVERIFY(path.endsWith(QStringLiteral("/mcp")));
+
+    int status = 0;
+    httpPost(port, {}, ping, &status, path.toUtf8());
+    QCOMPARE(status, 200);
+    httpPost(port, {}, ping, &status, "/w/not-the-secret/mcp");
+    QCOMPARE(status, 404);
+    // The secret opens the homepage endpoint only, never a pinned toolbox.
+    httpPost(port, {}, ping, &status, path.toUtf8().chopped(4) + "/mcp/timeline");
+    QCOMPARE(status, 404);
+    // The plain path still wants the token.
+    httpPost(port, {}, ping, &status);
+    QCOMPARE(status, 401);
+
+    QCOMPARE(state.mcp()->chatGptUrl(QStringLiteral("https://abc.trycloudflare.com/")),
+             QStringLiteral("https://abc.trycloudflare.com") + path);
+    QVERIFY(state.mcp()->chatGptUrl(QStringLiteral("http://abc.trycloudflare.com")).isEmpty());
+    QVERIFY(state.mcp()->chatGptUrl(QStringLiteral("not an address")).isEmpty());
+
+    // A new key replaces the secret too: the old address stops working.
+    state.mcp()->rotateToken();
+    httpPost(port, {}, ping, &status, path.toUtf8());
+    QCOMPARE(status, 404);
+    httpPost(port, {}, ping, &status, state.mcp()->webPath().toUtf8());
+    QCOMPARE(status, 200);
+
+    const QString openPath = state.mcp()->webPath();
+    state.mcp()->setWebAccess(false);
+    QVERIFY(state.mcp()->webPath().isEmpty());
+    httpPost(port, {}, ping, &status, openPath.toUtf8());
+    QCOMPARE(status, 404);
+
+    // Turning access off also forgets web access.
+    state.mcp()->setWebAccess(true);
+    state.mcp()->setEnabled(false);
+    QVERIFY(!state.mcp()->webAccess());
+    qunsetenv("DRIFT_MCP_SESSION_PATH");
+}
+
+// A model name ends up in a command the user pastes into a terminal.
+void McpTest::launchCommandsKeepToKnownModelNames()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    McpController *mcp = state.mcp();
+    const QString claudeBefore = mcp->assistantModel();
+    const QString codexBefore = mcp->codexModel();
+
+    mcp->setAssistantModel(QString());
+    QCOMPARE(mcp->claudeLaunchCommand(), QStringLiteral("claude"));
+    mcp->setAssistantModel(QStringLiteral("sonnet"));
+    QCOMPARE(mcp->claudeLaunchCommand(), QStringLiteral("claude --model sonnet"));
+    mcp->setAssistantModel(QStringLiteral("sonnet; rm -rf ~"));
+    QCOMPARE(mcp->assistantModel(), QStringLiteral("sonnet"));
+
+    mcp->setCodexModel(QString());
+    QCOMPARE(mcp->codexLaunchCommand(), QStringLiteral("codex"));
+    mcp->setCodexModel(QStringLiteral("some-model_1.5"));
+    QCOMPARE(mcp->codexLaunchCommand(), QStringLiteral("codex --model some-model_1.5"));
+    mcp->setCodexModel(QStringLiteral("x; rm -rf ~"));
+    QCOMPARE(mcp->codexModel(), QStringLiteral("some-model_1.5"));
+    mcp->setCodexModel(QStringLiteral("a b"));
+    QCOMPARE(mcp->codexModel(), QStringLiteral("some-model_1.5"));
+
+    mcp->setAssistantModel(claudeBefore);
+    mcp->setCodexModel(codexBefore);
 }
 
 // Regression for the constructor starting the server itself: that raced headless mode's

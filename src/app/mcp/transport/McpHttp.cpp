@@ -204,7 +204,23 @@ bool McpHttp::authorized(const QByteArray &header) const
 void McpHttp::handleRequest(QTcpSocket *socket, const QByteArray &header, const QByteArray &body)
 {
     const QByteArray method = requestMethod(header);
-    const QByteArray path = requestPath(header);
+    QByteArray path = requestPath(header);
+    // /w/<secret>/mcp: the secret replaces the bearer token. Only the homepage endpoint is
+    // reachable this way, and only while web access is on.
+    bool viaWebSecret = false;
+    if (path.startsWith("/w/")) {
+        const QByteArray rest = path.mid(3);
+        const int slash = rest.indexOf('/');
+        const QByteArray given = slash < 0 ? rest : rest.left(slash);
+        const QByteArray remainder = slash < 0 ? QByteArray() : rest.mid(slash);
+        if (m_webSecret.isEmpty() || !tokensEqual(given, m_webSecret.toUtf8())
+            || remainder != "/mcp") {
+            writeResponse(socket, 404, "Not Found", "text/plain", "not found\n", false);
+            return;
+        }
+        path = remainder;
+        viaWebSecret = true;
+    }
     const bool keepAlive = headerValue(header, "Connection").toLower() != "close";
 
     if (method == "OPTIONS") {
@@ -239,7 +255,7 @@ void McpHttp::handleRequest(QTcpSocket *socket, const QByteArray &header, const 
         return;
     }
 
-    if (!authorized(header)) {
+    if (!viaWebSecret && !authorized(header)) {
         writeResponse(socket, 401, "Unauthorized", "application/json",
                       "{\"error\":\"unauthorized\"}\n", false);
         return;

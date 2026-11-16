@@ -67,6 +67,8 @@
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QPointer>
+#include <QRegularExpression>
+#include <QUrl>
 #include <QSettings>
 #include <QImage>
 #include <QSet>
@@ -88,6 +90,22 @@ using drift::mcpdetail::round3;
 using drift::mcpdetail::findClipById;
 using drift::mcpdetail::runBeatAnalysis;
 using drift::mcpdetail::sceneRowsFromAnalysis;
+
+namespace {
+
+// Aliases the claude command line takes for --model.
+const QStringList kAssistantModels{QString(), QStringLiteral("sonnet"), QStringLiteral("opus"),
+                                   QStringLiteral("haiku")};
+
+// A model name goes into a command the user pastes into a terminal, so only the characters
+// real model names use are accepted.
+bool validCodexModel(const QString &name)
+{
+    static const QRegularExpression re(QStringLiteral("^[A-Za-z0-9._:/-]{0,64}$"));
+    return re.match(name).hasMatch();
+}
+
+} // namespace
 
 McpController::McpController(AppController *app, QObject *parent)
     : QObject(parent)
@@ -135,6 +153,29 @@ McpController::McpController(AppController *app, QObject *parent)
                 }
             });
     connect(m_mcp.get(), &drift::mcp::McpServer::toolCallResult, m_imageLog, &AgentImageLog::recordResult);
+    // Connected after toolCallFinished, so the log row for this id already has its time.
+    connect(m_mcp.get(), &drift::mcp::McpServer::toolCallResult, this,
+            [this](int id, const QString &tool, const QJsonObject &args, const QJsonObject &result) {
+                qint64 ms = 0;
+                for (int i = m_toolLog.size() - 1; i >= 0; --i) {
+                    const QVariantMap entry = m_toolLog.at(i).toMap();
+                    if (entry.value(QStringLiteral("id")).toInt() == id) {
+                        ms = entry.value(QStringLiteral("ms")).toLongLong();
+                        break;
+                    }
+                }
+                m_usage.record(tool, args, result, !result.value(QStringLiteral("isError")).toBool(), ms);
+                emit usageChanged();
+            });
+    connect(m_mcp.get(), &drift::mcp::McpServer::clientSeen, this,
+            [this](const QString &name, const QString &version) {
+                m_usage.setClient(name, version);
+                emit usageChanged();
+            });
+    connect(m_mcp.get(), &drift::mcp::McpServer::webAccessChanged, this,
+            &McpController::webAccessChanged);
+    // The web path changes with the key, so it follows the same signal.
+    connect(this, &McpController::runningChanged, this, &McpController::webAccessChanged);
 #endif
     // Loaded here so the property already reads correctly for anything constructed on
     // this object, but NOT acted on here — headless mode constructs the same
@@ -145,6 +186,12 @@ McpController::McpController(AppController *app, QObject *parent)
     // called once from Main.qml's own startup sequence.
     m_mcpStartOnLaunch =
         QSettings().value(QStringLiteral("mcp/startOnLaunch"), false).toBool();
+    m_assistantModel = QSettings().value(QStringLiteral("mcp/assistantModel")).toString();
+    if (!kAssistantModels.contains(m_assistantModel))
+        m_assistantModel.clear();
+    m_codexModel = QSettings().value(QStringLiteral("mcp/codexModel")).toString();
+    if (!validCodexModel(m_codexModel))
+        m_codexModel.clear();
 }
 
 McpController::~McpController()
@@ -264,6 +311,103 @@ void McpController::rotateToken()
 #endif
 }
 
+void McpController::setAssistantModel(const QString &model)
+{
+    if (model == m_assistantModel || !kAssistantModels.contains(model))
+        return;
+    m_assistantModel = model;
+    QSettings().setValue(QStringLiteral("mcp/assistantModel"), model);
+    emit assistantModelChanged();
+}
+
+void McpController::setCodexModel(const QString &model)
+{
+    const QString trimmed = model.trimmed();
+    if (trimmed == m_codexModel || !validCodexModel(trimmed))
+        return;
+    m_codexModel = trimmed;
+    QSettings().setValue(QStringLiteral("mcp/codexModel"), trimmed);
+    emit assistantModelChanged();
+}
+
+QString McpController::claudeLaunchCommand() const
+{
+    return m_assistantModel.isEmpty() ? QStringLiteral("claude")
+                                      : QStringLiteral("claude --model %1").arg(m_assistantModel);
+}
+
+QString McpController::codexLaunchCommand() const
+{
+    return m_codexModel.isEmpty() ? QStringLiteral("codex")
+                                  : QStringLiteral("codex --model %1").arg(m_codexModel);
+}
+
+bool McpController::webAccess() const
+{
+#ifndef Q_OS_WASM
+    return m_mcp && m_mcp->webAccess();
+#else
+    return false;
+#endif
+}
+
+void McpController::setWebAccess(bool enabled)
+{
+#ifndef Q_OS_WASM
+    // Only while the server runs: the switch has nothing to open otherwise.
+    if (m_mcp && m_mcp->running())
+        m_mcp->setWebAccess(enabled);
+#else
+    Q_UNUSED(enabled)
+#endif
+}
+
+QString McpController::webPath() const
+{
+#ifndef Q_OS_WASM
+    return m_mcp ? m_mcp->webPath() : QString();
+#else
+    return QString();
+#endif
+}
+
+QString McpController::chatGptUrl(const QString &publicAddress) const
+{
+    const QString path = webPath();
+    if (path.isEmpty())
+        return {};
+    const QUrl address(publicAddress.trimmed(), QUrl::StrictMode);
+    if (!address.isValid() || address.scheme().compare(QLatin1String("https"), Qt::CaseInsensitive) != 0
+        || address.host().isEmpty())
+        return {};
+    QString base = QStringLiteral("https://") + address.host();
+    if (address.port() > 0)
+        base += QStringLiteral(":%1").arg(address.port());
+    return base + path;
+}
+
+QString McpController::tunnelCommand() const
+{
+    const int p = port();
+    return p > 0 ? QStringLiteral("cloudflared tunnel --url http://127.0.0.1:%1").arg(p) : QString();
+}
+
+QString McpController::usageClient() const
+{
+    const QString name = m_usage.client();
+    if (name.isEmpty())
+        return {};
+    return m_usage.clientVersion().isEmpty() ? name : name + QLatin1Char(' ') + m_usage.clientVersion();
+}
+
+void McpController::resetUsage()
+{
+    if (m_usage.isEmpty())
+        return;
+    m_usage.reset();
+    emit usageChanged();
+}
+
 void McpController::setStartOnLaunch(bool enabled)
 {
     if (m_mcpStartOnLaunch == enabled)
@@ -311,10 +455,50 @@ void McpController::copyStdioSnippet()
     copyToClipboard(stdioSnippet());
 }
 
+void McpController::copyCodexSnippet()
+{
+#ifndef Q_OS_WASM
+    copyToClipboard(m_mcp ? m_mcp->codexSnippet() : QString());
+#endif
+}
+
+void McpController::copyClaudeLaunchCommand()
+{
+    copyToClipboard(claudeLaunchCommand());
+}
+
+void McpController::copyCodexLaunchCommand()
+{
+    copyToClipboard(codexLaunchCommand());
+}
+
+bool McpController::copyChatGptUrl(const QString &publicAddress)
+{
+    const QString address = chatGptUrl(publicAddress);
+    if (address.isEmpty())
+        return false;
+    copyToClipboard(address);
+    return true;
+}
+
+void McpController::copyTunnelCommand()
+{
+    copyToClipboard(tunnelCommand());
+}
+
+void McpController::copyUsageReport()
+{
+    copyToClipboard(m_usage.report());
+}
+
 QString McpController::agentGuide() const
 {
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     QString guide = drift::mcp::agentGuideText();
+    guide += QStringLiteral(
+        "\nKeeping usage low: most edits here are small, so a mid-size model at low or medium "
+        "effort is usually enough. Prefer search/inspect over a full catalog, ask for only the "
+        "clips you need, and use frames/capture sparingly: images are the largest replies.\n");
     if (m_mcp && m_mcp->running()) {
         guide += QStringLiteral("\nThis session:\nURL: %1\nToken: %2\n")
                      .arg(url(), token());

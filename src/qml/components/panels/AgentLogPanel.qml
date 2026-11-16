@@ -7,6 +7,8 @@ PanelFrame {
 
     property int expandedId: -1
     property bool followTail: true
+    // Dafin: the panel shows either the call log or what the calls added up to.
+    property bool showUsage: false
 
     function timeText(ms) {
         return Qt.formatTime(new Date(ms), "HH:mm:ss")
@@ -84,13 +86,44 @@ PanelFrame {
         }
     }
 
-    EmptyState {
+    Row {
+        id: tabs
         anchors.top: status.bottom
+        x: Theme.pagePadding
+        height: 32
+        spacing: Theme.spacingSm
+
+        ThemedButton {
+            anchors.verticalCenter: parent.verticalCenter
+            variant: root.showUsage ? "ghost" : "secondary"
+            text: qsTr("Calls")
+            onClicked: root.showUsage = false
+        }
+
+        ThemedButton {
+            anchors.verticalCenter: parent.verticalCenter
+            variant: root.showUsage ? "secondary" : "ghost"
+            text: qsTr("Usage")
+            tooltip: qsTr("What the connected assistant's calls added up to, as measured by Dafin")
+            onClicked: root.showUsage = true
+        }
+    }
+
+    AgentUsageView {
+        anchors.top: tabs.bottom
+        anchors.bottom: footer.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        visible: root.showUsage
+    }
+
+    EmptyState {
+        anchors.top: tabs.bottom
         anchors.bottom: footer.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: Theme.spacingLg
-        visible: EditorState.mcp.toolLog.length === 0
+        visible: !root.showUsage && EditorState.mcp.toolLog.length === 0
         glyph: Theme.icons.linkTwo
         title: EditorState.mcp.running ? qsTr("No tool calls yet. What a connected agent does will show up here.")
                                        : qsTr("Turn on agent access to let an assistant edit this project.")
@@ -98,11 +131,11 @@ PanelFrame {
 
     ListView {
         id: list
-        anchors.top: status.bottom
+        anchors.top: tabs.bottom
         anchors.bottom: footer.top
         anchors.left: parent.left
         anchors.right: parent.right
-        visible: EditorState.mcp.toolLog.length > 0
+        visible: !root.showUsage && EditorState.mcp.toolLog.length > 0
         clip: true
         model: EditorState.mcp.toolLog
         boundsBehavior: Flickable.StopAtBounds
