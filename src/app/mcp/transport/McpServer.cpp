@@ -84,6 +84,58 @@ QString McpServer::claudeCommand() const
         .arg(url(), m_token);
 }
 
+QString McpServer::codexSnippet() const
+{
+    if (!m_running)
+        return {};
+    return QStringLiteral(
+               "# Add this to ~/.codex/config.toml, then restart Codex.\n"
+               "[mcp_servers.dafin]\n"
+               "url = \"%1\"\n"
+               "http_headers = { Authorization = \"Bearer %2\" }\n")
+        .arg(url(), m_token);
+}
+
+QString McpServer::webPath() const
+{
+    if (!m_running || !m_webAccess || m_webSecret.isEmpty())
+        return {};
+    return QStringLiteral("/w/%1/mcp").arg(m_webSecret);
+}
+
+QString McpServer::persistedWebSecret() const
+{
+    QSettings settings;
+    const QString key = QStringLiteral("mcp/webSecret");
+    QString secret = settings.value(key).toString();
+    if (secret.isEmpty()) {
+        secret = makeToken();
+        settings.setValue(key, secret);
+    }
+    return secret;
+}
+
+// m_http reads the secret on its own thread; an empty secret closes /w/ again.
+void McpServer::applyWebSecret()
+{
+    if (!m_http)
+        return;
+    const QString secret = m_webAccess ? m_webSecret : QString();
+    QMetaObject::invokeMethod(
+        m_http, [this, secret]() { m_http->setWebSecret(secret); }, Qt::BlockingQueuedConnection);
+}
+
+void McpServer::setWebAccess(bool enabled)
+{
+    if (m_webAccess == enabled)
+        return;
+    m_webAccess = enabled;
+    if (enabled && m_webSecret.isEmpty())
+        m_webSecret = persistedWebSecret();
+    applyWebSecret();
+    emit webAccessChanged();
+}
+
 QString McpServer::makeToken() const
 {
     QString token;
@@ -111,10 +163,14 @@ QString McpServer::persistedToken() const
 void McpServer::rotateToken()
 {
     const QString token = makeToken();
+    const QString webSecret = makeToken();
     QSettings().setValue(QStringLiteral("mcp/token"), token);
+    QSettings().setValue(QStringLiteral("mcp/webSecret"), webSecret);
     if (!m_running)
         return;
     m_token = token;
+    m_webSecret = webSecret;
+    applyWebSecret();
     // m_http reads its token on its own thread.
     QMetaObject::invokeMethod(
         m_http, [this, token]() { m_http->setToken(token); }, Qt::BlockingQueuedConnection);
@@ -134,6 +190,11 @@ bool McpServer::start()
     m_thread = new QThread(this);
     m_http = new McpHttp;
     m_http->setToken(m_token);
+    m_webSecret.clear();
+    if (m_webAccess) {
+        m_webSecret = persistedWebSecret();
+        m_http->setWebSecret(m_webSecret);
+    }
     m_http->setRpcHandler([this](const QString &toolbox, const QJsonValue &body) {
         QJsonValue result;
         QMetaObject::invokeMethod(
@@ -218,6 +279,11 @@ void McpServer::stop()
     m_running = false;
     m_port = 0;
     m_token.clear();
+    m_webSecret.clear();
+    if (m_webAccess) {
+        m_webAccess = false;
+        emit webAccessChanged();
+    }
     if (wasRunning)
         emit runningChanged();
 }
@@ -243,6 +309,21 @@ bool McpServer::publishSession()
 
 QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)
 {
+    // The assistant introduces itself once, in initialize; keep the name for the usage monitor.
+    const auto noteClient = [this](const QJsonObject &message) {
+        if (message.value(QStringLiteral("method")).toString() != QLatin1String("initialize"))
+            return;
+        const QJsonObject info = message.value(QStringLiteral("params")).toObject()
+                                     .value(QStringLiteral("clientInfo")).toObject();
+        emit clientSeen(info.value(QStringLiteral("name")).toString(),
+                        info.value(QStringLiteral("version")).toString());
+    };
+    if (body.isObject()) {
+        noteClient(body.toObject());
+    } else if (body.isArray()) {
+        for (const QJsonValue &message : body.toArray())
+            noteClient(message.toObject());
+    }
     return handleJsonRpc(body, toolbox, [this](const QString &name, const QJsonObject &args) {
         // Both transports reach here on this object's thread, so the log never needs a lock.
         const int id = ++m_callSeq;

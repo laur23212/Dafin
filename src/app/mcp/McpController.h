@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/mcp/AgentImageLog.h"
+#include "app/mcp/McpUsage.h"
 #include "core/project/Project.h"
 #include "engine/audio/analysis/LoudnessMeter.h"
 
@@ -15,6 +16,7 @@
 #include <QString>
 #include <QStringList>
 #include <QVariant>
+#include <QVariantList>
 #include <QVariantMap>
 
 #include <functional>
@@ -52,6 +54,17 @@ class McpController : public QObject
     Q_PROPERTY(bool audioSearchBusy READ audioSearchBusy NOTIFY audioSearchChanged)
     Q_PROPERTY(QVariantMap audioSearchResult READ audioSearchResult NOTIFY audioSearchChanged)
     Q_PROPERTY(bool startOnLaunch READ startOnLaunch WRITE setStartOnLaunch NOTIFY startOnLaunchChanged)
+    // What Dafin itself measures about the connected assistant's calls (see McpUsage.h).
+    Q_PROPERTY(QVariantList usageRows READ usageRows NOTIFY usageChanged)
+    Q_PROPERTY(QVariantMap usageTotals READ usageTotals NOTIFY usageChanged)
+    Q_PROPERTY(QString usageClient READ usageClient NOTIFY usageChanged)
+    // Which model the copied launch commands ask for. Dafin cannot change the model of an
+    // assistant that is already running; the assistant's own app does that.
+    Q_PROPERTY(QString assistantModel READ assistantModel WRITE setAssistantModel NOTIFY assistantModelChanged)
+    Q_PROPERTY(QString codexModel READ codexModel WRITE setCodexModel NOTIFY assistantModelChanged)
+    // Web access for website assistants such as ChatGPT. Off at every launch.
+    Q_PROPERTY(bool webAccess READ webAccess WRITE setWebAccess NOTIFY webAccessChanged)
+    Q_PROPERTY(QString webPath READ webPath NOTIFY webAccessChanged)
 
 public:
     explicit McpController(AppController *app, QObject *parent = nullptr);
@@ -76,6 +89,34 @@ public:
     Q_INVOKABLE void copyClaudeCommand();
     Q_INVOKABLE void copyStdioSnippet();
     Q_INVOKABLE void copyAgentGuide();
+    Q_INVOKABLE void copyCodexSnippet();
+    // "claude --model sonnet" / "codex --model <name>": a command to start the assistant on
+    // the model chosen above (no --model when none is chosen).
+    Q_INVOKABLE void copyClaudeLaunchCommand();
+    Q_INVOKABLE void copyCodexLaunchCommand();
+    QString claudeLaunchCommand() const;
+    QString codexLaunchCommand() const;
+    QString assistantModel() const { return m_assistantModel; }
+    QString codexModel() const { return m_codexModel; }
+    Q_INVOKABLE void setAssistantModel(const QString &model);
+    Q_INVOKABLE void setCodexModel(const QString &model);
+
+    bool webAccess() const;
+    Q_INVOKABLE void setWebAccess(bool enabled);
+    QString webPath() const;
+    // The address to paste into ChatGPT: the tunnel's public https address plus the secret
+    // path. Empty when web access is off or the address is not an https URL.
+    Q_INVOKABLE QString chatGptUrl(const QString &publicAddress) const;
+    Q_INVOKABLE bool copyChatGptUrl(const QString &publicAddress);
+    // The command that opens a tunnel to this editor's port (cloudflared).
+    Q_INVOKABLE QString tunnelCommand() const;
+    Q_INVOKABLE void copyTunnelCommand();
+
+    QVariantList usageRows() const { return m_usage.rows(); }
+    QVariantMap usageTotals() const { return m_usage.totals(); }
+    QString usageClient() const;
+    Q_INVOKABLE void resetUsage();
+    Q_INVOKABLE void copyUsageReport();
     Q_INVOKABLE void rotateToken();
     bool startOnLaunch() const { return m_mcpStartOnLaunch; }
     Q_INVOKABLE void setStartOnLaunch(bool enabled);
@@ -316,6 +357,9 @@ signals:
     void errorChanged();
     void startOnLaunchChanged();
     void toolLogChanged();
+    void usageChanged();
+    void assistantModelChanged();
+    void webAccessChanged();
     void toolCallStarted(const QString &tool);
     void audioSheetChanged();
     void audioSearchChanged();
@@ -346,6 +390,9 @@ private:
     std::unique_ptr<drift::mcp::McpServer> m_mcp;
 #endif
     QVariantList m_toolLog;
+    drift::mcp::McpUsage m_usage;
+    QString m_assistantModel;
+    QString m_codexModel;
     AgentImageLog *m_imageLog = nullptr;
     bool m_audioSheetBusy = false;
     QVariantMap m_audioSheetResult;

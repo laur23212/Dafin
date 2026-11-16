@@ -29,6 +29,17 @@ public:
 
     QString cursorSnippet() const;
     QString claudeCommand() const;
+    // A block for ~/.codex/config.toml: Codex reads MCP servers from there (HTTP with a header).
+    QString codexSnippet() const;
+
+    // Web access, off at every launch. While on (and the server is running) POST
+    // /w/<secret>/mcp reaches the homepage endpoint without the bearer token, so a website
+    // assistant (ChatGPT) can use it through a tunnel the user starts. The secret persists
+    // like the token and is replaced with it.
+    bool webAccess() const { return m_webAccess; }
+    void setWebAccess(bool enabled);
+    // "/w/<secret>/mcp" while web access is on and the server runs, else empty.
+    QString webPath() const;
 
     // Headless overrides, applied by the next start(). The editor sets neither and keeps
     // the defaults: the token persisted in QSettings (generated on first start) on port 4731.
@@ -53,10 +64,15 @@ signals:
     void toolCallStarted(int id, const QString &tool, const QString &summary);
     void toolCallFinished(int id, bool ok, const QString &error, qint64 ms);
     void toolCallResult(int id, const QString &tool, const QJsonObject &args, const QJsonObject &result);
+    // The name an assistant gave in its initialize request (empty when it gave none).
+    void clientSeen(const QString &name, const QString &version);
+    void webAccessChanged();
 
 private:
     QString makeToken() const;
     QString persistedToken() const;
+    QString persistedWebSecret() const;
+    void applyWebSecret();
     bool publishSession();
     int m_callSeq = 0;
     QJsonObject dispatchTool(const QString &name, const QJsonObject &args);
@@ -67,6 +83,8 @@ private:
     McpHttp *m_http = nullptr;
     QString m_token;
     QString m_fixedToken;
+    QString m_webSecret;
+    bool m_webAccess = false;
     QString m_error;
     quint16 m_port = 0;
     quint16 m_requestedPort = 4731;

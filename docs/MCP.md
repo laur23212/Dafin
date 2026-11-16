@@ -25,6 +25,55 @@ is closed or Agent access is off, each call comes back as a JSON-RPC error and t
 keeps running, so enabling Agent access is enough to make it work — no need to restart the
 client.
 
+### Codex
+
+**Copy for Codex** (Settings → Agent access, or the Agent button in the header) copies a block for
+`~/.codex/config.toml`; the Codex app, command line and editor extension share that file:
+
+```toml
+[mcp_servers.dafin]
+url = "http://127.0.0.1:4731/mcp"
+http_headers = { Authorization = "Bearer <token>" }
+```
+
+The key persists between sessions, so the block keeps working until **New key** is pressed.
+
+### ChatGPT (web)
+
+ChatGPT runs on a website and only reaches public https addresses, with OAuth or no
+authentication, so it cannot use the bearer token. **Connect to ChatGPT…** therefore has four steps:
+
+1. **Allow ChatGPT (web access).** Off at every launch; also turned off when agent access is turned
+   off. While on, `POST /w/<secret>/mcp` is the homepage endpoint with the secret standing in for the
+   `Authorization` header. Nothing else is reachable that way (pinned toolboxes, GET, a wrong secret
+   all answer 404), and **New key** replaces the secret together with the token.
+2. **Start a tunnel.** Copy the command (`cloudflared tunnel --url http://127.0.0.1:<port>`) into a
+   terminal; it prints an `https://` address. Dafin does not bundle or start a tunnel.
+3. **Paste that address** into the box.
+4. **Copy ChatGPT address** gives `https://<tunnel address>/w/<secret>/mcp`. In ChatGPT: Settings →
+   Connectors → Advanced → Developer mode, Create, paste it, choose "No authentication" and confirm
+   trust. Which plans may add a custom connector, and whether it can change things or only read, is
+   up to OpenAI.
+
+Anyone who has that address can edit the open project until web access is turned off, so it is
+meant for a session you are watching, and the tunnel can be closed at any time.
+
+### Usage monitor and model
+
+The **Usage** tab of the Agent log shows what Dafin itself measures: tool calls, failures, calls
+repeated after a failure (same tool and arguments as a call that just failed), average and longest
+time, the size of Dafin's replies per operation (biggest first; images counted apart), and the
+assistant's name when its `initialize` request carries one (the stdio bridge answers `initialize`
+itself, so through it the name is not reported). The assistant's own input, output and cached
+tokens, its price and its model are never sent to Dafin, so they are not shown; the one token figure
+is an estimate of Dafin's text replies (about four bytes per token) and says so. **Copy report**
+puts the table on the clipboard; **Reset** clears it.
+
+Dafin cannot change the model of an assistant that is already running. The model picker (Claude:
+default, Sonnet, Opus, Haiku; Codex: a model name) decides the model in **Copy Claude launch command**
+(`claude --model sonnet`) and **Copy Codex launch command** (`codex --model <name>`). Most edits here
+are small, so a mid-size model at low or medium effort is usually enough.
+
 ### Several instances
 
 Any number of editors (and headless instances) can run at once. The first takes port 4731;
