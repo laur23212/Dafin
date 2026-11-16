@@ -1,0 +1,138 @@
+{
+  "format": 1,
+  "id": "chatgpt.rubik-mono-amber-specimen",
+  "label": "Rubik Amber Specimen",
+  "description": "Static, bold amber specimen in Rubik Black (900); preserves an orange-gold two-stop fill and warm dark edge while supporting Romanian comma-below glyphs. Proportional, not monospaced.",
+  "category": "essential-titles",
+  "tags": [
+    "amber",
+    "bold",
+    "static",
+    "romanian",
+    "font"
+  ],
+  "kind": "title",
+  "sampleText": "BOLD TYPE",
+  "requires": {
+    "fonts": [
+      "Rubik"
+    ]
+  },
+  "style": {
+    "fontFamily": "Rubik",
+    "fontWeight": 900,
+    "pixelSize": 108,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.05,
+    "letterSpacing": 3,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#A95409"
+        },
+        "offsetX": 0,
+        "offsetY": 6,
+        "blur": 0,
+        "opacity": 0.8
+      },
+      {
+        "id": "outline",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#A95409"
+        },
+        "width": 1.8,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "gradient",
+          "gradient": {
+            "kind": "linear",
+            "angle": 90,
+            "space": "line",
+            "stops": [
+              {
+                "pos": 0,
+                "color": "#FFCA4A"
+              },
+              {
+                "pos": 1,
+                "color": "#FFAC1C"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "title",
+      "label": "Title text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 48,
+      "max": 220,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "tracking",
+      "label": "Letter spacing",
+      "type": "scalar",
+      "bind": "letterSpacing",
+      "min": 0,
+      "max": 12,
+      "step": 0.5,
+      "unit": "px"
+    },
+    {
+      "id": "goldlight",
+      "label": "Amber highlight",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.0.color"
+    },
+    {
+      "id": "goldbase",
+      "label": "Amber base",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.1.color"
+    },
+    {
+      "id": "edge",
+      "label": "Edge colour",
+      "type": "color",
+      "bind": "layer.outline.color"
+    },
+    {
+      "id": "shadow",
+      "label": "Warm shadow",
+      "type": "bool",
+      "bind": "layer.shadow.enabled"
+    }
+  ]
+}

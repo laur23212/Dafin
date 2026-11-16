@@ -1,0 +1,135 @@
+{
+  "format": 1,
+  "id": "chatgpt.baloo-yellow-pill-title",
+  "label": "Baloo Yellow Pill",
+  "description": "Rounded yellow title card with black bold type; whole-title pop approximates the resizing visible in the editor recording.",
+  "category": "creator-social",
+  "tags": [
+    "reference-type",
+    "user-supplied",
+    "font-treatment"
+  ],
+  "kind": "title",
+  "sampleText": "GOOD NEWS!",
+  "requires": {
+    "fonts": [
+      "Baloo 2"
+    ]
+  },
+  "style": {
+    "fontFamily": "Baloo 2",
+    "fontWeight": 700,
+    "pixelSize": 100,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.08,
+    "letterSpacing": 0.4,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#111111"
+        }
+      }
+    ],
+    "animation": {
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      },
+      "in": {
+        "preset": "pop",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut",
+          "from": 84
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      }
+    },
+    "boxEnabled": true,
+    "boxColor": "#FFE600",
+    "boxPadding": 34,
+    "boxRadius": 24
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 26,
+      "max": 180,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "yellow",
+      "label": "Panel yellow",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "corners",
+      "label": "Rounded corners",
+      "type": "scalar",
+      "bind": "box.radius",
+      "min": 0,
+      "max": 50,
+      "step": 1
+    },
+    {
+      "id": "padding",
+      "label": "Panel padding",
+      "type": "scalar",
+      "bind": "boxPadding",
+      "min": 8,
+      "max": 80,
+      "step": 2,
+      "unit": "px"
+    },
+    {
+      "id": "pop",
+      "label": "Pop duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}
