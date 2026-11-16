@@ -1,0 +1,14 @@
+{
+  "id": "rubik",
+  "family": "Rubik",
+  "category": "impact",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Rubik-Black.ttf",
+      "weight": 900,
+      "styleName": "Black"
+    }
+  ]
+}

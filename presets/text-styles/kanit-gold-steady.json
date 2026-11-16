@@ -1,0 +1,153 @@
+{
+  "format": 1,
+  "id": "chatgpt.kanit-gold-steady",
+  "label": "Kanit Gold Steady",
+  "description": "Warm golden sans-serif reference; visually steady hold with a short gentle entrance.",
+  "category": "essential-titles",
+  "tags": [
+    "reference-type",
+    "user-supplied",
+    "font-treatment"
+  ],
+  "kind": "title",
+  "sampleText": "MAKE IT COUNT",
+  "requires": {
+    "fonts": [
+      "Kanit"
+    ]
+  },
+  "style": {
+    "fontFamily": "Kanit",
+    "fontWeight": 500,
+    "pixelSize": 110,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.15,
+    "letterSpacing": 0.1,
+    "textCase": "upper",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#281903"
+        },
+        "offsetX": 0,
+        "offsetY": 4,
+        "blur": 5,
+        "opacity": 0.5
+      },
+      {
+        "id": "stroke",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#A86B08"
+        },
+        "width": 1,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "gradient",
+          "gradient": {
+            "kind": "linear",
+            "angle": 90,
+            "space": "line",
+            "stops": [
+              {
+                "pos": 0,
+                "color": "#FFD740"
+              },
+              {
+                "pos": 1,
+                "color": "#E6A30B"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "animation": {
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      },
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.1,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.13,
+          "unit": "block",
+          "ease": "easeIn"
+        }
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 26,
+      "max": 190,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.0.color"
+    },
+    {
+      "id": "golddeep",
+      "label": "Lower gold",
+      "type": "color",
+      "bind": "layer.fill.gradient.stop.1.color"
+    },
+    {
+      "id": "edge",
+      "label": "Warm edge",
+      "type": "color",
+      "bind": "layer.stroke.color"
+    },
+    {
+      "id": "entrance",
+      "label": "Fade in",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

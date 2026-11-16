@@ -1,0 +1,134 @@
+{
+  "format": 1,
+  "id": "chatgpt.sourcehan-yellow-information-panel",
+  "label": "Yellow Information Panel — Source Sans 3",
+  "description": "High-contrast squared yellow panel with dark bold text. Source Sans 3 replaces the incompatible Noto Sans SC face for full Romanian comma-below coverage; retains quick, understated entrance and exit.",
+  "category": "editorial",
+  "tags": [
+    "yellow",
+    "panel",
+    "bold",
+    "romanian",
+    "information"
+  ],
+  "kind": "title",
+  "sampleText": "NEW COLLECTION",
+  "requires": {
+    "fonts": [
+      "Source Sans 3"
+    ]
+  },
+  "style": {
+    "fontFamily": "Source Sans 3",
+    "fontWeight": 700,
+    "pixelSize": 82,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.05,
+    "letterSpacing": 0.5,
+    "textCase": "upper",
+    "boxEnabled": true,
+    "boxColor": "#FFD600",
+    "boxRadius": 0,
+    "boxPadding": 15,
+    "layers": [
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#161616"
+        }
+      }
+    ],
+    "animation": {
+      "in": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.07,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeOut"
+        }
+      },
+      "out": {
+        "preset": "fade",
+        "params": {
+          "duration": 0.12,
+          "unit": "block",
+          "stagger": 0,
+          "ease": "easeIn"
+        }
+      },
+      "timing": {
+        "fit": true,
+        "maxReadMs": 150
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "title",
+      "label": "Panel text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Text size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 36,
+      "max": 160,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text colour",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "yellow",
+      "label": "Panel colour",
+      "type": "color",
+      "bind": "box.color"
+    },
+    {
+      "id": "panel",
+      "label": "Show panel",
+      "type": "bool",
+      "bind": "box.enabled"
+    },
+    {
+      "id": "entrance",
+      "label": "Entrance duration",
+      "type": "scalar",
+      "bind": "animation.in.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    },
+    {
+      "id": "exit",
+      "label": "Exit duration",
+      "type": "scalar",
+      "bind": "animation.out.duration",
+      "min": 0,
+      "max": 0.2,
+      "step": 0.01,
+      "unit": "s"
+    }
+  ]
+}

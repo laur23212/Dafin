@@ -20,6 +20,12 @@ from the upstream variable font; ș/ț are present.
 IBM Plex Mono (Regular, Medium, SemiBold, Bold) declares the Reserved Font Name "Plex", so its two static files
 are the upstream ones, unchanged. Noto Serif (400/500/600/700) is cut from the variable font.
 
+Kanit (Medium), Baloo 2 (Bold), Rubik (Black), Merriweather (ExtraBold Italic) and Source Sans 3
+(Bold) are the static files Google Fonts serves, copied byte for byte (their `OFL.txt` is the font's own
+licence text). Merriweather ("Merriweather") and Source Sans 3 ("Source") declare a Reserved Font Name,
+which is why they were not cut from a variable font. All five have ș/ț/Ș/Ț and ă/â/î. They are for the
+seven ChatGPT reference titles; `build_title_fonts.py` does not produce them.
+
 Amiri, Comic Neue and Lobster Two have no ș/ț: Romanian text in those titles falls back for
 those letters.
 

@@ -1,0 +1,126 @@
+{
+  "format": 1,
+  "id": "chatgpt.baloo2-ice-offset",
+  "label": "Baloo 2 Ice Offset",
+  "description": "Clean white rounded type with a crisp offset icy-blue backing, based on the supplied JPG.",
+  "category": "creator-social",
+  "tags": [
+    "reference-type",
+    "user-supplied",
+    "font-treatment"
+  ],
+  "kind": "title",
+  "sampleText": "HELLO, DAFIN!",
+  "requires": {
+    "fonts": [
+      "Baloo 2"
+    ]
+  },
+  "style": {
+    "fontFamily": "Baloo 2",
+    "fontWeight": 700,
+    "pixelSize": 126,
+    "italic": false,
+    "align": "center",
+    "valign": "center",
+    "wordWrap": true,
+    "lineHeight": 1.08,
+    "letterSpacing": 0.0,
+    "textCase": "none",
+    "layers": [
+      {
+        "id": "shadow",
+        "kind": "shadow",
+        "paint": {
+          "kind": "solid",
+          "color": "#3FA0FF"
+        },
+        "offsetX": 5,
+        "offsetY": 5,
+        "blur": 0,
+        "opacity": 1.0
+      },
+      {
+        "id": "stroke",
+        "kind": "stroke",
+        "paint": {
+          "kind": "solid",
+          "color": "#BDE8FF"
+        },
+        "width": 1.0,
+        "strokeAlign": "outside"
+      },
+      {
+        "id": "fill",
+        "kind": "fill",
+        "paint": {
+          "kind": "solid",
+          "color": "#FFFFFF"
+        }
+      }
+    ],
+    "animation": {
+      "timing": {
+        "fit": true,
+        "maxReadMs": 200
+      }
+    }
+  },
+  "effects": [],
+  "controls": [
+    {
+      "id": "text",
+      "label": "Text",
+      "type": "text",
+      "bind": "text"
+    },
+    {
+      "id": "font",
+      "label": "Font",
+      "type": "font",
+      "bind": "font.family"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "scalar",
+      "bind": "font.size",
+      "min": 26,
+      "max": 210,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "ink",
+      "label": "Text color",
+      "type": "color",
+      "bind": "layer.fill.color"
+    },
+    {
+      "id": "accent",
+      "label": "Blue offset color",
+      "type": "color",
+      "bind": "layer.shadow.color"
+    },
+    {
+      "id": "xoffset",
+      "label": "Offset X",
+      "type": "scalar",
+      "bind": "layer.shadow.offsetX",
+      "min": -4,
+      "max": 15,
+      "step": 1,
+      "unit": "px"
+    },
+    {
+      "id": "yoffset",
+      "label": "Offset Y",
+      "type": "scalar",
+      "bind": "layer.shadow.offsetY",
+      "min": -4,
+      "max": 15,
+      "step": 1,
+      "unit": "px"
+    }
+  ]
+}
