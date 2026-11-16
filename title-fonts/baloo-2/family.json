@@ -1,0 +1,14 @@
+{
+  "id": "baloo-2",
+  "family": "Baloo 2",
+  "category": "playful",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Baloo2-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

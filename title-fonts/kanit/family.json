@@ -1,0 +1,14 @@
+{
+  "id": "kanit",
+  "family": "Kanit",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Kanit-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    }
+  ]
+}

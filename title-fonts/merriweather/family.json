@@ -1,0 +1,15 @@
+{
+  "id": "merriweather",
+  "family": "Merriweather",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "Merriweather-ExtraBoldItalic.ttf",
+      "weight": 800,
+      "styleName": "ExtraBold Italic",
+      "italic": true
+    }
+  ]
+}

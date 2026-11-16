@@ -1,0 +1,14 @@
+{
+  "id": "source-sans-3",
+  "family": "Source Sans 3",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 0,
+  "faces": [
+    {
+      "file": "SourceSans3-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}
