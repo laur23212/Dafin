@@ -16,10 +16,10 @@ Item {
         { id: "captions", icon: "captions", available: true,
           title: qsTr("Auto captions"),
           description: qsTr("Speech to text: captions on the timeline and a transcript you can correct.") },
-        { id: "textEdit", icon: "file-text", available: false,
+        { id: "textEdit", icon: "file-text", available: true,
           title: qsTr("Text-based editing"),
           description: qsTr("Delete words in the transcript to cut them from the video.") },
-        { id: "silence", icon: "audio-waveform", available: false,
+        { id: "silence", icon: "audio-waveform", available: true,
           title: qsTr("Silence & filler words"),
           description: qsTr("Remove pauses and filler words like “um” and “uh”.") },
         { id: "sceneCut", icon: "scissors", available: false,
@@ -179,12 +179,31 @@ Item {
             anchors.top: toolHeader.bottom
             anchors.bottom: parent.bottom
             anchors.topMargin: Theme.spacingXs
-            sourceComponent: root.currentTool && root.currentTool.id === "captions" ? captionsTool : null
+            sourceComponent: {
+                const id = root.currentTool ? root.currentTool.id : ""
+                if (id === "captions")
+                    return captionsTool
+                if (id === "textEdit")
+                    return textEditTool
+                if (id === "silence")
+                    return silenceTool
+                return null
+            }
         }
     }
 
     Component {
         id: captionsTool
         AiCaptionsPanel { }
+    }
+
+    Component {
+        id: textEditTool
+        AiTextEditPanel { }
+    }
+
+    Component {
+        id: silenceTool
+        AiCleanupPanel { }
     }
 }

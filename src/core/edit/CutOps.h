@@ -64,4 +64,28 @@ struct TimelineWord
 QList<TimelineWord> transcriptWordsOnTimeline(const Project &project, TimeUs viewStart, TimeUs viewEnd,
                                               const QString &onlyClipId = {});
 
+// Dafin: AI › Text-based editing. The source ranges to cut so the speech tokens `wordIndexes`
+// (into transcript.words) no longer play in `clip`: cut_words' boundary rule. Neighbouring removed
+// words (in speech order) make one run; a run also takes the pauses around it, leaving padUs of
+// air beside the words that stay (less when the pause is shorter), and reaches the clip's edge
+// when no kept speech of the clip lies between. Words outside the clip's source window are skipped.
+// Sorted by source time.
+QList<TimeRangeUs> sourceCutsForWords(const Transcript &transcript, const Clip &clip,
+                                      const QList<int> &wordIndexes, TimeUs padUs);
+
+// Where old timeline time `t` lands once `removed` (old timeline µs, normalized here) are cut out
+// and what follows moves up: unchanged before the first cut, the cut's start for a time inside
+// one, earlier by everything removed before it after.
+TimeUs timeAfterCut(const QList<TimeRangeUs> &removed, TimeUs t);
+
+// Dafin: captions follow a cut. `before` is the media clip as it was and `removed` the parts of it
+// (old timeline µs) that were cut out, with the gaps closed. Every caption cue tied to that media
+// (cue.source == subtitleSourceKey(before)) moves by timeAfterCut. A cue lying over the clip that
+// lost some of its time has its words read again from `transcript` (when given) over the source it
+// still plays, and goes when no word is left. A subtitle clip holding such cues moves its edges the
+// same way, and goes when it has no cue left. Hand-written cues keep their place on the timeline.
+// True when anything changed.
+bool captionsFollowCut(Project &project, const Clip &before, const QList<TimeRangeUs> &removed,
+                       const Transcript *transcript);
+
 } // namespace drift
