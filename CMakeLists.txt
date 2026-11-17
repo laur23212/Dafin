@@ -1273,6 +1273,10 @@ if(ANDROID)
     find_package(Qt6 REQUIRED COMPONENTS CorePrivate)
     target_link_libraries(driftapp PUBLIC Qt6::CorePrivate)
 endif()
+# LowSpecStartup.cpp shows its warning with QMessageBox (Widgets); Android has no such window.
+if(NOT ANDROID)
+    target_link_libraries(driftapp PUBLIC Qt6::Widgets)
+endif()
 # Dafin: live interface size uses Qt's private high-DPI scaler (PreferencesController.cpp).
 # Optional: without GuiPrivate the size change waits for a restart, as before.
 find_package(Qt6 QUIET OPTIONAL_COMPONENTS GuiPrivate)
