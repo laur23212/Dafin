@@ -1561,7 +1561,7 @@ void ThemeManagerTest::bundledThemesAllLoad()
 {
     ThemeManager::setBundledThemesRoot(QStringLiteral(DAFIN_BUNDLED_THEMES_DIR));
     const QJsonArray catalog = bundledCatalog();
-    QCOMPARE(catalog.size(), 82);
+    QCOMPARE(catalog.size(), 83);
 
     ThemeManager manager;
     const QStringList available = manager.availableThemes();
@@ -1613,7 +1613,7 @@ void ThemeManagerTest::bundledThemesAllLoad()
             QCOMPARE(manager.effectiveVariant(), QStringLiteral("dark"));
         }
     }
-    QCOMPARE(qmlCount, 43);
+    QCOMPARE(qmlCount, 44);
 }
 
 // Shipped themes cannot be removed, re-imported or shadowed, and a user copy that borrows
