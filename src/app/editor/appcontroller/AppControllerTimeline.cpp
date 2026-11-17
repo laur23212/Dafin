@@ -1653,20 +1653,29 @@ void AppController::splitAtPlayhead()
     splitAtPlayheadImpl(nullptr);
 }
 
-// Scissors on the playhead: with clips selected only those are cut at the playhead (a linked
-// partner such as its audio goes with it); with nothing selected every clip under it is cut.
+// Scissors on the playhead: with clips selected under the playhead only those are cut (a linked
+// partner such as its audio goes with it). With nothing selected, or when no selected clip is
+// under the playhead, every clip under it is cut, as in Filmora: a selection somewhere else on
+// the timeline no longer turns the click into a warning and no cut.
 void AppController::splitSelectionOrAllAtPlayhead()
 {
     QSet<QString> selectedIds;
-    auto addSelected = [this, &selectedIds](int trackIndex, int clipIndex) {
-        if (isValidClipIndex(trackIndex, clipIndex))
-            selectedIds.insert(m_project.tracks().at(trackIndex).clips.at(clipIndex).id);
+    bool selectedUnderBar = false;
+    auto addSelected = [this, &selectedIds, &selectedUnderBar](int trackIndex, int clipIndex) {
+        if (!isValidClipIndex(trackIndex, clipIndex))
+            return;
+        const drift::Clip &clip = m_project.tracks().at(trackIndex).clips.at(clipIndex);
+        selectedIds.insert(clip.id);
+        // Same test splitAtPlayheadImpl uses to pick the clips it cuts.
+        if (clip.containsTime(m_playheadUs) && m_playheadUs != clip.timelineStart
+            && clip.linkedClipId.isEmpty())
+            selectedUnderBar = true;
     };
     addSelected(m_selectedTrack, m_selectedClip);
     for (const QPair<int, int> &pair : std::as_const(m_selection))
         addSelected(pair.first, pair.second);
 
-    splitAtPlayheadImpl(selectedIds.isEmpty() ? nullptr : &selectedIds);
+    splitAtPlayheadImpl(selectedUnderBar ? &selectedIds : nullptr);
 }
 
 void AppController::splitAtPlayheadImpl(const QSet<QString> *onlyIds)
@@ -1682,6 +1691,8 @@ void AppController::splitAtPlayheadImpl(const QSet<QString> *onlyIds)
         drift::TimeUs offset;
     };
     QList<PendingAdjustmentSplit> pendingAdjustmentSplits;
+    // The right-hand pieces, selected after the cut like Filmora does, so the cut shows.
+    QStringList tailIds;
 
     const QList<drift::Track> &tracksView = m_project.tracks();
     for (int trackIndex = 0; trackIndex < tracksView.size(); ++trackIndex) {
@@ -1715,6 +1726,7 @@ void AppController::splitAtPlayheadImpl(const QSet<QString> *onlyIds)
             splitLinkedPartnerAt(m_project, clip, m_playheadUs, tailLinkId);
             track.clips.insert(clipIndex + 1, tail);
             pendingAdjustmentSplits.append({trackIndex, headId, tail.id, offset});
+            tailIds.append(tail.id);
             splitAny = true;
             ++clipIndex;
         }
@@ -1728,11 +1740,31 @@ void AppController::splitAtPlayheadImpl(const QSet<QString> *onlyIds)
     if (splitAny) {
         pushProjectEdit(before, tr("Split at current time"));
         finishEdit(tr("Split at current time"));
+        selectClipsById(tailIds);
+        emit splitAtPlayheadDone(drift::usToSeconds(m_playheadUs));
     } else {
         setLastMessage(onlyIds ? tr("The selected clip isn't under the cut bar — move the bar onto it")
                                : tr("Nothing to split here — move to a clip first"),
                        QStringLiteral("warning"));
     }
+}
+
+// Selects the clips with these ids (and their linked partners), the last one becoming the
+// focused clip. Ids no longer on the timeline are skipped.
+void AppController::selectClipsById(const QStringList &clipIds)
+{
+    QVariantList pairs;
+    for (const QString &id : clipIds) {
+        const QVariantList where = locateClip(id);
+        if (where.size() != 2)
+            continue;
+        pairs.append(QVariantMap{
+            {QStringLiteral("track"), where.at(0).toInt()},
+            {QStringLiteral("clip"), where.at(1).toInt()},
+        });
+    }
+    if (!pairs.isEmpty())
+        setSelection(pairs);
 }
 
 void AppController::splitClipAt(int trackIndex, int clipIndex, double seconds)

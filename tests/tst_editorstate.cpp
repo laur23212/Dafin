@@ -504,6 +504,7 @@ private slots:
     void adjustmentMovesBetweenStandaloneAndNested();
     void trackRowHeightsForAdjustmentsAndLanes();
     void timelineSizeScalesRowsAndIsClamped();
+    void playheadScissorsCutUnderTheBarAndSelectTheRightPieces();
     void overlappingAdjustmentsGetASecondLane();
     void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
     void multiClipMoveCrossTracks();
@@ -13643,6 +13644,72 @@ void EditorStateTest::timelineSizeScalesRowsAndIsClamped()
     QCOMPARE(state.trackRowHeight(0, metrics), 180);
 
     state.setTimelineSize(1.0); // leave the shared setting at its default
+}
+
+// The scissors on the playhead used to refuse ("The selected clip isn't under the cut bar") when a
+// clip elsewhere was selected, which looked like a dead click. Now, as in Filmora, a selection
+// away from the bar cuts every clip under it, and the right-hand pieces end up selected so the
+// cut shows.
+void EditorStateTest::playheadScissorsCutUnderTheBarAndSelectTheRightPieces()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    appendTwoVideoClips(*state.project()); // clip-0 0–2 s, clip-1 2–6 s
+    QSignalSpy cuts(&state, &AppController::splitAtPlayheadDone);
+    // Clips on the track holding clip-0's pieces, found by id so a track reorder can't matter.
+    auto clips = [&state] {
+        for (const drift::Track &track : state.project()->tracks()) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.id == QLatin1String("clip-0"))
+                    return track.clips;
+            }
+        }
+        return QList<drift::Clip>{};
+    };
+    auto totalClips = [&state] {
+        qsizetype count = 0;
+        for (const drift::Track &track : state.project()->tracks())
+            count += track.clips.size();
+        return count;
+    };
+
+    // clip-0 is selected but the bar is on clip-1: clip-1 is cut, not nothing.
+    state.selectClip(0, 0);
+    state.setPlayheadSeconds(4.0);
+    state.splitSelectionOrAllAtPlayhead();
+    QCOMPARE(clips().size(), 3);
+    QCOMPARE(clips().at(2).timelineStart, drift::secondsToUs(4.0));
+    QCOMPARE(cuts.size(), 1);
+    QCOMPARE(cuts.at(0).at(0).toDouble(), 4.0);
+    // The right-hand piece is selected afterwards.
+    QCOMPARE(state.selectedTrack(), 0);
+    QCOMPARE(state.selectedClip(), 2);
+    QCOMPARE(state.selectionCount(), 1);
+
+    // A selected clip under the bar is still the only one cut.
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+    drift::Clip other;
+    other.id = QStringLiteral("other");
+    other.type = drift::ClipType::Video;
+    other.timelineStart = 0;
+    other.timelineDuration = drift::secondsToUs(6.0);
+    other.srcIn = 0;
+    other.srcOut = other.timelineDuration;
+    state.project()->tracks()[1].clips.append(other);
+    state.selectClip(0, 0);
+    state.setPlayheadSeconds(1.0);
+    state.splitSelectionOrAllAtPlayhead();
+    QCOMPARE(clips().size(), 4);
+    QCOMPARE(totalClips(), qsizetype(5)); // "other" was left whole
+    QCOMPARE(cuts.size(), 2);
+
+    // Nothing under the bar: a warning, no cut and no flash.
+    state.clearSelection();
+    state.setPlayheadSeconds(30.0);
+    state.splitSelectionOrAllAtPlayhead();
+    QCOMPARE(totalClips(), qsizetype(5));
+    QCOMPARE(cuts.size(), 2);
 }
 
 void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()

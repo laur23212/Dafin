@@ -2001,6 +2001,9 @@ signals:
     // Dafin: the "motionTrack" action reached triggerAction (from an agent, say); the shell's
     // motion tracking flow takes it from there, as the toolbar button does.
     void motionTrackingRequested();
+    // Dafin: a cut at the playhead went through (scissors chip, Ctrl+B, "Split at current
+    // time"). The playhead flashes a cut mark on it, as Filmora does.
+    void splitAtPlayheadDone(double seconds);
     void selectionChanged();
     void editCapabilitiesChanged();
     void sequenceTabsChanged();
@@ -2333,6 +2336,7 @@ protected:
     void normalizeSelection();
     bool isValidClipIndex(int trackIndex, int clipIndex) const;
     void splitAtPlayheadImpl(const QSet<QString> *onlyIds);
+    void selectClipsById(const QStringList &clipIds);
     // Indices of the tracks removeEmptyTracks() would delete, ascending.
     QList<int> removableEmptyTrackIndices() const;
     // Adds a video Drift rendered to the bin as one undoable edit; returns its asset id.
