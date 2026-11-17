@@ -89,6 +89,8 @@ Column {
             kind: modelData.video ? "media" : "sticker"
             payload: modelData.video ? "" : modelData.id
             fileUrl: modelData.video ? EditorState.fileUrl(modelData.path) : ""
+            groupTab: "stickers"
+            groupItem: modelData.id
             label: modelData.label
             thumbnail: modelData.thumbnail || modelData.path
             onTapped: {
@@ -131,6 +133,15 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("stickers", modelData.id)
+            }
+            AssetGroupSubmenu {
+                tabId: "stickers"
+                itemId: modelData.id
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "stickers"
+                itemId: modelData.id
             }
         }
 

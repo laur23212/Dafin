@@ -37,11 +37,9 @@ Column {
                 return label.indexOf(q) >= 0 || id.indexOf(q) >= 0
             })
         }
-        if (root.activeCategory === root.favoritesId) {
-            return root.catalog.filter(function(preset) {
-                return EditorState.isAssetFavorite("templates", preset.id)
-            })
-        }
+        // Dafin: favorites and the user's groups, in the user's order.
+        if (AssetGroups.isMyList(root.activeCategory))
+            return AssetGroups.pick("templates", root.activeCategory, root.catalog, preset => preset.id)
         return root.catalog.filter(function(preset) {
             return preset.category === root.activeCategory
         })
@@ -78,6 +76,7 @@ Column {
         activeCategory: root.activeCategory
         showMine: true
         mineLabel: qsTr("My presets")
+        tabId: "templates"
         searching: root.query.length > 0
         onCategoryActivated: (categoryId) => root.activeCategory = categoryId
     }
@@ -125,6 +124,8 @@ Column {
                   ? qsTr("No templates match “%1”.").arg(search.text.trim())
                   : (root.activeCategory === root.favoritesId
                      ? qsTr("No favorites yet. Star templates to save them here.")
+                     : AssetGroups.isGroup(root.activeCategory)
+                     ? qsTr("This group is empty. Right-click a card and choose Add to group, or drop a card on the group.")
                      : qsTr("Nothing in this category."))
             color: Theme.c.effectTemplateBrowser.foregroundMuted
             font.family: Theme.fontFamily
@@ -166,6 +167,15 @@ Column {
                 cardSize: presetGrid.cardSize
                 onApplyRequested: (templateId) => root.applyTemplate(templateId)
             }
+        }
+
+        // Dafin: drag a card onto another's place to reorder favorites and groups.
+        AssetReorderArea {
+            anchors.fill: presetGrid
+            view: presetGrid
+            tabId: "templates"
+            listId: root.activeCategory
+            keyAt: i => root.visibleTemplates[i] ? root.visibleTemplates[i].id : ""
         }
     }
 }

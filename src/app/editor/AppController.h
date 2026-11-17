@@ -6,6 +6,7 @@
 #include "engine/audio/analysis/AudioOnsets.h"
 #include "engine/media/thumbnails/FilmstripTileCache.h"
 #include "engine/media/waveforms/WaveformBlockCache.h"
+#include "app/editor/AssetGroupStore.h"
 #include "app/editor/TimelineClipsModel.h"
 #include "app/mcp/tools/McpMarket.h"
 #include "core/project/GuideSet.h"
@@ -1757,6 +1758,23 @@ public:
     // Per-tab favorites in the assets panel (effects, sounds, shapes, stickers, transitions, templates).
     Q_INVOKABLE bool isAssetFavorite(const QString &tabId, const QString &itemId) const;
     Q_INVOKABLE void toggleAssetFavorite(const QString &tabId, const QString &itemId);
+    // Dafin: the "My" area of each asset tab and the font list (AssetGroupStore): ordered
+    // favorites ("__favorites__") and the user's groups ({id, name, count}), each an ordered list
+    // of item ids. Ids the tab no longer has are kept and simply not shown.
+    Q_INVOKABLE QStringList assetListItems(const QString &tabId, const QString &listId) const;
+    Q_INVOKABLE QVariantList assetGroups(const QString &tabId) const;
+    // Returns the new group's id ("" for a blank name); a taken name is numbered. With itemId,
+    // that item goes into the new group.
+    Q_INVOKABLE QString addAssetGroup(const QString &tabId, const QString &name, const QString &itemId = QString());
+    Q_INVOKABLE bool renameAssetGroup(const QString &tabId, const QString &groupId, const QString &name);
+    // The group only; never an item.
+    Q_INVOKABLE bool removeAssetGroup(const QString &tabId, const QString &groupId);
+    Q_INVOKABLE bool addToAssetGroup(const QString &tabId, const QString &groupId, const QString &itemId);
+    Q_INVOKABLE bool removeFromAssetGroup(const QString &tabId, const QString &groupId, const QString &itemId);
+    Q_INVOKABLE bool isInAssetGroup(const QString &tabId, const QString &groupId, const QString &itemId) const;
+    // Puts itemId where targetId is in favorites or a group (drag-to-reorder).
+    Q_INVOKABLE bool moveAssetInList(const QString &tabId, const QString &listId, const QString &itemId,
+                                     const QString &targetId);
     Q_INVOKABLE void togglePlayback();
     // Bracket a scrub gesture (a dragged playhead, or the phone timeline being scrolled under
     // its fixed playhead). In between, the preview shows approximate frames and inspectors
@@ -2009,6 +2027,7 @@ signals:
     void guidesChanged();
     void shortcutsChanged();
     void assetFavoritesChanged();
+    void assetGroupsChanged();
     void userTextPresetsChanged();
     void textTemplatesChanged();
     void templateCategoriesChanged();
@@ -2102,8 +2121,6 @@ protected:
     // stored values that a new release has superseded and dropping any default that
     // would end up sharing a chord with a stored one.
     void loadShortcuts();
-    void loadAssetFavorites();
-    void saveAssetFavorites(const QString &tabId);
     void applyEffectTemplateInternal(int trackIndex, int clipIndex, const EffectTemplateEntry &entry,
                                    const QString &mattePath = {},
                                    drift::TimeUs matteSrcOffsetUs = 0);
@@ -2569,7 +2586,7 @@ protected:
     // Persists the library; an edit to an active set also changes what the project saves.
     void guideLibraryEdited(const QString &id);
     QHash<QString, QString> m_shortcuts;
-    QHash<QString, QSet<QString>> m_assetFavorites;
+    AssetGroupStore m_assetGroups;
     int m_draggingAssetIndex = -1;
     QString m_lastMessage;
     QString m_lastMessageSeverity = QStringLiteral("info");

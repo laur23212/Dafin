@@ -58,13 +58,10 @@ PanelFrame {
             }
             return out
         }
-        if (activeCategory === favoritesId) {
-            for (let i = 1; i < list.length; ++i) {
-                if (EditorState.isAssetFavorite("looks", list[i].id))
-                    out.push(list[i])
-            }
-            return out
-        }
+        // Dafin: favorites and the user's groups, in the user's order ("None", the first entry,
+        // is not a look of its own).
+        if (AssetGroups.isMyList(activeCategory))
+            return AssetGroups.pick("looks", activeCategory, list.slice(1), look => look.id)
         if (activeCategory === mineId) {
             for (let i = 1; i < list.length; ++i) {
                 if (list[i].userInstalled)
@@ -82,6 +79,7 @@ PanelFrame {
     }
 
     property var menuLook: ({})
+    readonly property string menuLookId: (root.menuLook && root.menuLook.id) || ""
     property int menuLookUses: 0
 
     function requestRemove(look) {
@@ -170,6 +168,7 @@ PanelFrame {
             activeCategory: root.activeCategory
             showMine: true
             mineLabel: qsTr("My Looks")
+            tabId: "looks"
             searching: root.trimmedQuery.length > 0
             onCategoryActivated: categoryId => root.activeCategory = categoryId
         }
@@ -312,9 +311,25 @@ PanelFrame {
             TapHandler {
                 onTapped: root.colorState.setLook(card.modelData.id)
             }
+            // Dafin: in Favorites and the user's groups a look drags onto another's place.
+            readonly property string groupTab: "looks"
+            readonly property string groupItem: card.modelData.id || ""
+            Drag.active: lookDrag.active
+            Drag.dragType: Drag.Automatic
+            Drag.supportedActions: Qt.CopyAction
+            Drag.mimeData: ({ "application/x-dafin-asset-reorder": card.modelData.id || "" })
+            DragHandler {
+                id: lookDrag
+                target: null
+                enabled: AssetGroups.isMyList(root.activeCategory) && (card.modelData.id || "") !== ""
+                acceptedButtons: Qt.LeftButton
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
+                onActiveChanged: active ? AssetGroups.beginDrag("looks", card.modelData.id) : AssetGroups.endDrag()
+            }
             TapHandler {
                 acceptedButtons: Qt.RightButton
-                enabled: !!card.modelData.userInstalled
+                // Dafin: every look has the group entries; rename and remove stay for imported ones.
+                enabled: (card.modelData.id || "") !== ""
                 onTapped: {
                     root.menuLook = card.modelData
                     lookMenu.popup()
@@ -333,9 +348,35 @@ PanelFrame {
         }
     }
 
+    // Dafin: drag a look onto another's place to reorder favorites and groups.
+    AssetReorderArea {
+        anchors.fill: grid
+        view: grid
+        tabId: "looks"
+        listId: root.activeCategory
+        keyAt: i => root.visibleLooks[i] ? root.visibleLooks[i].id : ""
+    }
+
     ThemedContextMenu {
         id: lookMenu
         ThemedMenuItem {
+            text: AssetGroups.tick >= 0 && EditorState.isAssetFavorite("looks", root.menuLookId)
+                  ? qsTr("Remove from favorites") : qsTr("Add to favorites")
+            icon.name: Theme.icons.star
+            onTriggered: EditorState.toggleAssetFavorite("looks", root.menuLookId)
+        }
+        AssetGroupSubmenu {
+            tabId: "looks"
+            itemId: root.menuLookId
+            anchorItem: root
+        }
+        AssetGroupRemoveItem {
+            tabId: "looks"
+            itemId: root.menuLookId
+        }
+        ThemedMenuSeparator { visible: !!(root.menuLook && root.menuLook.userInstalled) }
+        ThemedMenuItem {
+            visible: !!(root.menuLook && root.menuLook.userInstalled)
             text: qsTr("Rename…")
             icon.name: Theme.icons.pencil
             onTriggered: {
@@ -345,6 +386,7 @@ PanelFrame {
             }
         }
         ThemedMenuItem {
+            visible: !!(root.menuLook && root.menuLook.userInstalled)
             text: qsTr("Remove")
             icon.name: Theme.icons.trash
             onTriggered: root.requestRemove(root.menuLook)
@@ -361,6 +403,8 @@ PanelFrame {
               ? qsTr("No looks match “%1”.").arg(root.trimmedQuery)
               : (root.activeCategory === root.favoritesId
                  ? qsTr("No favorites yet. Star looks to save them here.")
+                 : AssetGroups.isGroup(root.activeCategory)
+                 ? qsTr("This group is empty. Right-click a card and choose Add to group, or drop a card on the group.")
                  : qsTr("Nothing in this category."))
         color: Theme.mutedForeground
         font.family: Theme.fontFamily

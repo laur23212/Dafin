@@ -43,11 +43,9 @@ Item {
                 return label.indexOf(q) >= 0 || kind.indexOf(q) >= 0
             })
         }
-        if (root.activeCategory === root.favoritesId) {
-            return root.catalog.filter(function(item) {
-                return EditorState.isAssetFavorite("transitions", item.kind)
-            })
-        }
+        // Dafin: favorites and the user's groups, in the user's order.
+        if (AssetGroups.isMyList(root.activeCategory))
+            return AssetGroups.pick("transitions", root.activeCategory, root.catalog, item => item.kind)
         if (root.activeCategory === root.mineId)
             return root.catalog.filter(function(item) { return item.user === true })
         return root.catalog.filter(function(item) {
@@ -80,6 +78,7 @@ Item {
             activeCategory: root.activeCategory
             showMine: true
             mineLabel: qsTr("My Transitions")
+            tabId: "transitions"
             searching: root.query.length > 0
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
@@ -115,6 +114,8 @@ Item {
                           ? qsTr("No custom transitions yet")
                           : root.activeCategory === root.favoritesId
                           ? qsTr("No favorites yet")
+                          : AssetGroups.isGroup(root.activeCategory)
+                          ? qsTr("This group is empty")
                           : qsTr("Nothing in this category"))
                 hint: root.query.length > 0
                       ? qsTr("Try a different name.")
@@ -122,6 +123,8 @@ Item {
                          ? qsTr("Import a .driftfx or zip made in Drift Forge to add your own.")
                          : root.activeCategory === root.favoritesId
                          ? qsTr("Star transitions to save them here.")
+                         : AssetGroups.isGroup(root.activeCategory)
+                         ? qsTr("Right-click a card and choose Add to group, or drop it on the group.")
                          : qsTr("Pick another category."))
                 actionText: root.activeCategory === root.mineId && root.query.length === 0
                             ? qsTr("Import") : ""
@@ -162,6 +165,15 @@ Item {
                 delegate: TransitionPresetCard {
                     cardSize: transitionGrid.cardSize
                 }
+            }
+
+            // Dafin: drag a card onto another's place to reorder favorites and groups.
+            AssetReorderArea {
+                anchors.fill: transitionGrid
+                view: transitionGrid
+                tabId: "transitions"
+                listId: root.activeCategory
+                keyAt: i => root.visibleTransitions[i] ? root.visibleTransitions[i].kind : ""
             }
         }
     }

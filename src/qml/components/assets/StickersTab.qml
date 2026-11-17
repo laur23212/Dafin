@@ -39,11 +39,9 @@ Item {
                 return label.indexOf(q) >= 0 || id.indexOf(q) >= 0
             })
         }
-        if (root.activeCategory === root.favoritesId) {
-            return root.allStickers.filter(function(s) {
-                return EditorState.isAssetFavorite("stickers", s.id)
-            })
-        }
+        // Dafin: favorites and the user's groups, in the user's order.
+        if (AssetGroups.isMyList(root.activeCategory))
+            return AssetGroups.pick("stickers", root.activeCategory, root.allStickers, s => s.id)
         return root.allStickers.filter(function(s) { return s.category === root.activeCategory })
     }
 
@@ -90,6 +88,7 @@ Item {
             width: parent.width
             categories: root.hasStickers ? root.categories : []
             activeCategory: root.activeCategory
+            tabId: "stickers"
             searching: root.query.length > 0
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
@@ -124,11 +123,15 @@ Item {
                        ? qsTr("No stickers match “%1”").arg(search.text.trim())
                        : (root.activeCategory === root.favoritesId
                           ? qsTr("No favorites yet")
+                          : AssetGroups.isGroup(root.activeCategory)
+                          ? qsTr("This group is empty")
                           : qsTr("Nothing in this category"))
                 hint: root.query.length > 0
                       ? qsTr("Try a different name.")
                       : (root.activeCategory === root.favoritesId
                          ? qsTr("Star stickers to save them here.")
+                         : AssetGroups.isGroup(root.activeCategory)
+                         ? qsTr("Right-click a sticker and choose Add to group, or drop it on the group.")
                          : qsTr("Pick another category."))
             }
 
@@ -166,6 +169,15 @@ Item {
                     cardSize: stickerGrid.cardSize
                     onAdded: root.added()
                 }
+            }
+
+            // Dafin: drag a card onto another's place to reorder favorites and groups.
+            AssetReorderArea {
+                anchors.fill: stickerGrid
+                view: stickerGrid
+                tabId: "stickers"
+                listId: root.activeCategory
+                keyAt: i => root.currentStickers[i] ? root.currentStickers[i].id : ""
             }
         }
         
