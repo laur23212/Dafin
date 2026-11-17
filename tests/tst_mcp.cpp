@@ -377,10 +377,10 @@ void McpTest::catalogOpsIncludeWhen()
     QVERIFY(!compact.contains(QStringLiteral("endpoints")));
     QVERIFY(!compact.contains(QStringLiteral("guide")));
     QVERIFY(!compact.contains(QStringLiteral("hint")));
-    // Budgets, not targets: ~270 ops with one-line "when" hints. Raise only with new ops.
-    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 22800);
+    // Budgets, not targets: ~290 ops (raised for the safety-gate and usage ops) with one-line "when" hints. Raise only with new ops.
+    QVERIFY(QJsonDocument(compact).toJson(QJsonDocument::Compact).size() < 25000);
     QVERIFY(QJsonDocument(drift::mcp::catalogPayload({{QStringLiteral("brief"), true}}))
-                .toJson(QJsonDocument::Compact).size() < 11400);
+                .toJson(QJsonDocument::Compact).size() < 12500);
 
     const QJsonObject cat = drift::mcp::catalogPayload(
         {{QStringLiteral("guide"), true}, {QStringLiteral("endpoints"), true}});

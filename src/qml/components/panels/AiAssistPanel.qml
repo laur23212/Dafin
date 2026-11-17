@@ -11,7 +11,7 @@ Popup {
     id: root
 
     // Height of the header above it, so the panel starts below it.
-    property real topInset: 0
+    property real headerInset: 0
     property bool showSettings: false
     signal openAgentAccess()
 
@@ -21,9 +21,9 @@ Popup {
     closePolicy: Popup.CloseOnEscape
     padding: 0
     width: Math.min(440, parent ? parent.width - Theme.spacingLg * 2 : 440)
-    height: parent ? parent.height - topInset - Theme.spacingLg : 600
+    height: parent ? parent.height - headerInset - Theme.spacingLg : 600
     x: parent ? parent.width - width - Theme.spacingSm : 0
-    y: topInset
+    y: headerInset
 
     readonly property bool setupNeeded: !Assistant.ready
 

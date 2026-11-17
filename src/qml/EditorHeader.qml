@@ -346,7 +346,7 @@ Item {
 
     AiAssistPanel {
         id: aiAssistPanel
-        topInset: root.mapToItem(null, 0, root.height).y
+        headerInset: root.mapToItem(null, 0, root.height).y
         onOpenAgentAccess: agentAccessDialog.openDialog()
     }
 
