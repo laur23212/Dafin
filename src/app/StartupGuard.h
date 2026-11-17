@@ -12,4 +12,9 @@ bool begin(int argc, char *argv[]);
 // The first frame reached the screen: this launch counts as successful.
 void markStarted();
 
+// Dafin: this process is handing over to a relaunched copy of itself (software OpenGL,
+// app/LowSpecStartup.cpp) before drawing anything. Puts the count back to what begin() found, so
+// the relaunched copy counts as the one attempt and a crash there still leads to safe mode.
+void cancelThisLaunch();
+
 } // namespace drift::startup

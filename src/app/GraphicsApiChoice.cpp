@@ -1,5 +1,6 @@
 #include "app/GraphicsApiChoice.h"
 
+#include "core/base/LowSpec.h"
 #include "core/base/SafeMode.h"
 
 #include <QCoreApplication>
@@ -99,6 +100,10 @@ bool applyAtStartup(int argc, char *argv[])
 
     // Safe mode: the default API, whatever is stored (the stored choice itself is left alone).
     if (drift::safemode::active())
+        id = kOpenGl;
+    // Dafin: relaunched on software OpenGL (low-spec mode): the interface has to be on that same
+    // OpenGL, or Vulkan/D3D would go straight back to the GPU the relaunch was for.
+    if (!qEnvironmentVariableIsEmpty(drift::lowspec::kSoftwareGlEnv))
         id = kOpenGl;
 
     QQuickWindow::setGraphicsApi(toQt(id));

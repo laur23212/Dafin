@@ -816,6 +816,7 @@ jobs:
         if: matrix.arch == 'x64'
         shell: pwsh
         env:
+          # Keep in step with the copy staged into the package (Stage runtime files).
           MESA_WIN_VERSION: "26.2.4"
         run: |
           $archive = "mesa.7z"
@@ -917,6 +918,20 @@ jobs:
           # good card in the first place; keep the two together.
           & "${{ env.QT_ROOT_DIR }}\bin\windeployqt.exe" --release --no-translations `
             --no-opengl-sw --qmldir src\qml dist\bin\dafin.exe
+          # Dafin: a modern Mesa llvmpipe (OpenGL 4.5 on the CPU) takes the opengl32sw.dll name
+          # instead. Low-spec mode (app/LowSpecStartup.cpp) relaunches on it with QT_OPENGL=software
+          # when the card is below OpenGL 3.3, so an old computer runs slowly instead of not at all;
+          # Qt's own fallback (no usable desktop GL at all) now lands on 4.5 too. The same Mesa build
+          # as the GPU tests use. x64 only: mesa-dist-win has no arm64 build.
+          if ("${{ matrix.arch }}" -eq "x64") {
+            $mesaVersion = "26.2.4"
+            if (-not (Test-Path mesa\x64\libgallium_wgl.dll)) {
+              Invoke-WebRequest -Uri "https://github.com/pal1000/mesa-dist-win/releases/download/$mesaVersion/mesa3d-$mesaVersion-release-msvc.7z" -OutFile mesa.7z
+              & "$env:ProgramFiles\7-Zip\7z.exe" x mesa.7z -omesa -y | Out-Null
+            }
+            Copy-Item mesa\x64\opengl32.dll dist\bin\opengl32sw.dll -Force
+            Copy-Item mesa\x64\libgallium_wgl.dll dist\bin -Force
+          }
           Copy-Item vcpkg\installed\${{ matrix.arch }}-windows\bin\*.dll dist\bin -Force
           Copy-Item .deps\ffmpeg\bin\*.dll dist\bin -Force
           # Bundled effect/transition/template packages: a POST_BUILD step already put them beside

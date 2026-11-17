@@ -1,5 +1,6 @@
 #include "app/editor/PreferencesController.h"
 
+#include "core/base/LowSpec.h"
 #include "core/base/SafeMode.h"
 #include "app/GraphicsApiChoice.h"
 #include "core/base/CacheRoot.h"
@@ -161,6 +162,8 @@ bool isMachineOrSecretSetting(const QString &key)
         QStringLiteral("graphicsApiRevertedFrom"),
         QStringLiteral("speedFactor"), QStringLiteral("speedCalibrated"),
         QStringLiteral("proxyPassword"),
+        // Dafin: low-spec mode is about this computer's hardware.
+        QStringLiteral("lowSpecMode"),
     };
     return key.startsWith(QLatin1String("ui/layout/"))
            || kLeaves.contains(key.section(QLatin1Char('/'), -1));
@@ -1318,6 +1321,37 @@ bool g_dropSafeModeFlag = false;
 bool PreferencesController::safeMode() const
 {
     return drift::safemode::active();
+}
+
+bool PreferencesController::lowSpecMode() const
+{
+    return drift::lowspec::active();
+}
+
+QString PreferencesController::lowSpecReason() const
+{
+    return QString::fromStdString(drift::lowspec::reasonText());
+}
+
+bool PreferencesController::onSoftwareGl() const
+{
+    return drift::lowspec::onSoftwareGl();
+}
+
+QString PreferencesController::lowSpecSetting() const
+{
+    const QString value = QSettings().value(QLatin1String(drift::lowspec::kSettingKey), QStringLiteral("auto")).toString();
+    return value == QLatin1String("on") || value == QLatin1String("off") ? value : QStringLiteral("auto");
+}
+
+void PreferencesController::setLowSpecSetting(const QString &value)
+{
+    const QString normalized = value == QLatin1String("on") || value == QLatin1String("off") ? value
+                                                                                              : QStringLiteral("auto");
+    if (normalized == lowSpecSetting())
+        return;
+    QSettings().setValue(QLatin1String(drift::lowspec::kSettingKey), normalized);
+    emit lowSpecSettingChanged();
 }
 
 void PreferencesController::restartNormally()

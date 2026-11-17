@@ -595,6 +595,11 @@ add_test(NAME AdaptivePolicy COMMAND tst_adaptivepolicy)
 add_executable(tst_safemode tst_safemode.cpp)
 target_include_directories(tst_safemode PRIVATE ../src)
 add_test(NAME SafeMode COMMAND tst_safemode)
+# Dafin, pure C++ (no Qt): when a computer counts as weak, the software-OpenGL relaunch and
+# low-spec mode (core/base/LowSpec.h).
+add_executable(tst_lowspec tst_lowspec.cpp)
+target_include_directories(tst_lowspec PRIVATE ../src)
+add_test(NAME LowSpec COMMAND tst_lowspec)
 # Dafin: heavy work in a separate process — the supervisor's heartbeat timeout, crash and cancel
 # handling and the watchdog's restart, against the test binary itself as a stand-in worker.
 qt_add_executable(tst_workers

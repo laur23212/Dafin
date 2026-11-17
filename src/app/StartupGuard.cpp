@@ -8,6 +8,10 @@
 
 namespace drift::startup {
 
+namespace {
+int g_countBeforeThisLaunch = -1;
+}
+
 bool begin(int argc, char *argv[])
 {
     bool flagGiven = false;
@@ -18,6 +22,7 @@ bool begin(int argc, char *argv[])
 
     QSettings settings;
     const int unfinished = settings.value(QLatin1String(safemode::kAttemptsKey), 0).toInt();
+    g_countBeforeThisLaunch = unfinished;
     const bool safe = safemode::shouldEnter(unfinished, flagGiven);
     safemode::setActive(safe);
     if (safe)
@@ -33,6 +38,15 @@ void markStarted()
 {
     QSettings settings;
     settings.setValue(QLatin1String(safemode::kAttemptsKey), 0);
+    settings.sync();
+}
+
+void cancelThisLaunch()
+{
+    if (g_countBeforeThisLaunch < 0)
+        return;
+    QSettings settings;
+    settings.setValue(QLatin1String(safemode::kAttemptsKey), g_countBeforeThisLaunch);
     settings.sync();
 }
 

@@ -56,10 +56,13 @@ Item {
         return null
     }
 
+    // Dafin: low-spec (compatibility) mode turns every local AI tool off for this run.
+    readonly property bool lowSpecOff: EditorState.preferences.lowSpecMode
+
     // A remembered tool that is not available (any more) shows the grid instead.
     readonly property var currentTool: {
         const tool = root.openTool.length > 0 ? root.toolById(root.openTool) : null
-        return tool && tool.available ? tool : null
+        return tool && tool.available && !root.lowSpecOff ? tool : null
     }
 
     Flickable {
@@ -88,6 +91,16 @@ Item {
                 font.pixelSize: Theme.fontSizeXs
             }
 
+            Text {
+                visible: root.lowSpecOff
+                width: gridColumn.width
+                wrapMode: Text.WordWrap
+                text: qsTr("Compatibility mode: this computer is below Dafin's recommended specs, so local AI is off. Settings › Performance › Low-spec mode turns it back on.")
+                color: Theme.c.subtitlesTab.foreground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeXs
+            }
+
             Flow {
                 id: cards
                 width: gridColumn.width
@@ -102,6 +115,7 @@ Item {
                     delegate: AiToolCard {
                         required property var modelData
                         tool: modelData
+                        lowSpecOff: root.lowSpecOff && modelData.available === true
                         width: cards.cardWidth
                         onOpenRequested: root.openTool = modelData.id
                     }

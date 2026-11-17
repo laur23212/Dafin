@@ -149,6 +149,15 @@ class PreferencesController : public QObject
     Q_PROPERTY(bool canRestart READ canRestart CONSTANT)
     // This run started in safe mode (GPU, local AI, add-ons and custom templates off).
     Q_PROPERTY(bool safeMode READ safeMode CONSTANT)
+    // Dafin: low-spec (compatibility) mode is on for this run (core/base/LowSpec.h): preview at a
+    // quarter, proxies for heavy clips, local AI and AI/3D effects off.
+    Q_PROPERTY(bool lowSpecMode READ lowSpecMode CONSTANT)
+    // Why this computer counts as weak ("OpenGL 3.2 detected, 3.3 needed"), or "".
+    Q_PROPERTY(QString lowSpecReason READ lowSpecReason CONSTANT)
+    // This run draws through a software OpenGL that Dafin switched to (Mesa llvmpipe).
+    Q_PROPERTY(bool onSoftwareGl READ onSoftwareGl CONSTANT)
+    // Settings › Performance › Low-spec mode: "auto", "on" or "off". Takes effect after a restart.
+    Q_PROPERTY(QString lowSpecSetting READ lowSpecSetting WRITE setLowSpecSetting NOTIFY lowSpecSettingChanged)
 
 public:
     explicit PreferencesController(QObject *parent = nullptr);
@@ -301,6 +310,11 @@ public:
     // unsaved-changes prompt gets its say.
     Q_INVOKABLE void restartApp();
     bool safeMode() const;
+    bool lowSpecMode() const;
+    QString lowSpecReason() const;
+    bool onSoftwareGl() const;
+    QString lowSpecSetting() const;
+    void setLowSpecSetting(const QString &value);
     // Leaves safe mode: clears the failed-start count and starts again without --safe-mode.
     Q_INVOKABLE void restartNormally();
     // Writes every preference except machine-specific and secret ones as JSON. Import applies the
@@ -312,6 +326,7 @@ public:
     static void installUiTranslators();
 
 signals:
+    void lowSpecSettingChanged();
     void darkModePreferenceChanged();
     void workspaceLayoutPreferenceChanged();
     void timelineOverviewVisibleChanged();
