@@ -1500,6 +1500,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/PreferencesController.cpp
     src/app/StartupGuard.h
     src/app/StartupGuard.cpp
+    src/app/LowSpecStartup.h
+    src/app/LowSpecStartup.cpp
     src/app/GraphicsApiChoice.h
     src/app/GraphicsApiChoice.cpp
     src/app/editor/ProjectFileController.h

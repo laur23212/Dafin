@@ -2,12 +2,15 @@ import QtQuick
 import Drift
 
 // Dafin: one tool in the AI category. A tool that is not built yet stays visible but greyed out,
-// with a "Coming soon" badge, and does not open.
+// with a "Coming soon" badge, and does not open. In low-spec mode a built tool is greyed out the
+// same way, with an "Off" badge and a tooltip saying why.
 Rectangle {
     id: root
 
     required property var tool
-    readonly property bool available: tool.available === true
+    // Low-spec (compatibility) mode: local AI is off on this computer.
+    property bool lowSpecOff: false
+    readonly property bool available: tool.available === true && !lowSpecOff
 
     signal openRequested()
 
@@ -22,7 +25,10 @@ Rectangle {
 
     Accessible.role: Accessible.Button
     Accessible.name: tool.title
-    Accessible.description: root.available ? tool.description : qsTr("Coming soon")
+    Accessible.description: root.available ? tool.description
+                                           : (root.lowSpecOff ? root.lowSpecTip : qsTr("Coming soon"))
+
+    readonly property string lowSpecTip: qsTr("Off in compatibility mode: this computer is below Dafin's recommended specs. Settings › Performance › Low-spec mode turns it back on.")
 
     Keys.onReturnPressed: if (root.available) root.openRequested()
     Keys.onEnterPressed: if (root.available) root.openRequested()
@@ -76,7 +82,7 @@ Rectangle {
                 Text {
                     id: soonLabel
                     anchors.centerIn: parent
-                    text: qsTr("Coming soon")
+                    text: root.lowSpecOff ? qsTr("Off") : qsTr("Coming soon")
                     color: Theme.c.driftAssetCard.foregroundMuted
                     font.family: Theme.fontFamily
                     font.pixelSize: Theme.fontSizeXs
@@ -116,6 +122,11 @@ Rectangle {
         id: descMetrics
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
+    }
+
+    ThemedToolTip {
+        text: root.lowSpecTip
+        visible: root.lowSpecOff && hover.hovered
     }
 
     HoverHandler {

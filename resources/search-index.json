@@ -1195,6 +1195,14 @@
       "descriptionSource": "These tune memory use and playback behaviour. The defaults suit most machines; changing them can make playback stutter or use far more memory. Most changes apply immediately."
     },
     {
+      "id": "performance-low-spec",
+      "target": "settings:performance#performance-low-spec",
+      "context": "SettingsPerformancePage",
+      "source": "Low-spec mode",
+      "keywords": "compatibility weak old slow computer laptop opengl 3.2 llvmpipe software ram memory low spec",
+      "needs": []
+    },
+    {
       "id": "performance-graphics-api",
       "target": "settings:performance#performance-graphics-api",
       "context": "SettingsPerformancePage",

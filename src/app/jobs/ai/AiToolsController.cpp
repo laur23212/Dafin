@@ -1,5 +1,6 @@
 #include "app/jobs/ai/AiToolsController.h"
 
+#include "core/base/LowSpec.h"
 #include "core/base/SafeMode.h"
 
 #include "app/editor/AppController.h"
@@ -233,6 +234,12 @@ bool AiToolsController::createCaptions(const QString &language, int maxWordsPerC
 {
     if (drift::safemode::active()) {
         m_app->setLastMessage(tr("AI tools are off in safe mode. Restart normally to use them."),
+                              QStringLiteral("warning"));
+        return false;
+    }
+    if (drift::lowspec::active()) {
+        m_app->setLastMessage(tr("Local AI is off in compatibility mode: this computer is below Dafin's "
+                                 "recommended specs. Settings › Performance › Low-spec mode turns it back on."),
                               QStringLiteral("warning"));
         return false;
     }

@@ -1,6 +1,7 @@
 #include "engine/platform/AndroidUri.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "engine/packages/effects/EffectCatalog.h"
+#include "core/base/LowSpec.h"
 #include "core/effects/EffectStackStore.h"
 #include "app/jobs/vision/FaceTrackingController.h"
 #include "app/jobs/vision/SegmentationController.h"
@@ -50,6 +51,15 @@ drift::KeyframeTrack<T> rescaleKeyframeTrackTimes(const drift::KeyframeTrack<T> 
 }
 } // namespace
 
+namespace {
+// Dafin: effects that run a local AI model (faces, depth, face swap) or a 3D renderer every frame.
+// Off in low-spec mode: on a weak computer they are too slow to preview or export.
+bool lowSpecBlocksEffect(const EffectPresetEntry &def)
+{
+    return drift::lowspec::active() && (def.needsFace || def.needsDepth || def.isFaceSwap || def.isModel3d);
+}
+} // namespace
+
 QVariantList AppController::effectCatalog() const
 {
     QVariantList out;
@@ -76,6 +86,7 @@ QVariantList AppController::effectCatalog() const
             {QStringLiteral("thumbnailPath"), def.thumbnailPath},
             {QStringLiteral("user"), isUserPackageDir(def.gpu.packageDir, QStringLiteral("effects"))},
             {QStringLiteral("params"), params},
+            {QStringLiteral("lowSpecOff"), lowSpecBlocksEffect(def)},
         });
     }
     return out;
@@ -107,6 +118,12 @@ bool isFaceEffectId(const QString &catalogId)
 bool AppController::effectFitsTrack(int trackIndex, const QString &effectId, QString *why) const
 {
     const EffectPresetEntry *def = effectDefForId(effectId);
+    if (def && lowSpecBlocksEffect(*def)) {
+        if (why)
+            *why = tr("This effect is off in compatibility mode: it runs a local AI model or 3D, which "
+                      "is too slow on this computer.");
+        return false;
+    }
     if (!def || !(def->needsFace || def->needsDepth || def->needsMask || def->isFaceSwap || def->isModel3d))
         return true;
     const bool standalone = trackIndex < 0

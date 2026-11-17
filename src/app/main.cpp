@@ -33,6 +33,8 @@
 #include "app/platform/PrimaryDisplay.h"
 #include "app/GraphicsApiChoice.h"
 #include "app/StartupSplash.h"
+#include "app/LowSpecStartup.h"
+#include "core/base/LowSpec.h"
 #include "app/editor/LayoutStore.h"
 #include "app/editor/WorkspaceStore.h"
 #include "app/editor/TutorialContent.h"
@@ -379,7 +381,15 @@ bool probeOpenGl(const QSurfaceFormat &format, QSurfaceFormat *obtained = nullpt
 // Qt Quick asks for QSurfaceFormat::defaultFormat() and calls qFatal() when it
 // cannot have it, so on a driver below OpenGL 3.3 Drift aborts before there is a
 // window to put an error in — the app simply vanishes. Say why first.
-void warnIfNoOpenGl()
+//
+// Dafin: split in two so low-spec mode can decide in between (app/LowSpecStartup.cpp) — the probe
+// returns what it found, and the error is only shown when no software OpenGL took over.
+bool glAtLeast33(const dafin::lowspec::GlFound &gl)
+{
+    return gl.major > 3 || (gl.major == 3 && gl.minor >= 3);
+}
+
+dafin::lowspec::GlFound probeStartupOpenGl()
 {
     // Probe exactly what Qt Quick will ask for — and check what came *back*, not
     // just that creation succeeded. Both WGL and GLX quietly clamp the request to
@@ -410,8 +420,16 @@ void warnIfNoOpenGl()
         dafin::setCrashGraphicsInfo(haveGl ? line.constData() : "no OpenGL context could be created");
     };
     noteGraphics();
+    const auto found = [&] {
+        dafin::lowspec::GlFound gl;
+        gl.haveGl = haveGl;
+        gl.major = haveGl ? obtained.majorVersion() : 0;
+        gl.minor = haveGl ? obtained.minorVersion() : 0;
+        gl.renderer = renderer;
+        return gl;
+    };
     if (haveGl && atLeast33(obtained))
-        return;
+        return found();
 
     // The 3.3 request did not give us 3.3. The two platforms disagree about how it
     // fails — WGL clamps and hands back a valid older context, GLX refuses outright
@@ -423,19 +441,30 @@ void warnIfNoOpenGl()
     if (!vendor.isEmpty())
         drift::hwaccel::setRenderVendor(vendor);
     noteGraphics();
+    dafin::lowspec::GlFound gl = found();
+    // New enough, yet the 3.3 core profile itself could not be had: a driver quirk, not old
+    // hardware (the "OpenGL context unavailable" message below).
+    gl.coreProfileFailed = haveGl && atLeast33(obtained);
+    return gl;
+}
 
+// The message for a driver that cannot run Dafin's compositor, when no software OpenGL took over.
+void warnIfNoOpenGl(const dafin::lowspec::GlFound &gl)
+{
+    if (gl.haveGl && glAtLeast33(gl) && !gl.coreProfileFailed)
+        return;
     const QString driver =
-        renderer.isEmpty() ? QCoreApplication::translate("main", "unknown") : renderer;
+        gl.renderer.isEmpty() ? QCoreApplication::translate("main", "unknown") : gl.renderer;
 
     QString title;
     QString body;
-    if (!haveGl) {
+    if (!gl.haveGl) {
         title = QCoreApplication::translate("main", "No OpenGL driver");
         body = QCoreApplication::translate(
             "main",
             "Drift could not create an OpenGL context, so it cannot draw its interface "
             "or render the preview.\n\nInstall or update your graphics driver.");
-    } else if (atLeast33(obtained)) {
+    } else if (gl.coreProfileFailed) {
         // New enough, so it is the 3.3 *core profile* that could not be had — a
         // driver or session quirk, not old hardware. Do not tell someone their GPU
         // is too old when it is not.
@@ -445,8 +474,8 @@ void warnIfNoOpenGl()
                    "Drift could not create an OpenGL 3.3 core profile context, though "
                    "this driver reports OpenGL %1.%2 (%3).\n\nThe video preview cannot "
                    "render. Updating your graphics driver may help.")
-                   .arg(obtained.majorVersion())
-                   .arg(obtained.minorVersion())
+                   .arg(gl.major)
+                   .arg(gl.minor)
                    .arg(driver);
     } else {
         title = QCoreApplication::translate("main", "Graphics driver is too old");
@@ -458,8 +487,8 @@ void warnIfNoOpenGl()
                    "OpenGL %1.%2 (%3).\n\nThe video preview cannot render, and Drift may "
                    "not start at all. Update your graphics driver, or run Drift on a "
                    "machine with a newer GPU.")
-                   .arg(obtained.majorVersion())
-                   .arg(obtained.minorVersion())
+                   .arg(gl.major)
+                   .arg(gl.minor)
                    .arg(driver);
     }
 
@@ -487,7 +516,7 @@ public:
                             "anything yet.\n\nIf the window is blank or black, your graphics "
                             "driver is most likely outdated or faulty. Update it from your GPU "
                             "vendor's website (AMD, NVIDIA or Intel) and start Drift again.")
-                            .arg(kTimeout.count());
+                            .arg(timeout().count());
 
         window->installEventFilter(this);
         auto state = m_state;
@@ -509,7 +538,12 @@ protected:
     }
 
 private:
-    static constexpr std::chrono::seconds kTimeout{15};
+    // Dafin: a minute in low-spec mode, where software OpenGL first compiles its shaders on a
+    // slow CPU; a quarter of that everywhere else, as before.
+    static std::chrono::seconds timeout()
+    {
+        return std::chrono::seconds(drift::lowspec::active() ? 60 : 15);
+    }
 
     struct State
     {
@@ -534,7 +568,7 @@ private:
     {
         std::unique_lock lock(state->mutex);
         state->cv.wait(lock, [&] { return state->exposed || state->framed; });
-        if (state->cv.wait_for(lock, kTimeout, [&] { return state->framed; }))
+        if (state->cv.wait_for(lock, timeout(), [&] { return state->framed; }))
             return;
         lock.unlock();
 
@@ -564,6 +598,11 @@ private:
 int main(int argc, char *argv[])
 {
     g_dafinStartupClock.start();
+#if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
+    // Dafin: the environment as launched, before anything below adds to it; a software-OpenGL
+    // relaunch (low-spec mode) starts from this.
+    dafin::lowspec::captureLaunchEnvironment();
+#endif
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
     // Dafin: an export running in its own process for the editor (ExportWorker.h). Before the
     // crash report: a crash there is reported by the editor, and the report's message box would
@@ -816,7 +855,15 @@ int main(int argc, char *argv[])
     // all. A driver that is merely too old still starts, and the preview explains
     // itself in the panel instead.
     step(StartupSplash::tr("Checking the graphics driver…"), 0.04);
-    warnIfNoOpenGl();
+    const dafin::lowspec::GlFound startupGl = probeStartupOpenGl();
+    // Dafin: weak hardware (OpenGL below 3.3, a software rasterizer, under 5 GB of RAM) turns on
+    // low-spec mode; below 3.3 this process hands over to a copy of itself on software OpenGL
+    // (Mesa llvmpipe) and quits here, before any window. On other machines nothing changes.
+    if (dafin::lowspec::decideAtStartup(startupGl, splash)) {
+        delete splash;
+        return 0;
+    }
+    warnIfNoOpenGl(startupGl);
 #endif
 
     // Registering the bundled fonts needs a QGuiApplication, and must happen before the compositor

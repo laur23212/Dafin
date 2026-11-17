@@ -70,6 +70,50 @@ SettingsPage {
         }
     }
 
+    // Dafin: low-spec (compatibility) mode, core/base/LowSpec.h.
+    SettingsGroupHeader {
+        text: qsTr("Compatibility")
+        query: page.query
+    }
+
+    SettingsRow {
+        title: qsTr("Low-spec mode")
+        searchId: "performance-low-spec"
+        description: {
+            const text = qsTr("For computers below Dafin's recommended specs (OpenGL below 3.3, a software graphics driver, or under 5 GB of RAM). The preview runs at a quarter, heavy clips get proxies, and local AI and AI/3D effects are off. Automatic turns it on only for such computers. Takes effect after restart.")
+            const now = EditorState.preferences.lowSpecMode
+                ? (EditorState.preferences.lowSpecReason.length > 0
+                   ? qsTr("On now: %1.").arg(EditorState.preferences.lowSpecReason)
+                   : qsTr("On now."))
+                : ""
+            const gl = EditorState.preferences.onSoftwareGl
+                ? qsTr("Drawing with software OpenGL, because the graphics driver cannot.")
+                : ""
+            return [text, now, gl].filter(function (t) { return t.length > 0 }).join(" ")
+        }
+        keywords: "compatibility weak old slow computer laptop opengl 3.2 llvmpipe software ram memory low spec"
+        query: page.query
+
+        ThemedComboBox {
+            width: Theme.c.settingsRow.controlWidth
+            textRole: "label"
+            valueRole: "id"
+            model: [
+                { id: "auto", label: qsTr("Automatic") },
+                { id: "on", label: qsTr("Always on") },
+                { id: "off", label: qsTr("Off") }
+            ]
+            currentIndex: {
+                for (var i = 0; i < model.length; ++i) {
+                    if (model[i].id === EditorState.preferences.lowSpecSetting)
+                        return i
+                }
+                return 0
+            }
+            onActivated: EditorState.preferences.lowSpecSetting = model[currentIndex].id
+        }
+    }
+
     SettingsGroupHeader {
         text: qsTr("Interface")
         query: page.query

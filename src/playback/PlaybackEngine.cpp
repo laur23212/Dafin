@@ -1,4 +1,5 @@
 #include "playback/PlaybackEngine.h"
+#include "core/base/LowSpec.h"
 #include "core/base/SafeMode.h"
 #include "engine/gpu/PresentClaims.h"
 #include "playback/AudioOutputChannel.h"
@@ -208,6 +209,10 @@ PlaybackEngine::PlaybackEngine(QObject *parent)
     if (drift::safemode::active()) {
         m_decodeMode = QStringLiteral("software");
         m_previewQuality = QStringLiteral("eighth");
+    } else if (drift::lowspec::active() && m_previewQuality != QLatin1String("eighth")) {
+        // Dafin: low-spec mode previews at a quarter (or the user's own 1/8) for this run; nothing
+        // is saved, so turning the mode off brings the stored quality back. Export is unaffected.
+        m_previewQuality = QStringLiteral("quarter");
     }
     ClipReaderPool::instance().setHardwareDecodeMode(decodeModeFromString(m_decodeMode),
                                                      decodeBackendFromString(m_decodeMode));

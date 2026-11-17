@@ -13,7 +13,7 @@ Column {
     spacing: 4
     // Lift on grab: the card dims and grows slightly, so it reads
     // as picked up rather than merely faded.
-    opacity: presetDrag.active ? Theme.c.effectPresetCard.dragOpacity : 1
+    opacity: presetDrag.active ? Theme.c.effectPresetCard.dragOpacity : (root.lowSpecOff ? 0.45 : 1)
     scale: presetDrag.active ? 1.04 : 1.0
 
     Behavior on opacity {
@@ -24,13 +24,17 @@ Column {
     }
 
     readonly property string thumb: root.modelData.thumbnailPath || ""
+    // Dafin: low-spec (compatibility) mode turns off effects that run a local AI model or 3D.
+    // Greyed out; clicking or dropping one says why (AppController::effectFitsTrack).
+    readonly property bool lowSpecOff: root.modelData.lowSpecOff === true
 
     // Dafin: resting on the card previews the effect on the clip under the playhead.
     PresetHoverPreview {
         kind: "effect"
         payload: root.modelData.id
         hovered: cardHover.hovered
-        suspended: presetDrag.active
+        // Rendering an off effect on hover is exactly the cost low-spec mode avoids.
+        suspended: presetDrag.active || root.lowSpecOff
     }
 
     Drag.active: presetDrag.active
@@ -82,7 +86,9 @@ Column {
         HoverHandler { id: cardHover }
 
         ThemedToolTip {
-            text: EditorState.selectedClip >= 0
+            text: root.lowSpecOff
+                  ? qsTr("%1 — off in compatibility mode: it runs a local AI model or 3D, which is too slow on this computer").arg(root.modelData.label)
+                  : EditorState.selectedClip >= 0
                   ? qsTr("%1 — click to apply to the selection, or drag onto a clip").arg(root.modelData.label)
                   : qsTr("%1 — click to add as an adjustment layer, or drag onto a clip").arg(root.modelData.label)
             visible: cardHover.hovered && !presetDrag.active

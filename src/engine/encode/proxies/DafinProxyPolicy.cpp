@@ -1,4 +1,5 @@
 #include "engine/encode/proxies/DafinProxyPolicy.h"
+#include "core/base/LowSpec.h"
 
 #include "engine/encode/proxies/PreviewProxyRenderer.h"
 #include "engine/encode/proxies/ReverseProxyCache.h"
@@ -56,6 +57,9 @@ QStringList heavyReasons(const MediaInfo &info, qint64 fileBytes)
             reasons << QStringLiteral("4K");
         else if (shortSide > 1080)
             reasons << QStringLiteral("%1p").arg(shortSide);
+        // Dafin: in low-spec mode Full HD is heavy too; a weak CPU decodes it slowly.
+        else if (shortSide == 1080 && drift::lowspec::active())
+            reasons << QStringLiteral("1080p");
         if (stream.codecName == QLatin1String("hevc"))
             reasons << QStringLiteral("HEVC");
         if (stream.bitDepth > 8)
@@ -299,7 +303,11 @@ void setProjectEnabled(const QString &projectId, bool enabled)
 
 QString importChoice()
 {
-    const QString value = QSettings().value(settingsKey("proxyImportChoice"), QStringLiteral("ask")).toString();
+    QSettings settings;
+    // Dafin: low-spec mode makes proxies without asking, unless the user has chosen themselves.
+    if (drift::lowspec::active() && !settings.contains(settingsKey("proxyImportChoice")))
+        return QStringLiteral("proxy");
+    const QString value = settings.value(settingsKey("proxyImportChoice"), QStringLiteral("ask")).toString();
     return value == QLatin1String("proxy") || value == QLatin1String("full") ? value
                                                                               : QStringLiteral("ask");
 }

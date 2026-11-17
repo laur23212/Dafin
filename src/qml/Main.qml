@@ -839,6 +839,8 @@ ApplicationWindow {
     Connections {
         target: EditorState.segmentation
         function onOpenWindowRequested(track, clip, startSeconds, durationSeconds) {
+            if (window.lowSpecBlocksAi())
+                return
             segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds, true)
         }
     }
@@ -945,12 +947,26 @@ ApplicationWindow {
         }
     }
 
+    // Dafin: low-spec (compatibility) mode keeps the local AI tools (cutout, denoise, restore and
+    // upscale) closed for this run; their models would crawl on this computer. Says so instead.
+    function lowSpecBlocksAi() {
+        if (!EditorState.preferences.lowSpecMode)
+            return false
+        EditorState.setLastMessage(qsTr("Local AI is off in compatibility mode: this computer is below Dafin's recommended specs. Settings › Performance › Low-spec mode turns it back on."),
+                                   "warning")
+        return true
+    }
+
     // Opened from the clip inspector; a window rather than a dialog so the timeline stays visible.
     function openSegmentation(track, clip, startSeconds, durationSeconds) {
+        if (window.lowSpecBlocksAi())
+            return
         segmentationWindowLoader.ensure().openFor(track, clip, startSeconds, durationSeconds)
     }
 
     function openDenoise(track, clip, durationSeconds) {
+        if (window.lowSpecBlocksAi())
+            return
         if (workspace.pool.denoiseInLayout && !denoiseWindowLoader.shown) {
             workspace.pool.panel("denoise").parent?.parent?.activate?.("denoise")
             const panel = workspace.pool.denoisePanel
@@ -963,12 +979,16 @@ ApplicationWindow {
     }
 
     function openRestore(track, clip) {
+        if (window.lowSpecBlocksAi())
+            return
         const w = restoreWindowLoader.ensure()
         w.host = window
         w.openFor(track, clip)
     }
 
     function openRestoreAsset(assetId) {
+        if (window.lowSpecBlocksAi())
+            return
         if (workspace.pool.sourceLabShown) {
             EditorState.sourceLab.load(assetId)
             return
