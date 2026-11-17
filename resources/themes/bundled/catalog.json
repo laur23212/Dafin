@@ -242,6 +242,12 @@
    "kind": "qml"
   },
   {
+   "id": "dafin-romanian-core-2",
+   "label": "Romanian Core 2",
+   "group": "Romanian",
+   "kind": "qml"
+  },
+  {
    "id": "dafin-romanian-core",
    "label": "Retro Slavic Christmas",
    "group": "Romanian",
