@@ -86,6 +86,191 @@ SettingsPage {
         }
     }
 
+    // Dafin: folders of effects downloaded by Filmora, read and shown as Dafin's own
+    // (LinkedLibraries, FilmoraLibraryImporter).
+    SettingsGroupHeader {
+        text: qsTr("Effect folders")
+        query: page.query
+    }
+
+    SettingsRow {
+        id: linkedRow
+        title: qsTr("Linked effect folders")
+        searchId: "asset-providers-linked-folders"
+        description: qsTr("Point Dafin at a folder of effects downloaded by Filmora (Filter, Overlay, transition, Element, resFont, title…), "
+                          + "or at any folder of fonts, stickers (videos, pictures, Lotties) and .cube looks. "
+                          + "Dafin reads it and puts what it can use into Effects, Transitions, Stickers, Looks and the font list, each in the category it fits, like its own. "
+                          + "Fonts anywhere in it (a Fonts folder, say) are added too, so titles and templates that ask for them by name find them. "
+                          + "The folder stays where it is, so keep it there; changes in it are picked up when Dafin starts.")
+        keywords: "filmora effects filters transitions elements stickers fonts folder link import library resinfo typeface"
+        query: page.query
+        stacked: true
+
+        function summary(f) {
+            if (f.missing)
+                return qsTr("Folder not found. Reconnect its drive, or remove it here.")
+            if (!f.scanned)
+                return f.scanning ? qsTr("Reading the folder…") : qsTr("Waiting to be read")
+            if (f.error)
+                return f.error
+            if (f.found === 0)
+                return qsTr("No Filmora effects found in this folder")
+            const parts = []
+            if (f.effects > 0) parts.push(qsTr("%n effect(s)", "", f.effects))
+            if (f.transitions > 0) parts.push(qsTr("%n transition(s)", "", f.transitions))
+            if (f.stickers > 0) parts.push(qsTr("%n sticker(s)", "", f.stickers))
+            if (f.fonts > 0) parts.push(qsTr("%n font(s)", "", f.fonts))
+            if (f.looks > 0) parts.push(qsTr("%n look(s)", "", f.looks))
+            let text = parts.length > 0 ? parts.join(" · ") : qsTr("Nothing Dafin can use yet")
+            if (f.skipped > 0)
+                text += " · " + qsTr("%n not supported", "", f.skipped)
+            if (f.scanning)
+                text += " · " + qsTr("updating…")
+            if (f.note)
+                text += "\n" + f.note
+            return text
+        }
+
+        Connections {
+            target: LinkedLibraries
+            function onScanFinished(path, imported, skipped, error) {
+                const name = path.split(/[\\/]/).pop()
+                if (error.length > 0)
+                    Toasts.error(qsTr("%1: %2").arg(name).arg(error))
+                else if (imported > 0)
+                    Toasts.success(qsTr("%1: %n item(s) ready in Dafin", "", imported).arg(name))
+            }
+        }
+
+        Column {
+            width: parent ? parent.width : 0
+            spacing: Theme.spacingSm
+
+            Repeater {
+                model: LinkedLibraries.folders
+
+                delegate: Rectangle {
+                    id: folderCard
+                    required property var modelData
+                    property bool expanded: false
+                    readonly property var skippedList: expanded ? LinkedLibraries.skippedItems(modelData.key) : []
+                    width: parent ? parent.width : 0
+                    height: folderColumn.implicitHeight + Theme.spacingSm * 2
+                    radius: Theme.c.startScreenProjectRow.radius
+                    color: Theme.c.startScreenProjectRow.background
+                    border.width: Theme.c.startScreenProjectRow.borderWidth
+                    border.color: Theme.c.startScreenProjectRow.border
+
+                    Column {
+                        id: folderColumn
+                        x: Theme.spacingMd
+                        y: Theme.spacingSm
+                        width: parent.width - Theme.spacingMd - Theme.spacingXs
+                        spacing: Theme.spacingXs
+
+                        Item {
+                            width: parent.width
+                            height: 28
+
+                            IconGlyph {
+                                id: linkedGlyph
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                glyph: Theme.icons.folder
+                                iconSize: Theme.iconSizeMd
+                                iconColor: Theme.c.startScreenProjectRow.icon
+                            }
+
+                            Text {
+                                anchors.left: linkedGlyph.right
+                                anchors.leftMargin: Theme.spacingMd
+                                anchors.right: detailsButton.left
+                                anchors.rightMargin: Theme.spacingSm
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: folderCard.modelData.path
+                                color: Theme.c.startScreenProjectRow.foreground
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeSm
+                                elide: Text.ElideMiddle
+                            }
+
+                            ThemedButton {
+                                id: detailsButton
+                                anchors.right: removeLinked.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: (folderCard.modelData.skipped || 0) > 0
+                                variant: "ghost"
+                                text: folderCard.expanded ? qsTr("Hide") : qsTr("Why some weren't added")
+                                onClicked: folderCard.expanded = !folderCard.expanded
+                            }
+
+                            IconButton {
+                                id: removeLinked
+                                anchors.right: parent.right
+                                anchors.verticalCenter: parent.verticalCenter
+                                glyph: Theme.icons.x
+                                tooltip: qsTr("Unlink this folder (its effects leave Dafin; the folder itself is not touched)")
+                                onClicked: LinkedLibraries.removeFolder(folderCard.modelData.key)
+                            }
+                        }
+
+                        Text {
+                            width: parent.width
+                            leftPadding: Theme.iconSizeMd + Theme.spacingMd
+                            text: linkedRow.summary(folderCard.modelData)
+                            color: folderCard.modelData.missing ? Theme.c.startScreenProjectRow.foreground
+                                                                : Theme.c.startScreenProjectRow.icon
+                            font.family: Theme.fontFamily
+                            font.pixelSize: Theme.fontSizeSm
+                            wrapMode: Text.Wrap
+                        }
+
+                        Repeater {
+                            model: folderCard.skippedList
+                            delegate: Text {
+                                required property var modelData
+                                width: folderColumn.width
+                                leftPadding: Theme.iconSizeMd + Theme.spacingMd
+                                text: "• " + modelData.name + " — " + modelData.reason
+                                color: Theme.c.startScreenProjectRow.icon
+                                font.family: Theme.fontFamily
+                                font.pixelSize: Theme.fontSizeSm
+                                wrapMode: Text.Wrap
+                            }
+                        }
+                    }
+                }
+            }
+
+            Row {
+                spacing: Theme.spacingSm
+
+                ThemedButton {
+                    variant: "secondary"
+                    glyph: Theme.icons.plus
+                    text: qsTr("Add folder…")
+                    onClicked: {
+                        const url = FileDialogs.openDirectory(qsTr("Choose a folder of Filmora effects"))
+                        if (!url || url.toString().length === 0)
+                            return
+                        const problem = LinkedLibraries.addFolder(url)
+                        if (problem.length > 0)
+                            Toasts.error(problem)
+                    }
+                }
+
+                ThemedButton {
+                    variant: "ghost"
+                    glyph: Theme.icons.refresh
+                    text: LinkedLibraries.busy ? qsTr("Reading…") : qsTr("Rescan")
+                    enabled: !LinkedLibraries.busy && LinkedLibraries.folders.length > 0
+                    tooltip: qsTr("Pick up effects added to or removed from the linked folders")
+                    onClicked: LinkedLibraries.rescan()
+                }
+            }
+        }
+    }
+
     // Dafin: the user's own Lotties, sounds and .mogrt titles, carried to another computer.
     SettingsGroupHeader {
         text: qsTr("Your library")

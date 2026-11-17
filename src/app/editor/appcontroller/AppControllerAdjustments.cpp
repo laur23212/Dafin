@@ -11,6 +11,7 @@
 // would restore the boundary.
 #include "engine/ml/vision/detection/ObjectDetector.h"
 #include "engine/packages/assets/StickerCatalog.h"
+#include <QFileInfo>
 
 
 using namespace drift::appdetail;
@@ -74,6 +75,18 @@ void AppController::finalizeGeneratedSubtitles(drift::TimeUs timelineStart,
 }
 
 
+namespace {
+// A sticker that is a video (a Filmora element: a WebM with a transparent background) rather
+// than a picture or a Lottie.
+bool isVideoStickerPath(const QString &path)
+{
+    static const QStringList kVideo = {QStringLiteral("webm"), QStringLiteral("mov"),
+                                       QStringLiteral("mp4"), QStringLiteral("m4v"),
+                                       QStringLiteral("mkv")};
+    return kVideo.contains(QFileInfo(path).suffix().toLower());
+}
+} // namespace
+
 QVariantList AppController::builtinStickers() const
 {
     QVariantList out;
@@ -83,6 +96,10 @@ QVariantList AppController::builtinStickers() const
             {QStringLiteral("label"), entry.label},
             {QStringLiteral("category"), entry.category},
             {QStringLiteral("path"), entry.path},
+            // Dafin: a video sticker (linked Filmora element) shows its thumbnail and goes onto
+            // the timeline as the video file itself (StickerPresetCard).
+            {QStringLiteral("thumbnail"), entry.thumbnail.isEmpty() ? entry.path : entry.thumbnail},
+            {QStringLiteral("video"), isVideoStickerPath(entry.path)},
         });
     }
     return out;

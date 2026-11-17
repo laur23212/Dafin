@@ -15,6 +15,9 @@ struct StickerEntry
     QString label;
     QString category;
     QString path; // absolute filesystem path
+    // Dafin: a picture for the card when `path` is not one itself (a video sticker from a linked
+    // Filmora folder). Optional, absolute.
+    QString thumbnail;
 };
 
 struct StickerCategory

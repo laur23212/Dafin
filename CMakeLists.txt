@@ -1021,6 +1021,8 @@ add_library(driftengine STATIC
     src/engine/render2d/vector/VectorInspect.cpp
     src/engine/packages/effects/EffectPackageLoader.h
     src/engine/packages/effects/EffectPackageLoader.cpp
+    src/engine/packages/linked/FilmoraLibraryImporter.h
+    src/engine/packages/linked/FilmoraLibraryImporter.cpp
     src/engine/packages/transitions/TransitionCatalog.h
     src/engine/packages/transitions/TransitionCatalog.cpp
     src/engine/packages/transitions/TransitionPackageLoader.h
@@ -1313,6 +1315,8 @@ qt_add_executable(drift
     src/app/online/addons/AddonEndpoint.h
     src/app/online/addons/AddonManager.h
     src/app/online/addons/AddonManager.cpp
+    src/app/online/addons/LinkedLibraries.h
+    src/app/online/addons/LinkedLibraries.cpp
     src/app/online/market/MarketEndpoint.h
     src/app/online/market/MarketIdentity.h
     src/app/online/market/MarketIdentity.cpp

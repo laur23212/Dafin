@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFileInfo>
 #include <QStandardPaths>
 
 namespace PackageSearchPaths {
@@ -43,8 +44,19 @@ QStringList defaultSearchPaths(const QString &envVar, const QString &subdir,
 #endif
 
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if (!appData.isEmpty())
+    if (!appData.isEmpty()) {
         roots.append(QDir(appData).filePath(subdir));
+
+        // Dafin: packages converted from linked effect folders (FilmoraLibraryImporter), one
+        // folder per linked library. Last, so a built-in package always wins an id clash.
+        const QDir linked(QDir(appData).filePath(QStringLiteral("linked-libraries")));
+        const QStringList libraries = linked.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        for (const QString &library : libraries) {
+            const QString root = linked.filePath(library + QLatin1Char('/') + subdir);
+            if (QFileInfo(root).isDir())
+                roots.append(root);
+        }
+    }
 
     roots.removeDuplicates();
     return roots;
