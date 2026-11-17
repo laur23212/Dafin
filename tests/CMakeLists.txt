@@ -326,6 +326,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/appcontroller/AppControllerKeyframes.cpp
     ../src/app/editor/appcontroller/AppControllerEffects.cpp
     ../src/app/editor/appcontroller/AppControllerTracks.cpp
+    ../src/app/editor/AssetGroupStore.cpp
     ../src/app/editor/appcontroller/AppControllerProject.cpp
     ../src/app/editor/appcontroller/AppControllerTextLayers.cpp
     ../src/app/editor/appcontroller/AppControllerDafin.cpp
