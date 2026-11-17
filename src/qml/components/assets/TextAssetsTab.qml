@@ -246,6 +246,15 @@ Item {
         onCategoryActivated: (categoryId) => root.section = categoryId
     }
 
+    // Dafin: the card label's height, for the grid rows. It was used below but never defined, so
+    // every cellHeight binding failed and the rows stayed at the 100 px default while the cards are
+    // taller: each card covered the lower half of the one above it, cutting off its preview.
+    FontMetrics {
+        id: labelMetrics
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+    }
+
     // Built-in packs and the user's own styles are separate grids, switched from the toolbar.
     GridView {
         id: packGrid
@@ -265,7 +274,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.section === "builtin"
         model: root.builtinPresets
@@ -294,7 +303,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.section === "mine" && root.userPresets.length > 0
         model: root.userPresets
@@ -327,7 +336,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.section === "installed"
         model: root.installedPresets
@@ -356,7 +365,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.showsMyList && root.myTitles.length > 0
         model: root.myTitles
