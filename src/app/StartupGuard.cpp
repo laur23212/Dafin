@@ -1,4 +1,5 @@
 #include "app/StartupGuard.h"
+#include "app/platform/CrashReport.h"
 
 #include "core/base/SafeMode.h"
 
@@ -31,6 +32,8 @@ bool begin(int argc, char *argv[])
 
 void markStarted()
 {
+    // Dafin: from here a crash is "Dafin crashed", before it "Dafin could not start".
+    dafin::markCrashReportStarted();
     QSettings settings;
     settings.setValue(QLatin1String(safemode::kAttemptsKey), 0);
     settings.sync();

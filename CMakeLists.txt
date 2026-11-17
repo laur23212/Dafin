@@ -1701,6 +1701,12 @@ if(WIN32)
         OBJECT_DEPENDS "${CMAKE_SOURCE_DIR}/resources/windows/drift.ico")
 endif()
 
+# Dafin: on Linux a crash leaves a report and a window too (CrashReport_posix.cpp). Android is
+# CMAKE_SYSTEM_NAME "Android", so it is not in this.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_sources(drift PRIVATE src/app/platform/CrashReport.h src/app/platform/CrashReport_posix.cpp)
+endif()
+
 # Without a bundle macOS runs the app as a background process, with no Dock tile or menu bar.
 # It also collides with the <build>/Drift/ directory qt_add_qml_module(URI Drift) writes, which
 # on case-insensitive APFS fails the link with EISDIR.
@@ -3398,7 +3404,8 @@ if(NOT _dafin_sha STREQUAL "")
         string(APPEND DAFIN_BUILD_LABEL " (${_dafin_sha})")
     endif()
 endif()
-set_property(SOURCE src/app/StartupSplash.cpp src/app/platform/CrashReport_win.cpp APPEND PROPERTY
+set_property(SOURCE src/app/StartupSplash.cpp src/app/platform/CrashReport_win.cpp
+             src/app/platform/CrashReport_posix.cpp APPEND PROPERTY
              COMPILE_DEFINITIONS DAFIN_BUILD_LABEL="${DAFIN_BUILD_LABEL}")
 
 if(DRIFT_PCH)

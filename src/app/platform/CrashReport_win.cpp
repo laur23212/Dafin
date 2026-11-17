@@ -4,23 +4,34 @@
 // function, file and line: run the Build workflow with platforms=crash-report and the report's
 // text, or llvm-symbolizer --obj=dafin.exe --relative-address <offset> beside the .pdb.
 // The last Qt messages before the crash go to dafin-log.txt beside it, rewritten every start.
+// Dafin never closes silently: besides unhandled exceptions, abort() (qFatal, a failed OpenGL
+// context in Qt Quick, std::terminate), pure virtual calls and invalid CRT parameters write the
+// same report and show the same message box. Not catchable by anyone: a __fastfail, a kill from
+// outside and a DLL missing at load time (Windows shows its own box for that one).
 
 #include "app/platform/CrashReport.h"
 
 #include <QByteArray>
 #include <QString>
+#include <QSysInfo>
 #include <QtGlobal>
 
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <windows.h>
+#include <intrin.h>
 
+#include <csignal>
 #include <cstdarg>
 #include <cstdio>
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <cwchar>
+#include <exception>
 #include <mutex>
+#include <stdexcept>
 
 // "build 33 (abc1234)" from CMakeLists.txt, so a report names the dafin.pdb that reads it back
 // (Build workflow, platforms=crash-report).
@@ -34,6 +45,27 @@ wchar_t g_dir[MAX_PATH] = {};
 HANDLE g_log = INVALID_HANDLE_VALUE;
 std::mutex g_logMutex;
 QtMessageHandler g_previousHandler = nullptr;
+std::terminate_handler g_previousTerminate = nullptr;
+char g_os[256] = {};
+char g_gfx[512] = {};
+char g_error[512] = {};
+volatile LONG g_started = 0;
+volatile LONG g_inCrash = 0;
+
+// Exception codes for the runtime failures that never raise an exception of their own.
+constexpr DWORD kAbortCode = 0xE0DAF001;
+constexpr DWORD kPurecallCode = 0xE0DAF002;
+constexpr DWORD kInvalidParameterCode = 0xE0DAF003;
+
+void setText(char *dst, size_t cap, const char *src)
+{
+    if (!cap)
+        return;
+    size_t i = 0;
+    for (; src && src[i] && i + 1 < cap; ++i)
+        dst[i] = src[i];
+    dst[i] = '\0';
+}
 
 void writeAll(HANDLE file, const char *text, int length)
 {
@@ -73,20 +105,36 @@ void describe(HANDLE file, int index, DWORD64 address)
 
 LONG WINAPI onCrash(EXCEPTION_POINTERS *info)
 {
+    // A second thread crashing while the first one shows the message box just waits for it.
+    if (InterlockedExchange(&g_inCrash, 1))
+        Sleep(INFINITE);
     SYSTEMTIME now;
     GetLocalTime(&now);
     wchar_t path[MAX_PATH + 64];
     swprintf_s(path, L"%ls\\crash-%04d%02d%02d-%02d%02d%02d.txt", g_dir, now.wYear, now.wMonth, now.wDay, now.wHour,
                now.wMinute, now.wSecond);
     HANDLE file = CreateFileW(path, GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    if (file == INVALID_HANDLE_VALUE)
+    if (file == INVALID_HANDLE_VALUE) {
+        // No report possible (no LOCALAPPDATA, disk full): still say so rather than vanish.
+        MessageBoxW(nullptr,
+                    g_started ? L"Dafin crashed.\n\nA report could not be saved."
+                              : L"Dafin could not start.\n\nA report could not be saved.",
+                    L"Dafin", MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
         return EXCEPTION_CONTINUE_SEARCH;
+    }
 
     const EXCEPTION_RECORD *record = info->ExceptionRecord;
+    const char *outcome = g_started ? "crashed" : "could not start";
     if (DAFIN_BUILD_LABEL[0])
-        writeLine(file, "Dafin %s, %s, crashed", DRIFT_VERSION, DAFIN_BUILD_LABEL);
+        writeLine(file, "Dafin %s, %s, %s", DRIFT_VERSION, DAFIN_BUILD_LABEL, outcome);
     else
-        writeLine(file, "Dafin %s crashed", DRIFT_VERSION);
+        writeLine(file, "Dafin %s %s", DRIFT_VERSION, outcome);
+    writeLine(file, "Time: %04d-%02d-%02d %02d:%02d:%02d", now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute,
+              now.wSecond);
+    writeLine(file, "OS: %s", g_os);
+    writeLine(file, "Graphics: %s", g_gfx[0] ? g_gfx : "not known (the OpenGL check had not run)");
+    writeLine(file, "Last error message: %s", g_error[0] ? g_error : "none");
+    writeLine(file, "Likely cause: %s", dafin::crashLikelyCause(g_error));
     writeLine(file, "Exception 0x%08lx at 0x%p, thread %lu", record->ExceptionCode, record->ExceptionAddress,
               GetCurrentThreadId());
     if (record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && record->NumberParameters >= 2) {
@@ -130,9 +178,12 @@ LONG WINAPI onCrash(EXCEPTION_POINTERS *info)
         if (g_log != INVALID_HANDLE_VALUE)
             FlushFileBuffers(g_log);
     }
-    wchar_t message[MAX_PATH + 256];
-    swprintf_s(message, L"Dafin stopped because of an error.\n\nA report was saved here:\n%ls\n\n"
-                        L"Please send it, together with dafin-log.txt from the same folder.", path);
+    wchar_t cause[512] = {};
+    MultiByteToWideChar(CP_UTF8, 0, dafin::crashLikelyCause(g_error), -1, cause, 512);
+    wchar_t message[MAX_PATH + 1024];
+    swprintf_s(message, L"%ls%ls%ls\n\nA report was saved here:\n%ls\n\n"
+                        L"Please send it to the Dafin developer, together with dafin-log.txt from the same folder.",
+               g_started ? L"Dafin crashed." : L"Dafin could not start.", cause[0] ? L"\n\n" : L"", cause, path);
     MessageBoxW(nullptr, message, L"Dafin", MB_OK | MB_ICONERROR | MB_SETFOREGROUND | MB_TOPMOST);
     // Windows still records it (Event Viewer) and ends the process.
     return EXCEPTION_CONTINUE_SEARCH;
@@ -140,6 +191,8 @@ LONG WINAPI onCrash(EXCEPTION_POINTERS *info)
 
 void onMessage(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
+    if (type == QtFatalMsg)
+        setText(g_error, sizeof g_error, message.toUtf8().constData());
     {
         static const char *const kinds[] = {"debug", "warning", "critical", "fatal", "info"};
         const QByteArray line = QByteArray(kinds[qBound(0, int(type), 4)]) + ": " + message.toUtf8() + "\r\n";
@@ -149,6 +202,62 @@ void onMessage(QtMsgType type, const QMessageLogContext &context, const QString 
     }
     if (g_previousHandler)
         g_previousHandler(type, context, message);
+}
+
+// abort() (qFatal, std::terminate), a pure virtual call and an invalid CRT parameter do not go
+// through the unhandled-exception filter, so each makes the same report from here.
+void reportRuntimeFailure(DWORD code)
+{
+    CONTEXT context = {};
+    RtlCaptureContext(&context);
+    EXCEPTION_RECORD record = {};
+    record.ExceptionCode = code;
+    record.ExceptionAddress = _ReturnAddress();
+    EXCEPTION_POINTERS pointers = {&record, &context};
+    onCrash(&pointers);
+}
+
+void onAbort(int)
+{
+    reportRuntimeFailure(kAbortCode);
+    TerminateProcess(GetCurrentProcess(), 3);
+}
+
+void onPurecall()
+{
+    setText(g_error, sizeof g_error, "pure virtual function call");
+    reportRuntimeFailure(kPurecallCode);
+    TerminateProcess(GetCurrentProcess(), 3);
+}
+
+void onInvalidParameter(const wchar_t *, const wchar_t *, const wchar_t *, unsigned int, uintptr_t)
+{
+    setText(g_error, sizeof g_error, "invalid parameter passed to the C runtime");
+    reportRuntimeFailure(kInvalidParameterCode);
+    TerminateProcess(GetCurrentProcess(), 3);
+}
+
+[[noreturn]] void onTerminate()
+{
+    try {
+        if (std::current_exception()) {
+            try {
+                throw;
+            } catch (const std::exception &e) {
+                setText(g_error, sizeof g_error, "uncaught exception: ");
+                const size_t used = strlen(g_error);
+                setText(g_error + used, sizeof g_error - used, e.what());
+            } catch (...) {
+                setText(g_error, sizeof g_error, "uncaught exception of unknown type");
+            }
+        } else {
+            setText(g_error, sizeof g_error, "std::terminate called");
+        }
+    } catch (...) {
+    }
+    if (g_previousTerminate && g_previousTerminate != onTerminate)
+        g_previousTerminate();
+    std::abort(); // -> onAbort
 }
 
 } // namespace
@@ -173,6 +282,51 @@ void installCrashReport()
                         FILE_ATTRIBUTE_NORMAL | FILE_FLAG_WRITE_THROUGH, nullptr);
     g_previousHandler = qInstallMessageHandler(onMessage);
     SetUnhandledExceptionFilter(onCrash);
+
+    setText(g_os, sizeof g_os,
+            QStringLiteral("%1, kernel %2 %3, cpu %4")
+                .arg(QSysInfo::prettyProductName(), QSysInfo::kernelType(), QSysInfo::kernelVersion(),
+                     QSysInfo::currentCpuArchitecture())
+                .toUtf8()
+                .constData());
+    signal(SIGABRT, onAbort);
+    _set_abort_behavior(0, _CALL_REPORTFAULT); // no Windows Error Reporting box after ours
+    _set_purecall_handler(onPurecall);
+    _set_invalid_parameter_handler(onInvalidParameter);
+    g_previousTerminate = std::set_terminate(onTerminate);
+}
+
+void setCrashGraphicsInfo(const char *utf8)
+{
+    setText(g_gfx, sizeof g_gfx, utf8);
+}
+
+void markCrashReportStarted()
+{
+    InterlockedExchange(&g_started, 1);
+}
+
+void forceCrashIfRequested()
+{
+    const QByteArray mode = qgetenv("DAFIN_FORCE_CRASH");
+    if (mode.isEmpty() || mode == "0")
+        return;
+    if (mode == "abort")
+        std::abort();
+    if (mode == "terminate") {
+        try {
+            throw std::runtime_error("DAFIN_FORCE_CRASH test exception");
+        } catch (...) {
+            std::terminate();
+        }
+    }
+    if (mode == "start")
+        qFatal("Failed to create OpenGL context for format QSurfaceFormat(version 3.3) "
+               "(fake start-up failure, DAFIN_FORCE_CRASH=start)");
+    if (mode == "late")
+        markCrashReportStarted(); // same crash below, worded as "crashed" instead of "could not start"
+    volatile int *nothing = nullptr;
+    *nothing = 1; // "1": a real invalid memory write
 }
 
 } // namespace dafin
