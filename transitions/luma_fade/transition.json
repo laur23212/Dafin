@@ -1,9 +1,9 @@
 {
   "id": "luma_fade",
   "displayName": "Luma Fade",
-  "category": "cinematic",
+  "category": "basic",
   "previewStrip": "preview_strip.webp",
-  "order": 510,
+  "order": 109,
   "parameters": [
     {
       "identifier": "softness",

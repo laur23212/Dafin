@@ -1,0 +1,34 @@
+{
+  "id": "dip_gray",
+  "displayName": "Dip to Gray",
+  "category": "basic",
+  "previewStrip": "preview_strip.webp",
+  "order": 112,
+  "parameters": [],
+  "fixedParams": {
+    "dipColor": "#808080"
+  },
+  "audioCurve": "dip",
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}
