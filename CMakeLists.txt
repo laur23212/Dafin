@@ -1490,6 +1490,12 @@ target_sources(driftapp PRIVATE
     src/app/mcp/McpController.h
     src/app/mcp/McpController.cpp
     src/app/mcp/McpSafety.cpp
+    src/app/assistant/AssistantController.h
+    src/app/assistant/AssistantController.cpp
+    src/app/assistant/LlmProtocol.h
+    src/app/assistant/LlmProtocol.cpp
+    src/app/assistant/LlmTransport.h
+    src/app/assistant/LlmTransport.cpp
     src/app/editor/PreferencesController.h
     src/app/editor/PreferencesController.cpp
     src/app/StartupGuard.h
@@ -2692,6 +2698,7 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/DebugInfoDialog.qml
         src/qml/components/dialogs/LogViewerDialog.qml
         src/qml/components/dialogs/AgentConfirmDialog.qml
+        src/qml/components/panels/AiAssistPanel.qml
         src/qml/components/dialogs/ThemeTrustDialog.qml
         src/qml/components/preview/PlaybackStatsOverlay.qml
         src/qml/components/preview/transport/PreviewTransportTimecode.qml

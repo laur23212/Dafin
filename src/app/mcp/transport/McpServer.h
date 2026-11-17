@@ -13,6 +13,10 @@ namespace drift::mcp {
 class McpHttp;
 class McpDispatcher;
 
+// Runs one MCP tool (homepage tool or toolbox op) and returns the MCP tool result
+// ({content:[…], isError}). What both the HTTP/stdio server and the AI Assist panel use.
+QJsonObject runTool(McpDispatcher &dispatcher, const QString &name, const QJsonObject &args);
+
 class McpServer : public QObject
 {
     Q_OBJECT

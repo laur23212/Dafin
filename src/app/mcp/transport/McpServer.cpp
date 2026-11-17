@@ -349,6 +349,13 @@ QJsonValue McpServer::handleRpc(const QString &toolbox, const QJsonValue &body)
 
 QJsonObject McpServer::dispatchTool(const QString &name, const QJsonObject &args)
 {
+    return runTool(*m_dispatcher, name, args);
+}
+
+// Dafin: shared with the in-app AI Assist panel, which calls tools in-process.
+QJsonObject runTool(McpDispatcher &dispatcher, const QString &name, const QJsonObject &args)
+{
+    McpDispatcher *m_dispatcher = &dispatcher;
     if (name == QLatin1String("catalog"))
         return textResult(catalogPayload(args));
     if (name == QLatin1String("toolbox")) {

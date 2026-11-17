@@ -6,6 +6,8 @@
 #include "app/editor/PreferencesController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/mcp/McpController.h"
+#include "app/assistant/AssistantController.h"
+#include "app/online/library/SecretStore.h"
 #include "engine/packages/assets/EmojiCatalog.h"
 #include "engine/packages/assets/FontCatalog.h"
 #include "engine/gpu/device/GpuDevice.h"
@@ -877,6 +879,12 @@ int main(int argc, char *argv[])
     static DafinProxyController dafinProxies(&assetLibrary);
     qmlRegisterSingletonInstance("Drift", 1, 0, "DafinProxies", &dafinProxies);
     qmlRegisterSingletonInstance("Drift", 1, 0, "BinFolderModel", editorState.bin()->folderModel());
+    // Dafin: the AI Assist chat panel. Off until the user sets a provider up; keys go to the
+    // same credential store as the asset-provider sign-ins.
+    static dafin::assistant::AssistantController assistant(&editorState);
+    assistant.setSecretStore(dafin::assets::SecretStore::createBest(
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/credentials")));
+    qmlRegisterSingletonInstance("Drift", 1, 0, "Assistant", &assistant);
     qmlRegisterSingletonInstance("Drift", 1, 0, "EditorState", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "AppController", &editorState);
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);

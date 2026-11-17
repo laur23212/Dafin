@@ -5,6 +5,9 @@
 #include "app/mcp/McpController.h"
 #include "core/project/Transcript.h"
 #include "core/edit/ProtectedRanges.h"
+#include "app/assistant/AssistantController.h"
+#include "app/assistant/LlmTransport.h"
+#include "app/online/library/SecretStore.h"
 #include "app/online/CloudProviders.h"
 
 #include <QAbstractSocket>
@@ -237,6 +240,15 @@ private slots:
     void confirmGateNeedsARealClick();
     void confirmReasonCoversOverwriteAndUnprotect();
     void variantLinkMatchesContentNotTitle();
+    // Dafin AI Assist
+    void assistantProtocolBothProviders();
+    void assistantNoNetworkUntilReady();
+    void assistantToolLoopRunsAndEnds();
+    void assistantFramesNotSentWhenOff();
+    void assistantQuestionNeedsTheButton();
+    void assistantStopClosesOpenCalls();
+    void assistantIrreversibleNeedsAClick();
+    void assistantKeyNeverLeaks();
     void getWaveformImageReportsWords();
     void setEffectStringParamSetsFileParam();
     void addShapeReturnsMintedId();
@@ -8663,6 +8675,398 @@ void McpTest::variantLinkMatchesContentNotTitle()
     r = dispatcher.applyOne(QStringLiteral("clear_variant_link"), {});
     QVERIFY(r.value(QStringLiteral("ok")).toBool());
     QVERIFY(!state.project()->variantLink().isSet());
+}
+
+// ---- Dafin AI Assist ------------------------------------------------------------------------
+
+namespace {
+
+using namespace dafin::assistant;
+
+// Answers from a queue, synchronously; with an empty queue the request stays open (for Stop).
+class FakeTransport : public LlmTransport
+{
+public:
+    QList<LlmRequest> requests;
+    QList<QByteArray> replies;
+    Done pending;
+    void post(const LlmRequest &request, Done done) override
+    {
+        requests.append(request);
+        if (replies.isEmpty()) {
+            pending = done;
+            return;
+        }
+        done(200, replies.takeFirst(), {});
+    }
+    void abort() override { pending = {}; }
+    QJsonObject body(int i) const { return QJsonDocument::fromJson(requests.at(i).body).object(); }
+};
+
+class MemorySecrets : public dafin::assets::SecretStore
+{
+public:
+    QHash<QString, QByteArray> values;
+    bool write(const QString &key, const QByteArray &secret) override { values.insert(key, secret); return true; }
+    std::optional<QByteArray> read(const QString &key) override
+    {
+        if (!values.contains(key))
+            return std::nullopt;
+        return values.value(key);
+    }
+    bool remove(const QString &key) override { return values.remove(key) > 0; }
+    QString backendName() const override { return QStringLiteral("memory"); }
+    bool isEncrypted() const override { return true; }
+};
+
+QByteArray anthropicToolUse(const QList<QPair<QString, QJsonObject>> &calls, const QString &text = {})
+{
+    QJsonArray content;
+    if (!text.isEmpty())
+        content.append(QJsonObject{{"type", "text"}, {"text", text}});
+    int n = 0;
+    for (const auto &[name, input] : calls)
+        content.append(QJsonObject{{"type", "tool_use"}, {"id", QStringLiteral("toolu_%1").arg(++n)}, {"name", name}, {"input", input}});
+    return QJsonDocument(QJsonObject{{"type", "message"},
+                                     {"content", content},
+                                     {"stop_reason", "tool_use"},
+                                     {"usage", QJsonObject{{"input_tokens", 120}, {"output_tokens", 30}, {"cache_read_input_tokens", 80}}}})
+        .toJson(QJsonDocument::Compact);
+}
+
+QByteArray anthropicText(const QString &text)
+{
+    return QJsonDocument(QJsonObject{{"type", "message"},
+                                     {"content", QJsonArray{QJsonObject{{"type", "text"}, {"text", text}}}},
+                                     {"stop_reason", "end_turn"},
+                                     {"usage", QJsonObject{{"input_tokens", 200}, {"output_tokens", 15}}}})
+        .toJson(QJsonDocument::Compact);
+}
+
+// An assistant set up for Anthropic with a key and consent, on a fake network.
+struct AssistantRig
+{
+    QTemporaryDir dir;
+    AssetLibrary library;
+    AppController state{&library};
+    AssistantController assistant{&state, dir.filePath(QStringLiteral("settings.ini"))};
+    FakeTransport *net = nullptr;
+    MemorySecrets *secrets = nullptr;
+    QByteArray savedAnthropic = qgetenv("ANTHROPIC_API_KEY");
+    QByteArray savedOpenAi = qgetenv("OPENAI_API_KEY");
+
+    explicit AssistantRig(bool setUp = true)
+    {
+        qunsetenv("ANTHROPIC_API_KEY");
+        qunsetenv("OPENAI_API_KEY");
+        auto transport = std::make_unique<FakeTransport>();
+        net = transport.get();
+        assistant.setTransport(std::move(transport));
+        auto store = std::make_unique<MemorySecrets>();
+        secrets = store.get();
+        assistant.setSecretStore(std::move(store));
+        assistant.setUsageLogPath(dir.filePath(QStringLiteral("usage.csv")));
+        if (setUp) {
+            assistant.setProvider(QStringLiteral("anthropic"));
+            assistant.setApiKey(QStringLiteral("sk-test-SECRET123"));
+            assistant.setConsent(true);
+        }
+    }
+    ~AssistantRig()
+    {
+        if (!savedAnthropic.isEmpty())
+            qputenv("ANTHROPIC_API_KEY", savedAnthropic);
+        if (!savedOpenAi.isEmpty())
+            qputenv("OPENAI_API_KEY", savedOpenAi);
+    }
+    QList<ChatMessage> toolResults() const
+    {
+        QList<ChatMessage> out;
+        for (const ChatMessage &m : assistant.history())
+            if (m.role == ChatMessage::Role::Tool)
+                out.append(m);
+        return out;
+    }
+};
+
+} // namespace
+
+void McpTest::assistantProtocolBothProviders()
+{
+    QList<ChatMessage> history;
+    ChatMessage user;
+    user.text = QStringLiteral("Cut the pauses");
+    history.append(user);
+    ChatMessage assistant;
+    assistant.role = ChatMessage::Role::Assistant;
+    assistant.text = QStringLiteral("Looking.");
+    assistant.toolCalls = {{QStringLiteral("c1"), QStringLiteral("inspect"), QJsonObject{{"clips", true}}}};
+    history.append(assistant);
+    ChatMessage tool;
+    tool.role = ChatMessage::Role::Tool;
+    tool.toolCallId = QStringLiteral("c1");
+    tool.toolName = QStringLiteral("inspect");
+    tool.text = QStringLiteral("{\"ok\":true}");
+    tool.images = {{QStringLiteral("image/jpeg"), QStringLiteral("QUJD")}};
+    history.append(tool);
+    ChatMessage again;
+    again.text = QStringLiteral("Go on");
+    history.append(again);
+    const QList<ToolSpec> tools{{QStringLiteral("inspect"), QStringLiteral("Read"), QJsonObject{{"type", "object"}}}};
+
+    RequestOptions a;
+    a.model = QStringLiteral("claude-test");
+    a.apiKey = QStringLiteral("k-1");
+    a.system = QStringLiteral("sys");
+    LlmRequest r = buildRequest(a, tools, history);
+    QCOMPARE(r.url.host(), QStringLiteral("api.anthropic.com"));
+    QVERIFY(r.headers.contains(qMakePair(QByteArray("x-api-key"), QByteArray("k-1"))));
+    QJsonObject body = QJsonDocument::fromJson(r.body).object();
+    QVERIFY(!r.body.contains("k-1"));
+    QCOMPARE(body.value("system").toArray().first().toObject().value("cache_control").toObject().value("type").toString(),
+             QStringLiteral("ephemeral"));
+    QJsonArray msgs = body.value("messages").toArray();
+    QCOMPARE(msgs.size(), 3); // user, assistant, user (tool result + "Go on" in one turn)
+    QCOMPARE(msgs.at(2).toObject().value("role").toString(), QStringLiteral("user"));
+    const QJsonArray last = msgs.at(2).toObject().value("content").toArray();
+    QCOMPARE(last.first().toObject().value("type").toString(), QStringLiteral("tool_result"));
+    QCOMPARE(last.first().toObject().value("content").toArray().at(1).toObject().value("type").toString(), QStringLiteral("image"));
+    QCOMPARE(last.last().toObject().value("text").toString(), QStringLiteral("Go on"));
+
+    RequestOptions o = a;
+    o.provider = Provider::OpenAiCompat;
+    o.baseUrl = QStringLiteral("http://localhost:11434/v1/");
+    o.apiKey.clear();
+    r = buildRequest(o, tools, history);
+    QCOMPARE(r.url.toString(), QStringLiteral("http://localhost:11434/v1/chat/completions"));
+    for (const auto &h : std::as_const(r.headers))
+        QVERIFY(h.first != "authorization"); // a local server without a key gets none
+    body = QJsonDocument::fromJson(r.body).object();
+    msgs = body.value("messages").toArray();
+    QCOMPARE(msgs.first().toObject().value("role").toString(), QStringLiteral("system"));
+    const QJsonObject call = msgs.at(2).toObject().value("tool_calls").toArray().first().toObject();
+    QVERIFY(call.value("function").toObject().value("arguments").isString());
+    QCOMPARE(msgs.at(3).toObject().value("role").toString(), QStringLiteral("tool"));
+    QVERIFY(msgs.at(4).toObject().value("content").toArray().at(1).toObject().value("image_url").toObject()
+                .value("url").toString().startsWith(QStringLiteral("data:image/jpeg;base64,")));
+    QCOMPARE(body.value("tools").toArray().first().toObject().value("type").toString(), QStringLiteral("function"));
+
+    // Replies.
+    LlmReply reply = parseReply(Provider::Anthropic, 200, anthropicToolUse({{QStringLiteral("inspect"), {}}}, QStringLiteral("hm")));
+    QVERIFY(reply.ok);
+    QCOMPARE(reply.toolCalls.size(), 1);
+    QCOMPARE(reply.usage.cacheRead, qint64(80));
+    QCOMPARE(reply.usage.cacheWrite, qint64(-1)); // not reported = unknown, not zero
+    const QByteArray openAi = R"({"choices":[{"finish_reason":"tool_calls","message":{"content":null,"tool_calls":[{"id":"t1","type":"function","function":{"name":"inspect","arguments":"{\"clips\":true}"}}]}}],"usage":{"prompt_tokens":10,"completion_tokens":2,"prompt_tokens_details":{"cached_tokens":4}}})";
+    reply = parseReply(Provider::OpenAiCompat, 200, openAi);
+    QVERIFY(reply.ok);
+    QVERIFY(reply.toolCalls.first().args.value("clips").toBool());
+    QCOMPARE(reply.usage.input, qint64(10));
+    QCOMPARE(reply.usage.cacheRead, qint64(4));
+    reply = parseReply(Provider::OpenAiCompat, 200, R"({"choices":[{"message":{"content":"hi"}}]})");
+    QCOMPARE(reply.usage.input, qint64(-1));
+    reply = parseReply(Provider::Anthropic, 401, R"({"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}})");
+    QVERIFY(!reply.ok);
+    QVERIFY(reply.error.contains(QStringLiteral("401")));
+    QVERIFY(reply.error.contains(QStringLiteral("invalid x-api-key")));
+}
+
+void McpTest::assistantNoNetworkUntilReady()
+{
+    AssistantRig rig(false);
+    AssistantController &a = rig.assistant;
+    a.send(QStringLiteral("hello"));
+    QVERIFY(rig.net->requests.isEmpty());
+    QVERIFY(!a.ready());
+    a.setApiKey(QStringLiteral("sk-test"));
+    a.send(QStringLiteral("hello"));
+    QVERIFY(rig.net->requests.isEmpty()); // key but no consent yet
+    a.setConsent(true);
+    QVERIFY(a.ready());
+    rig.net->replies = {anthropicText(QStringLiteral("Hi!"))};
+    a.send(QStringLiteral("hello"));
+    QCOMPARE(rig.net->requests.size(), 1);
+    QVERIFY(!a.busy());
+
+    // Consent is per provider; a local OpenAI-compatible server needs no key.
+    a.setProvider(QStringLiteral("openai"));
+    QVERIFY(!a.ready());
+    a.setModel(QStringLiteral("llama3"));
+    a.setBaseUrl(QStringLiteral("http://localhost:11434/v1"));
+    QVERIFY(!a.ready());
+    a.setConsent(true);
+    QVERIFY2(a.ready(), qPrintable(a.notReadyReason()));
+}
+
+void McpTest::assistantToolLoopRunsAndEnds()
+{
+    AssistantRig rig;
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("catalog"), QJsonObject{{"brief", true}}}}),
+                        anthropicToolUse({{QStringLiteral("inspect"), QJsonObject{}}}),
+                        anthropicText(QStringLiteral("Nothing to change."))};
+    QSignalSpy finished(&rig.assistant, &AssistantController::turnFinished);
+    rig.assistant.send(QStringLiteral("What's in my project?"));
+    QCOMPARE(finished.size(), 1);
+    QCOMPARE(finished.first().first().toString(), QStringLiteral("ok"));
+    QCOMPARE(rig.net->requests.size(), 3);
+    const QList<ChatMessage> results = rig.toolResults();
+    QCOMPARE(results.size(), 2);
+    QVERIFY(!results.at(0).isError);
+    QVERIFY(results.at(0).text.contains(QStringLiteral("toolboxes")) || results.at(0).text.size() > 20);
+    // The second request carries the first tool's result.
+    QVERIFY(rig.net->requests.at(1).body.contains("tool_result"));
+    QVERIFY(!rig.assistant.busy());
+    QVERIFY(rig.assistant.lastUsage().contains(QStringLiteral("440"))); // 120 + 120 + 200 input tokens, as reported
+
+    QFile csv(rig.dir.filePath(QStringLiteral("usage.csv")));
+    QVERIFY(csv.open(QIODevice::ReadOnly));
+    const QStringList lines = QString::fromUtf8(csv.readAll()).trimmed().split(QLatin1Char('\n'));
+    QCOMPARE(lines.size(), 2);
+    QVERIFY(lines.first().startsWith(QStringLiteral("time,provider,model")));
+    QVERIFY(lines.last().contains(QStringLiteral(",440,75,160,")));
+    QVERIFY(lines.last().contains(QStringLiteral(",unknown,"))); // cache writes were never reported
+    QVERIFY(lines.last().endsWith(QStringLiteral(",ok")));
+}
+
+void McpTest::assistantFramesNotSentWhenOff()
+{
+    AssistantRig rig;
+    QVERIFY(!rig.assistant.allowFrames());
+    for (const ToolSpec &t : rig.assistant.toolSpecs())
+        QVERIFY(t.name != QLatin1String("frames") && t.name != QLatin1String("capture"));
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("capture"), QJsonObject{}}}), anthropicText(QStringLiteral("ok"))};
+    rig.assistant.send(QStringLiteral("look at it"));
+    QVERIFY(rig.net->requests.at(0).body.contains("\"name\":\"inspect\""));
+    QVERIFY(!rig.net->requests.at(0).body.contains("\"name\":\"capture\""));
+    QVERIFY(!rig.net->requests.at(0).body.contains("\"name\":\"frames\""));
+    const QList<ChatMessage> results = rig.toolResults();
+    QCOMPARE(results.size(), 1);
+    QVERIFY(results.first().isError);
+    QVERIFY(results.first().images.isEmpty());
+    QVERIFY(!rig.net->requests.at(1).body.contains("\"type\":\"image\""));
+
+    rig.assistant.setAllowFrames(true);
+    bool offered = false;
+    for (const ToolSpec &t : rig.assistant.toolSpecs())
+        offered = offered || t.name == QLatin1String("capture");
+    QVERIFY(offered);
+}
+
+void McpTest::assistantQuestionNeedsTheButton()
+{
+    AssistantRig rig;
+    const QJsonObject ask{{"question", "Which caption style?"}, {"options", QJsonArray{"Bold", "Minimal"}}};
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("ask_user"), ask}})};
+    rig.assistant.send(QStringLiteral("Add captions"));
+    const QString id = rig.assistant.question().value(QStringLiteral("id")).toString();
+    QVERIFY(!id.isEmpty());
+    QVERIFY(rig.assistant.busy());
+    QCOMPARE(rig.net->requests.size(), 1);
+
+    // Typed text cannot answer it, and neither can a wrong id.
+    rig.assistant.send(QStringLiteral("Bold"));
+    rig.assistant.answerQuestion(QStringLiteral("not-the-id"), 0);
+    QCOMPARE(rig.net->requests.size(), 1);
+    QVERIFY(rig.toolResults().isEmpty());
+
+    // The project changes before the click: the answer is not used.
+    rig.state.project()->setProtectedRanges({{QStringLiteral("a"), 0, 1000000, QString()}});
+    rig.net->replies = {anthropicText(QStringLiteral("Asking again later."))};
+    rig.assistant.answerQuestion(id, 0);
+    QCOMPARE(rig.toolResults().size(), 1);
+    QVERIFY(rig.toolResults().first().text.contains(QStringLiteral("expired")));
+    QVERIFY(!rig.toolResults().first().text.contains(QStringLiteral("Bold")));
+    QVERIFY(!rig.assistant.busy());
+
+    // Replaying the old id does nothing.
+    rig.assistant.answerQuestion(id, 1);
+    QCOMPARE(rig.toolResults().size(), 1);
+
+    // A fresh question answered by its button.
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("ask_user"), ask}}), anthropicText(QStringLiteral("Minimal it is."))};
+    rig.assistant.send(QStringLiteral("Add captions"));
+    rig.assistant.answerQuestion(rig.assistant.question().value(QStringLiteral("id")).toString(), 1);
+    QVERIFY(rig.toolResults().last().text.contains(QStringLiteral("The user chose: Minimal")));
+    QVERIFY(rig.toolResults().last().text.contains(QStringLiteral("not permission")));
+    QVERIFY(!rig.assistant.busy());
+}
+
+void McpTest::assistantStopClosesOpenCalls()
+{
+    AssistantRig rig;
+    const QJsonObject ask{{"question", "Which take?"}, {"options", QJsonArray{"First", "Second"}}};
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("ask_user"), ask}, {QStringLiteral("inspect"), QJsonObject{}}})};
+    rig.assistant.send(QStringLiteral("Pick the best take"));
+    QVERIFY(rig.assistant.busy());
+    rig.assistant.stop();
+    QVERIFY(!rig.assistant.busy());
+    QVERIFY(rig.assistant.question().isEmpty());
+    const QList<ChatMessage> results = rig.toolResults();
+    QCOMPARE(results.size(), 2); // both open calls got a result, so the next request is valid
+    QVERIFY(results.at(1).text.contains(QStringLiteral("Stopped")));
+
+    // A request in flight: Stop drops its late answer.
+    rig.net->replies.clear();
+    rig.assistant.send(QStringLiteral("Try again"));
+    QVERIFY(rig.assistant.busy());
+    auto late = rig.net->pending;
+    rig.assistant.stop();
+    const int before = rig.assistant.history().size();
+    if (late)
+        late(200, anthropicText(QStringLiteral("late")), {});
+    QCOMPARE(rig.assistant.history().size(), before);
+
+    // The conversation stays valid for the next request: roles alternate.
+    rig.net->replies = {anthropicText(QStringLiteral("ok"))};
+    rig.assistant.send(QStringLiteral("Continue"));
+    const QJsonArray msgs = rig.net->body(rig.net->requests.size() - 1).value("messages").toArray();
+    for (int i = 1; i < msgs.size(); ++i)
+        QVERIFY(msgs.at(i).toObject().value("role") != msgs.at(i - 1).toObject().value("role"));
+}
+
+void McpTest::assistantIrreversibleNeedsAClick()
+{
+    AssistantRig rig;
+    McpController *mcp = rig.state.mcp();
+    const bool wasOn = mcp->confirmIrreversible();
+    const auto restore = qScopeGuard([&] { mcp->setConfirmIrreversible(wasOn); });
+    mcp->setConfirmIrreversible(true);
+    mcp->registerConfirmUi();
+    mcp->setConfirmTimeoutMs(50);
+    int asked = 0;
+    QObject::connect(mcp, &McpController::confirmationRequested, mcp,
+                     [&](const QString &, const QString &, const QString &) { ++asked; });
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("reset_shortcuts"), QJsonObject{{"confirm", true}}}}),
+                        anthropicText(QStringLiteral("I couldn't."))};
+    rig.assistant.send(QStringLiteral("Reset my shortcuts"));
+    QCOMPARE(asked, 1);
+    const QList<ChatMessage> results = rig.toolResults();
+    QCOMPARE(results.size(), 1);
+    QVERIFY(results.first().isError);
+    QVERIFY(results.first().text.contains(QStringLiteral("not_confirmed")));
+}
+
+void McpTest::assistantKeyNeverLeaks()
+{
+    AssistantRig rig;
+    const QString key = QStringLiteral("sk-test-SECRET123");
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("no_such_op"), QJsonObject{}}}),
+                        anthropicText(QStringLiteral("Done."))};
+    rig.assistant.send(QStringLiteral("do something"));
+    QCOMPARE(rig.net->requests.size(), 2);
+    for (const LlmRequest &r : std::as_const(rig.net->requests))
+        QVERIFY(!r.body.contains(key.toUtf8()));
+    QVERIFY(!QJsonDocument::fromVariant(rig.assistant.messages()).toJson().contains(key.toUtf8()));
+    for (const ChatMessage &m : rig.assistant.history())
+        QVERIFY(!m.text.contains(key));
+    QVERIFY(!rig.assistant.systemPrompt().contains(key));
+    QFile csv(rig.dir.filePath(QStringLiteral("usage.csv")));
+    QVERIFY(csv.open(QIODevice::ReadOnly));
+    QVERIFY(!csv.readAll().contains(key.toUtf8()));
+    QFile ini(rig.dir.filePath(QStringLiteral("settings.ini")));
+    if (ini.open(QIODevice::ReadOnly))
+        QVERIFY(!ini.readAll().contains(key.toUtf8())); // the key lives in the secret store only
+    QVERIFY(rig.secrets->values.value(QStringLiteral("assistant-anthropic")) == key.toUtf8());
 }
 
 QTEST_MAIN(McpTest)

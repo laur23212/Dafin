@@ -344,6 +344,12 @@ Item {
         id: agentAccessDialog
     }
 
+    AiAssistPanel {
+        id: aiAssistPanel
+        topInset: root.mapToItem(null, 0, root.height).y
+        onOpenAgentAccess: agentAccessDialog.openDialog()
+    }
+
     LazyLoader {
         id: videoSizeDialogLoader
         sourceComponent: Component { VideoSizeDialog { } }
@@ -513,11 +519,13 @@ Item {
             glyph: Theme.icons.bot
             variant: "ghost"
             text: qsTr("Agent")
-            active: EditorState.mcp.running
+            // Dafin: opens the AI Assist chat; connecting Claude/Cursor from outside is in its
+            // settings (and in Settings > Agent access, as before).
+            active: EditorState.mcp.running || aiAssistPanel.opened
             tooltip: EditorState.mcp.running
-                     ? qsTr("Agent access is on")
-                     : qsTr("Agent access")
-            onClicked: agentAccessDialog.openDialog()
+                     ? qsTr("AI Assist (agent access is on)")
+                     : qsTr("AI Assist")
+            onClicked: aiAssistPanel.toggle()
         }
     }
 
