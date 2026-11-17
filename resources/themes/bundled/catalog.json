@@ -236,8 +236,14 @@
    "kind": "color"
   },
   {
-   "id": "dafin-romanian-core",
+   "id": "dafin-romanian-tricolor",
    "label": "Romanian Core",
+   "group": "Romanian",
+   "kind": "qml"
+  },
+  {
+   "id": "dafin-romanian-core",
+   "label": "Retro Slavic Christmas",
    "group": "Romanian",
    "kind": "qml"
   },
