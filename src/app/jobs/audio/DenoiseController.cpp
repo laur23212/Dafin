@@ -1,6 +1,7 @@
 #include "app/jobs/audio/DenoiseController.h"
 
 #include "app/editor/AppController.h"
+#include "app/jobs/audio/AudioToolsController.h"
 #include "engine/encode/writers/AudioFileWriter.h"
 #include "engine/ml/speech/DeepFilterDenoiser.h"
 #include "engine/ml/speech/DenoiseAudio.h"
@@ -36,7 +37,8 @@ void DenoiseController::cancel()
 bool DenoiseController::renderAudio(const QString &path, drift::TimeUs srcIn,
                                     drift::TimeUs span, const QString &outPath,
                                     const QString &originalPath, double progressFrom,
-                                    double progressTo, QString *errorOut)
+                                    double progressTo, QString *errorOut, double strength,
+                                    int audioStreamOrdinal)
 {
     const auto setProgress = [this](double fraction, const QString &status) {
         QMetaObject::invokeMethod(
@@ -72,7 +74,7 @@ bool DenoiseController::renderAudio(const QString &path, drift::TimeUs srcIn,
         return m_cancel.loadRelaxed() == 0;
     };
     return drift::denoiseAudioRange(path, srcIn, srcIn + span, outPath, errorOut, onProgress,
-                                    originalPath);
+                                    originalPath, strength, audioStreamOrdinal);
 }
 
 // Both entry points share this: validate the clip, latch the busy state, and hand the work to a
@@ -287,6 +289,70 @@ void DenoiseController::finalize(const QString &clipId, const QString &audioPath
     m_app->selectClip(newTrack, m_app->m_project.tracks().at(newTrack).clips.size() - 1);
     m_app->setLastMessage(tr("Noise removed"), QStringLiteral("success"));
     emit finished(true, tr("Noise removed"));
+}
+
+bool DenoiseController::canApplyInPlace(int trackIndex, int clipIndex) const
+{
+    return !m_app->audioTools()->audibleSourceAt(trackIndex, clipIndex).clipId.isEmpty();
+}
+
+void DenoiseController::applyInPlace(int trackIndex, int clipIndex, double strength)
+{
+    if (m_running) {
+        m_app->setLastMessage(tr("Noise removal already in progress"), QStringLiteral("warning"));
+        return;
+    }
+    const AudioToolsController::AudibleSource source =
+        m_app->audioTools()->audibleSourceAt(trackIndex, clipIndex);
+    if (source.clipId.isEmpty()) {
+        m_app->setLastMessage(tr("Select a clip with audio"), QStringLiteral("warning"));
+        return;
+    }
+    const QString outPath = drift::newDenoisePath();
+    if (outPath.isEmpty()) {
+        m_app->setLastMessage(tr("Could not create an output file"), QStringLiteral("error"));
+        return;
+    }
+
+    m_app->setPlaying(false);
+    m_cancel.storeRelaxed(0);
+    m_progress = 0.0;
+    emit progressChanged();
+    m_status = tr("Starting…");
+    emit statusChanged();
+    m_running = true;
+    emit runningChanged();
+    m_app->setLastMessage(tr("Removing noise…"));
+
+    const double amount = std::clamp(strength, 0.0, 1.0);
+    (void)QtConcurrent::run([this, source, outPath, amount]() {
+        QString error;
+        const bool ok = renderAudio(source.path, source.srcIn, source.srcOut - source.srcIn, outPath,
+                                    QString(), 0.0, 1.0, &error, amount, source.audioStreamIndex);
+        QMetaObject::invokeMethod(
+            this,
+            [this, ok, error, source, outPath]() {
+                m_running = false;
+                emit runningChanged();
+                if (!ok) {
+                    QFile::remove(outPath);
+                    m_status = error;
+                    emit statusChanged();
+                    m_app->setLastMessage(error, QStringLiteral("error"));
+                    emit finished(false, error);
+                    return;
+                }
+                const QString done = tr("Noise removed");
+                // Resolved by id inside: the timeline may have been edited while the job ran.
+                const QString failed = m_app->audioTools()->replaceClipAudio(
+                    source.clipId, outPath, source.srcIn, source.srcOut, tr("Remove noise (AI)"),
+                    tr(" (AI denoised)"), done);
+                m_status = failed.isEmpty() ? done : failed;
+                emit statusChanged();
+                emit finished(failed.isEmpty(), m_status);
+            },
+            Qt::QueuedConnection);
+    });
 }
 
 

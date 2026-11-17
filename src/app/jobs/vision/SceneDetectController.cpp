@@ -1,9 +1,12 @@
 #include "app/jobs/vision/SceneDetectController.h"
 
 #include "app/editor/AppController.h"
+#include "app/mcp/McpController.h"
 #include "app/mcp/McpDetail.h"
 
 #include <QPointer>
+
+#include <algorithm>
 #include <QSettings>
 #include <QtConcurrent>
 
@@ -281,5 +284,84 @@ void SceneDetectController::detect(int trackIndex, int clipIndex, bool withObjec
 }
 
 
+
+QList<double> SceneDetectController::cutsInside(const QList<double> &times, double start,
+                                               double end, double minGap)
+{
+    QList<double> sorted = times;
+    std::sort(sorted.begin(), sorted.end());
+    QList<double> cuts;
+    for (double t : std::as_const(sorted)) {
+        if (t - start < minGap || end - t < minGap)
+            continue;
+        if (!cuts.isEmpty() && t - cuts.last() < minGap)
+            continue;
+        cuts.append(t);
+    }
+    return cuts;
+}
+
+QVariantList SceneDetectController::cutTimes(int trackIndex, int clipIndex) const
+{
+    QVariantList out;
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return out;
+    const drift::Clip &clip = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    if (m_scenes.isEmpty() || clip.id != m_sceneClipId)
+        return out;
+    const QList<double> cuts =
+        cutsInside(m_app->mcp()->sceneCutTimes(0.0, QString()), drift::usToSeconds(clip.timelineStart),
+                   drift::usToSeconds(clip.timelineEnd()), 0.1);
+    for (double t : cuts)
+        out.append(t);
+    return out;
+}
+
+int SceneDetectController::splitAtScenes(int trackIndex, int clipIndex)
+{
+    if (!m_app->isValidClipIndex(trackIndex, clipIndex))
+        return 0;
+    const QString clipId = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex).id;
+    const QVariantList cutList = cutTimes(trackIndex, clipIndex);
+    if (cutList.isEmpty()) {
+        m_app->setLastMessage(m_sceneClipId == clipId && !m_scenes.isEmpty()
+                                  ? tr("No scene changes inside this clip")
+                                  : tr("Find scenes in this clip first"),
+                              QStringLiteral("warning"));
+        return 0;
+    }
+
+    // One undo step for all the cuts, the way MCP split_on_scenes batches them. Back to front, so
+    // the clip's id keeps naming a real clip and ends up on the first piece.
+    McpController *batch = m_app->mcp();
+    batch->beginBatch();
+    int made = 0;
+    for (int i = cutList.size() - 1; i >= 0; --i) {
+        int t = -1;
+        int c = -1;
+        const auto &tracks = m_app->m_project.tracks();
+        for (int ti = 0; ti < tracks.size() && t < 0; ++ti) {
+            for (int ci = 0; ci < tracks.at(ti).clips.size(); ++ci) {
+                if (tracks.at(ti).clips.at(ci).id == clipId) {
+                    t = ti;
+                    c = ci;
+                    break;
+                }
+            }
+        }
+        if (t < 0)
+            break;
+        const int before = tracks.at(t).clips.size();
+        m_app->splitClipAt(t, c, cutList.at(i).toDouble());
+        if (m_app->m_project.tracks().at(t).clips.size() > before)
+            ++made;
+    }
+    batch->endBatch(tr("Split at scene changes"), made > 0);
+    if (made == 0)
+        m_app->setLastMessage(tr("No cuts were made (is the track locked?)"), QStringLiteral("warning"));
+    else
+        m_app->setLastMessage(tr("Split into %n piece(s)", nullptr, made + 1), QStringLiteral("success"));
+    return made;
+}
 
 #include "moc_SceneDetectController.cpp"

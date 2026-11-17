@@ -268,20 +268,49 @@ void AudioToolsController::startRender(int trackIndex, int clipIndex, RenderKind
     });
 }
 
+AudioToolsController::AudibleSource AudioToolsController::audibleSourceAt(int trackIndex,
+                                                                        int clipIndex) const
+{
+    if (!canProcess(trackIndex, clipIndex))
+        return {};
+    const drift::Clip &target = m_app->m_project.tracks().at(trackIndex).clips.at(clipIndex);
+    const drift::Clip &audible = *audibleClip(m_app->m_project, target);
+    return AudibleSource{audible.id, audible.path, audible.audioStreamIndex, audible.srcIn,
+                         audible.srcOut};
+}
+
 void AudioToolsController::finishRender(const QString &clipId, const QString &audioPath,
                                         drift::TimeUs srcIn, drift::TimeUs srcOut, RenderKind kind)
 {
     const QString label = kind == RenderKind::Loudness ? tr("Normalize loudness") : tr("Reduce noise");
+    const QString suffix = kind == RenderKind::Loudness ? tr(" (normalized)") : tr(" (noise reduced)");
+    const QString done = kind == RenderKind::Loudness ? tr("Loudness normalized") : tr("Noise reduced");
+    const QString error = replaceClipAudio(clipId, audioPath, srcIn, srcOut, label, suffix, done);
+    if (!error.isEmpty()) {
+        emit finished(false, error);
+        return;
+    }
+    m_status = done;
+    emit statusChanged();
+    emit finished(true, done);
+}
+
+QString AudioToolsController::replaceClipAudio(const QString &clipId, const QString &audioPath,
+                                               drift::TimeUs srcIn, drift::TimeUs srcOut,
+                                               const QString &undoLabel, const QString &nameSuffix,
+                                               const QString &doneText)
+{
+    const auto fail = [&](const QString &message, const QString &level) {
+        QFile::remove(audioPath);
+        m_app->setLastMessage(message, level);
+        return message;
+    };
     int track = -1, index = -1;
     if (!findClip(m_app->m_project, clipId, &track, &index)
         || m_app->m_project.tracks().at(track).clips.at(index).srcIn != srcIn
         || m_app->m_project.tracks().at(track).clips.at(index).srcOut != srcOut) {
         // Deleted or trimmed while the job ran: the render no longer matches the clip.
-        QFile::remove(audioPath);
-        const QString message = tr("The clip changed while it was processed");
-        m_app->setLastMessage(message, QStringLiteral("warning"));
-        emit finished(false, message);
-        return;
+        return fail(tr("The clip changed while it was processed"), QStringLiteral("warning"));
     }
 
     const drift::Project before = m_app->m_project;
@@ -291,11 +320,7 @@ void AudioToolsController::finishRender(const QString &clipId, const QString &au
         if (!drift::appcontroller_detail::detachEmbeddedAudioFromVideo(m_app->m_project, m_app->m_assetLibrary,
                                                                      track, index)) {
             m_app->m_project = before;
-            QFile::remove(audioPath);
-            const QString message = tr("Could not separate the video's audio");
-            m_app->setLastMessage(message, QStringLiteral("error"));
-            emit finished(false, message);
-            return;
+            return fail(tr("Could not separate the video's audio"), QStringLiteral("error"));
         }
         // Separating inserts a track, which can shift indices: look the video up again by id.
         const drift::Clip *companion = nullptr;
@@ -303,11 +328,7 @@ void AudioToolsController::finishRender(const QString &clipId, const QString &au
             companion = audibleClip(m_app->m_project, m_app->m_project.tracks().at(track).clips.at(index));
         if (!companion || !findClip(m_app->m_project, companion->id, &track, &index)) {
             m_app->m_project = before;
-            QFile::remove(audioPath);
-            const QString message = tr("Could not separate the video's audio");
-            m_app->setLastMessage(message, QStringLiteral("error"));
-            emit finished(false, message);
-            return;
+            return fail(tr("Could not separate the video's audio"), QStringLiteral("error"));
         }
     }
 
@@ -320,17 +341,13 @@ void AudioToolsController::finishRender(const QString &clipId, const QString &au
     clip.srcIn = 0;
     clip.srcOut = srcOut - srcIn;
     const QString base = clip.name.isEmpty() ? tr("Clip") : clip.name;
-    const QString suffix = kind == RenderKind::Loudness ? tr(" (normalized)") : tr(" (noise reduced)");
-    if (!base.endsWith(suffix))
-        clip.name = base + suffix;
+    if (!base.endsWith(nameSuffix))
+        clip.name = base + nameSuffix;
 
-    const QString done = kind == RenderKind::Loudness ? tr("Loudness normalized") : tr("Noise reduced");
-    m_app->pushProjectEdit(before, label);
-    m_app->finishEdit(done);
-    m_status = done;
-    emit statusChanged();
-    m_app->setLastMessage(done, QStringLiteral("success"));
-    emit finished(true, done);
+    m_app->pushProjectEdit(before, undoLabel);
+    m_app->finishEdit(doneText);
+    m_app->setLastMessage(doneText, QStringLiteral("success"));
+    return {};
 }
 
 // ---- Silence remover ---------------------------------------------------------------------

@@ -1,5 +1,6 @@
 // Dafin audio tools: the FFmpeg chains behind Loudness, Noise reduction and Silence remover.
 #include "engine/audio/dsp/FfmpegAudioFilter.h"
+#include "engine/ml/speech/DenoiseAudio.h"
 
 #include <QtTest>
 
@@ -41,6 +42,16 @@ class TestAudioTools : public QObject
     Q_OBJECT
 
 private slots:
+    // The AI denoise strength: a mix of the cleaned and the original sample, clamped to 0..1.
+    void denoiseStrengthBlends()
+    {
+        QCOMPARE(drift::blendDenoised(0.8f, 0.2f, 1.0), 0.2f);
+        QCOMPARE(drift::blendDenoised(0.8f, 0.2f, 0.0), 0.8f);
+        QVERIFY(std::abs(drift::blendDenoised(0.8f, 0.2f, 0.5) - 0.5f) < 1e-6f);
+        QCOMPARE(drift::blendDenoised(0.8f, 0.2f, 2.0), 0.2f);
+        QCOMPARE(drift::blendDenoised(0.8f, 0.2f, -1.0), 0.8f);
+    }
+
     void filtersExist()
     {
         QVERIFY(drift::FfmpegAudioFilter::hasFilter("loudnorm"));

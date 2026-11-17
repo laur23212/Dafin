@@ -460,14 +460,7 @@ QJsonObject McpDispatcher::opSplitOnScenes(const QJsonObject &args)
     const double start = before.value(QStringLiteral("start")).toDouble();
     const double end = start + before.value(QStringLiteral("duration")).toDouble();
 
-    QList<double> cuts;
-    for (double t : times) {
-        if (t - start < minGap || end - t < minGap)
-            continue;
-        if (!cuts.isEmpty() && t - cuts.last() < minGap)
-            continue;
-        cuts.append(t);
-    }
+    const QList<double> cuts = SceneDetectController::cutsInside(times, start, end, minGap);
     if (cuts.isEmpty())
         return err("bad_args", QStringLiteral("No scene boundaries fall inside that clip"));
 

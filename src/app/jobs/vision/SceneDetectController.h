@@ -55,6 +55,18 @@ public:
     // Sensitivity, persisted in QSettings so a scan does not forget it between sessions.
     Q_INVOKABLE double threshold() const;
     Q_INVOKABLE void setThreshold(double threshold);
+    // Dafin: the timeline seconds where the selected clip would be cut, from the live analysis of
+    // that clip (empty when the analysis is of another clip, or there is none). For the AI tab's
+    // markers before anything is split.
+    Q_INVOKABLE QVariantList cutTimes(int trackIndex, int clipIndex) const;
+    // Dafin: splits the clip at every detected shot change, as one undo step. Returns the number
+    // of cuts made; 0, with a message, when there is no analysis for this clip or nothing to cut.
+    Q_INVOKABLE int splitAtScenes(int trackIndex, int clipIndex);
+
+    // The cuts worth making in a clip spanning [start, end) timeline seconds: times sorted, at
+    // least minGap from either edge and from the previous cut. Shared with MCP split_on_scenes.
+    static QList<double> cutsInside(const QList<double> &times, double start, double end,
+                                    double minGap);
 
     // Scans a file's range for callers that keep their own state (Source Lab): the scene list,
     // `detecting` and the progress above are left alone. Off the GUI thread; `progress` and `done`

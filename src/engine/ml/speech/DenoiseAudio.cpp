@@ -25,7 +25,7 @@ QString trDenoise(const char *text)
 
 bool denoiseAudioRange(const QString &input, TimeUs inUs, TimeUs outUs, const QString &outputFlac,
                        QString *error, const std::function<bool(double)> &onProgress,
-                       const QString &originalFlac)
+                       const QString &originalFlac, double strength, int audioStreamOrdinal)
 {
     const auto fail = [&](const QString &message) {
         if (error)
@@ -60,7 +60,8 @@ bool denoiseAudioRange(const QString &input, TimeUs inUs, TimeUs outUs, const QS
         const TimeUs at = inUs + TimeUs((have * kUsPerSecond) / rate);
         const int want = int(std::min<int64_t>(chunkFrames, totalFrames - have));
         const int got = ClipReaderPool::instance().readAudioInterleaved(
-            input, kDenoiseScanStreamId, at, want, rate, interleaved.data() + size_t(have) * 2);
+            input, kDenoiseScanStreamId, at, want, rate, interleaved.data() + size_t(have) * 2,
+            audioStreamOrdinal);
         if (got <= 0)
             break;
         have += got;
@@ -95,8 +96,10 @@ bool denoiseAudioRange(const QString &input, TimeUs inUs, TimeUs outUs, const QS
             dn.denoise(mono, [&](double f) { return report(base + 0.35 * f); });
         if (clean.empty())
             return fail(cancelled ? cancelMessage : dn.lastError());
-        for (int64_t i = 0; i < have; ++i)
-            interleaved[size_t(i) * 2 + ch] = clean[size_t(i)];
+        for (int64_t i = 0; i < have; ++i) {
+            float &sample = interleaved[size_t(i) * 2 + ch];
+            sample = blendDenoised(sample, clean[size_t(i)], strength);
+        }
     }
 
     if (!report(0.95))

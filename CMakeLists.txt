@@ -2353,6 +2353,14 @@ qt_add_qml_module(drift
         src/qml/components/assets/AiToolsTab.qml
         src/qml/components/assets/AiToolCard.qml
         src/qml/components/assets/AiCaptionsPanel.qml
+        src/qml/components/assets/AiToolPage.qml
+        src/qml/components/assets/AiHint.qml
+        src/qml/components/assets/AiJobStatus.qml
+        src/qml/components/assets/AiSceneCutPanel.qml
+        src/qml/components/assets/AiDenoisePanel.qml
+        src/qml/components/assets/AiSpeechPanel.qml
+        src/qml/components/assets/AiCutoutPanel.qml
+        src/qml/components/assets/AiEnhancePanel.qml
         src/qml/components/assets/AiTranscriptView.qml
         src/qml/components/assets/AiModelDownload.qml
         src/qml/components/assets/SpeechTab.qml

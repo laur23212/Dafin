@@ -63,6 +63,27 @@ public:
 
     Q_INVOKABLE void cancel();
 
+    // The audio a tool should render for the clip at (trackIndex, clipIndex): the clip itself, or
+    // a video's separated audio partner. clipId empty when the clip has no usable sound.
+    struct AudibleSource
+    {
+        QString clipId;
+        QString path;
+        int audioStreamIndex = 0;
+        drift::TimeUs srcIn = 0;
+        drift::TimeUs srcOut = 0;
+    };
+    AudibleSource audibleSourceAt(int trackIndex, int clipIndex) const;
+    // Points clip `clipId` at `audioPath`, a render of exactly its old source window
+    // [srcIn, srcOut), keeping its timing, link, volume dots, fades and effects; a video still
+    // playing its own sound has it separated onto an audio track first. One undo step labelled
+    // `undoLabel`; `nameSuffix` is added to the clip's name once. Returns an empty string on
+    // success, else the reason (the file is then deleted and the project left as it was). Shared
+    // by Reduce noise here and the AI tab's noise removal (DenoiseController).
+    QString replaceClipAudio(const QString &clipId, const QString &audioPath, drift::TimeUs srcIn,
+                             drift::TimeUs srcOut, const QString &undoLabel,
+                             const QString &nameSuffix, const QString &doneText);
+
 signals:
     void runningChanged();
     void progressChanged();
