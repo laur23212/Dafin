@@ -203,6 +203,12 @@ private:
     bool applyIndex(const QByteArray &json, bool fromCache);
     void startDownload(const QString &id);
     void finishDownload(const QString &id);
+    // Dafin: add-ons outside the store (DirectAddons.h). Their rows join m_remote and their
+    // catalog entries m_catalog; they download file by file, then are checked and installed.
+    void appendDirectRows();
+    void addDirectCatalogEntries();
+    void startDirectFile(const std::shared_ptr<Transfer> &transfer);
+    void finishDirectFile(const QString &id);
     void beginExtract(const QString &id, const QString &packagePath);
     void failTransfer(const QString &id, const QString &message);
     enum class Outcome { Succeeded, Failed, Cancelled };

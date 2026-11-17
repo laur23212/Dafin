@@ -229,6 +229,25 @@ target_include_directories(tst_projectbundle PRIVATE ../src)
 target_link_libraries(tst_projectbundle PRIVATE Qt6::Test driftengine ${DRIFT_ZSTD_TARGET})
 add_test(NAME ProjectBundle COMMAND tst_projectbundle)
 
+# Dafin's AI › Vocal remover: the streaming separation and the editor side (Vocals only / Both,
+# one undo step) with a stand-in model, so the 304 MB HTDemucs download is not needed. Built like
+# tst_editorstate, which also drives a real AppController.
+qt_add_executable(tst_vocalremover
+    tst_vocalremover.cpp
+    ../src/app/online/addons/AddonManager.cpp
+    ../src/app/mcp/protocol/McpProtocol.cpp
+    ../src/ui/theme/ThemeManager.cpp
+    ../src/app/online/marketplace/MarketSourceBrowser.cpp
+    ../src/app/online/marketplace/MarketTransport.cpp
+    ../src/app/online/market/MarketIdentity.cpp
+    ../src/ui/imageproviders/TextStylePreviewImageProvider.cpp
+)
+target_include_directories(tst_vocalremover PRIVATE ../src)
+target_link_libraries(tst_vocalremover PRIVATE Qt6::Test Qt6::Gui Qt6::Quick Qt6::Multimedia Qt6::Concurrent Qt6::Network driftapp driftcore driftengine)
+target_compile_definitions(tst_vocalremover PRIVATE DRIFT_VERSION="${PROJECT_VERSION}")
+add_test(NAME VocalRemover COMMAND tst_vocalremover)
+set_tests_properties(VocalRemover PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 # Dafin's FFmpeg audio tools (loudnorm, afftdn, silencedetect) on synthetic audio.
 qt_add_executable(tst_audiotools tst_audiotools.cpp)
 target_include_directories(tst_audiotools PRIVATE ../src)
@@ -356,6 +375,7 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/ai/ShortClipsController.cpp
     ../src/app/jobs/ai/MediaTaggingController.cpp
     ../src/app/jobs/audio/AudioToolsController.cpp
+    ../src/app/jobs/ai/VocalRemoverController.cpp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp
     ../src/app/color/LookThumbnailService.cpp
@@ -372,6 +392,7 @@ qt_add_executable(tst_mcp
     ../src/ui/preview/Outliner3dModel.cpp
     ../src/ui/preview/PreviewController.cpp
     ../src/app/online/addons/AddonCatalog.cpp
+    ../src/app/online/addons/DirectAddons.cpp
     ../src/app/online/addons/AddonManager.cpp
     ../src/app/jobs/JobRegistry.cpp
     ../src/app/online/CloudProviders.cpp

@@ -1157,6 +1157,10 @@ add_library(driftengine STATIC
     src/engine/ml/audio/ClapTagger.cpp
     src/engine/ml/speech/DenoiseAudio.h
     src/engine/ml/speech/DenoiseAudio.cpp
+    src/engine/ml/audio/StemSeparation.h
+    src/engine/ml/audio/StemSeparation.cpp
+    src/engine/ml/audio/DemucsSeparator.h
+    src/engine/ml/audio/DemucsSeparator.cpp
     src/engine/encode/writers/MatteWriter.h
     src/engine/encode/writers/MatteWriter.cpp
     src/engine/encode/proxies/ProxyNaming.h
@@ -1412,6 +1416,8 @@ target_sources(driftapp PRIVATE
     src/app/color/ScopesController.cpp
     src/app/color/LookThumbnailService.cpp
     src/app/online/addons/AddonCatalog.cpp
+    src/app/online/addons/DirectAddons.h
+    src/app/online/addons/DirectAddons.cpp
     src/app/jobs/JobRegistry.h
     src/app/jobs/JobRegistry.cpp
     src/app/online/CloudProviders.h
@@ -1582,6 +1588,8 @@ target_sources(driftapp PRIVATE
     src/app/jobs/ai/MediaTaggingController.cpp
     src/app/jobs/audio/AudioToolsController.h
     src/app/jobs/audio/AudioToolsController.cpp
+    src/app/jobs/ai/VocalRemoverController.h
+    src/app/jobs/ai/VocalRemoverController.cpp
     src/app/jobs/vision/RestoreController.h
     src/app/jobs/vision/RestoreController.cpp
     src/app/jobs/vision/FaceTrackingController.h
@@ -2374,6 +2382,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/AiShortsPanel.qml
         src/qml/components/assets/AiShortRow.qml
         src/qml/components/assets/AiTaggingPanel.qml
+        src/qml/components/assets/AiVocalsPanel.qml
         src/qml/components/assets/AiTranscriptView.qml
         src/qml/components/assets/AiTextEditPanel.qml
         src/qml/components/assets/AiCleanupPanel.qml

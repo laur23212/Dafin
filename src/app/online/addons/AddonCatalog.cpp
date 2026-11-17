@@ -46,6 +46,15 @@ QJsonObject AddonCatalog::entryFor(const QString &addonId) const
     return {};
 }
 
+void AddonCatalog::addFallbackEntry(const QJsonObject &entry)
+{
+    const QString id = entry.value(QStringLiteral("id")).toString();
+    if (id.isEmpty() || m_byId.contains(id))
+        return;
+    m_byId.insert(id, int(m_entries.size()));
+    m_entries.append(entry);
+}
+
 std::optional<QString> AddonCatalog::pickProvider(const QJsonObject &requirement,
                                                   const QList<IndexRow> &rows, const QString &platform)
 {

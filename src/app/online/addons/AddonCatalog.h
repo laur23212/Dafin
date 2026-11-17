@@ -61,6 +61,10 @@ public:
     // Exact id first, then the first `match` glob that fits. Empty when the catalog has no entry.
     QJsonObject entryFor(const QString &addonId) const;
 
+    // Dafin: an entry for an add-on the store's catalog does not know (DirectAddons.h), so its
+    // requirements are planned like a store pack's. Ignored when the catalog has that id already.
+    void addFallbackEntry(const QJsonObject &entry);
+
     // The addon a `requires` item resolves to on this platform: its id, else prefer[platform],
     // else default, else the first row providing the kind. Nullopt when nothing qualifies.
     static std::optional<QString> pickProvider(const QJsonObject &requirement,

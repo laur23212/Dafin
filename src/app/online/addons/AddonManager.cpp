@@ -1,6 +1,7 @@
 #include "app/online/addons/AddonManager.h"
 
 #include "app/online/addons/AddonEndpoint.h"
+#include "app/online/addons/DirectAddons.h"
 #include "core/base/VersionCompare.h"
 #include "engine/addons/AddonPackage.h"
 #include "engine/addons/AddonRegistry.h"
@@ -115,6 +116,15 @@ struct AddonManager::Transfer
     QFile file;
     std::atomic_bool cancelled{false};
     bool extracting = false;
+    // Dafin direct add-ons: which of the add-on's files is downloading, and the bytes of the ones
+    // before it (for the progress bar).
+    bool direct = false;
+    int fileIndex = 0;
+    qint64 doneBefore = 0;
+    // Bytes already in the .part when the request went out, and whether the reply has been seen
+    // to honour the Range request (a 200 instead of a 206 starts the file over).
+    qint64 resumeFrom = 0;
+    bool bodyChecked = false;
 };
 
 AddonManager::AddonManager(QObject *parent)
@@ -125,6 +135,7 @@ AddonManager::AddonManager(QObject *parent)
 
     connect(this, &AddonManager::catalogChanged, this, &AddonManager::queueChanged);
     loadCatalog();
+    addDirectCatalogEntries();
 
     // Serve whatever we already know immediately, then go and check.
     QFile cached(cachedIndexPath());
@@ -134,6 +145,8 @@ AddonManager::AddonManager(QObject *parent)
         if (!validCache)
             QFile::remove(cachedIndexPath());
     }
+    // Known with no index at all (first start offline, or a build without the store).
+    appendDirectRows();
 
     refresh();
 
@@ -339,6 +352,8 @@ QVariantList AddonManager::catalog() const
             {QStringLiteral("details"), addon.value(QStringLiteral("details")).toString()},
             {QStringLiteral("author"), addon.value(QStringLiteral("author")).toString()},
             {QStringLiteral("license"), addon.value(QStringLiteral("license")).toString()},
+            {QStringLiteral("source"), addon.value(QStringLiteral("source")).toString()},
+            {QStringLiteral("direct"), addon.value(QStringLiteral("direct")).toBool()},
             {QStringLiteral("kind"), addon.value(QStringLiteral("kind")).toString()},
             // A pack can provide several kinds; `kind` is only the headline one. The category
             // filter needs all of them or an Acceleration pack that also ships an EP disappears.
@@ -513,6 +528,7 @@ bool AddonManager::applyCatalog(const QByteArray &json)
     if (!parsed.valid())
         return false;
     m_catalog = parsed;
+    addDirectCatalogEntries();
     emit catalogChanged();
     return true;
 }
@@ -886,9 +902,28 @@ bool AddonManager::applyIndex(const QByteArray &json, bool fromCache)
             continue;
         m_remote.append(addon);
     }
+    appendDirectRows();
 
     emit catalogChanged();
     return true;
+}
+
+void AddonManager::appendDirectRows()
+{
+    for (const direct::Addon &addon : direct::addons()) {
+        const bool known = std::any_of(m_remote.cbegin(), m_remote.cend(), [&](const QJsonObject &row) {
+            return row.value(QStringLiteral("id")).toString() == addon.id;
+        });
+        // Should the store ever carry the same id, its signed pack wins.
+        if (!known)
+            m_remote.append(direct::indexRow(addon));
+    }
+}
+
+void AddonManager::addDirectCatalogEntries()
+{
+    for (const direct::Addon &addon : direct::addons())
+        m_catalog.addFallbackEntry(addon.catalogEntry);
 }
 
 void AddonManager::install(const QString &id)
@@ -969,10 +1004,17 @@ QVariantMap AddonManager::planInstall(const QStringList &ids) const
 
 void AddonManager::installMany(const QStringList &ids)
 {
-    if (!addonServiceConfigured())
+    // Direct add-ons download without the store; what they need from it still waits for it.
+    const bool anyDirect = std::any_of(ids.cbegin(), ids.cend(), [](const QString &id) {
+        return direct::find(id) != nullptr;
+    });
+    if (!addonServiceConfigured() && !anyDirect)
         return;
 
-    const AddonCatalog::Plan plan = planFor(ids);
+    AddonCatalog::Plan plan = planFor(ids);
+    // Without the store only the direct ones can come; a store id would wait for it forever.
+    if (!addonServiceConfigured())
+        plan.ids.removeIf([](const QString &id) { return direct::find(id) == nullptr; });
     if (plan.ids.isEmpty())
         return;
     for (const QString &id : plan.ids) {
@@ -1012,7 +1054,8 @@ void AddonManager::pump()
 
         const QString id = m_queue.takeAt(pick);
         // The in-flight refresh may replace an expired download URL; wait for it instead of racing.
-        if (m_refreshing) {
+        // A direct add-on's URL is fixed, so it never waits for the store.
+        if (m_refreshing && !direct::find(id)) {
             m_awaitingFreshIndex.append(id);
             emit catalogChanged();
         } else {
@@ -1076,6 +1119,23 @@ void AddonManager::startDownload(const QString &id)
         }
     }
 
+    if (addon.value(QStringLiteral("direct")).toBool()) {
+        const direct::Addon *source = direct::find(id);
+        if (!source || source->files.isEmpty()) {
+            failTransfer(id, QStringLiteral("Unknown add-on"));
+            return;
+        }
+        auto transfer = std::make_shared<Transfer>();
+        transfer->id = id;
+        transfer->version = source->version;
+        transfer->direct = true;
+        transfer->packagePath = direct::cachePath(*source, 0);
+        m_transfers.insert(id, transfer);
+        emit catalogChanged();
+        startDirectFile(transfer);
+        return;
+    }
+
     const QString url = addon.value(QStringLiteral("url")).toString();
     if (url.isEmpty()) {
         if (!m_awaitingFreshIndex.contains(id))
@@ -1137,6 +1197,10 @@ void AddonManager::finishDownload(const QString &id)
     const auto transfer = m_transfers.value(id);
     if (!transfer)
         return;
+    if (transfer->direct) {
+        finishDirectFile(id);
+        return;
+    }
 
     QNetworkReply *reply = transfer->reply;
     if (!reply)
@@ -1210,7 +1274,10 @@ void AddonManager::beginExtract(const QString &id, const QString &packagePath)
                 const auto finished = m_transfers.value(id);
                 m_transfers.remove(id);
                 m_extractingId.clear();
-                QFile::remove(packagePath);
+                // A direct add-on's files are moved, or deleted when they fail the check; one that
+                // was only cancelled is kept so the next attempt checks it again without a download.
+                if (!finished || !finished->direct)
+                    QFile::remove(packagePath);
 
                 if (!ok) {
                     if (finished && finished->cancelled) {
@@ -1241,6 +1308,15 @@ void AddonManager::beginExtract(const QString &id, const QString &packagePath)
             });
 
     watcher->setFuture(QtConcurrent::run([transfer, packagePath, destination]() -> QPair<bool, QString> {
+        if (transfer->direct) {
+            const direct::Addon *source = direct::find(transfer->id);
+            QString error;
+            if (!source)
+                return {false, QStringLiteral("Unknown add-on")};
+            const bool ok = direct::installDownloaded(
+                *source, [transfer] { return !transfer->cancelled; }, &error);
+            return {ok, error};
+        }
         PackageInfo info;
         QString error;
         const bool ok = drift::addon::install(
@@ -1252,6 +1328,139 @@ void AddonManager::beginExtract(const QString &id, const QString &packagePath)
             return {false, error};
         return {true, QString()};
     }));
+}
+
+void AddonManager::startDirectFile(const std::shared_ptr<Transfer> &transfer)
+{
+    const QString id = transfer->id;
+    const direct::Addon *source = direct::find(id);
+    if (!source) {
+        failTransfer(id, QStringLiteral("Unknown add-on"));
+        return;
+    }
+
+    // Files already downloaded (an earlier attempt that stopped later on) are not fetched again;
+    // the install step checks every one of them anyway.
+    while (transfer->fileIndex < source->files.size()) {
+        const direct::File &file = source->files.at(transfer->fileIndex);
+        const QString done = direct::cachePath(*source, transfer->fileIndex);
+        const QString partial = done + QStringLiteral(".part");
+        if (QFileInfo(partial).size() == file.size) {
+            QFile::remove(done);
+            QFile::rename(partial, done);
+        }
+        if (QFileInfo(done).size() != file.size)
+            break;
+        transfer->doneBefore += file.size;
+        ++transfer->fileIndex;
+    }
+    if (transfer->fileIndex >= source->files.size()) {
+        transfer->reply = nullptr;
+        queueExtract(id);
+        return;
+    }
+
+    const direct::File &file = source->files.at(transfer->fileIndex);
+    const QString partial = direct::cachePath(*source, transfer->fileIndex) + QStringLiteral(".part");
+    qint64 have = QFileInfo(partial).size();
+    if (have > file.size) {
+        QFile::remove(partial);
+        have = 0;
+    }
+    transfer->resumeFrom = have;
+    transfer->bodyChecked = have == 0;
+    transfer->file.setFileName(partial);
+    if (!transfer->file.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        failTransfer(id, QStringLiteral("Cannot write to the download cache"));
+        return;
+    }
+
+    QNetworkRequest request{QUrl(file.url)};
+    // Hugging Face answers with a redirect to its CDN; https to https only.
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setRawHeader("User-Agent", QByteArrayLiteral("Dafin/" DRIFT_VERSION));
+    if (have > 0)
+        request.setRawHeader("Range", QByteArrayLiteral("bytes=") + QByteArray::number(have) + "-");
+    transfer->reply = m_network->get(request);
+    emit catalogChanged();
+
+    QNetworkReply *reply = transfer->reply;
+    const double total = double(source->downloadSize());
+    connect(reply, &QNetworkReply::readyRead, this, [transfer] {
+        if (!transfer->reply)
+            return;
+        const int status = transfer->reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QByteArray chunk = transfer->reply->readAll();
+        if (status != 0 && (status < 200 || status >= 300))
+            return;
+        if (!transfer->bodyChecked) {
+            transfer->bodyChecked = true;
+            if (status == 200) { // the server ignored the Range: the whole file is coming
+                transfer->file.resize(0);
+                transfer->resumeFrom = 0;
+            }
+        }
+        transfer->file.write(chunk);
+    });
+    connect(reply, &QNetworkReply::downloadProgress, this, [this, id, transfer, total](qint64 received, qint64) {
+        const double done = double(transfer->doneBefore + transfer->resumeFrom + received);
+        emit progressChanged(id, total > 0 ? qMin(1.0, done / total) : 0.0, QStringLiteral("Downloading"));
+    });
+    connect(reply, &QNetworkReply::finished, this, [this, id] { finishDownload(id); });
+}
+
+void AddonManager::finishDirectFile(const QString &id)
+{
+    const auto transfer = m_transfers.value(id);
+    QNetworkReply *reply = transfer ? transfer->reply.data() : nullptr;
+    const direct::Addon *source = direct::find(id);
+    if (!transfer || !reply || !source)
+        return;
+    reply->deleteLater();
+
+    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QByteArray tail = reply->readAll();
+    if (status == 0 || (status >= 200 && status < 300)) {
+        if (!transfer->bodyChecked && status == 200)
+            transfer->file.resize(0);
+        transfer->bodyChecked = true;
+        transfer->file.write(tail);
+    }
+    transfer->file.close();
+    transfer->reply = nullptr;
+
+    if (transfer->cancelled) {
+        // The .part stays: the next attempt picks up where this one stopped.
+        m_transfers.remove(id);
+        emit transferFailed(id, QStringLiteral("Cancelled"));
+        settle(id, Outcome::Cancelled);
+        return;
+    }
+    if (reply->error() != QNetworkReply::NoError) {
+        failTransfer(id, reply->errorString());
+        return;
+    }
+
+    const direct::File &file = source->files.at(transfer->fileIndex);
+    const QString done = direct::cachePath(*source, transfer->fileIndex);
+    const QString partial = done + QStringLiteral(".part");
+    const qint64 size = QFileInfo(partial).size();
+    if (size != file.size) {
+        if (size > file.size)
+            QFile::remove(partial);
+        failTransfer(id, QStringLiteral("The download stopped early (%1 of %2 MB). Try again.")
+                             .arg(size / (1024 * 1024))
+                             .arg(file.size / (1024 * 1024)));
+        return;
+    }
+    QFile::remove(done);
+    if (!QFile::rename(partial, done)) {
+        failTransfer(id, QStringLiteral("Could not finalise the download"));
+        return;
+    }
+    // On to the next file, or to the check and install once there is none.
+    startDirectFile(transfer);
 }
 
 void AddonManager::failTransfer(const QString &id, const QString &message)
