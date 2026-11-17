@@ -12,6 +12,7 @@
 #include <QLocale>
 #include <QPointer>
 #include <QSettings>
+#include <QUrl>
 #include <QUuid>
 
 #include <memory>
@@ -197,6 +198,35 @@ void TtsController::cancel()
         m_app->m_jobs->cancel(m_jobId);
 }
 
+void TtsController::synthesize(JobContext &ctx, const QString &script, const QString &voiceId,
+                               const QString &lang, double exaggeration, const QString &path)
+{
+    QString err;
+    ctx.progress(0.0, QStringLiteral("Loading voice model…"));
+    if (!ensureLoaded(&err))
+        return ctx.fail(QStringLiteral("internal"), err);
+    if (ctx.cancelled())
+        return;
+    ctx.progress(0.02, QStringLiteral("Preparing voice…"));
+    const auto voice = m_voices->conditioning(voiceId, &err);
+    if (!voice)
+        return ctx.fail(QStringLiteral("internal"), err);
+    const std::vector<float> pcm = m_engine.synthesize(
+        script, lang, *voice, static_cast<float>(exaggeration),
+        [&ctx](double p) {
+            ctx.progress(0.05 + 0.9 * p, QStringLiteral("Generating speech…"));
+            return !ctx.cancelled();
+        },
+        &err);
+    if (ctx.cancelled())
+        return;
+    if (pcm.empty())
+        return ctx.fail(QStringLiteral("internal"), err.isEmpty() ? QStringLiteral("No speech was produced") : err);
+    if (!VoiceLibrary::writeFlac24k(path, pcm, &err))
+        return ctx.fail(QStringLiteral("internal"), err);
+    ctx.succeed({});
+}
+
 QString TtsController::generate(const QString &text, const QString &voiceId, const QString &lang,
                                 double exaggeration, bool place, double atSeconds, int track)
 {
@@ -224,30 +254,7 @@ QString TtsController::generate(const QString &text, const QString &voiceId, con
     m_jobId = m_app->m_jobs->start(
         QStringLiteral("tts"), QStringLiteral("chatterbox"), JobRegistry::Lane::Model,
         [this, script, voiceId, lang, exaggeration, path](JobContext &ctx) {
-            QString err;
-            ctx.progress(0.0, QStringLiteral("Loading voice model…"));
-            if (!ensureLoaded(&err))
-                return ctx.fail(QStringLiteral("internal"), err);
-            if (ctx.cancelled())
-                return;
-            ctx.progress(0.02, QStringLiteral("Preparing voice…"));
-            const auto voice = m_voices->conditioning(voiceId, &err);
-            if (!voice)
-                return ctx.fail(QStringLiteral("internal"), err);
-            const std::vector<float> pcm = m_engine.synthesize(
-                script, lang, *voice, static_cast<float>(exaggeration),
-                [&ctx](double p) {
-                    ctx.progress(0.05 + 0.9 * p, QStringLiteral("Generating speech…"));
-                    return !ctx.cancelled();
-                },
-                &err);
-            if (ctx.cancelled())
-                return;
-            if (pcm.empty())
-                return ctx.fail(QStringLiteral("internal"), err.isEmpty() ? QStringLiteral("No speech was produced") : err);
-            if (!VoiceLibrary::writeFlac24k(path, pcm, &err))
-                return ctx.fail(QStringLiteral("internal"), err);
-            ctx.succeed({});
+            synthesize(ctx, script, voiceId, lang, exaggeration, path);
         },
         [self, path, generator, place, atSeconds, track](const QJsonObject &job) {
             if (!self)
@@ -391,6 +398,96 @@ QString TtsController::voiceoverFromSubtitles(int trackIndex, int clipIndex, con
         });
     m_poll.start();
     return m_jobId;
+}
+
+QString TtsController::previewKeyFor(const QString &text, const QString &voiceId, const QString &lang,
+                                     double exaggeration)
+{
+    return text.trimmed() + QChar(0x1f) + voiceId + QChar(0x1f) + lang + QChar(0x1f)
+           + QString::number(exaggeration, 'f', 3);
+}
+
+void TtsController::dropPreview()
+{
+    if (!m_previewPath.isEmpty())
+        QFile::remove(m_previewPath);
+    m_previewPath.clear();
+    m_previewKey.clear();
+}
+
+QString TtsController::preview(const QString &text, const QString &voiceId, const QString &lang,
+                               double exaggeration)
+{
+    const QString script = text.trimmed();
+    if (m_running || script.isEmpty())
+        return {};
+    if (!m_available) {
+        emit finished(false, tr("Install the voice model first"));
+        return {};
+    }
+    remember(voiceId, lang, exaggeration);
+    dropPreview();
+    const QString path = speechPath(script);
+    const QString key = previewKeyFor(script, voiceId, lang, exaggeration);
+    m_running = true;
+    m_progress = 0.0;
+    emit runningChanged();
+    emit progressChanged();
+    setStatus(tr("Queued"));
+    const QPointer<TtsController> self(this);
+    m_jobId = m_app->m_jobs->start(
+        QStringLiteral("tts-preview"), QStringLiteral("chatterbox"), JobRegistry::Lane::Model,
+        [this, script, voiceId, lang, exaggeration, path](JobContext &ctx) {
+            synthesize(ctx, script, voiceId, lang, exaggeration, path);
+        },
+        [self, path, key](const QJsonObject &job) {
+            if (!self)
+                return QJsonObject{};
+            self->endJob();
+            if (!job.value(QStringLiteral("ok")).toBool()) {
+                QFile::remove(path);
+                const QString message = jobError(job);
+                self->setStatus(message.isEmpty() ? tr("Cancelled") : message);
+                emit self->finished(false, self->m_status);
+                return QJsonObject{};
+            }
+            self->m_previewPath = path;
+            self->m_previewKey = key;
+            self->setStatus(tr("Preview ready"));
+            emit self->previewReady(QUrl::fromLocalFile(path).toString());
+            return QJsonObject{{QStringLiteral("path"), path}};
+        });
+    m_poll.start();
+    return m_jobId;
+}
+
+QString TtsController::insertAtPlayhead(const QString &text, const QString &voiceId,
+                                        const QString &lang, double exaggeration)
+{
+    if (m_running || text.trimmed().isEmpty())
+        return {};
+    if (!m_previewPath.isEmpty() && QFile::exists(m_previewPath)
+        && m_previewKey == previewKeyFor(text, voiceId, lang, exaggeration)) {
+        const QJsonObject generator{{QStringLiteral("engine"), QStringLiteral("chatterbox")},
+                                    {QStringLiteral("voice"), m_voices->nameFor(voiceId)},
+                                    {QStringLiteral("lang"), lang},
+                                    {QStringLiteral("exaggeration"), exaggeration},
+                                    {QStringLiteral("text"), text.trimmed()}};
+        const AppController::GeneratedAudioImport imported = m_app->importGeneratedAudio(
+            m_previewPath, generator, true, m_app->playheadSeconds(), -1);
+        if (!imported.ok) {
+            setStatus(imported.error);
+            emit finished(false, imported.error);
+            return {};
+        }
+        // The file now belongs to the project; it is no longer ours to delete.
+        m_previewPath.clear();
+        m_previewKey.clear();
+        setStatus(tr("Speech added to the timeline"));
+        emit finished(true, m_status);
+        return QStringLiteral("preview");
+    }
+    return generate(text, voiceId, lang, exaggeration, true, -1.0, -1);
 }
 
 #include "moc_TtsController.cpp"

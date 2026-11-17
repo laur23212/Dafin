@@ -18,8 +18,19 @@ namespace drift {
 // onProgress is called with 0..1 and returns false to cancel; the phases are decode 0.05-0.25,
 // left channel 0.25-0.60, right channel 0.60-0.95, write 0.95-1. Blocking: run it off the GUI
 // thread. Failure and cancel leave no finished output file behind.
+//
+// Dafin: `strength` 0..1 mixes the cleaned sound with the original (1 = fully cleaned, the old
+// behaviour); `audioStreamOrdinal` picks which audio stream of the file is read.
 bool denoiseAudioRange(const QString &input, TimeUs inUs, TimeUs outUs, const QString &outputFlac,
                        QString *error, const std::function<bool(double)> &onProgress,
-                       const QString &originalFlac = QString());
+                       const QString &originalFlac = QString(), double strength = 1.0,
+                       int audioStreamOrdinal = 0);
+
+// One sample of the strength mix above: `strength` of the cleaned sample, the rest the original.
+inline float blendDenoised(float original, float clean, double strength)
+{
+    const float s = float(strength < 0.0 ? 0.0 : (strength > 1.0 ? 1.0 : strength));
+    return clean * s + original * (1.0f - s);
+}
 
 } // namespace drift

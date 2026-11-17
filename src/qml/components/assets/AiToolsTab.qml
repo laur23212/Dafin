@@ -22,22 +22,22 @@ Item {
         { id: "silence", icon: "audio-waveform", available: false,
           title: qsTr("Silence & filler words"),
           description: qsTr("Remove pauses and filler words like “um” and “uh”.") },
-        { id: "sceneCut", icon: "scissors", available: false,
+        { id: "sceneCut", icon: "scissors", available: true,
           title: qsTr("Smart scene cut"),
           description: qsTr("Split a video wherever the shot changes.") },
-        { id: "denoise", icon: "headphones", available: false,
+        { id: "denoise", icon: "headphones", available: true,
           title: qsTr("AI audio denoise"),
           description: qsTr("Clean background noise out of voices.") },
         { id: "vocals", icon: "mic-off", available: false,
           title: qsTr("Vocal remover"),
           description: qsTr("Split a song into the voice and the music.") },
-        { id: "tts", icon: "megaphone", available: false,
+        { id: "tts", icon: "megaphone", available: true,
           title: qsTr("Text to speech"),
           description: qsTr("Turn typed text into a natural voice-over.") },
-        { id: "cutout", icon: "circle-dashed", available: false,
+        { id: "cutout", icon: "circle-dashed", available: true,
           title: qsTr("Background removal"),
           description: qsTr("Cut a person or object out of its background.") },
-        { id: "enhance", icon: "zoom-in", available: false,
+        { id: "enhance", icon: "zoom-in", available: true,
           title: qsTr("Video enhancer"),
           description: qsTr("Upscale and sharpen low-resolution video.") },
         { id: "shorts", icon: "smartphone", available: false,
@@ -179,12 +179,42 @@ Item {
             anchors.top: toolHeader.bottom
             anchors.bottom: parent.bottom
             anchors.topMargin: Theme.spacingXs
-            sourceComponent: root.currentTool && root.currentTool.id === "captions" ? captionsTool : null
+            sourceComponent: {
+                switch (root.currentTool ? root.currentTool.id : "") {
+                case "captions": return captionsTool
+                case "sceneCut": return sceneCutTool
+                case "denoise": return denoiseTool
+                case "tts": return speechTool
+                case "cutout": return cutoutTool
+                case "enhance": return enhanceTool
+                }
+                return null
+            }
         }
     }
 
     Component {
         id: captionsTool
         AiCaptionsPanel { }
+    }
+    Component {
+        id: sceneCutTool
+        AiSceneCutPanel { }
+    }
+    Component {
+        id: denoiseTool
+        AiDenoisePanel { }
+    }
+    Component {
+        id: speechTool
+        AiSpeechPanel { }
+    }
+    Component {
+        id: cutoutTool
+        AiCutoutPanel { }
+    }
+    Component {
+        id: enhanceTool
+        AiEnhancePanel { }
     }
 }

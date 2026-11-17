@@ -132,7 +132,8 @@ Column {
                 id: deleteButton
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                enabled: !EditorState.ai.captioning
+                enabled: !EditorState.ai.captioning && !EditorState.denoise.running && !EditorState.tts.running
+                         && !EditorState.segmentation.running
                 variant: entry.confirming ? "destructive" : "secondary"
                 glyph: Theme.icons.trash
                 text: entry.confirming ? qsTr("Delete now") : qsTr("Delete")

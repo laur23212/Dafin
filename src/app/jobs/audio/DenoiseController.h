@@ -29,6 +29,13 @@ public:
     Q_INVOKABLE bool available();
     Q_INVOKABLE void preview(int trackIndex, int clipIndex, double atSeconds);
     Q_INVOKABLE void apply(int trackIndex, int clipIndex);
+    // Dafin, the AI tab: renders the clip's sound (a video's separated audio partner when it has
+    // one) and points the clip at the result in place, keeping its timing, volume dots, fades and
+    // effects, as one undo step: the same behaviour as Audio tools › Noise reduction. strength
+    // 0..1 mixes the cleaned sound with the original.
+    Q_INVOKABLE void applyInPlace(int trackIndex, int clipIndex, double strength);
+    // A clip the AI tab can clean: one with sound of its own, or a video whose audio partner has it.
+    Q_INVOKABLE bool canApplyInPlace(int trackIndex, int clipIndex) const;
     Q_INVOKABLE void cancel();
 
 signals:
@@ -45,7 +52,8 @@ private:
     // `originalPathOut` is written only when non-empty, for the preview's A/B source.
     bool renderAudio(const QString &path, drift::TimeUs srcIn, drift::TimeUs span,
                      const QString &outPath, const QString &originalPath, double progressFrom,
-                     double progressTo, QString *errorOut);
+                     double progressTo, QString *errorOut, double strength = 1.0,
+                     int audioStreamOrdinal = 0);
 
     AppController *m_app = nullptr;
     bool m_running = false;

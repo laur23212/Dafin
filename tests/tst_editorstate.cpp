@@ -327,6 +327,8 @@ private slots:
     void trimClickWithoutMovementLeavesNoUndoStep();
     void trimClipRightRejectsANoOpMove();
     void tracksCacheIsInvalidatedByEveryMutation();
+    void sceneCutsInsideKeepsGapsFromEdges();
+    void splitAtScenesIsOneUndoStep();
     void removeTransitionDoesNotMoveOverlappingClips();
     void editsCannotOverlapAClipCompletely();
     void separateAudioFromCombinedClip();
@@ -8635,6 +8637,65 @@ void EditorStateTest::tracksCacheIsInvalidatedByEveryMutation()
 
     state.undo();
     QCOMPARE(state.tracks().at(0).toMap().value(QStringLiteral("clips")).toList().size(), 1);
+}
+
+void EditorStateTest::sceneCutsInsideKeepsGapsFromEdges()
+{
+    // Unsorted on purpose; reverse playback hands the times over back to front.
+    const QList<double> cuts = SceneDetectController::cutsInside({7.0, 0.05, 3.05, 3.0, 9.95}, 0.0,
+                                                                 10.0, 0.1);
+    QCOMPARE(cuts, (QList<double>{3.0, 7.0}));
+    QVERIFY(SceneDetectController::cutsInside({}, 0.0, 10.0, 0.1).isEmpty());
+    QVERIFY(SceneDetectController::cutsInside({0.0, 10.0}, 0.0, 10.0, 0.1).isEmpty());
+}
+
+void EditorStateTest::splitAtScenesIsOneUndoStep()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    state.setSnapEnabled(false);
+    state.project()->tracks().clear();
+    state.project()->tracks().append(drift::Track{.type = drift::TrackType::Video});
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("clip-v");
+    clip.type = drift::ClipType::Video;
+    clip.path = QStringLiteral("/nonexistent/scenes.mp4");
+    clip.timelineStart = drift::secondsToUs(2.0);
+    clip.timelineDuration = drift::secondsToUs(10.0);
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(10.0);
+    state.project()->tracks()[0].clips.append(clip);
+
+    // No analysis yet: nothing to cut, and nothing is pushed.
+    QVERIFY(state.scenes()->cutTimes(0, 0).isEmpty());
+    QCOMPARE(state.scenes()->splitAtScenes(0, 0), 0);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
+
+    drift::SceneAnalysis analysis;
+    for (const auto &[in, out] : {std::pair{0.0, 3.0}, std::pair{3.0, 7.0}, std::pair{7.0, 10.0}}) {
+        drift::Scene scene;
+        scene.sourceIn = drift::secondsToUs(in);
+        scene.sourceOut = drift::secondsToUs(out);
+        analysis.scenes.append(scene);
+    }
+    state.scenes()->applySceneAnalysis(analysis, clip.id, clip.path, 0);
+
+    // Source seconds 3 and 7 land at timeline 5 and 9 (the clip starts at 2).
+    const QVariantList cuts = state.scenes()->cutTimes(0, 0);
+    QCOMPARE(cuts.size(), 2);
+    QVERIFY(qAbs(cuts.at(0).toDouble() - 5.0) < 1e-6);
+    QVERIFY(qAbs(cuts.at(1).toDouble() - 9.0) < 1e-6);
+
+    const int undoBefore = state.m_undoStack.count();
+    QCOMPARE(state.scenes()->splitAtScenes(0, 0), 2);
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 3);
+    // The original id names the first piece.
+    QCOMPARE(state.project()->tracks().at(0).clips.at(0).id, clip.id);
+    QCOMPARE(state.m_undoStack.count(), undoBefore + 1);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
 }
 
 void EditorStateTest::trimmingOverlapClampsStaleTransitionDuration()

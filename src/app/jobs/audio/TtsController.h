@@ -11,6 +11,7 @@
 #include <atomic>
 
 class AppController;
+class JobContext;
 class VoiceLibrary;
 
 // Local Chatterbox text-to-speech, reached from QML as EditorState.tts. Owns the one shared engine:
@@ -55,6 +56,16 @@ public:
     Q_INVOKABLE QString generate(const QString &text, const QString &voiceId, const QString &lang,
                                  double exaggeration, bool place = true, double atSeconds = -1.0,
                                  int track = -1);
+    // Dafin, the AI tab: speaks the text into a file without touching the project or the bin, for
+    // listening first. previewReady carries its file: URL. Returns the job id, or empty.
+    Q_INVOKABLE QString preview(const QString &text, const QString &voiceId, const QString &lang,
+                                double exaggeration);
+    // Puts the speech at the playhead on the first audio track with room: the previewed take when
+    // it was made from exactly these settings (no second synthesis), else a new one. Returns the
+    // job id of a new synthesis, or "preview" when the take was placed straight away, or empty.
+    Q_INVOKABLE QString insertAtPlayhead(const QString &text, const QString &voiceId,
+                                         const QString &lang, double exaggeration);
+
     // The subtitle clip at (trackIndex, clipIndex): one voiced clip per caption, on new audio tracks.
     Q_INVOKABLE QString voiceoverFromSubtitles(int trackIndex, int clipIndex, const QString &voiceId,
                                                const QString &lang, double exaggeration);
@@ -74,8 +85,15 @@ signals:
     void statusChanged();
     void lastUsedChanged();
     void finished(bool ok, const QString &message);
+    void previewReady(const QString &url);
 
 private:
+    // The model-lane body shared by generate and preview: speaks `script` into `path`.
+    void synthesize(JobContext &ctx, const QString &script, const QString &voiceId,
+                    const QString &lang, double exaggeration, const QString &path);
+    static QString previewKeyFor(const QString &text, const QString &voiceId, const QString &lang,
+                                 double exaggeration);
+    void dropPreview();
     void remember(const QString &voiceId, const QString &lang, double exaggeration);
     void pollJob();
     void endJob();
@@ -95,4 +113,7 @@ private:
     QTimer m_poll;
     bool m_shownLoaded = false;
     bool m_shownLoading = false;
+    // The take on offer from preview(): its file and the settings it was made with.
+    QString m_previewPath;
+    QString m_previewKey;
 };
