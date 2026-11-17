@@ -398,6 +398,16 @@ void warnIfNoOpenGl()
     // previewed frame, and a reader keeps whichever backend it opened with, so this has to be
     // known before the first clip does — not whenever the compositor happens to come up.
     drift::hwaccel::setRenderVendor(vendor);
+    // Dafin: what a crash report says about the graphics stack, from this probe.
+    const auto noteGraphics = [&] {
+        const QByteArray line = QStringLiteral("%1 %2, OpenGL %3.%4")
+                                    .arg(vendor, renderer)
+                                    .arg(obtained.majorVersion())
+                                    .arg(obtained.minorVersion())
+                                    .toUtf8();
+        dafin::setCrashGraphicsInfo(haveGl ? line.constData() : "no OpenGL context could be created");
+    };
+    noteGraphics();
     if (haveGl && atLeast33(obtained))
         return;
 
@@ -410,6 +420,7 @@ void warnIfNoOpenGl()
         haveGl = probeOpenGl(QSurfaceFormat(), &obtained, &renderer, &vendor);
     if (!vendor.isEmpty())
         drift::hwaccel::setRenderVendor(vendor);
+    noteGraphics();
 
     const QString driver =
         renderer.isEmpty() ? QCoreApplication::translate("main", "unknown") : renderer;
@@ -560,6 +571,12 @@ int main(int argc, char *argv[])
             return drift::worker::runExportWorker(argc, argv);
     }
 #endif
+    // Dafin: `dafin --crash-dialog <report>` is the window a crashed Linux Dafin starts about itself
+    // (CrashReport_posix.cpp); before the crash report is installed, so it can never recurse.
+    for (int i = 1; i < argc; ++i) {
+        if (qstrcmp(argv[i], "--crash-dialog") == 0)
+            return dafin::runCrashDialog(argc, argv);
+    }
     // Dafin: --check-qml builds the whole QML shell, logs every QML error, and quits by itself
     // (the ShellQmlLoads test). Its own settings and data folders, so it never touches the real ones.
     for (int i = 1; i < argc; ++i) {
@@ -669,6 +686,8 @@ int main(int argc, char *argv[])
     dafin::migrateFromCadra();
     // Dafin: this session's log file (the newest five are kept); needs the names set above.
     dafin::log::start();
+    // Dafin: DAFIN_FORCE_CRASH=1 (or abort, terminate, start, late) makes a fake crash to see the window.
+    dafin::forceCrashIfRequested();
     // Dafin: our own rotating log file (Settings > About > Log viewer). Chains to the old handler.
     dafin::applog::install();
     // Counts this launch and decides on safe mode (two failed starts in a row, or --safe-mode)
