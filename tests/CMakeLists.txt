@@ -17,6 +17,13 @@ qt_add_executable(tst_beatduck tst_beatduck.cpp)
 target_include_directories(tst_beatduck PRIVATE ../src)
 target_link_libraries(tst_beatduck PRIVATE Qt6::Test driftcore)
 add_test(NAME BeatDuck COMMAND tst_beatduck)
+
+# Dafin: AI › Smart short clips (segment scoring, sentence boundaries, reframe) and AI › Media
+# auto-tagging (tag storage and the media bin search).
+qt_add_executable(tst_aishorts tst_aishorts.cpp)
+target_include_directories(tst_aishorts PRIVATE ../src)
+target_link_libraries(tst_aishorts PRIVATE Qt6::Test driftcore)
+add_test(NAME AiShorts COMMAND tst_aishorts)
 qt_add_executable(tst_snapsticky tst_snapsticky.cpp)
 target_include_directories(tst_snapsticky PRIVATE ../src)
 target_link_libraries(tst_snapsticky PRIVATE Qt6::Test driftcore)
@@ -340,6 +347,8 @@ qt_add_executable(tst_mcp
     ../src/app/jobs/audio/DenoiseController.cpp
     ../src/app/jobs/audio/AudioAlignController.cpp
     ../src/app/jobs/ai/AiToolsController.cpp
+    ../src/app/jobs/ai/ShortClipsController.cpp
+    ../src/app/jobs/ai/MediaTaggingController.cpp
     ../src/app/jobs/audio/AudioToolsController.cpp
     ../src/app/color/ColorController.cpp
     ../src/app/color/ScopesController.cpp

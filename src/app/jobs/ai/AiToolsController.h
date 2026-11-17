@@ -11,7 +11,9 @@
 #include <QVariantMap>
 
 class AppController;
+class MediaTaggingController;
 class QTimer;
+class ShortClipsController;
 
 // Dafin: the back end of the assets panel's AI category, reached from QML as EditorState.ai.
 // Every tool there runs on this computer; its models are add-ons downloaded on first use.
@@ -26,6 +28,12 @@ class QTimer;
 class AiToolsController : public QObject
 {
     Q_OBJECT
+    Q_MOC_INCLUDE("app/jobs/ai/ShortClipsController.h")
+    Q_MOC_INCLUDE("app/jobs/ai/MediaTaggingController.h")
+
+    // Dafin: AI › Smart short clips and AI › Media auto-tagging.
+    Q_PROPERTY(ShortClipsController *shorts READ shorts CONSTANT)
+    Q_PROPERTY(MediaTaggingController *tagging READ tagging CONSTANT)
 
     // A selected video or audio clip with sound, so Create captions has something to work on.
     Q_PROPERTY(bool canCaption READ canCaption NOTIFY canCaptionChanged)
@@ -45,6 +53,9 @@ class AiToolsController : public QObject
 
 public:
     explicit AiToolsController(AppController *app, QObject *parent = nullptr);
+
+    ShortClipsController *shorts() const { return m_shorts; }
+    MediaTaggingController *tagging() const { return m_tagging; }
 
     bool transcriptVisible() const { return m_transcriptVisible; }
     void setTranscriptVisible(bool visible);
@@ -112,6 +123,8 @@ private:
                       drift::TimeUs startUs, drift::TimeUs endUs);
 
     AppController *m_app = nullptr;
+    ShortClipsController *m_shorts = nullptr;
+    MediaTaggingController *m_tagging = nullptr;
     QTimer *m_refreshTimer = nullptr;
     bool m_transcriptVisible = false;
 

@@ -1,6 +1,7 @@
 #include "app/bin/AssetLibrary.h"
 
 #include "core/project/media/ImageSequence.h"
+#include "core/project/media/MediaTags.h"
 #include "core/project/Project.h"
 
 #include "engine/decode/probe/MediaProbe.h"
@@ -1444,6 +1445,14 @@ bool AssetLibrary::isEditFriendly(const QString &assetId) const
     return asset && asset->editFriendly;
 }
 
+bool AssetLibrary::matchesSearch(const QString &assetId, const QString &query) const
+{
+    const drift::MediaAsset *asset = m_project ? m_project->asset(assetId) : nullptr;
+    if (!asset)
+        return false;
+    return drift::mediaMatchesSearch(asset->name, asset->tags, query);
+}
+
 bool AssetLibrary::isMissing(const QString &assetId) const
 {
     return m_missing.contains(assetId);
@@ -1865,6 +1874,8 @@ QVariantMap AssetLibrary::assetAt(int index) const
         {QStringLiteral("sequenceId"), asset->sequenceId},
         {QStringLiteral("rating"), asset->rating},
         {QStringLiteral("maskRole"), asset->maskRole},
+        {QStringLiteral("tags"), asset->tags},
+        {QStringLiteral("tagged"), asset->tagged},
         {QStringLiteral("rangeCount"), static_cast<int>(asset->ranges.size())},
         {QStringLiteral("favoriteRangeCount"),
          static_cast<int>(std::count_if(asset->ranges.cbegin(), asset->ranges.cend(),
@@ -2588,6 +2599,8 @@ QStringList AssetLibrary::importFilesReturningIds(const QStringList &paths,
         startImportJob(placeholder.id, absolutePath, !sequence && isImagePath(path));
         ids.append(placeholder.id);
     }
+    if (!ids.isEmpty())
+        emit assetsImported(ids);
     return ids;
 }
 

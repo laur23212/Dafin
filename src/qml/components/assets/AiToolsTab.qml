@@ -40,10 +40,10 @@ Item {
         { id: "enhance", icon: "zoom-in", available: false,
           title: qsTr("Video enhancer"),
           description: qsTr("Upscale and sharpen low-resolution video.") },
-        { id: "shorts", icon: "smartphone", available: false,
+        { id: "shorts", icon: "smartphone", available: true,
           title: qsTr("Smart short clips"),
           description: qsTr("Find the highlights and reframe them to 9:16.") },
-        { id: "tagging", icon: "tags", available: false,
+        { id: "tagging", icon: "tags", available: true,
           title: qsTr("Media auto-tagging"),
           description: qsTr("Tag your media so the bin can be searched by what is in it.") }
     ]
@@ -179,12 +179,31 @@ Item {
             anchors.top: toolHeader.bottom
             anchors.bottom: parent.bottom
             anchors.topMargin: Theme.spacingXs
-            sourceComponent: root.currentTool && root.currentTool.id === "captions" ? captionsTool : null
+            sourceComponent: {
+                const id = root.currentTool ? root.currentTool.id : ""
+                if (id === "captions")
+                    return captionsTool
+                if (id === "shorts")
+                    return shortsTool
+                if (id === "tagging")
+                    return taggingTool
+                return null
+            }
         }
     }
 
     Component {
         id: captionsTool
         AiCaptionsPanel { }
+    }
+
+    Component {
+        id: shortsTool
+        AiShortsPanel { }
+    }
+
+    Component {
+        id: taggingTool
+        AiTaggingPanel { }
     }
 }

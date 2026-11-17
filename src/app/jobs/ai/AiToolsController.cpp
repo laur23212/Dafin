@@ -6,6 +6,8 @@
 #include "app/editor/AppController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/jobs/JobRegistry.h"
+#include "app/jobs/ai/MediaTaggingController.h"
+#include "app/jobs/ai/ShortClipsController.h"
 #include "app/mcp/McpController.h"
 #include "core/edit/CutOps.h"
 #include "core/edit/TimelineOps.h"
@@ -67,6 +69,9 @@ AiToolsController::AiToolsController(AppController *app, QObject *parent)
     : QObject(parent)
     , m_app(app)
 {
+    m_shorts = new ShortClipsController(app, this);
+    m_tagging = new MediaTaggingController(app, this);
+
     m_refreshTimer = new QTimer(this);
     m_refreshTimer->setSingleShot(true);
     m_refreshTimer->setInterval(0);

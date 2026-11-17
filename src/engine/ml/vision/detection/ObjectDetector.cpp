@@ -9,6 +9,8 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMutex>
+#include <QMutexLocker>
 
 #include <algorithm>
 #include <cmath>
@@ -145,6 +147,9 @@ QList<Detection> nonMaximumSuppression(QList<Detection> detections, double iouTh
 
 struct ObjectDetector::Impl
 {
+    // Dafin: Scene detection's object pass and AI › Media auto-tagging can run at the same time;
+    // one ONNX session, so one frame at a time.
+    QMutex mutex;
     bool loadAttempted = false;
     bool loaded = false;
     QString error;
@@ -241,6 +246,7 @@ bool ObjectDetector::modelPresent()
 
 bool ObjectDetector::available()
 {
+    QMutexLocker lock(&d->mutex);
     return d->ensureLoaded();
 }
 
@@ -251,6 +257,7 @@ QString ObjectDetector::lastError() const
 
 QList<Detection> ObjectDetector::detect(const QImage &frame)
 {
+    QMutexLocker lock(&d->mutex);
     if (frame.isNull() || !d->ensureLoaded())
         return {};
 
