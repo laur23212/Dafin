@@ -1347,8 +1347,6 @@ qt_add_executable(drift
     src/app/mcp/McpUsage.h
     src/app/editor/AppControllerDetail.h
     src/app/editor/EditorState.h
-    src/app/editor/AssetGroupStore.h
-    src/app/editor/AssetGroupStore.cpp
     src/app/editor/LayoutStore.h
     src/app/editor/LayoutStore.cpp
     src/app/editor/WorkspaceStore.h
@@ -1487,6 +1485,8 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerKeyframes.cpp
     src/app/editor/appcontroller/AppControllerEffects.cpp
     src/app/editor/appcontroller/AppControllerTracks.cpp
+    src/app/editor/AssetGroupStore.h
+    src/app/editor/AssetGroupStore.cpp
     src/app/editor/appcontroller/AppControllerProject.cpp
     src/app/editor/appcontroller/AppControllerTextLayers.cpp
     src/app/editor/appcontroller/AppControllerDafin.cpp
