@@ -52,7 +52,7 @@ and audio clips are teal.
 | 🔠 **Titles** | Title templates with quick controls for text, font, colours and speed. Premiere `.mogrt` titles stay editable, with no Adobe software. |
 | ✨ **Effects and stickers** | Lottie stickers, chroma key in one click, adjustment layers, keyframes, speed ramps and motion tracking. |
 | 🧩 **Templates** | Built-in split-screen layouts. Add your own Lottie files, sounds and templates by dragging them onto a tab. |
-| 🤖 **AI** | An AI tab for tools that run on your computer: no cloud, no account, no API key. Auto captions come first, and the rest are marked *Coming soon*. |
+| 🤖 **AI** | An AI tab for tools that run on your computer: no cloud, no account, no API key. Auto captions and the vocal remover come first, and the rest are marked *Coming soon*. |
 | 🎚️ **Volume dots** | A feature Filmora lacks. Click the volume line on a clip, add dots and drag them to shape the loudness without splitting the clip. Inspired by Cool Edit Pro. |
 | 📤 **Export** | One-click YouTube, TikTok, Instagram and WhatsApp presets, and NVIDIA, AMD and Intel GPU encoders with a CPU fallback. |
 | 📂 **Open other projects** | Premiere Pro `.prproj` and Filmora `.wfp` files open as a Dafin project. The originals are never changed. |

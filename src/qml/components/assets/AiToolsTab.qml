@@ -28,7 +28,7 @@ Item {
         { id: "denoise", icon: "headphones", available: false,
           title: qsTr("AI audio denoise"),
           description: qsTr("Clean background noise out of voices.") },
-        { id: "vocals", icon: "mic-off", available: false,
+        { id: "vocals", icon: "mic-vocal", available: true,
           title: qsTr("Vocal remover"),
           description: qsTr("Split a song into the voice and the music.") },
         { id: "tts", icon: "megaphone", available: false,
@@ -179,12 +179,25 @@ Item {
             anchors.top: toolHeader.bottom
             anchors.bottom: parent.bottom
             anchors.topMargin: Theme.spacingXs
-            sourceComponent: root.currentTool && root.currentTool.id === "captions" ? captionsTool : null
+            sourceComponent: {
+                if (!root.currentTool)
+                    return null
+                switch (root.currentTool.id) {
+                case "captions": return captionsTool
+                case "vocals": return vocalsTool
+                default: return null
+                }
+            }
         }
     }
 
     Component {
         id: captionsTool
         AiCaptionsPanel { }
+    }
+
+    Component {
+        id: vocalsTool
+        AiVocalsPanel { }
     }
 }

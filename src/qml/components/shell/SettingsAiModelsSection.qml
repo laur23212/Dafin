@@ -14,7 +14,8 @@ Column {
     readonly property var aiKinds: ["onnxruntime", "onnxruntime-ep", "whisper-model", "align-model",
                                     "vad-model", "diarize-model", "denoise-model", "sam2-model",
                                     "rvm-model", "restore-model", "tts-model", "face-model",
-                                    "depth-model", "audio-tag-model", "audio-class-model", "object-model"]
+                                    "depth-model", "audio-tag-model", "audio-class-model", "object-model",
+                                    "separation-model"]
 
     readonly property var rows: {
         const out = []
@@ -36,6 +37,7 @@ Column {
     property string confirmId: ""
     property bool engineRemoved: false
     property bool stillListening: false
+    property bool stillSeparating: false
 
     function kindsOf(row) {
         return row.kinds && row.kinds.length > 0 ? row.kinds : [row.kind]
@@ -43,6 +45,9 @@ Column {
     function isEngine(row) {
         const kinds = root.kindsOf(row)
         return kinds.indexOf("onnxruntime") >= 0 || kinds.indexOf("onnxruntime-ep") >= 0
+    }
+    function isSeparation(row) {
+        return root.kindsOf(row).indexOf("separation-model") >= 0
     }
     function isSpeech(row) {
         const kinds = root.kindsOf(row)
@@ -56,7 +61,13 @@ Column {
             root.stillListening = true
             return
         }
+        // The vocal remover's model is let go after every run; only a run in progress holds it.
+        if (root.isSeparation(row) && !EditorState.vocals.releaseModel()) {
+            root.stillSeparating = true
+            return
+        }
         root.stillListening = false
+        root.stillSeparating = false
         if (root.isEngine(row))
             root.engineRemoved = true
         Addons.uninstall(row.id)
@@ -132,7 +143,7 @@ Column {
                 id: deleteButton
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                enabled: !EditorState.ai.captioning
+                enabled: !EditorState.ai.captioning && !EditorState.vocals.running
                 variant: entry.confirming ? "destructive" : "secondary"
                 glyph: Theme.icons.trash
                 text: entry.confirming ? qsTr("Delete now") : qsTr("Delete")
@@ -160,6 +171,16 @@ Column {
         font.family: Theme.fontFamily
         font.pixelSize: Theme.fontSizeXs
         text: qsTr("Speech recognition is still working. Delete it once it has finished.")
+    }
+
+    Text {
+        width: root.width
+        visible: root.stillSeparating
+        wrapMode: Text.WordWrap
+        color: Theme.c.scenesTab.warning
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
+        text: qsTr("The vocal remover is still working. Delete it once it has finished.")
     }
 
     // The engine stays loaded until Dafin closes, so its files are only gone for good then.
