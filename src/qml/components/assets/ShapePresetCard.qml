@@ -64,6 +64,8 @@ Column {
             anchors.fill: parent
             kind: "shape"
             payload: root.modelData.id
+            groupTab: "shapes"
+            groupItem: root.modelData.id
             label: root.modelData.label
             glyph: Theme.icons.shapes
             onTapped: {
@@ -98,6 +100,15 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("shapes", root.modelData.id)
+            }
+            AssetGroupSubmenu {
+                tabId: "shapes"
+                itemId: root.modelData.id
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "shapes"
+                itemId: root.modelData.id
             }
         }
 

@@ -44,6 +44,8 @@ Column {
             anchors.fill: parent
             kind: "textStyle"
             payload: root.modelData.id
+            groupTab: "titles"
+            groupItem: root.modelData.id
             label: root.modelData.label
             glyph: Theme.icons.type
             hasContextMenu: true
@@ -122,6 +124,31 @@ Column {
                 icon.name: Theme.icons.trash
                 onTriggered: deleteRequested(root.modelData)
             }
+            ThemedMenuSeparator { }
+            ThemedMenuItem {
+                text: AssetGroups.tick >= 0 && EditorState.isAssetFavorite("titles", root.modelData.id)
+                      ? qsTr("Remove from favorites") : qsTr("Add to favorites")
+                icon.name: Theme.icons.star
+                onTriggered: EditorState.toggleAssetFavorite("titles", root.modelData.id)
+            }
+            AssetGroupSubmenu {
+                tabId: "titles"
+                itemId: root.modelData.id
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "titles"
+                itemId: root.modelData.id
+            }
+        }
+
+        // Dafin: titles can be favorites too.
+        AssetFavoriteButton {
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.margins: 3
+            tabId: "titles"
+            itemId: root.modelData.id
         }
     }
 

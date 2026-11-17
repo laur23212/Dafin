@@ -40,6 +40,15 @@ Item {
         void root.userPresetsTick
         return EditorState.templateCategories()
     }
+    // Dafin: the My area (favorites and the user's groups) covers every title card: built-in,
+    // installed and the user's own templates. section is then "__favorites__" or a group id.
+    readonly property var allTitles: builtinPresets.map(p => Object.assign({ "_titleKind": "builtin" }, p))
+                                     .concat(installedPresets.map(p => Object.assign({ "_titleKind": "installed" }, p)))
+                                     .concat(allUserPresets.map(p => Object.assign({ "_titleKind": "user" }, p)))
+    readonly property bool showsMyList: AssetGroups.isMyList(root.section)
+    readonly property var myTitles: showsMyList ? AssetGroups.pick("titles", root.section, root.allTitles, p => p.id) : []
+    readonly property real topArea: myBar.y + myBar.height
+
     readonly property var activeCategory: {
         for (const c of root.categories)
             if (c.id === root.category)
@@ -153,7 +162,7 @@ Item {
     Item {
         id: categoryBar
         width: parent.width
-        y: toolbar.height + Theme.spacingSm
+        y: root.topArea + Theme.spacingSm
         height: visible ? Theme.controlHeightSm + Theme.spacingSm : 0
         visible: root.section === "mine"
 
@@ -227,6 +236,16 @@ Item {
         }
     }
 
+    // Dafin: ⭐ Favorites, the user's groups and + New group, under the section chips.
+    AssetCategoryChips {
+        id: myBar
+        y: toolbar.height + Theme.spacingSm
+        width: parent.width
+        tabId: "titles"
+        activeCategory: root.section
+        onCategoryActivated: (categoryId) => root.section = categoryId
+    }
+
     // Built-in packs and the user's own styles are separate grids, switched from the toolbar.
     GridView {
         id: packGrid
@@ -236,7 +255,7 @@ Item {
         readonly property int columnCount: 2
         readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
         x: Theme.pagePadding
-        y: toolbar.height + Theme.spacingSm
+        y: root.topArea + Theme.spacingSm
         width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
         height: parent.height - y
         bottomMargin: Theme.spacing3xl
@@ -298,7 +317,7 @@ Item {
         readonly property int columnCount: 2
         readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
         x: Theme.pagePadding
-        y: toolbar.height + Theme.spacingSm
+        y: root.topArea + Theme.spacingSm
         width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
         height: parent.height - y
         bottomMargin: Theme.spacing3xl
@@ -321,9 +340,90 @@ Item {
         }
     }
 
+    // Dafin: favorites or one of the user's groups, in the user's order; any kind of title card.
+    GridView {
+        id: myGrid
+        readonly property int columnCount: 2
+        readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
+        x: Theme.pagePadding
+        y: root.topArea + Theme.spacingSm
+        width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
+        height: parent.height - y
+        bottomMargin: Theme.spacing3xl
+        clip: true
+        reuseItems: true
+        boundsBehavior: Flickable.StopAtBounds
+        acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
+        ScrollBar.vertical: AppScrollBar { }
+        cellWidth: Math.floor(width / columnCount)
+        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
+                    + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+        visible: root.showsMyList && root.myTitles.length > 0
+        model: root.myTitles
+
+        delegate: Item {
+            id: myCell
+            required property var modelData
+            width: myGrid.cellWidth
+            height: myGrid.cellHeight
+
+            Loader {
+                sourceComponent: myCell.modelData._titleKind === "builtin" ? myPackCard : myUserCard
+            }
+
+            Component {
+                id: myPackCard
+                TextStylePackCard {
+                    modelData: myCell.modelData
+                    cardSize: myGrid.cardSize
+                    onAdded: root.added()
+                }
+            }
+
+            Component {
+                id: myUserCard
+                TextStyleUserCard {
+                    modelData: myCell.modelData
+                    cardSize: myGrid.cardSize
+                    installed: myCell.modelData._titleKind === "installed"
+                    onAdded: root.added()
+                    onExportRequested: (preset) => root.exportStyle(preset)
+                    onRenameRequested: (preset) => renameDialog.openFor(preset)
+                    onDeleteRequested: (preset) => myCell.modelData._titleKind === "installed"
+                                                   ? EditorState.uninstallTextTemplate(preset.id)
+                                                   : deleteDialog.openFor(preset)
+                    onDetailsRequested: (preset) => detailsDialog.openForEdit(preset)
+                    onDuplicateRequested: (preset) => EditorState.duplicateUserTextPreset(preset.id)
+                }
+            }
+        }
+    }
+
+    // Dafin: drag a title onto another's place to reorder favorites and groups.
+    AssetReorderArea {
+        anchors.fill: myGrid
+        view: myGrid
+        tabId: "titles"
+        listId: root.section
+        keyAt: i => root.myTitles[i] ? root.myTitles[i].id : ""
+    }
+
     EmptyState {
         anchors.horizontalCenter: parent.horizontalCenter
-        y: toolbar.height + Math.max(0, (parent.height - toolbar.height - height) / 2)
+        y: root.topArea + Math.max(0, (parent.height - root.topArea - height) / 2)
+        width: Math.min(parent.width - Theme.spacing3xl, 260)
+        visible: root.showsMyList && root.myTitles.length === 0
+        compact: true
+        glyph: Theme.icons.star
+        title: root.section === AssetGroups.favoritesId ? qsTr("No favorite titles yet") : qsTr("This group is empty")
+        hint: root.section === AssetGroups.favoritesId
+              ? qsTr("Star a title to keep it here.")
+              : qsTr("Right-click a title and choose Add to group, or drop it on the group.")
+    }
+
+    EmptyState {
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.topArea + Math.max(0, (parent.height - root.topArea - height) / 2)
         width: Math.min(parent.width - Theme.spacing3xl, 260)
         visible: root.section === "mine" && root.userPresets.length === 0
         compact: true

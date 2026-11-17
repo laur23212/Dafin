@@ -27,6 +27,13 @@ Item {
     property bool usingSystemFonts: false
     property string filter: ""
 
+    // Dafin: which list the popup shows: every font ("__all__"), the favorites or one of the
+    // user's groups (AssetGroups, tab "fonts"), the last two in the user's order.
+    readonly property string allId: "__all__"
+    property string view: allId
+    readonly property bool showsMyList: AssetGroups.isMyList(view)
+    onViewChanged: root.rebuild()
+
     function addFont() {
         const url = FileDialogs.openFile(qsTr("Add font"), [qsTr("Fonts (*.ttf *.otf *.ttc *.otc)")])
         if (url.toString().length === 0)
@@ -70,8 +77,14 @@ Item {
                 rows.push({ "name": system[i], "previewFamily": "", "group": qsTr("System fonts"), "removable": false })
         }
 
+        // Dafin: favorites or a group: those fonts only, in the user's order, under no headers.
+        // A font that is no longer installed is skipped, not forgotten.
+        let shown = rows
+        if (root.showsMyList)
+            shown = AssetGroups.pick("fonts", root.view, rows, r => r.name).map(r => Object.assign({}, r, { "group": "" }))
+
         familyModel.clear()
-        familyModel.append(rows)
+        familyModel.append(shown)
     }
 
     Timer {
@@ -85,6 +98,10 @@ Item {
     Connections {
         target: EditorState
         function onUserFontsChanged() { root.rebuild() }
+        function onAssetGroupsChanged() {
+            if (root.showsMyList)
+                Qt.callLater(root.rebuild)
+        }
     }
 
     Connections {
@@ -206,6 +223,16 @@ Item {
                 onAddRequested: root.addFont()
             }
 
+            // Dafin: All fonts · ⭐ Favorites · the user's groups · + New group.
+            AssetCategoryChips {
+                Layout.fillWidth: true
+                Layout.preferredHeight: Theme.controlHeightSm
+                tabId: "fonts"
+                categories: [{ "id": root.allId, "label": qsTr("All fonts") }]
+                activeCategory: root.view
+                onCategoryActivated: (categoryId) => root.view = categoryId
+            }
+
             ListView {
                 id: list
                 Layout.fillWidth: true
@@ -225,7 +252,7 @@ Item {
                 currentIndex: -1
                 ScrollBar.vertical: AppScrollBar {}
 
-                section.property: "group"
+                section.property: root.showsMyList ? "" : "group"
                 section.delegate: FontPickerSectionHeader {
                     rowWidth: list.width
                 }
@@ -236,6 +263,7 @@ Item {
                 delegate: FontPickerFamilyRow {
                     rowWidth: list.width
                     selectedFamily: root.family
+                    reorderable: root.showsMyList
                     onFamilyChosen: function(familyName) {
                         root.forceActiveFocus()
                         root.familyPicked(familyName)
@@ -246,6 +274,16 @@ Item {
                     }
                 }
             }
+        }
+
+        // Dafin: drag a font by its handle onto another's place to reorder favorites and groups.
+        AssetReorderArea {
+            parent: list
+            anchors.fill: parent
+            view: list
+            tabId: "fonts"
+            listId: root.view
+            keyAt: i => i >= 0 && i < familyModel.count ? familyModel.get(i).name : ""
         }
 
         background: FontPickerPopupSurface { }

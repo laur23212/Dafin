@@ -22,6 +22,11 @@ Item {
     // lands. Used by Lottie stickers and titles, which are files rather than catalog ids.
     property url fileUrl: ""
     readonly property bool fileDrag: fileUrl.toString().length > 0
+    // Dafin: the card's tab and item id in the "My" area (AssetGroups), so it can be reordered in
+    // favorites or a group, or dropped on a group chip. Carried apart from the payload, which is
+    // not always the id (a video sticker drags as media).
+    property string groupTab: ""
+    property string groupItem: ""
 
     readonly property bool active: mouseDrag.active || lift.lifted
     readonly property bool pressed: tap.pressed || lift.pressed
@@ -89,10 +94,13 @@ Item {
             onActiveChanged: {
                 // A file drag is marked "file" so the assets panel knows it came from inside
                 // and does not file it into My Lotties again.
-                if (active)
+                if (active) {
+                    AssetGroups.beginDrag(root.groupTab, root.groupItem)
                     AssetDrag.begin(root.fileDrag ? "file" : root.kind, root.fileDrag ? root.fileUrl : root.payload, root.label)
-                else
+                } else {
                     AssetDrag.end()
+                    AssetGroups.endDrag()
+                }
             }
         }
 

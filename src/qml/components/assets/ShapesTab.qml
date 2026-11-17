@@ -35,11 +35,9 @@ Item {
                 return label.indexOf(q) >= 0 || id.indexOf(q) >= 0
             })
         }
-        if (root.activeCategory === root.favoritesId) {
-            return root.allShapes.filter(function(s) {
-                return EditorState.isAssetFavorite("shapes", s.id)
-            })
-        }
+        // Dafin: favorites and the user's groups, in the user's order.
+        if (AssetGroups.isMyList(root.activeCategory))
+            return AssetGroups.pick("shapes", root.activeCategory, root.allShapes, s => s.id)
         return root.allShapes.filter(function(s) { return s.category === root.activeCategory })
     }
 
@@ -62,6 +60,7 @@ Item {
             width: parent.width
             categories: root.categories
             activeCategory: root.activeCategory
+            tabId: "shapes"
             searching: root.query.length > 0
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
@@ -80,6 +79,8 @@ Item {
                       ? qsTr("No shapes match “%1”.").arg(search.text.trim())
                       : (root.activeCategory === root.favoritesId
                          ? qsTr("No favorites yet. Star shapes to save them here.")
+                         : AssetGroups.isGroup(root.activeCategory)
+                         ? qsTr("This group is empty. Right-click a card and choose Add to group, or drop a card on the group.")
                          : qsTr("Nothing in this category."))
                 color: Theme.c.shapesTab.foregroundMuted
                 font.family: Theme.fontFamily
@@ -120,6 +121,15 @@ Item {
                     cardSize: shapeGrid.cardSize
                     onAdded: root.added()
                 }
+            }
+
+            // Dafin: drag a card onto another's place to reorder favorites and groups.
+            AssetReorderArea {
+                anchors.fill: shapeGrid
+                view: shapeGrid
+                tabId: "shapes"
+                listId: root.activeCategory
+                keyAt: i => root.currentShapes[i] ? root.currentShapes[i].id : ""
             }
         }
         

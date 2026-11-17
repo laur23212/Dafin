@@ -159,6 +159,8 @@ Column {
             anchors.fill: parent
             kind: "template"
             payload: root.modelData.id
+            groupTab: "templates"
+            groupItem: root.modelData.id
             label: root.modelData.label
             glyph: Theme.icons.layers
             onTapped: applyRequested(root.modelData.id)
@@ -181,6 +183,15 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("templates", root.modelData.id)
+            }
+            AssetGroupSubmenu {
+                tabId: "templates"
+                itemId: root.modelData.id
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "templates"
+                itemId: root.modelData.id
             }
         }
 

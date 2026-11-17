@@ -52,6 +52,9 @@ Column {
         }
     }
 
+    // Dafin: what a drop on a group chip or a reorder reads from the drag's source (AssetGroups).
+    readonly property string groupTab: "transitions"
+    readonly property string groupItem: root.modelData.kind || ""
     Drag.active: transitionDrag.active
     Drag.dragType: Drag.Automatic
     Drag.supportedActions: Qt.CopyAction
@@ -102,10 +105,13 @@ Column {
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
             onActiveChanged: {
-                if (active)
+                if (active) {
+                    AssetGroups.beginDrag("transitions", root.modelData.kind)
                     AssetDrag.begin("transition", root.modelData.kind, root.modelData.label)
-                else
+                } else {
                     AssetDrag.end()
+                    AssetGroups.endDrag()
+                }
             }
         }
 
@@ -131,6 +137,15 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("transitions", root.modelData.kind)
+            }
+            AssetGroupSubmenu {
+                tabId: "transitions"
+                itemId: root.modelData.kind
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "transitions"
+                itemId: root.modelData.kind
             }
         }
 

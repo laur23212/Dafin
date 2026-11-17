@@ -1343,6 +1343,8 @@ qt_add_executable(drift
     src/app/mcp/McpUsage.h
     src/app/editor/AppControllerDetail.h
     src/app/editor/EditorState.h
+    src/app/editor/AssetGroupStore.h
+    src/app/editor/AssetGroupStore.cpp
     src/app/editor/LayoutStore.h
     src/app/editor/LayoutStore.cpp
     src/app/editor/WorkspaceStore.h
@@ -2074,6 +2076,8 @@ set_source_files_properties(src/qml/Toasts.qml PROPERTIES QT_QML_SINGLETON_TYPE 
 # AndroidBottomSheet and the drop is performed by AndroidTimeline.
 set_source_files_properties(src/qml/TouchDrag.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 set_source_files_properties(src/qml/AssetDrag.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
+# Dafin: favorites and user groups of the asset tabs and the font picker.
+set_source_files_properties(src/qml/AssetGroups.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # The editor main window, for panels that may live in a secondary window.
 set_source_files_properties(src/qml/ShellBridge.qml PROPERTIES QT_QML_SINGLETON_TYPE true)
 # Dafin tutorial: content, guided-tour target registry.
@@ -2155,6 +2159,7 @@ qt_add_qml_module(drift
         src/qml/Toasts.qml
         src/qml/TouchDrag.qml
         src/qml/AssetDrag.qml
+        src/qml/AssetGroups.qml
         src/qml/ShellBridge.qml
         src/qml/Tutorial.qml
         src/qml/components/tutorial/TourTarget.qml
@@ -2381,6 +2386,9 @@ qt_add_qml_module(drift
         src/qml/components/assets/AssetCategoryChips.qml
         src/qml/components/assets/EffectStacksSection.qml
         src/qml/components/assets/AssetFavoriteButton.qml
+        src/qml/components/assets/AssetGroupSubmenu.qml
+        src/qml/components/assets/AssetGroupRemoveItem.qml
+        src/qml/components/assets/AssetReorderArea.qml
         src/qml/components/assets/AssetQuickAddButton.qml
         src/qml/components/assets/TransitionPresetCard.qml
         src/qml/components/assets/TextStyleUserCard.qml

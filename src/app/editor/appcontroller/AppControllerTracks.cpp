@@ -1676,50 +1676,93 @@ QString AppController::actionForArrowChord(int key, int modifiers) const
     return {};
 }
 
-void AppController::loadAssetFavorites()
-{
-    m_assetFavorites.clear();
-    QSettings settings;
-    settings.beginGroup(QStringLiteral("assetFavorites"));
-    const QStringList keys = settings.allKeys();
-    for (const QString &tabId : keys) {
-        const QStringList ids = settings.value(tabId).toStringList();
-        if (!ids.isEmpty())
-            m_assetFavorites.insert(tabId, QSet<QString>(ids.cbegin(), ids.cend()));
-    }
-    settings.endGroup();
-}
-
-void AppController::saveAssetFavorites(const QString &tabId)
-{
-    QSettings settings;
-    settings.beginGroup(QStringLiteral("assetFavorites"));
-    const QSet<QString> ids = m_assetFavorites.value(tabId);
-    if (ids.isEmpty())
-        settings.remove(tabId);
-    else
-        settings.setValue(tabId, QStringList(ids.cbegin(), ids.cend()));
-    settings.endGroup();
-}
-
 bool AppController::isAssetFavorite(const QString &tabId, const QString &itemId) const
 {
-    return m_assetFavorites.value(tabId).contains(itemId);
+    return m_assetGroups.isFavorite(tabId, itemId);
 }
 
 void AppController::toggleAssetFavorite(const QString &tabId, const QString &itemId)
 {
     if (tabId.isEmpty() || itemId.isEmpty())
         return;
-    QSet<QString> &ids = m_assetFavorites[tabId];
-    if (ids.contains(itemId))
-        ids.remove(itemId);
-    else
-        ids.insert(itemId);
-    if (ids.isEmpty())
-        m_assetFavorites.remove(tabId);
-    saveAssetFavorites(tabId);
+    m_assetGroups.toggleFavorite(tabId, itemId);
     emit assetFavoritesChanged();
+    emit assetGroupsChanged();
+}
+
+QStringList AppController::assetListItems(const QString &tabId, const QString &listId) const
+{
+    return m_assetGroups.items(tabId, listId);
+}
+
+QVariantList AppController::assetGroups(const QString &tabId) const
+{
+    QVariantList out;
+    for (const AssetGroupStore::Group &g : m_assetGroups.groups(tabId))
+        out.append(QVariantMap{{QStringLiteral("id"), g.id},
+                               {QStringLiteral("name"), g.name},
+                               {QStringLiteral("count"), g.items.size()}});
+    return out;
+}
+
+QString AppController::addAssetGroup(const QString &tabId, const QString &name, const QString &itemId)
+{
+    const QString id = m_assetGroups.addGroup(tabId, name);
+    if (id.isEmpty())
+        return id;
+    if (!itemId.isEmpty())
+        m_assetGroups.addToGroup(tabId, id, itemId);
+    emit assetGroupsChanged();
+    return id;
+}
+
+bool AppController::renameAssetGroup(const QString &tabId, const QString &groupId, const QString &name)
+{
+    const bool ok = m_assetGroups.renameGroup(tabId, groupId, name);
+    if (ok)
+        emit assetGroupsChanged();
+    return ok;
+}
+
+bool AppController::removeAssetGroup(const QString &tabId, const QString &groupId)
+{
+    const bool ok = m_assetGroups.removeGroup(tabId, groupId);
+    if (ok)
+        emit assetGroupsChanged();
+    return ok;
+}
+
+bool AppController::addToAssetGroup(const QString &tabId, const QString &groupId, const QString &itemId)
+{
+    const bool ok = m_assetGroups.addToGroup(tabId, groupId, itemId);
+    if (ok)
+        emit assetGroupsChanged();
+    return ok;
+}
+
+bool AppController::removeFromAssetGroup(const QString &tabId, const QString &groupId, const QString &itemId)
+{
+    const bool ok = m_assetGroups.removeFromGroup(tabId, groupId, itemId);
+    if (ok)
+        emit assetGroupsChanged();
+    return ok;
+}
+
+bool AppController::isInAssetGroup(const QString &tabId, const QString &groupId, const QString &itemId) const
+{
+    return m_assetGroups.isInGroup(tabId, groupId, itemId);
+}
+
+bool AppController::moveAssetInList(const QString &tabId, const QString &listId, const QString &itemId,
+                                    const QString &targetId)
+{
+    const bool ok = m_assetGroups.moveItem(tabId, listId, itemId, targetId);
+    if (ok) {
+        if (listId == AssetGroupStore::favoritesId())
+            emit assetFavoritesChanged();
+        emit assetGroupsChanged();
+    }
+    return ok;
 }
 
 void AppController::triggerAction(const QString &actionId)

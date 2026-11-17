@@ -51,11 +51,9 @@ Column {
                 return label.indexOf(q) >= 0 || id.indexOf(q) >= 0
             })
         }
-        if (root.activeCategory === root.favoritesId) {
-            return root.catalog.filter(function(preset) {
-                return EditorState.isAssetFavorite("effects", preset.id)
-            })
-        }
+        // Dafin: favorites and the user's groups, in the user's order.
+        if (AssetGroups.isMyList(root.activeCategory))
+            return AssetGroups.pick("effects", root.activeCategory, root.catalog, preset => preset.id)
         if (root.activeCategory === root.mineId)
             return root.catalog.filter(function(preset) { return preset.user === true })
         if (root.activeCategory === root.allId)
@@ -71,7 +69,7 @@ Column {
         if (root.query.length > 0)
             return root.adjustmentCardLabel.toLowerCase().indexOf(root.query) >= 0
                    || "adjustment layer".indexOf(root.query) >= 0
-        return root.activeCategory !== root.mineId && root.activeCategory !== root.favoritesId
+        return root.activeCategory !== root.mineId && !AssetGroups.isMyList(root.activeCategory)
     }
 
     function applyPreset(effectId) {
@@ -148,6 +146,7 @@ Column {
             activeCategory: root.activeCategory
             showMine: true
             mineLabel: qsTr("My Effects")
+            tabId: "effects"
             searching: root.query.length > 0
             onCategoryActivated: (categoryId) => root.activeCategory = categoryId
         }
@@ -170,6 +169,8 @@ Column {
                          ? qsTr("Nothing here yet. Import a .driftfx or a Drift Forge zip to add your own.")
                          : root.activeCategory === root.favoritesId
                          ? qsTr("No favorites yet. Star presets to save them here.")
+                         : AssetGroups.isGroup(root.activeCategory)
+                         ? qsTr("This group is empty. Right-click a card and choose Add to group, or drop a card on the group.")
                          : qsTr("Nothing in this category."))
                 color: Theme.c.effectBrowser.foregroundMuted
                 font.family: Theme.fontFamily
@@ -312,6 +313,15 @@ Column {
                     onApplyRequested: (effectId) => root.applyPreset(effectId)
                     onDeleteRequested: (preset) => deleteEffectDialog.openFor(preset)
                 }
+            }
+
+            // Dafin: drag a card onto another's place to reorder favorites and groups.
+            AssetReorderArea {
+                anchors.fill: presetGrid
+                view: presetGrid
+                tabId: "effects"
+                listId: root.activeCategory
+                keyAt: i => root.visiblePresets[i] ? root.visiblePresets[i].id : ""
             }
         }
         }

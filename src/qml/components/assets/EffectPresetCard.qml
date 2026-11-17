@@ -37,6 +37,9 @@ Column {
         suspended: presetDrag.active || root.lowSpecOff
     }
 
+    // Dafin: what a drop on a group chip or a reorder reads from the drag's source (AssetGroups).
+    readonly property string groupTab: "effects"
+    readonly property string groupItem: root.modelData.id || ""
     Drag.active: presetDrag.active
     Drag.dragType: Drag.Automatic
     Drag.supportedActions: Qt.CopyAction
@@ -137,6 +140,8 @@ Column {
 
         DragHandler {
             id: presetDrag
+            // Dafin: names the card for reordering in favorites and groups (AssetGroups).
+            onActiveChanged: active ? AssetGroups.beginDrag("effects", root.modelData.id) : AssetGroups.endDrag()
             target: null
             // A finger lifts through TouchDrag instead: a platform
             // drag has no touch gesture and cannot leave the sheet.
@@ -172,6 +177,15 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("effects", root.modelData.id)
+            }
+            AssetGroupSubmenu {
+                tabId: "effects"
+                itemId: root.modelData.id
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "effects"
+                itemId: root.modelData.id
             }
             ThemedMenuSeparator { visible: root.modelData.user === true }
             ThemedMenuItem {

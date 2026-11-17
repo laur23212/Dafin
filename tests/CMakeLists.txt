@@ -123,6 +123,12 @@ add_test(NAME LayoutStore COMMAND tst_layoutstore)
 # test means the same thing on a dev machine as it does headless in CI.
 set_tests_properties(LayoutStore PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
+# Dafin: favorites and user groups of the asset tabs and the font list.
+qt_add_executable(tst_assetgroups tst_assetgroups.cpp ../src/app/editor/AssetGroupStore.cpp)
+target_include_directories(tst_assetgroups PRIVATE ../src)
+target_link_libraries(tst_assetgroups PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME AssetGroups COMMAND tst_assetgroups)
+
 qt_add_executable(tst_projectsafety tst_projectsafety.cpp ../src/app/editor/ProjectSafety.cpp)
 target_include_directories(tst_projectsafety PRIVATE ../src)
 target_link_libraries(tst_projectsafety PRIVATE Qt6::Test Qt6::Core)

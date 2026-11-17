@@ -74,6 +74,8 @@ Column {
             anchors.fill: parent
             kind: "sticker"
             payload: modelData.id
+            groupTab: "stickers"
+            groupItem: modelData.id
             label: modelData.label
             thumbnail: modelData.path
             onTapped: {
@@ -108,6 +110,15 @@ Column {
                 text: cardMenu.favorited ? qsTr("Remove from favorites") : qsTr("Add to favorites")
                 icon.name: Theme.icons.star
                 onTriggered: EditorState.toggleAssetFavorite("stickers", modelData.id)
+            }
+            AssetGroupSubmenu {
+                tabId: "stickers"
+                itemId: modelData.id
+                anchorItem: root
+            }
+            AssetGroupRemoveItem {
+                tabId: "stickers"
+                itemId: modelData.id
             }
         }
 

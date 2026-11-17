@@ -966,7 +966,6 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
     // Off by default: with it on, nudging a clip while the playhead sits anywhere writes a
     // keyframe, and an animation appears where the user only meant to reposition something.
     m_autoKeyEnabled = settings.value(QStringLiteral("editor/autoKeyEnabled"), false).toBool();
-    loadAssetFavorites();
 
     m_previewAutoCommit = new QTimer(this);
     m_previewAutoCommit->setSingleShot(true);
