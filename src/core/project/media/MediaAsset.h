@@ -102,6 +102,13 @@ struct MediaAsset
     // otherwise. Dropping a flagged asset makes a media mask instead of a clip.
     QString maskRole;
 
+    // Dafin: what AI › Media auto-tagging heard or saw in this file ("dog", "speech", "rock
+    // music"), lowercase, most confident first; the media bin search matches them. `tagged` says
+    // the tagger has looked at this file, so "tag untagged media" skips it even when it found
+    // nothing or the user removed every tag. See core/project/media/MediaTags.h.
+    QStringList tags;
+    bool tagged = false;
+
     int sampleRate = 0;
     int channels = 0;
     QString codecName;

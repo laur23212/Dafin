@@ -21,6 +21,7 @@
 #include "app/online/addons/AddonManager.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/online/CloudProviders.h"
+#include "core/edit/AutoReframe.h"
 #include "core/edit/CutOps.h"
 #include "core/edit/TimelineOps.h"
 #include "engine/addons/AddonRegistry.h"
@@ -4886,70 +4887,36 @@ QJsonObject McpController::autoReframe(int trackIndex, int clipIndex, double asp
     }
 
     const int radius = (m == QLatin1String("motion")) ? 4 : 2;
-    QList<Sample> smoothed = samples;
-    for (int i = 0; i < samples.size(); ++i) {
-        double cx = 0, cy = 0, n = 0;
-        for (int j = qMax(0, i - radius); j <= qMin(samples.size() - 1, i + radius); ++j) {
-            cx += samples.at(j).cx;
-            cy += samples.at(j).cy;
-            n += 1;
-        }
-        smoothed[i].cx = cx / n;
-        smoothed[i].cy = cy / n;
-    }
+    QList<drift::reframe::FaceSample> faceSamples;
+    faceSamples.reserve(samples.size());
+    for (const Sample &s : samples)
+        faceSamples.append({s.t, s.cx, s.cy, s.rx, s.ry});
 
     // The crop window is in normalised source coordinates, where the two axes have different
-    // lengths in pixels. Relating them by the target aspect alone — as this did — treats them as
-    // square, which both distorts the picture and zooms far past what was asked for: on a 4K 16:9
-    // source a 9:16 request came out as a square box and about a 3x upscale. Dividing the source's
-    // own display aspect out is what makes the window the shape the caller asked for.
+    // lengths in pixels: the source's own display aspect is what makes the window the shape the
+    // caller asked for (see core/edit/AutoReframe.cpp, shared with AI › Smart short clips).
     double sourceAspect = canvasW / canvasH;
+    int sourcePixelWidth = 0;
     if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
         if (asset->width > 0 && asset->height > 0)
             sourceAspect = double(asset->width) / double(asset->height);
+        sourcePixelWidth = asset->width;
     }
-
+    const drift::reframe::Result framed =
+        drift::reframe::reframeKeys(drift::reframe::smoothSamples(faceSamples, radius), canvasW, canvasH,
+                                    sourceAspect, targetAspect, sourcePixelWidth);
     // How much of the source ends up across the canvas, at the tightest point. Above 1.0 the crop
     // is being blown up past its own resolution, which no amount of framing can make sharp.
-    double tightestScale = 0.0;
-
-    // Where the target-aspect window lands on the canvas. When the canvas already is that aspect
-    // this is the whole canvas and the crop fills it. When it is not — a 9:16 crop asked for on a
-    // 16:9 timeline, which is the documented use — the window is fitted inside instead. Filling the
-    // canvas in that case would mean stretching the picture, and a reframe that distorts the
-    // subject has not reframed anything.
-    const double frameH = qMin(canvasH, canvasW / targetAspect);
-    const double frameW = frameH * targetAspect;
-    const double frameX = (canvasW - frameW) * 0.5;
-    const double frameY = (canvasH - frameH) * 0.5;
+    const double tightestScale = framed.tightestScale;
 
     beginBatch();
     int keys = 0;
-    for (const Sample &s : smoothed) {
-        // Crop window of targetAspect centred on the face, in normalised source coords.
-        double cropH = qMin(1.0, qMax(s.ry * 2.4, 0.35));
-        double cropW = cropH * targetAspect / sourceAspect;
-        if (cropW > 1.0) {
-            cropW = 1.0;
-            cropH = qMin(1.0, cropW * sourceAspect / targetAspect);
-        }
-        double cropX = qBound(0.0, s.cx - cropW * 0.5, 1.0 - cropW);
-        double cropY = qBound(0.0, s.cy - cropH * 0.5, 1.0 - cropH);
-        // The whole source, scaled so that its crop window covers exactly the framed area. w/h
-        // comes out at the source's own aspect, so nothing is stretched.
-        const double w = frameW / cropW;
-        const double h = frameH / cropH;
-        const double x = frameX - cropX * w;
-        const double y = frameY - cropY * h;
-        if (const drift::MediaAsset *asset = m_app->m_project.asset(clip.assetId)) {
-            if (asset->width > 0)
-                tightestScale = qMax(tightestScale, frameW / (cropW * asset->width));
-        }
-        const double at = drift::usToSeconds(clip.timelineStart) + s.t;
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("x"), at, x);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("y"), at, y);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("width"), at, w);
-        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("height"), at, h);
+    for (const drift::reframe::Key &k : framed.keys) {
+        const double at = drift::usToSeconds(clip.timelineStart) + k.t;
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("x"), at, k.x);
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("y"), at, k.y);
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("width"), at, k.width);
+        m_app->setClipKeyframe(trackIndex, clipIndex, QStringLiteral("height"), at, k.height);
         keys += 4;
     }
     endBatch(QStringLiteral("Auto-reframe"), keys > 0);

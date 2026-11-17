@@ -346,7 +346,7 @@ Item {
             let hit = false
             const assets = childAssets[folderId] || []
             for (let i = 0; i < assets.length && !hit; ++i)
-                hit = assets[i].name.toLowerCase().indexOf(q) >= 0
+                hit = AssetLibrary.matchesSearch(assets[i].id, q)
             const folders = childFolders[folderId] || []
             for (let j = 0; j < folders.length && !hit; ++j)
                 hit = folders[j].name.toLowerCase().indexOf(q) >= 0
@@ -393,7 +393,7 @@ Item {
 
             const assets = childAssets[parentId] || []
             for (const asset of assets) {
-                if (q.length > 0 && asset.name.toLowerCase().indexOf(q) < 0)
+                if (q.length > 0 && !AssetLibrary.matchesSearch(asset.id, q))
                     continue
                 items.push({
                     isFolder: false,
@@ -464,7 +464,7 @@ Item {
                 continue
             if (!root.assetVisibleFn(asset.kind))
                 continue
-            if (q.length > 0 && asset.name.toLowerCase().indexOf(q) < 0)
+            if (q.length > 0 && !AssetLibrary.matchesSearch(asset.id, q))
                 continue
             items.push({
                 isFolder: false,
@@ -504,7 +504,7 @@ Item {
         // longer has room for alongside the import actions.
         anchors.rightMargin: Theme.pagePadding + viewControls.width + Theme.spacingMd
         visible: AssetLibrary.count > 0 || BinFolderModel.count > 0
-        placeholderText: qsTr("Search media")
+        placeholderText: qsTr("Search media and tags")
         font.family: Theme.fontFamily
     }
 

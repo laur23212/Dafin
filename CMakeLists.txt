@@ -725,6 +725,8 @@ add_library(driftcore STATIC
     src/core/project/media/MediaAsset.h
     src/core/project/media/SourceLab.h
     src/core/project/media/MediaAsset.cpp
+    src/core/project/media/MediaTags.h
+    src/core/project/media/MediaTags.cpp
     src/core/project/media/ImageSequence.h
     src/core/project/media/ImageSequence.cpp
     src/core/effects/BlendMode.h
@@ -835,6 +837,10 @@ add_library(driftcore STATIC
     src/core/edit/TimelineOps.cpp
     src/core/edit/BeatDuckPlan.h
     src/core/edit/BeatDuckPlan.cpp
+    src/core/edit/ShortClipPlan.h
+    src/core/edit/ShortClipPlan.cpp
+    src/core/edit/AutoReframe.h
+    src/core/edit/AutoReframe.cpp
     src/core/edit/SplitScreen.h
     src/core/edit/SplitScreen.cpp
     src/core/edit/MaskSpace.h
@@ -1570,6 +1576,10 @@ target_sources(driftapp PRIVATE
     src/app/jobs/audio/AudioAlignController.cpp
     src/app/jobs/ai/AiToolsController.h
     src/app/jobs/ai/AiToolsController.cpp
+    src/app/jobs/ai/ShortClipsController.h
+    src/app/jobs/ai/ShortClipsController.cpp
+    src/app/jobs/ai/MediaTaggingController.h
+    src/app/jobs/ai/MediaTaggingController.cpp
     src/app/jobs/audio/AudioToolsController.h
     src/app/jobs/audio/AudioToolsController.cpp
     src/app/jobs/vision/RestoreController.h
@@ -2361,6 +2371,9 @@ qt_add_qml_module(drift
         src/qml/components/assets/AiSpeechPanel.qml
         src/qml/components/assets/AiCutoutPanel.qml
         src/qml/components/assets/AiEnhancePanel.qml
+        src/qml/components/assets/AiShortsPanel.qml
+        src/qml/components/assets/AiShortRow.qml
+        src/qml/components/assets/AiTaggingPanel.qml
         src/qml/components/assets/AiTranscriptView.qml
         src/qml/components/assets/AiTextEditPanel.qml
         src/qml/components/assets/AiCleanupPanel.qml

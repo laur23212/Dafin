@@ -40,10 +40,10 @@ Item {
         { id: "enhance", icon: "zoom-in", available: true,
           title: qsTr("Video enhancer"),
           description: qsTr("Upscale and sharpen low-resolution video.") },
-        { id: "shorts", icon: "smartphone", available: false,
+        { id: "shorts", icon: "smartphone", available: true,
           title: qsTr("Smart short clips"),
           description: qsTr("Find the highlights and reframe them to 9:16.") },
-        { id: "tagging", icon: "tags", available: false,
+        { id: "tagging", icon: "tags", available: true,
           title: qsTr("Media auto-tagging"),
           description: qsTr("Tag your media so the bin can be searched by what is in it.") }
     ]
@@ -189,6 +189,8 @@ Item {
                 case "tts": return speechTool
                 case "cutout": return cutoutTool
                 case "enhance": return enhanceTool
+                case "shorts": return shortsTool
+                case "tagging": return taggingTool
                 }
                 return null
             }
@@ -228,5 +230,15 @@ Item {
     Component {
         id: silenceTool
         AiCleanupPanel { }
+    }
+
+    Component {
+        id: shortsTool
+        AiShortsPanel { }
+    }
+
+    Component {
+        id: taggingTool
+        AiTaggingPanel { }
     }
 }

@@ -103,6 +103,8 @@ class AppController : public QObject
     friend class DenoiseController;
     friend class AudioAlignController;
     friend class AiToolsController;
+    friend class ShortClipsController;
+    friend class MediaTaggingController;
     friend class AudioToolsController;
     friend class ColorController;
     friend class KeyframeController;

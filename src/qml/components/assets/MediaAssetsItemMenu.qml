@@ -113,6 +113,32 @@ ThemedContextMenu {
                  && !root.host.editFriendlyOf(root.assetId)
         onTriggered: EditorState.bin.convertToConstantFrameRate([root.assetId])
     }
+    // Dafin: AI › Media auto-tagging. What this item was tagged with, and ways to tag it again or
+    // drop its tags. Read when the menu opens, so it shows what a job that just ended found.
+    property var assetTags: []
+    readonly property var tagTargets: root.host.selectedAssetIds.length > 0 ? root.host.selectedAssetIds
+                                                                            : [root.assetId]
+    onAboutToShow: root.assetTags = AssetLibrary.assetAt(root.assetIndex).tags || []
+    ThemedMenuItem {
+        text: qsTr("Tags: %1").arg(root.assetTags.join(", "))
+        sectionHeader: true
+        visible: root.assetTags.length > 0 && root.host.selectedAssetIds.length <= 1
+    }
+    ThemedMenuItem {
+        text: root.tagTargets.length > 1 ? qsTr("Tag %n items with AI", "", root.tagTargets.length)
+                                         : qsTr("Tag with AI")
+        icon.name: "tags"
+        visible: (root.kind === "video" || root.kind === "image" || root.kind === "audio")
+                 && !EditorState.preferences.lowSpecMode
+        onTriggered: EditorState.ai.tagging.tagAssets(root.tagTargets, true)
+    }
+    ThemedMenuItem {
+        text: root.tagTargets.length > 1 ? qsTr("Remove tags from %n items", "", root.tagTargets.length)
+                                         : qsTr("Remove tags")
+        icon.name: Theme.icons.x
+        visible: root.assetTags.length > 0
+        onTriggered: EditorState.ai.tagging.clearTags(root.tagTargets)
+    }
     ThemedMenuItem {
         text: qsTr("Export image…")
         icon.name: Theme.icons.save

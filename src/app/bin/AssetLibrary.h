@@ -122,6 +122,9 @@ public:
     // complete, so this skips the probe and thumbnail jobs the import path runs. Returns its id.
     QString addGeneratedAsset(drift::MediaAsset asset);
     Q_INVOKABLE QVariantMap assetAt(int index) const;
+    // Dafin: the media bin search — every word of `query` in the item's name or its auto-tags
+    // (drift::mediaMatchesSearch). True for an empty query; false for an unknown id.
+    Q_INVOKABLE bool matchesSearch(const QString &assetId, const QString &query) const;
     Q_INVOKABLE QString assetIdAt(int index) const;
     Q_INVOKABLE int indexOfId(const QString &id) const;
     Q_INVOKABLE QString thumbnailAt(int index) const;
@@ -240,6 +243,10 @@ signals:
     void importingChanged();
     void importProgress(int done, int total, const QString &name);
     void importFinished(int materialized, int failed);
+    // Dafin: new media rows, by every import path (file dialog, drops, downloads), as they are
+    // added; their probe may still be running. AI › Media auto-tagging listens for its
+    // "Auto-tag new imports" option. Not emitted when a project opens or by undo/redo.
+    void assetsImported(const QStringList &assetIds);
     // Fired when probe/thumb/audio metadata lands so unlink affordances can refresh.
     void assetMetadataChanged(const QString &assetId);
     // Narrower than assetMetadataChanged: only for a change to a *card-level* field the bin grid

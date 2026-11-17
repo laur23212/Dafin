@@ -3,6 +3,7 @@
 #include "core/base/CameraEuler.h"
 #include "core/project/clip/Clip.h"
 #include "core/project/SubtitleCue.h"
+#include "core/project/media/MediaTags.h"
 #include "core/edit/TimelineOps.h"
 
 #include <QCoreApplication>
@@ -634,6 +635,11 @@ QJsonObject assetToJson(const MediaAsset &asset)
         object.insert(QStringLiteral("rating"), asset.rating);
     if (!asset.maskRole.isEmpty())
         object.insert(QStringLiteral("maskRole"), asset.maskRole);
+    // Dafin: auto-tags. Written only once the tagger has looked, so older projects round-trip.
+    if (!asset.tags.isEmpty())
+        object.insert(QStringLiteral("tags"), QJsonArray::fromStringList(asset.tags));
+    if (asset.tagged)
+        object.insert(QStringLiteral("tagged"), true);
     if (!asset.ranges.isEmpty()) {
         QJsonArray ranges;
         for (const drift::SourceRange &range : asset.ranges)
@@ -680,6 +686,13 @@ MediaAsset assetFromJsonV2(const QJsonObject &object)
         static_cast<qint64>(object.value(QStringLiteral("sourceModifiedMs")).toDouble());
     asset.rating = qBound(-1, object.value(QStringLiteral("rating")).toInt(), 1);
     asset.maskRole = object.value(QStringLiteral("maskRole")).toString();
+    {
+        QStringList tags;
+        for (const QJsonValue &value : object.value(QStringLiteral("tags")).toArray())
+            tags.append(value.toString());
+        asset.tags = drift::mergeTags({}, tags);
+    }
+    asset.tagged = object.value(QStringLiteral("tagged")).toBool() || !asset.tags.isEmpty();
     for (const QJsonValue &value : object.value(QStringLiteral("ranges")).toArray())
         asset.ranges.append(drift::sourceRangeFromJson(value.toObject()));
     for (const QJsonValue &value : object.value(QStringLiteral("markers")).toArray())
