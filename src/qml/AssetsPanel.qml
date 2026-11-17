@@ -1186,6 +1186,7 @@ PanelFrame {
                         tabId: "text"
                         onlineKinds: ["title"]
                         builtinLabel: qsTr("Text styles")
+                        builtinFirst: true
                         allowLinks: false
                         onAdded: root.addCompleted()
                         builtin: Component {

@@ -232,7 +232,8 @@ Item {
         id: packGrid
         // As many columns as fit at the nominal card size, rounded, with the cards stretched or
         // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
-        readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+        // Dafin: two large previews per row.
+        readonly property int columnCount: 2
         readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
         x: Theme.pagePadding
         y: toolbar.height + Theme.spacingSm
@@ -245,7 +246,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.section === "builtin"
         model: root.builtinPresets
@@ -260,7 +261,8 @@ Item {
         id: userGrid
         // As many columns as fit at the nominal card size, rounded, with the cards stretched or
         // squeezed a little to fill the row — a fixed card left a column's worth of empty space.
-        readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+        // Dafin: two large previews per row.
+        readonly property int columnCount: 2
         readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
         x: Theme.pagePadding
         y: categoryBar.y + categoryBar.height
@@ -273,7 +275,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.section === "mine" && root.userPresets.length > 0
         model: root.userPresets
@@ -292,7 +294,8 @@ Item {
     // Templates installed from files (an external author's work): same cards, remove instead of edit.
     GridView {
         id: installedGrid
-        readonly property int columnCount: Math.max(1, Math.round(width / (Theme.assetCardWidth + Theme.assetCardGap)))
+        // Dafin: two large previews per row.
+        readonly property int columnCount: 2
         readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
         x: Theme.pagePadding
         y: toolbar.height + Theme.spacingSm
@@ -305,7 +308,7 @@ Item {
         acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
         ScrollBar.vertical: AppScrollBar { }
         cellWidth: Math.floor(width / columnCount)
-        cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
+        cellHeight: Math.round(cardSize * 0.62) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
         visible: root.section === "installed"
         model: root.installedPresets

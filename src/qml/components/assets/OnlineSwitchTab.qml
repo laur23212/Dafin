@@ -18,6 +18,8 @@ Item {
     property string builtinLabel: qsTr("Built-in")
     property Component builtin
     property bool allowLinks: true
+    // Dafin: Titles lists its built-in Text styles first and opens on them.
+    property bool builtinFirst: false
 
     readonly property string userCollection: OnlineAssets.userCollectionForKinds(root.onlineKinds)
 
@@ -38,7 +40,7 @@ Item {
     // Dafin: the built-in side while it is shown (Titles' TextAssetsTab, say), else null.
     readonly property Item builtinItem: !root.online ? content.item : null
 
-    property bool online: LayoutMemory.layoutString("assets/" + tabId + "/mode", "online") === "online"
+    property bool online: LayoutMemory.layoutString("assets/" + tabId + "/mode", builtinFirst ? "builtin" : "online") === "online"
     function setOnline(on) {
         root.online = on
         LayoutMemory.setLayoutString("assets/" + root.tabId + "/mode", on ? "online" : "builtin")
@@ -52,7 +54,9 @@ Item {
         spacing: 2
 
         Repeater {
-            model: [{ online: true, label: qsTr("Online") }, { online: false, label: root.builtinLabel }]
+            model: root.builtinFirst
+                   ? [{ online: false, label: root.builtinLabel }, { online: true, label: qsTr("Online") }]
+                   : [{ online: true, label: qsTr("Online") }, { online: false, label: root.builtinLabel }]
             delegate: Rectangle {
                 required property var modelData
                 readonly property bool selected: root.online === modelData.online

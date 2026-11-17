@@ -10,11 +10,17 @@ Column {
 
     readonly property string favoritesId: "__favorites__"
     readonly property string mineId: "__mine__"
+    // Dafin: the first chip, and the one open by default, lists every preset at once.
+    readonly property string allId: "__all__"
     // Bumped when an addon changes the effects on disk (an imported .driftfx, a pack install).
     property int catalogTick: 0
-    readonly property var categories: { void catalogTick; return EditorState.effectCategories() }
+    readonly property var categories: {
+        void catalogTick
+        const base = EditorState.effectCategories()
+        return base.length > 0 ? [{ "id": root.allId, "label": qsTr("All effects") }].concat(base) : base
+    }
     readonly property var catalog: { void catalogTick; return EditorState.effectCatalog() }
-    property string activeCategory: categories.length > 0 ? categories[0].id : ""
+    property string activeCategory: categories.length > 0 ? root.allId : ""
     property alias searchText: search.text
     readonly property string query: search.text.trim().toLowerCase()
     property int favoritesTick: 0
@@ -52,6 +58,8 @@ Column {
         }
         if (root.activeCategory === root.mineId)
             return root.catalog.filter(function(preset) { return preset.user === true })
+        if (root.activeCategory === root.allId)
+            return root.catalog
         return root.catalog.filter(function(preset) {
             return preset.category === root.activeCategory
         })
