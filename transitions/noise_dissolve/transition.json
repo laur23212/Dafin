@@ -2,7 +2,7 @@
   "id": "dafin.suite.transition.noise-dissolve",
   "displayName": "Clean Noise Dissolve",
   "category": "basic",
-  "order": 900,
+  "order": 105,
   "parameters": [
     {
       "identifier": "grain",

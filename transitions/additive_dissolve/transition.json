@@ -1,0 +1,30 @@
+{
+  "id": "additive_dissolve",
+  "displayName": "Additive Dissolve",
+  "category": "basic",
+  "previewStrip": "preview_strip.webp",
+  "order": 103,
+  "parameters": [],
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}

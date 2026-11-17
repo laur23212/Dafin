@@ -1,0 +1,34 @@
+{
+  "id": "dip_sepia",
+  "displayName": "Dip to Sepia",
+  "category": "basic",
+  "previewStrip": "preview_strip.webp",
+  "order": 115,
+  "parameters": [],
+  "fixedParams": {
+    "dipColor": "#704214"
+  },
+  "audioCurve": "dip",
+  "pipeline": {
+    "intermediateBuffers": [],
+    "passes": [
+      {
+        "passIndex": 0,
+        "fragmentShader": "main.frag",
+        "inputs": [
+          {
+            "type": "source_texture",
+            "index": 0
+          },
+          {
+            "type": "source_texture",
+            "index": 1
+          }
+        ],
+        "output": {
+          "type": "canvas"
+        }
+      }
+    ]
+  }
+}
