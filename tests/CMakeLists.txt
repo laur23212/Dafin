@@ -646,6 +646,7 @@ qt_add_executable(tst_linkedlibraries
     tst_linkedlibraries.cpp
     ../src/engine/packages/linked/FilmoraLibraryImporter.cpp)
 target_include_directories(tst_linkedlibraries PRIVATE ../src)
+target_compile_definitions(tst_linkedlibraries PRIVATE DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(tst_linkedlibraries PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME LinkedLibraries COMMAND tst_linkedlibraries)
 # Dafin: tutorial content — tutorial.json is valid, feature ids are unique, and every tour target

@@ -8,6 +8,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLShader>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QSurfaceFormat>
 #include <QtConcurrent/QtConcurrentRun>
 
@@ -26,6 +27,18 @@ bool samePath(const QString &a, const QString &b)
     return normalized(a).compare(normalized(b), Qt::CaseInsensitive) == 0;
 #else
     return normalized(a) == normalized(b);
+#endif
+}
+
+// `inner` is `outer` or somewhere below it.
+bool isInside(const QString &inner, const QString &outer)
+{
+    const QString o = normalized(outer) + QLatin1Char('/');
+    const QString i = normalized(inner) + QLatin1Char('/');
+#ifdef Q_OS_WIN
+    return i.startsWith(o, Qt::CaseInsensitive);
+#else
+    return i.startsWith(o);
 #endif
 }
 
@@ -72,26 +85,43 @@ QVariantList LinkedLibraries::folders() const
             folder.insert(QStringLiteral("skipped"), report->skipped());
             folder.insert(QStringLiteral("found"), int(report->items.size()));
             folder.insert(QStringLiteral("error"), report->error);
+            folder.insert(QStringLiteral("note"), report->note);
         }
         out.append(folder);
     }
     return out;
 }
 
-bool LinkedLibraries::addFolder(const QUrl &url)
+QString LinkedLibraries::addFolder(const QUrl &url)
 {
     const QString path = normalized(url.isLocalFile() ? url.toLocalFile() : url.toString());
     if (path.isEmpty() || !QFileInfo(path).isDir())
-        return false;
+        return tr("That isn't a folder on this computer.");
+    // Failsafes: a whole drive would be read file by file, and Dafin's own data folder would
+    // read its own converted copies back in.
+    if (QDir(path).isRoot())
+        return tr("Pick a folder rather than a whole drive.");
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (!appData.isEmpty() && (isInside(path, appData) || isInside(appData, path)))
+        return tr("That folder holds Dafin's own data. Pick the folder with your effects.");
     for (const QString &existing : std::as_const(m_paths)) {
         if (samePath(existing, path))
-            return false;
+            return tr("That folder is already linked.");
+        if (isInside(path, existing))
+            return tr("It is already included through %1.").arg(QDir::toNativeSeparators(existing));
+    }
+    // Linked folders inside the new one: it covers them, so they go (their items come back
+    // through it, and nothing is listed twice).
+    const QStringList covered = m_paths;
+    for (const QString &existing : covered) {
+        if (isInside(existing, path))
+            removeFolder(existing);
     }
     m_paths.append(path);
     QSettings().setValue(kFoldersKey, m_paths);
     queue(path);
     emit foldersChanged();
-    return true;
+    return {};
 }
 
 void LinkedLibraries::removeFolder(const QString &path)

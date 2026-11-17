@@ -28,8 +28,8 @@ class QOffscreenSurface;
 class LinkedLibraries : public QObject
 {
     Q_OBJECT
-    // One map per folder: path, missing, scanning, effects, transitions, stickers, fonts, looks,
-    // skipped, scanned (a scan finished this session), error.
+    // One map per folder: path, key, missing, scanning, scanned (a scan finished this session),
+    // effects, transitions, stickers, fonts, looks, skipped, found, error, note.
     Q_PROPERTY(QVariantList folders READ folders NOTIFY foldersChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY busyChanged)
 
@@ -40,8 +40,10 @@ public:
     QVariantList folders() const;
     bool busy() const { return !m_current.isEmpty(); }
 
-    // False when the url is not a local folder or is already linked.
-    Q_INVOKABLE bool addFolder(const QUrl &url);
+    // Empty on success, else why not, in plain words. Refused: not a local folder, a whole drive,
+    // Dafin's own data folder, a folder already linked or inside one. A folder that holds linked
+    // folders replaces them (it covers them).
+    Q_INVOKABLE QString addFolder(const QUrl &url);
     // Unlinks the folder and removes what was converted from it. The folder itself is untouched.
     Q_INVOKABLE void removeFolder(const QString &path);
     // Converts what changed in every linked folder.

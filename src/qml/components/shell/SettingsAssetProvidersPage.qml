@@ -97,10 +97,12 @@ SettingsPage {
         id: linkedRow
         title: qsTr("Linked effect folders")
         searchId: "asset-providers-linked-folders"
-        description: qsTr("Point Dafin at a folder of effects downloaded by Filmora (Filter, Overlay, transition, Element, resFont, title…). "
-                          + "Dafin reads it and puts what it can use into Effects, Transitions, Stickers and the font list, in their categories, like its own. "
+        description: qsTr("Point Dafin at a folder of effects downloaded by Filmora (Filter, Overlay, transition, Element, resFont, title…), "
+                          + "or at any folder of fonts, stickers (videos, pictures, Lotties) and .cube looks. "
+                          + "Dafin reads it and puts what it can use into Effects, Transitions, Stickers, Looks and the font list, each in the category it fits, like its own. "
+                          + "Fonts anywhere in it (a Fonts folder, say) are added too, so titles and templates that ask for them by name find them. "
                           + "The folder stays where it is, so keep it there; changes in it are picked up when Dafin starts.")
-        keywords: "filmora effects filters transitions elements stickers fonts folder link import library resinfo"
+        keywords: "filmora effects filters transitions elements stickers fonts folder link import library resinfo typeface"
         query: page.query
         stacked: true
 
@@ -124,6 +126,8 @@ SettingsPage {
                 text += " · " + qsTr("%n not supported", "", f.skipped)
             if (f.scanning)
                 text += " · " + qsTr("updating…")
+            if (f.note)
+                text += "\n" + f.note
             return text
         }
 
@@ -196,7 +200,7 @@ SettingsPage {
                                 anchors.verticalCenter: parent.verticalCenter
                                 visible: (folderCard.modelData.skipped || 0) > 0
                                 variant: "ghost"
-                                text: folderCard.expanded ? qsTr("Hide") : qsTr("What's not supported")
+                                text: folderCard.expanded ? qsTr("Hide") : qsTr("Why some weren't added")
                                 onClicked: folderCard.expanded = !folderCard.expanded
                             }
 
@@ -247,8 +251,11 @@ SettingsPage {
                     text: qsTr("Add folder…")
                     onClicked: {
                         const url = FileDialogs.openDirectory(qsTr("Choose a folder of Filmora effects"))
-                        if (url && url.toString().length > 0 && !LinkedLibraries.addFolder(url))
-                            Toasts.error(qsTr("Couldn’t use that folder (or it is already linked)."))
+                        if (!url || url.toString().length === 0)
+                            return
+                        const problem = LinkedLibraries.addFolder(url)
+                        if (problem.length > 0)
+                            Toasts.error(problem)
                     }
                 }
 
