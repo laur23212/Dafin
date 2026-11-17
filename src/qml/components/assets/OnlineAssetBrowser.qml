@@ -513,7 +513,7 @@ Item {
 
             readonly property bool audio: root.activeKind === "music" || root.activeKind === "sfx"
             readonly property real minCell: root.activeKind === "sticker" ? 104 : audio ? 230 : 156
-            readonly property int columns: Math.max(1, Math.floor(width / minCell))
+            readonly property int columns: root.activeKind === "title" ? 2 : Math.max(1, Math.floor(width / minCell))
             readonly property real aspect: root.activeKind === "sticker" ? 1.0 : audio ? 0.42 : 9 / 16
             cellWidth: Math.floor(width / columns)
             cellHeight: Math.round((cellWidth - Theme.spacingSm) * aspect) + 44
