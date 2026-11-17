@@ -2559,6 +2559,7 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineTransitionDropOutline.qml
         src/qml/components/timeline/TimelineTrackTransformWash.qml
         src/qml/components/timeline/TimelineToolbarZoomSlider.qml
+        src/qml/components/timeline/TimelineToolbarSizeSlider.qml
         src/qml/components/timeline/TimelineToolbarZoomReadout.qml
         src/qml/components/timeline/TimelineToolbarZoomControl.qml
         src/qml/components/timeline/TimelineToolbarToolButton.qml

@@ -1,7 +1,7 @@
 import QtQuick
 import Drift
 
-// Zoom out, slider, numeric readout, zoom in, and fit.
+// Zoom out, slider, numeric readout, zoom in, fit, and the timeline size slider.
 Row {
     id: zoomControl
 
@@ -30,4 +30,5 @@ Row {
         tooltip: qsTr("Fit timeline in view")
         onClicked: zoomControl.host.panel.fitZoom()
     }
+    TimelineToolbarSizeSlider {}
 }

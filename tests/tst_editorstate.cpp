@@ -501,6 +501,7 @@ private slots:
     void projectV3MigratesEffectsOntoAdjustmentLanes();
     void adjustmentMovesBetweenStandaloneAndNested();
     void trackRowHeightsForAdjustmentsAndLanes();
+    void timelineSizeScalesRowsAndIsClamped();
     void overlappingAdjustmentsGetASecondLane();
     void multiClipMoveLeftPreservesSelectionAndRelativeSpacing();
     void multiClipMoveCrossTracks();
@@ -13557,6 +13558,32 @@ void EditorStateTest::trackMovesAndDeletesCarryTheirAdjustmentLanes()
 // The timeline asks C++ for a row's height so the desktop panel, the track headers and the
 // Android timeline cannot disagree. Two things it has to get right: an adjustment is a label, not
 // a picture, and a nested lane has no row of its own.
+void EditorStateTest::timelineSizeScalesRowsAndIsClamped()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendTwoVideoClips(*state.project());
+    const QVariantMap metrics{{QStringLiteral("video"), 60.0}};
+
+    state.setTimelineSize(1.0);
+    QCOMPARE(state.trackRowHeight(0, metrics), 60);
+    state.setTimelineSize(2.0);
+    QCOMPARE(state.trackRowHeight(0, metrics), 120);
+    state.setTimelineSize(0.75);
+    QCOMPARE(state.trackRowHeight(0, metrics), 45);
+
+    // Out-of-range values are clamped, and the per-track scale still multiplies on top.
+    state.setTimelineSize(9.0);
+    QCOMPARE(state.timelineSize(), state.timelineSizeMax());
+    state.setTimelineSize(0.1);
+    QCOMPARE(state.timelineSize(), state.timelineSizeMin());
+    state.setTimelineSize(2.0);
+    state.setTrackHeightScale(0, 1.5);
+    QCOMPARE(state.trackRowHeight(0, metrics), 180);
+
+    state.setTimelineSize(1.0); // leave the shared setting at its default
+}
+
 void EditorStateTest::trackRowHeightsForAdjustmentsAndLanes()
 {
     AssetLibrary library;

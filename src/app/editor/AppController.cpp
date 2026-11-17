@@ -951,6 +951,9 @@ AppController::AppController(AssetLibrary *assetLibrary, QObject *parent)
 
     loadShortcuts();
     QSettings settings;
+    m_timelineSize = qBound(timelineSizeMin(),
+                            settings.value(QStringLiteral("Timeline/size"), 1.0).toDouble(),
+                            timelineSizeMax());
     for (const QJsonValue &value :
          QJsonDocument::fromJson(settings.value(QStringLiteral("preview/guideSets")).toByteArray()).array())
         m_guideLibrary.append(drift::guideSetFromJson(value.toObject()));

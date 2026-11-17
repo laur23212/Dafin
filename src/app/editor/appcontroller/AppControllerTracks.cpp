@@ -563,7 +563,7 @@ int AppController::trackRowHeight(int trackIndex, const QVariantMap &metrics) co
     const double scale = track.heightScale > 0 ? track.heightScale : 1.0;
     const double lanes =
         drift::adjustmentLaneIndexes(m_project, trackIndex).size() * metric("lane", 20.0);
-    return qRound(qMax(20.0, base * scale + lanes));
+    return qRound(qMax(20.0, base * scale * m_timelineSize + lanes));
 }
 
 int AppController::adjustmentLaneCount(int trackIndex) const
@@ -592,6 +592,18 @@ void AppController::nudgeTrackHeightScale(int trackIndex, int steps)
         return;
     setTrackHeightScale(trackIndex,
                         trackHeightScale(trackIndex) * std::pow(1.18, steps));
+}
+
+void AppController::setTimelineSize(double size)
+{
+    const double clamped = qBound(timelineSizeMin(), size, timelineSizeMax());
+    if (qFuzzyCompare(m_timelineSize, clamped))
+        return;
+    m_timelineSize = clamped;
+    QSettings().setValue(QStringLiteral("Timeline/size"), clamped);
+    // View-only, like the per-track scale: no undo entry. tracksChanged is what every row-height
+    // binding already listens to.
+    notifyTracksChanged();
 }
 
 void AppController::nudgeAllTrackHeightScales(int steps)

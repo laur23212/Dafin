@@ -236,6 +236,10 @@ class AppController : public QObject
     // `tracks`, which rebuilds a QVariantList of every clip in the project each time it is read.
     Q_PROPERTY(bool canGrowTrackHeights READ canGrowTrackHeights NOTIFY tracksChanged)
     Q_PROPERTY(bool canShrinkTrackHeights READ canShrinkTrackHeights NOTIFY tracksChanged)
+    // Timeline size (Filmora-style): one multiplier over every row height, so tracks, filmstrips,
+    // waveforms and labels all grow together. Independent of the horizontal zoom and of each
+    // track's own heightScale. A view preference kept in settings, not in the project.
+    Q_PROPERTY(double timelineSize READ timelineSize WRITE setTimelineSize NOTIFY tracksChanged)
     Q_PROPERTY(double playheadSeconds READ playheadSeconds WRITE setPlayheadSeconds NOTIFY playheadSecondsChanged)
     // The same playhead, announced at most ~10 times a second while playing and on every change
     // otherwise. Inspectors bind this: a value readout does not need frame rate, and ~45 rows
@@ -1672,6 +1676,10 @@ public:
     // Track indices of those lanes, topmost first.
     Q_INVOKABLE QVariantList adjustmentLanes(int trackIndex) const;
 
+    double timelineSize() const { return m_timelineSize; }
+    void setTimelineSize(double size);
+    Q_INVOKABLE double timelineSizeMin() const { return 0.75; }
+    Q_INVOKABLE double timelineSizeMax() const { return 2.0; }
     Q_INVOKABLE double trackHeightScaleMin() const { return 0.6; }
     Q_INVOKABLE double trackHeightScaleMax() const { return 4.0; }
     Q_INVOKABLE void moveTrack(int fromIndex, int toIndex);
@@ -2384,6 +2392,7 @@ protected:
     mutable double m_durationSecondsCache = 0.0;
     mutable bool m_durationCacheValid = false;
     quint32 m_tracksRevision = 0;
+    double m_timelineSize = 1.0;
     // One model per track index, parented to this. Grown on demand and never shrunk: a Repeater
     // holds the pointer it was handed, and deleting the model out from under it on a track
     // removal would leave it dangling. An unused slot just holds no rows.
