@@ -639,6 +639,15 @@ qt_add_executable(tst_diagnostics
 target_include_directories(tst_diagnostics PRIVATE ../src)
 target_link_libraries(tst_diagnostics PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME Diagnostics COMMAND tst_diagnostics)
+
+# Dafin: linked Filmora effect folders — shader conversion, categories, packages written, rescans
+# that only redo what changed (made-up fixtures, no GUI, no GL).
+qt_add_executable(tst_linkedlibraries
+    tst_linkedlibraries.cpp
+    ../src/engine/packages/linked/FilmoraLibraryImporter.cpp)
+target_include_directories(tst_linkedlibraries PRIVATE ../src)
+target_link_libraries(tst_linkedlibraries PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME LinkedLibraries COMMAND tst_linkedlibraries)
 # Dafin: tutorial content — tutorial.json is valid, feature ids are unique, and every tour target
 # is an element in the QML sources or on tests/tutorial/known_missing.txt. Plain Python, no Qt.
 find_package(Python3 QUIET COMPONENTS Interpreter)

@@ -25,6 +25,7 @@
 #include "app/mcp/transport/McpStdio.h"
 #endif
 #include "app/online/addons/AddonManager.h"
+#include "app/online/addons/LinkedLibraries.h"
 #include "app/bin/AssetLibrary.h"
 #include "app/editor/EditorState.h"
 #include "app/platform/FileDialogs.h"
@@ -927,6 +928,8 @@ int main(int argc, char *argv[])
     static FileDialogs fileDialogs;
     static DiagnosticsController diagnostics;
     static AddonManager addonManager;
+    // Dafin: folders of Filmora effects shown as Dafin's own (Settings › Asset Providers).
+    static LinkedLibraries linkedLibraries(&addonManager);
     static UpdateChecker updateChecker;
     static LayoutStore layoutStore;
     static WorkspaceStore workspaceStore;
@@ -956,6 +959,7 @@ int main(int argc, char *argv[])
     qmlRegisterSingletonInstance("Drift", 1, 0, "FileDialogs", &fileDialogs);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Diagnostics", &diagnostics);
     qmlRegisterSingletonInstance("Drift", 1, 0, "Addons", &addonManager);
+    qmlRegisterSingletonInstance("Drift", 1, 0, "LinkedLibraries", &linkedLibraries);
     qmlRegisterSingletonInstance("Drift", 1, 0, "StockInstaller", &market.stock);
     qmlRegisterSingletonInstance("Drift", 1, 0, "CommunityInstaller", &market.community);
     qmlRegisterSingletonInstance("Drift", 1, 0, "MarketInstall", &market.router);
@@ -1230,6 +1234,9 @@ int main(int argc, char *argv[])
     // Dafin: test the GPU encoders once per GPU/driver (EncoderProbe.h), a few seconds after the
     // editor is up so the test encodes don't compete with opening the first project.
     QTimer::singleShot(5000, &app, [] { drift::encoderprobe::startBackgroundProbe(); });
+    // Dafin: convert what changed in the linked effect folders while Dafin was closed (nothing
+    // to do, and nothing created, when no folder is linked).
+    QTimer::singleShot(6000, &app, [] { linkedLibraries.start(); });
     drift::perf::install();
     if (drift::perf::enabled()) {
         // Frame pacing: the interval between swaps is the frame time the user sees. Windows are

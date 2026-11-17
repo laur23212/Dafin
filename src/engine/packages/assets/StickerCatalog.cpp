@@ -62,6 +62,9 @@ bool loadPackage(const QString &dir, StickerPack *out)
         entry.label = object.value(QStringLiteral("label")).toString();
         entry.category = object.value(QStringLiteral("category")).toString();
         entry.path = path;
+        const QString thumbnail = object.value(QStringLiteral("thumbnail")).toString();
+        if (!thumbnail.isEmpty() && QFileInfo::exists(QDir(dir).filePath(thumbnail)))
+            entry.thumbnail = QDir(dir).filePath(thumbnail);
         pack.stickers.append(entry);
     }
 

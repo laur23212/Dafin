@@ -11,6 +11,8 @@ namespace PackageSearchPaths {
 //   2. installed addons of addonKind  downloaded updates (empty addonKind to skip)
 //   3. <appDir>/<subdir>              content bundled with the build, if any
 //   4. <AppDataLocation>/<subdir>     hand-placed content
+//   5. <AppDataLocation>/linked-libraries/*/<subdir>
+//                                     Dafin: items converted from linked effect folders
 //
 // Every catalog resolves duplicate ids by first-root-wins, so this ordering is what lets an
 // addon update replace a bundled package of the same id without touching the install.

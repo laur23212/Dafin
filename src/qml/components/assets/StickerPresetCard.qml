@@ -42,7 +42,8 @@ Column {
             id: stickerImage
             anchors.fill: parent
             anchors.margins: Theme.pagePadding
-            source: EditorState.imageUrl(modelData.path)
+            // Dafin: a video sticker (a linked Filmora element) shows its thumbnail.
+            source: EditorState.imageUrl(modelData.thumbnail || modelData.path)
             fillMode: Image.PreserveAspectFit
             asynchronous: true
             sourceSize: Qt.size(Math.ceil((cardSize - Theme.pagePadding * 2) * Screen.devicePixelRatio),
@@ -62,6 +63,17 @@ Column {
             iconColor: Theme.c.stickerPresetCard.icon
         }
 
+        // Dafin: a video sticker plays from its file, so it is marked as one.
+        IconGlyph {
+            visible: !!modelData.video
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.margins: 4
+            glyph: Theme.icons.film
+            iconSize: Theme.iconSizeSm
+            iconColor: Theme.c.stickerPresetCard.icon
+        }
+
         ThemedToolTip {
             text: qsTr("%1 — click to add, or drag to the timeline or preview").arg(modelData.label)
             visible: stickerDrag.hovered && !stickerDrag.active
@@ -72,12 +84,23 @@ Column {
             hasContextMenu: true
             onContextMenuRequested: cardMenu.popup()
             anchors.fill: parent
-            kind: "sticker"
-            payload: modelData.id
+            // Dafin: a video sticker drags as its file, like a file from the file manager: it is
+            // imported into Media on the way and lands as a video clip (transparency kept).
+            kind: modelData.video ? "media" : "sticker"
+            payload: modelData.video ? "" : modelData.id
+            fileUrl: modelData.video ? EditorState.fileUrl(modelData.path) : ""
             label: modelData.label
-            thumbnail: modelData.path
+            thumbnail: modelData.thumbnail || modelData.path
             onTapped: {
-                EditorState.addStickerClip(modelData.id, -1)
+                if (modelData.video) {
+                    MediaImport.importUrls([EditorState.fileUrl(modelData.path)], true, function (count) {
+                        // The rows it reports are the last `count` in the library.
+                        if (count > 0)
+                            EditorState.addClipFromAsset(AssetLibrary.count - count)
+                    })
+                } else {
+                    EditorState.addStickerClip(modelData.id, -1)
+                }
                 added()
             }
         }
