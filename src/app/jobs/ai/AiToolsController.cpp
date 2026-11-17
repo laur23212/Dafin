@@ -6,8 +6,10 @@
 #include "app/editor/AppController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/jobs/JobRegistry.h"
+#include "app/jobs/audio/AudioToolsController.h"
 #include "app/mcp/McpController.h"
 #include "core/edit/CutOps.h"
+#include "core/edit/ProtectedRanges.h"
 #include "core/edit/TimelineOps.h"
 #include "core/project/Project.h"
 #include "core/project/TranscriptEdit.h"
@@ -22,6 +24,7 @@
 #include <QJsonObject>
 #include <QMetaObject>
 #include <QPointer>
+#include <QSettings>
 #include <QTimer>
 #include <QUndoStack>
 
@@ -61,6 +64,67 @@ QString speechText(const drift::Transcript &transcript, int first, int last)
     return parts.join(QLatin1Char(' '));
 }
 
+// Dafin: the take a transcript view shows for `focus`: every media clip on its track that plays the
+// same media, in timeline order (a cut splits one clip into several; they still read as one take).
+// A clip from another file, or a stale transcript, is not part of it.
+QList<drift::Clip> takeOf(const drift::Project &project, const drift::Clip &focus)
+{
+    QList<drift::Clip> out;
+    for (const drift::Track &track : project.tracks()) {
+        bool here = false;
+        for (const drift::Clip &clip : track.clips)
+            here = here || clip.id == focus.id;
+        if (!here)
+            continue;
+        for (const drift::Clip &clip : track.clips) {
+            if (clip.id == focus.id
+                || (isMediaClip(clip) && !focus.assetId.isEmpty() && clip.assetId == focus.assetId
+                    && clip.path == focus.path))
+                out.append(clip);
+        }
+        break;
+    }
+    if (out.isEmpty())
+        out.append(focus);
+    std::stable_sort(out.begin(), out.end(), [](const drift::Clip &a, const drift::Clip &b) {
+        return a.timelineStart < b.timelineStart;
+    });
+    return out;
+}
+
+// m:ss–m:ss of a source range, for messages.
+QString rangeLabel(const drift::TimeRangeUs &r)
+{
+    return QStringLiteral("%1–%2").arg(timeLabel(r.startUs), timeLabel(r.endUs));
+}
+
+constexpr drift::TimeUs kDeclickUs = 30'000;     // cut_words' de-click ramp
+constexpr drift::TimeUs kWordPadUs = 50'000;     // cut_words' default air beside kept words
+const char *const kFillerKey = "ai/fillerWords/";
+
+QString fillerLangKey(const QString &language)
+{
+    const QString lang = language.trimmed().toLower().section(QLatin1Char('-'), 0, 0)
+                             .section(QLatin1Char('_'), 0, 0);
+    return lang.isEmpty() ? QStringLiteral("en") : lang;
+}
+
+QList<drift::FillerWord> storedFillers(const QString &language)
+{
+    const QString lang = fillerLangKey(language);
+    const QVariant stored = QSettings().value(QLatin1String(kFillerKey) + lang);
+    if (!stored.isValid())
+        return drift::defaultFillerWords(lang);
+    QList<drift::FillerWord> out;
+    for (const QVariant &v : stored.toList()) {
+        const QVariantMap m = v.toMap();
+        const QString text = m.value(QStringLiteral("text")).toString().simplified();
+        if (!text.isEmpty())
+            out.append({text, m.value(QStringLiteral("enabled"), true).toBool()});
+    }
+    return out;
+}
+
 } // namespace
 
 AiToolsController::AiToolsController(AppController *app, QObject *parent)
@@ -71,6 +135,12 @@ AiToolsController::AiToolsController(AppController *app, QObject *parent)
     m_refreshTimer->setSingleShot(true);
     m_refreshTimer->setInterval(0);
     connect(m_refreshTimer, &QTimer::timeout, this, &AiToolsController::refresh);
+    m_hitStopTimer = new QTimer(this);
+    m_hitStopTimer->setSingleShot(true);
+    connect(m_hitStopTimer, &QTimer::timeout, this, [this] {
+        if (m_app->playing())
+            m_app->setPlaying(false);
+    });
 
     // Selection, edits, undo and a new project all change which clip is in focus or what its
     // transcript lines map to on the timeline. Bursts collapse into one refresh.
@@ -79,6 +149,8 @@ AiToolsController::AiToolsController(AppController *app, QObject *parent)
     connect(&m_app->m_undoStack, &QUndoStack::indexChanged, this, &AiToolsController::scheduleRefresh);
     connect(m_app, &AppController::projectReset, this, [this] {
         m_lastCaptionedClipId.clear();
+        cancelCleanup();
+        clearCleanup();
         scheduleRefresh();
     });
 }
@@ -139,7 +211,14 @@ void AiToolsController::refresh()
     }
 
     QVariantMap info;
-    QList<std::pair<Line, QVariantMap>> listed;
+    // A listed line with its words (timeline order) and the clip that plays them.
+    struct Listed
+    {
+        Line line;
+        QVariantMap row;
+        QVariantList words;
+    };
+    QList<Listed> listed;
     QString assetId;
     QString sourceKey;
     if (target) {
@@ -160,41 +239,75 @@ void AiToolsController::refresh()
             info.insert(QStringLiteral("language"), transcript->language);
             info.insert(QStringLiteral("aligned"), transcript->wordTimingsAligned);
             info.insert(QStringLiteral("words"), transcript->speechTokenCount());
-            const drift::TimeUs inUs = std::min(target->srcIn, target->srcOut);
-            const drift::TimeUs outUs = std::max(target->srcIn, target->srcOut);
-            for (const drift::TranscriptLine &l : drift::transcriptLines(*transcript, inUs, outUs)) {
-                drift::TimeRangeUs on;
-                if (!drift::sourceRangeToTimeline(*target, {l.startUs, l.endUs}, on))
-                    continue;
-                QString speaker;
-                if (transcript->diarized && l.speaker >= 0 && l.speaker < transcript->speakers.size())
-                    speaker = transcript->speakers.at(l.speaker).label;
-                const Line line{l.firstWord, l.lastWord, l.startUs, l.endUs, on.startUs, l.text};
-                listed.append({line,
-                               QVariantMap{{QStringLiteral("text"), l.text},
-                                           {QStringLiteral("start"), drift::usToSeconds(on.startUs)},
-                                           {QStringLiteral("end"), drift::usToSeconds(on.endUs)},
-                                           {QStringLiteral("time"), timeLabel(on.startUs)},
-                                           {QStringLiteral("speaker"), speaker}}});
+            // Dafin: the whole take on this track, so the words stay listed once a cut has split
+            // the clip into pieces.
+            const QList<drift::Clip> take = takeOf(project, *target);
+            for (const drift::Clip &clip : std::as_const(take)) {
+                const drift::TimeUs inUs = std::min(clip.srcIn, clip.srcOut);
+                const drift::TimeUs outUs = std::max(clip.srcIn, clip.srcOut);
+                for (const drift::TranscriptLine &l : drift::transcriptLines(*transcript, inUs, outUs)) {
+                    drift::TimeRangeUs on;
+                    if (!drift::sourceRangeToTimeline(clip, {l.startUs, l.endUs}, on))
+                        continue;
+                    QString speaker;
+                    if (transcript->diarized && l.speaker >= 0 && l.speaker < transcript->speakers.size())
+                        speaker = transcript->speakers.at(l.speaker).label;
+                    Listed entry;
+                    entry.line = Line{l.firstWord, l.lastWord, l.startUs, l.endUs, on.startUs, l.text};
+                    entry.row = QVariantMap{{QStringLiteral("text"), l.text},
+                                            {QStringLiteral("start"), drift::usToSeconds(on.startUs)},
+                                            {QStringLiteral("end"), drift::usToSeconds(on.endUs)},
+                                            {QStringLiteral("time"), timeLabel(on.startUs)},
+                                            {QStringLiteral("speaker"), speaker}};
+                    QList<std::pair<drift::TimeUs, QVariantMap>> words;
+                    for (int i = std::max(0, l.firstWord); i <= l.lastWord && i < transcript->words.size(); ++i) {
+                        const drift::TranscriptWord &w = transcript->words.at(i);
+                        if (!drift::isSpeechToken(w) || w.text.trimmed().isEmpty())
+                            continue;
+                        drift::TimeRangeUs wordOn;
+                        if (!drift::sourceRangeToTimeline(clip, {w.startUs, std::max(w.endUs, w.startUs + 1)}, wordOn))
+                            continue;
+                        words.append({wordOn.startUs,
+                                      QVariantMap{{QStringLiteral("i"), i},
+                                                  {QStringLiteral("clip"), clip.id},
+                                                  {QStringLiteral("text"), w.text.trimmed()},
+                                                  {QStringLiteral("start"), drift::usToSeconds(wordOn.startUs)},
+                                                  {QStringLiteral("end"), drift::usToSeconds(wordOn.endUs)}}});
+                    }
+                    std::stable_sort(words.begin(), words.end(),
+                                     [](const auto &a, const auto &b) { return a.first < b.first; });
+                    for (const auto &word : std::as_const(words))
+                        entry.words.append(word.second);
+                    listed.append(entry);
+                }
             }
             // Timeline order: a reversed clip says its source backwards.
-            std::stable_sort(listed.begin(), listed.end(), [](const auto &a, const auto &b) {
-                return a.first.timelineStartUs < b.first.timelineStartUs;
+            std::stable_sort(listed.begin(), listed.end(), [](const Listed &a, const Listed &b) {
+                return a.line.timelineStartUs < b.line.timelineStartUs;
             });
         }
     }
 
     QList<Line> lines;
     QVariantList rows;
+    QVariantList wordRows;
     lines.reserve(listed.size());
     rows.reserve(listed.size());
-    for (const auto &entry : std::as_const(listed)) {
-        lines.append(entry.first);
-        rows.append(entry.second);
+    for (Listed &entry : listed) {
+        const int lineIndex = int(lines.size());
+        entry.row.insert(QStringLiteral("firstRow"), int(wordRows.size()));
+        entry.row.insert(QStringLiteral("rowCount"), int(entry.words.size()));
+        for (QVariant &word : entry.words) {
+            QVariantMap map = word.toMap();
+            map.insert(QStringLiteral("line"), lineIndex);
+            wordRows.append(map);
+        }
+        lines.append(entry.line);
+        rows.append(entry.row);
     }
 
     const QString clipId = target ? target->id : QString();
-    const bool changed = clipId != m_targetClipId || info != m_info || rows != m_lineRows;
+    const bool changed = clipId != m_targetClipId || info != m_info || rows != m_lineRows || wordRows != m_wordRows;
     m_targetClipId = clipId;
     m_targetAssetId = assetId;
     m_targetSourceKey = sourceKey;
@@ -202,6 +315,7 @@ void AiToolsController::refresh()
     if (changed) {
         m_info = info;
         m_lineRows = rows;
+        m_wordRows = wordRows;
         emit transcriptChanged();
     }
 }
@@ -232,6 +346,32 @@ void AiToolsController::setCaptionStatus(const QString &status)
 
 bool AiToolsController::createCaptions(const QString &language, int maxWordsPerCue)
 {
+    return startRun(language, maxWordsPerCue, true);
+}
+
+bool AiToolsController::transcribe(const QString &language)
+{
+    return startRun(language, 0, false);
+}
+
+bool AiToolsController::aiAllowed() const
+{
+    if (drift::safemode::active()) {
+        m_app->setLastMessage(tr("AI tools are off in safe mode. Restart normally to use them."),
+                              QStringLiteral("warning"));
+        return false;
+    }
+    if (drift::lowspec::active()) {
+        m_app->setLastMessage(tr("Local AI is off in compatibility mode: this computer is below Dafin's "
+                                 "recommended specs. Settings › Performance › Low-spec mode turns it back on."),
+                              QStringLiteral("warning"));
+        return false;
+    }
+    return true;
+}
+
+bool AiToolsController::startRun(const QString &language, int maxWordsPerCue, bool makeCaptions)
+{
     if (drift::safemode::active()) {
         m_app->setLastMessage(tr("AI tools are off in safe mode. Restart normally to use them."),
                               QStringLiteral("warning"));
@@ -244,7 +384,9 @@ bool AiToolsController::createCaptions(const QString &language, int maxWordsPerC
         return false;
     }
     if (m_captioning) {
-        m_app->setLastMessage(tr("Captions are already being made"), QStringLiteral("warning"));
+        m_app->setLastMessage(m_runMakesCaptions ? tr("Captions are already being made")
+                                                 : tr("Speech recognition is already running"),
+                              QStringLiteral("warning"));
         return false;
     }
     const drift::Project &project = m_app->m_project;
@@ -333,6 +475,7 @@ bool AiToolsController::createCaptions(const QString &language, int maxWordsPerC
         m_runClipIds.append(clip.id);
     m_runLanguage = lang;
     m_runWordsPerCue = std::max(0, maxWordsPerCue);
+    m_runMakesCaptions = makeCaptions;
     m_runError.clear();
     m_runCancelled = false;
 
@@ -463,7 +606,7 @@ void AiToolsController::jobDone(const QString &jobId, bool ok, const QString &co
     if (!m_runError.isEmpty())
         endCaptionRun(false, m_runError);
     else if (m_runCancelled)
-        endCaptionRun(false, tr("Captions cancelled"));
+        endCaptionRun(false, m_runMakesCaptions ? tr("Captions cancelled") : tr("Transcription cancelled"));
     else
         finishCaptions();
 }
@@ -478,6 +621,12 @@ void AiToolsController::finishCaptions()
     }
     if (pairs.isEmpty()) {
         endCaptionRun(false, tr("The clips to caption are no longer on the timeline"));
+        return;
+    }
+    // Text-based editing only wanted the words: they are stored, so the transcript is listed.
+    if (!m_runMakesCaptions) {
+        m_lastCaptionedClipId = m_runClipIds.first();
+        endCaptionRun(true, tr("Transcript ready"));
         return;
     }
     setCaptionStatus(tr("Building the captions…"));
@@ -641,5 +790,472 @@ bool AiToolsController::releaseSpeechModels()
     drift::WhisperTranscriber::instance().unload();
     drift::CtcAligner::instance().unload();
     drift::SpeakerDiarizer::instance().unload();
+    return true;
+}
+
+// ---- Text-based editing ----------------------------------------------------------------------
+
+QList<drift::Clip> AiToolsController::focusTake() const
+{
+    const QVariantList at = m_targetClipId.isEmpty() ? QVariantList{} : m_app->locateClip(m_targetClipId);
+    if (at.size() != 2)
+        return {};
+    return takeOf(m_app->m_project, m_app->m_project.tracks().at(at.at(0).toInt()).clips.at(at.at(1).toInt()));
+}
+
+bool AiToolsController::applySourceCuts(const QHash<QString, QList<drift::TimeRangeUs>> &cuts,
+                                        const QString &editName, drift::TimeUs *removedUs)
+{
+    drift::Project &project = m_app->m_project;
+    struct Job
+    {
+        drift::Clip clip;
+        QList<drift::TimeRangeUs> source;
+    };
+    QList<Job> jobs;
+    for (auto it = cuts.cbegin(); it != cuts.cend(); ++it) {
+        const QVariantList at = m_app->locateClip(it.key());
+        const QList<drift::TimeRangeUs> source = drift::normalizedRanges(it.value());
+        if (at.size() != 2 || source.isEmpty())
+            continue;
+        jobs.append({project.tracks().at(at.at(0).toInt()).clips.at(at.at(1).toInt()), source});
+    }
+    if (jobs.isEmpty()) {
+        m_app->setLastMessage(tr("Nothing to cut"), QStringLiteral("warning"));
+        return false;
+    }
+
+    // Protected footage refuses the whole edit before anything changes.
+    QStringList refused;
+    for (const Job &job : std::as_const(jobs)) {
+        for (const drift::ProtectedRange &r :
+             drift::protectedOverlaps(project.protectedRanges(), job.clip.assetId, job.source)) {
+            const QString label = rangeLabel({r.srcStartUs, r.srcEndUs});
+            refused.append(r.reason.isEmpty() ? label : QStringLiteral("%1 (%2)").arg(label, r.reason));
+        }
+    }
+    if (!refused.isEmpty()) {
+        refused.removeDuplicates();
+        m_app->setLastMessage(tr("That would cut protected footage: %1. Keep those words, or remove the "
+                                 "protection first.").arg(refused.join(QStringLiteral(", "))),
+                              QStringLiteral("warning"));
+        return false;
+    }
+
+    // Back to front: a cut only moves what lies after it, so earlier clips keep their place.
+    std::sort(jobs.begin(), jobs.end(),
+              [](const Job &a, const Job &b) { return a.clip.timelineStart > b.clip.timelineStart; });
+    const drift::Project before = project;
+    const drift::TimeUs minKeepUs = std::max<drift::TimeUs>(drift::kCutMinEdgeUs, 2 * kDeclickUs);
+    drift::TimeUs total = 0;
+    bool changed = false;
+    for (const Job &job : std::as_const(jobs)) {
+        const QVariantList at = m_app->locateClip(job.clip.id);
+        if (at.size() != 2)
+            continue;
+        const drift::Clip clip = project.tracks().at(at.at(0).toInt()).clips.at(at.at(1).toInt());
+        QList<drift::TimeRangeUs> removedTimeline;
+        for (const drift::TimeRangeUs &r : job.source) {
+            drift::TimeRangeUs tl;
+            if (drift::sourceRangeToTimeline(clip, r, tl))
+                removedTimeline.append(tl);
+        }
+        if (removedTimeline.isEmpty())
+            continue;
+        const QList<drift::TimeRangeUs> kept = drift::keptTimelineIntervals(clip, removedTimeline, minKeepUs);
+        // What actually goes: the clip less what is kept (a sliver too short to keep goes too).
+        QList<drift::TimeRangeUs> removed;
+        drift::TimeUs cursor = clip.timelineStart;
+        for (const drift::TimeRangeUs &k : kept) {
+            if (k.startUs > cursor)
+                removed.append({cursor, k.startUs});
+            cursor = k.endUs;
+        }
+        if (cursor < clip.timelineEnd())
+            removed.append({cursor, clip.timelineEnd()});
+        if (removed.isEmpty())
+            continue;
+        QString error;
+        if (!m_app->replaceClipGroupWithSegments(
+                at.at(0).toInt(), at.at(1).toInt(),
+                [&kept](const drift::Clip &member) { return drift::packedSegments(member, kept, kDeclickUs); },
+                true, nullptr, &error)) {
+            project = before;
+            m_app->setLastMessage(tr("Could not make the cut"), QStringLiteral("error"));
+            return false;
+        }
+        const drift::TranscriptPtr transcript = clip.assetId.isEmpty() ? nullptr : project.transcript(clip.assetId);
+        drift::captionsFollowCut(project, clip, removed, transcript.get());
+        for (const drift::TimeRangeUs &r : std::as_const(removed))
+            total += r.length();
+        changed = true;
+    }
+    if (!changed) {
+        m_app->setLastMessage(tr("Nothing to cut"), QStringLiteral("warning"));
+        return false;
+    }
+    // The same guard after the edit, for footage the planned ranges did not show (a linked clip
+    // whose own trim drifted, a sliver dropped beside a protected range).
+    if (!drift::protectedLoss(before.protectedRanges(), before, project).isEmpty()) {
+        project = before;
+        m_app->setLastMessage(tr("That would cut protected footage. Keep those words, or remove the "
+                                 "protection first."),
+                              QStringLiteral("warning"));
+        return false;
+    }
+    m_app->pushProjectEdit(before, editName);
+    m_app->finishEdit(editName);
+    if (removedUs)
+        *removedUs = total;
+    return true;
+}
+
+bool AiToolsController::cutWords(const QVariantList &words)
+{
+    if (!aiAllowed())
+        return false;
+    refresh();
+    if (m_targetAssetId.isEmpty())
+        return false;
+    const drift::TranscriptPtr transcript = m_app->m_project.transcript(m_targetAssetId);
+    if (!transcript)
+        return false;
+    QHash<QString, QList<int>> byClip;
+    int count = 0;
+    for (const QVariant &v : words) {
+        const QVariantMap m = v.toMap();
+        const QString clipId = m.value(QStringLiteral("clip")).toString();
+        const int i = m.value(QStringLiteral("i"), -1).toInt();
+        if (clipId.isEmpty() || i < 0 || i >= transcript->words.size())
+            continue;
+        byClip[clipId].append(i);
+        ++count;
+    }
+    QHash<QString, QList<drift::TimeRangeUs>> cuts;
+    for (const drift::Clip &clip : focusTake()) {
+        const auto it = byClip.constFind(clip.id);
+        if (it == byClip.constEnd())
+            continue;
+        const QList<drift::TimeRangeUs> ranges = drift::sourceCutsForWords(*transcript, clip, *it, kWordPadUs);
+        if (!ranges.isEmpty())
+            cuts.insert(clip.id, ranges);
+    }
+    if (cuts.isEmpty()) {
+        m_app->setLastMessage(tr("Select words in the transcript first"), QStringLiteral("warning"));
+        refresh();
+        return false;
+    }
+    drift::TimeUs removed = 0;
+    if (!applySourceCuts(cuts, tr("Cut words"), &removed))
+        return false;
+    m_app->setLastMessage(tr("Cut %n word(s), %1 s", nullptr, count).arg(drift::usToSeconds(removed), 0, 'f', 1),
+                          QStringLiteral("success"));
+    refresh();
+    return true;
+}
+
+void AiToolsController::seekToWord(int row)
+{
+    if (row < 0 || row >= m_wordRows.size())
+        return;
+    m_app->setPlayheadSeconds(m_wordRows.at(row).toMap().value(QStringLiteral("start")).toDouble());
+}
+
+// ---- Silence & filler words --------------------------------------------------------------------
+
+QVariantList AiToolsController::fillerWords(const QString &language) const
+{
+    QVariantList out;
+    for (const drift::FillerWord &f : storedFillers(language))
+        out.append(QVariantMap{{QStringLiteral("text"), f.text}, {QStringLiteral("enabled"), f.enabled}});
+    return out;
+}
+
+void AiToolsController::setFillerWords(const QString &language, const QVariantList &rows)
+{
+    QVariantList clean;
+    QStringList seen;
+    for (const QVariant &v : rows) {
+        const QVariantMap m = v.toMap();
+        const QString text = m.value(QStringLiteral("text")).toString().simplified();
+        if (text.isEmpty() || seen.contains(text.toLower()))
+            continue;
+        seen.append(text.toLower());
+        clean.append(QVariantMap{{QStringLiteral("text"), text},
+                                 {QStringLiteral("enabled"), m.value(QStringLiteral("enabled"), true).toBool()}});
+    }
+    QSettings().setValue(QLatin1String(kFillerKey) + fillerLangKey(language), clean);
+}
+
+void AiToolsController::resetFillerWords(const QString &language)
+{
+    QSettings().remove(QLatin1String(kFillerKey) + fillerLangKey(language));
+}
+
+QString AiToolsController::fillerLanguage() const
+{
+    const QString lang = fillerLangKey(m_info.value(QStringLiteral("language")).toString());
+    return lang.isEmpty() ? QStringLiteral("en") : lang;
+}
+
+void AiToolsController::setCleanupBusy(bool busy, const QString &status)
+{
+    if (m_cleanupBusy == busy && m_cleanupStatus == status)
+        return;
+    m_cleanupBusy = busy;
+    m_cleanupStatus = status;
+    emit cleanupBusyChanged();
+}
+
+void AiToolsController::clearCleanup()
+{
+    if (m_cleanupHits.isEmpty() && !m_cleanupFound && m_cleanupClipId.isEmpty())
+        return;
+    m_cleanupHits.clear();
+    m_cleanupTake.clear();
+    m_cleanupClipId.clear();
+    m_cleanupFound = false;
+    publishCleanup();
+}
+
+void AiToolsController::cancelCleanup()
+{
+    m_silenceQueue.clear();
+    if (m_silenceConnection)
+        disconnect(m_silenceConnection);
+    if (m_cleanupBusy) {
+        if (AudioToolsController *tools = m_app->audioTools())
+            tools->cancel();
+        m_silenceClipId.clear();
+        setCleanupBusy(false, tr("Cancelled"));
+    }
+}
+
+bool AiToolsController::findCleanup(bool silences, bool fillers, double thresholdDb, double minSeconds,
+                                    double paddingSeconds, const QString &language)
+{
+    if (!aiAllowed() || m_cleanupBusy)
+        return false;
+    if (!silences && !fillers) {
+        m_app->setLastMessage(tr("Tick silences, filler words or both"), QStringLiteral("warning"));
+        return false;
+    }
+    refresh();
+    const QList<drift::Clip> take = focusTake();
+    if (take.isEmpty()) {
+        m_app->setLastMessage(tr("Select a video or audio clip on the timeline first"), QStringLiteral("warning"));
+        return false;
+    }
+    clearCleanup();
+    m_cleanupClipId = m_targetClipId;
+    for (const drift::Clip &clip : take)
+        m_cleanupTake.append({clip.id, clip.timelineStart, clip.timelineDuration});
+
+    if (fillers) {
+        const drift::TranscriptPtr transcript =
+            m_targetAssetId.isEmpty() ? nullptr : m_app->m_project.transcript(m_targetAssetId);
+        if (!transcript || !m_info.value(QStringLiteral("hasTranscript")).toBool()) {
+            if (!silences) {
+                m_app->setLastMessage(tr("Filler words come from the transcript: transcribe this clip first"),
+                                      QStringLiteral("warning"));
+                m_cleanupClipId.clear();
+                m_cleanupTake.clear();
+                return false;
+            }
+        } else {
+            const QList<drift::FillerWord> list = storedFillers(language);
+            for (const drift::Clip &clip : take) {
+                const drift::TimeUs inUs = std::min(clip.srcIn, clip.srcOut);
+                const drift::TimeUs outUs = std::max(clip.srcIn, clip.srcOut);
+                for (const drift::FillerHit &f : drift::findFillerWords(*transcript, inUs, outUs, list)) {
+                    QList<int> words;
+                    for (int i = f.firstWord; i <= f.lastWord; ++i)
+                        words.append(i);
+                    // The same cut as deleting those words in Text-based editing.
+                    const QList<drift::TimeRangeUs> cut = drift::sourceCutsForWords(*transcript, clip, words, kWordPadUs);
+                    drift::TimeRangeUs on;
+                    if (cut.isEmpty() || !drift::sourceRangeToTimeline(clip, {f.startUs, std::max(f.endUs, f.startUs + 1)}, on))
+                        continue;
+                    m_cleanupHits.append({QStringLiteral("filler"), clip.id,
+                                          {cut.first().startUs, cut.last().endUs}, on, f.text});
+                }
+            }
+        }
+    }
+
+    m_silenceThreshold = thresholdDb;
+    m_silenceMin = minSeconds;
+    m_silencePadding = paddingSeconds;
+    m_silenceQueue.clear();
+    if (silences) {
+        for (const drift::Clip &clip : take)
+            m_silenceQueue.append(clip.id);
+    }
+    if (m_silenceQueue.isEmpty()) {
+        m_cleanupFound = true;
+        publishCleanup();
+        return true;
+    }
+    setCleanupBusy(true, tr("Finding silence…"));
+    findNextSilence();
+    return true;
+}
+
+void AiToolsController::findNextSilence()
+{
+    AudioToolsController *tools = m_app->audioTools();
+    while (!m_silenceQueue.isEmpty()) {
+        const QString clipId = m_silenceQueue.takeFirst();
+        const QVariantList at = m_app->locateClip(clipId);
+        if (!tools || at.size() != 2 || !tools->canProcess(at.at(0).toInt(), at.at(1).toInt()))
+            continue;
+        if (tools->running()) {
+            m_silenceQueue.clear();
+            m_app->setLastMessage(tr("Another audio tool is still working; try again when it is done"),
+                                  QStringLiteral("warning"));
+            break;
+        }
+        m_silenceClipId = clipId;
+        m_silenceConnection = connect(tools, &AudioToolsController::finished, this, &AiToolsController::silenceFound,
+                                      Qt::SingleShotConnection);
+        // Silence remover's own detection: the clip as it plays, every other clip muted.
+        tools->findSilence(at.at(0).toInt(), at.at(1).toInt(), m_silenceThreshold, m_silenceMin, m_silencePadding);
+        if (tools->running())
+            return;
+        // It refused at once (no silencedetect filter, say) and has said why.
+        disconnect(m_silenceConnection);
+        m_silenceClipId.clear();
+        m_silenceQueue.clear();
+        break;
+    }
+    m_silenceClipId.clear();
+    setCleanupBusy(false);
+    m_cleanupFound = true;
+    publishCleanup();
+}
+
+void AiToolsController::silenceFound(bool ok, const QString &message)
+{
+    Q_UNUSED(message)
+    AudioToolsController *tools = m_app->audioTools();
+    const QString clipId = m_silenceClipId;
+    m_silenceClipId.clear();
+    if (!ok || !tools) {
+        m_silenceQueue.clear();
+        if (tools)
+            tools->clearSilencePreview();
+        setCleanupBusy(false, message);
+        m_cleanupFound = !m_cleanupHits.isEmpty();
+        publishCleanup();
+        return;
+    }
+    // The preview is in the analysed clip's own span (a video's separated sound, say).
+    const QVariantList audibleAt = m_app->locateClip(tools->silencePreviewClipId());
+    if (audibleAt.size() == 2) {
+        const drift::Clip audible =
+            m_app->m_project.tracks().at(audibleAt.at(0).toInt()).clips.at(audibleAt.at(1).toInt());
+        for (const QVariant &v : tools->silencePreview()) {
+            const QVariantMap r = v.toMap();
+            const drift::TimeUs a = audible.timelineStart + drift::secondsToUs(r.value(QStringLiteral("start")).toDouble());
+            const drift::TimeUs b = audible.timelineStart + drift::secondsToUs(r.value(QStringLiteral("end")).toDouble());
+            drift::TimeUs s0 = audible.timelineToSourceUs(a);
+            drift::TimeUs s1 = audible.timelineToSourceUs(b);
+            if (s1 < s0)
+                std::swap(s0, s1);
+            if (b > a && s1 > s0)
+                m_cleanupHits.append({QStringLiteral("silence"), clipId, {s0, s1}, {a, b}, QString()});
+        }
+    }
+    // Its list lives here now; the Properties panel's own preview is not left behind.
+    tools->clearSilencePreview();
+    findNextSilence();
+}
+
+void AiToolsController::publishCleanup()
+{
+    std::stable_sort(m_cleanupHits.begin(), m_cleanupHits.end(), [](const CleanupHit &a, const CleanupHit &b) {
+        return a.timeline.startUs < b.timeline.startUs;
+    });
+    QVariantList rows;
+    for (const CleanupHit &h : std::as_const(m_cleanupHits)) {
+        const bool silence = h.kind == QLatin1String("silence");
+        rows.append(QVariantMap{{QStringLiteral("kind"), h.kind},
+                                {QStringLiteral("text"), silence ? tr("Pause") : h.text},
+                                {QStringLiteral("time"), timeLabel(h.timeline.startUs)},
+                                {QStringLiteral("start"), drift::usToSeconds(h.timeline.startUs)},
+                                {QStringLiteral("end"), drift::usToSeconds(h.timeline.endUs)},
+                                {QStringLiteral("seconds"), drift::usToSeconds(h.source.length())}});
+    }
+    m_cleanupRows = rows;
+    emit cleanupChanged();
+}
+
+double AiToolsController::cleanupSeconds(const QVariantList &rows) const
+{
+    QHash<QString, QList<drift::TimeRangeUs>> byClip;
+    for (const QVariant &v : rows) {
+        const int row = v.toInt();
+        if (row >= 0 && row < m_cleanupHits.size())
+            byClip[m_cleanupHits.at(row).clipId].append(m_cleanupHits.at(row).source);
+    }
+    drift::TimeUs total = 0;
+    for (auto it = byClip.cbegin(); it != byClip.cend(); ++it) {
+        for (const drift::TimeRangeUs &r : drift::normalizedRanges(it.value()))
+            total += r.length();
+    }
+    return drift::usToSeconds(total);
+}
+
+void AiToolsController::playCleanupHit(int row)
+{
+    if (row < 0 || row >= m_cleanupHits.size())
+        return;
+    const drift::TimeRangeUs on = m_cleanupHits.at(row).timeline;
+    constexpr drift::TimeUs kAround = 400'000;
+    m_app->setPlayheadSeconds(drift::usToSeconds(std::max<drift::TimeUs>(0, on.startUs - kAround)));
+    m_app->setPlaying(true);
+    m_hitStopTimer->start(int((on.length() + 2 * kAround) / 1000));
+}
+
+bool AiToolsController::removeCleanupHits(const QVariantList &rows)
+{
+    if (!aiAllowed() || m_cleanupBusy || m_cleanupHits.isEmpty())
+        return false;
+    // The hits point at the take as it was found; a move or trim since makes them point at the
+    // wrong sound, so it has to be found again.
+    for (const TakeClip &t : std::as_const(m_cleanupTake)) {
+        const QVariantList at = m_app->locateClip(t.id);
+        const drift::Clip *clip = at.size() == 2
+            ? &m_app->m_project.tracks().at(at.at(0).toInt()).clips.at(at.at(1).toInt()) : nullptr;
+        if (!clip || clip->timelineStart != t.startUs || clip->timelineDuration != t.durationUs) {
+            clearCleanup();
+            m_app->setLastMessage(tr("The clip changed since this was found; press Find again"),
+                                  QStringLiteral("warning"));
+            return false;
+        }
+    }
+    QHash<QString, QList<drift::TimeRangeUs>> cuts;
+    int fillers = 0;
+    int pauses = 0;
+    for (const QVariant &v : rows) {
+        const int row = v.toInt();
+        if (row < 0 || row >= m_cleanupHits.size())
+            continue;
+        const CleanupHit &h = m_cleanupHits.at(row);
+        cuts[h.clipId].append(h.source);
+        (h.kind == QLatin1String("silence") ? pauses : fillers) += 1;
+    }
+    if (cuts.isEmpty()) {
+        m_app->setLastMessage(tr("Tick what to remove first"), QStringLiteral("warning"));
+        return false;
+    }
+    drift::TimeUs removed = 0;
+    if (!applySourceCuts(cuts, tr("Remove silence and filler words"), &removed))
+        return false;
+    clearCleanup();
+    m_app->setLastMessage(tr("Removed %1 pause(s) and %2 filler word(s), %3 s")
+                              .arg(pauses).arg(fillers).arg(drift::usToSeconds(removed), 0, 'f', 1),
+                          QStringLiteral("success"));
+    refresh();
     return true;
 }

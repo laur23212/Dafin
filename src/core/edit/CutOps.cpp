@@ -2,8 +2,11 @@
 
 #include "core/project/Project.h"
 #include "core/edit/TimelineOps.h"
+#include "core/project/TranscriptEdit.h"
 
+#include <QHash>
 #include <QSet>
+#include <QStringList>
 
 #include <algorithm>
 #include <limits>
@@ -214,6 +217,195 @@ QList<TimelineWord> transcriptWordsOnTimeline(const Project &project, TimeUs vie
     std::stable_sort(out.begin(), out.end(),
                      [](const TimelineWord &a, const TimelineWord &b) { return a.word.startUs < b.word.startUs; });
     return out;
+}
+
+QList<TimeRangeUs> sourceCutsForWords(const Transcript &transcript, const Clip &clip,
+                                      const QList<int> &wordIndexes, TimeUs padUs)
+{
+    const TimeUs lo = qMin(clip.srcIn, clip.srcOut);
+    const TimeUs hi = qMax(clip.srcIn, clip.srcOut);
+    // Speech tokens in order; runs are positions in this list, as in cut_words.
+    QList<int> speech;
+    QHash<int, int> position;
+    for (int i = 0; i < transcript.words.size(); ++i) {
+        if (isSpeechToken(transcript.words.at(i))) {
+            position.insert(i, int(speech.size()));
+            speech.append(i);
+        }
+    }
+    QList<int> positions;
+    for (const int i : wordIndexes) {
+        const auto it = position.constFind(i);
+        if (it == position.constEnd())
+            continue;
+        const TranscriptWord &w = transcript.words.at(i);
+        if (w.endUs <= lo || w.startUs >= hi)
+            continue;
+        positions.append(*it);
+    }
+    std::sort(positions.begin(), positions.end());
+    positions.erase(std::unique(positions.begin(), positions.end()), positions.end());
+
+    QList<QPair<int, int>> runs;
+    for (const int p : std::as_const(positions)) {
+        if (!runs.isEmpty() && runs.last().second + 1 == p)
+            runs.last().second = p;
+        else
+            runs.append({p, p});
+    }
+
+    QList<TimeRangeUs> out;
+    for (const auto &[a, b] : std::as_const(runs)) {
+        const TranscriptWord &first = transcript.words.at(speech.at(a));
+        const TranscriptWord &last = transcript.words.at(speech.at(b));
+        const TimeUs L0 = a > 0 ? qMax(lo, transcript.words.at(speech.at(a - 1)).endUs) : lo;
+        const TimeUs L1 = qMax(L0, first.startUs);
+        const TimeUs R0 = qMax(L1, qMin(hi, last.endUs));
+        const TimeUs R1 = b + 1 < speech.size() ? qMax(R0, qMin(hi, transcript.words.at(speech.at(b + 1)).startUs))
+                                                : hi;
+        // Take the pauses around the removed words too, leaving `pad` of air beside the words
+        // that stay (less when the gap is shorter than that).
+        const TimeUs cutS = L0 <= lo ? lo : qMin(L0 + qMin(padUs, (L1 - L0) / 2), L1);
+        const TimeUs cutE = R1 >= hi ? hi : qMax(R1 - qMin(padUs, (R1 - R0) / 2), R0);
+        if (cutE > cutS)
+            out.append({cutS, cutE});
+    }
+    return normalizedRanges(out);
+}
+
+TimeUs timeAfterCut(const QList<TimeRangeUs> &removed, TimeUs t)
+{
+    TimeUs shift = 0;
+    for (const TimeRangeUs &r : normalizedRanges(removed)) {
+        if (t <= r.startUs)
+            break;
+        if (t < r.endUs)
+            return r.startUs - shift;
+        shift += r.length();
+    }
+    return t - shift;
+}
+
+namespace {
+
+// The parts of [a, b) that `removed` (normalized) does not cover, in time order.
+QList<TimeRangeUs> keptPieces(TimeUs a, TimeUs b, const QList<TimeRangeUs> &removed)
+{
+    QList<TimeRangeUs> out;
+    TimeUs cursor = a;
+    for (const TimeRangeUs &r : removed) {
+        if (r.endUs <= cursor)
+            continue;
+        if (r.startUs >= b)
+            break;
+        if (r.startUs > cursor)
+            out.append({cursor, r.startUs});
+        cursor = qMax(cursor, r.endUs);
+    }
+    if (b > cursor)
+        out.append({cursor, b});
+    return out;
+}
+
+} // namespace
+
+bool captionsFollowCut(Project &project, const Clip &before, const QList<TimeRangeUs> &removedIn,
+                       const Transcript *transcript)
+{
+    const QList<TimeRangeUs> removed = normalizedRanges(removedIn);
+    const QString key = subtitleSourceKey(before);
+    if (removed.isEmpty() || key.isEmpty())
+        return false;
+
+    bool anyChanged = false;
+    for (Track &track : project.tracks()) {
+        for (int i = int(track.clips.size()) - 1; i >= 0; --i) {
+            const Clip &sub = track.clips.at(i);
+            if (sub.type != ClipType::Subtitle)
+                continue;
+            bool ours = false;
+            for (const SubtitleCue &cue : sub.subtitleCues)
+                ours = ours || cue.source == key;
+            if (!ours)
+                continue;
+
+            bool changed = false;
+            QList<SubtitleCue> cues;
+            for (SubtitleCue cue : sub.subtitleCues) {
+                TimeUs a = sub.timelineStart + cue.startUs;
+                TimeUs b = sub.timelineStart + cue.endUs;
+                if (cue.source != key) {
+                    cue.startUs = a;
+                    cue.endUs = b;
+                    cues.append(cue);
+                    continue;
+                }
+                const QList<TimeRangeUs> pieces = keptPieces(a, b, removed);
+                const bool lostTime = pieces.size() != 1 || pieces.first().startUs != a || pieces.first().endUs != b;
+                const bool overClip = a >= before.timelineStart && b <= before.timelineEnd();
+                if (lostTime && overClip && transcript) {
+                    QStringList said;
+                    for (const TimeRangeUs &piece : pieces) {
+                        TimeUs s0 = before.timelineToSourceUs(piece.startUs);
+                        TimeUs s1 = before.timelineToSourceUs(piece.endUs);
+                        if (s1 < s0)
+                            std::swap(s0, s1);
+                        const QString text = transcriptTextInWindow(*transcript, s0, s1);
+                        if (!text.isEmpty())
+                            said.append(text);
+                    }
+                    const QString text = said.join(QLatin1Char(' '));
+                    if (text != cue.text) {
+                        cue.text = text;
+                        changed = true;
+                    }
+                }
+                const TimeUs na = timeAfterCut(removed, a);
+                const TimeUs nb = timeAfterCut(removed, b);
+                if (na != a || nb != b)
+                    changed = true;
+                cue.startUs = na;
+                cue.endUs = nb;
+                if (cue.endUs <= cue.startUs || (lostTime && overClip && cue.text.trimmed().isEmpty())) {
+                    changed = true;
+                    continue;
+                }
+                cues.append(cue);
+            }
+            if (!changed)
+                continue;
+            anyChanged = true;
+
+            if (cues.isEmpty()) {
+                track.clips.removeAt(i);
+                continue;
+            }
+            TimeUs start = timeAfterCut(removed, sub.timelineStart);
+            TimeUs end = timeAfterCut(removed, sub.timelineEnd());
+            for (const SubtitleCue &cue : std::as_const(cues)) {
+                start = qMin(start, cue.startUs);
+                end = qMax(end, cue.endUs);
+            }
+            QList<SubtitleCue> rebased;
+            for (SubtitleCue cue : std::as_const(cues)) {
+                cue.startUs -= start;
+                cue.endUs -= start;
+                rebased.append(cue);
+            }
+            sortSubtitleCues(rebased);
+
+            Clip &out = track.clips[i];
+            // A clip still carrying its generated name ("Subtitles (12)") keeps counting its cues.
+            if (out.name == subtitleClipName(out.subtitleCues))
+                out.name = subtitleClipName(rebased);
+            out.timelineStart = start;
+            out.timelineDuration = qMax<TimeUs>(1, end - start);
+            out.srcIn = 0;
+            out.srcOut = out.timelineDuration;
+            out.subtitleCues = rebased;
+        }
+    }
+    return anyChanged;
 }
 
 } // namespace drift

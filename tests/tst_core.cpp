@@ -87,6 +87,10 @@ private slots:
     void audioHandlesForwardReverseSpeed();
     void audioTransitionEdgeOwnsButtCutOnly();
     void transcriptWordsFollowClipsOnTimeline();
+    void fillerWordsDefaultsAndMatching();
+    void sourceCutsForWordsTakePausesAndClipEdges();
+    void timeAfterCutClosesGaps();
+    void captionsFollowCutRetimeAndReread();
     void keyframeHoldInterpolation();
     void keyframeLinearInterpolation();
     void keyframeEaseInterpolation();
@@ -8703,6 +8707,189 @@ void CoreTest::protect_contentHashIgnoresName()
     QCOMPARE(drift::sampledContentHash(d.filePath("two.mp4")), h);
     QVERIFY(drift::sampledContentHash(d.filePath("one-other.mp4")) != h);
     QVERIFY(drift::sampledContentHash(d.filePath("missing.mp4")).isEmpty());
+}
+
+
+// Dafin: AI › Silence & filler words. Dafin's lists, how words are compared, and what is found.
+void CoreTest::fillerWordsDefaultsAndMatching()
+{
+    const auto en = drift::defaultFillerWords(QStringLiteral("en"));
+    QCOMPARE(en.size(), 7);
+    QCOMPARE(en.at(0), (drift::FillerWord{QStringLiteral("um"), true}));
+    QCOMPARE(en.at(5), (drift::FillerWord{QStringLiteral("you know"), false}));
+    QCOMPARE(en.at(6), (drift::FillerWord{QStringLiteral("like"), false}));
+    QCOMPARE(drift::defaultFillerWords(QStringLiteral("en-GB")), en);
+    const auto ro = drift::defaultFillerWords(QStringLiteral("ro"));
+    QCOMPARE(ro.size(), 4);
+    QCOMPARE(ro.at(0), (drift::FillerWord{QString::fromUtf8("ăă"), true}));
+    QCOMPARE(ro.at(1), (drift::FillerWord{QString::fromUtf8("îî"), true}));
+    QCOMPARE(ro.at(2), (drift::FillerWord{QString::fromUtf8("păi"), false}));
+    QCOMPARE(ro.at(3), (drift::FillerWord{QStringLiteral("deci"), false}));
+    QVERIFY(drift::defaultFillerWords(QStringLiteral("de")).isEmpty());
+
+    // Drawn-out spellings and punctuation match.
+    QCOMPARE(drift::fillerMatchKey(QStringLiteral("Ummm,")), QStringLiteral("um"));
+    QCOMPARE(drift::fillerMatchKey(QStringLiteral("hmm")), drift::fillerMatchKey(QStringLiteral("Hmmmm...")));
+    QCOMPARE(drift::fillerMatchKey(QString::fromUtf8("Ăăă")), drift::fillerMatchKey(QString::fromUtf8("ăă")));
+    QVERIFY(drift::fillerMatchKey(QStringLiteral("um")) != drift::fillerMatchKey(QStringLiteral("uh")));
+
+    drift::Transcript t;
+    t.words = {tw(0.0, 0.3, QStringLiteral("So")),       tw(0.3, 0.6, QStringLiteral("Ummm,")),
+               tw(0.6, 0.7, QStringLiteral(" "), -1, drift::TranscriptTokenType::Spacing),
+               tw(0.7, 0.9, QStringLiteral("you")),      tw(0.9, 1.1, QStringLiteral("know,")),
+               tw(1.1, 1.4, QStringLiteral("like")),     tw(1.4, 1.8, QStringLiteral("this.")),
+               tw(2.0, 2.2, QStringLiteral("uh"), -1, drift::TranscriptTokenType::Filler)};
+    // Dafin's English list: "you know" and "like" are off.
+    auto hits = drift::findFillerWords(t, 0, drift::secondsToUs(10), en);
+    QCOMPARE(hits.size(), 2);
+    QCOMPARE(hits.at(0).text, QStringLiteral("Ummm,"));
+    QCOMPARE(hits.at(0).firstWord, 1);
+    QCOMPARE(hits.at(0).startUs, drift::secondsToUs(0.3));
+    QCOMPARE(hits.at(1).firstWord, 7);
+
+    // Ticked on, the phrase takes two words in a row, and only inside the window.
+    QList<drift::FillerWord> all = en;
+    for (drift::FillerWord &f : all)
+        f.enabled = true;
+    hits = drift::findFillerWords(t, 0, drift::secondsToUs(1.5), all);
+    QCOMPARE(hits.size(), 3);
+    QCOMPARE(hits.at(1).text, QStringLiteral("you know,"));
+    QCOMPARE(hits.at(1).firstWord, 3);
+    QCOMPARE(hits.at(1).lastWord, 4);
+    QCOMPARE(hits.at(1).startUs, drift::secondsToUs(0.7));
+    QCOMPARE(hits.at(1).endUs, drift::secondsToUs(1.1));
+    QCOMPARE(hits.at(2).text, QStringLiteral("like"));
+    // "you" alone is not a filler, and an empty or all-off list finds nothing.
+    QVERIFY(drift::findFillerWords(t, 0, drift::secondsToUs(10), {{QStringLiteral("you know"), false}}).isEmpty());
+    QVERIFY(drift::findFillerWords(t, 0, drift::secondsToUs(10), {}).isEmpty());
+}
+
+// Dafin: AI › Text-based editing cuts words with cut_words' rule.
+void CoreTest::sourceCutsForWordsTakePausesAndClipEdges()
+{
+    const auto t = sampleTranscript();
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.assetId = QStringLiteral("a");
+    clip.srcIn = 0;
+    clip.srcOut = drift::secondsToUs(5);
+    clip.timelineStart = drift::secondsToUs(10);
+    clip.timelineDuration = drift::secondsToUs(5);
+    const drift::TimeUs pad = drift::secondsToUs(0.05);
+
+    // "um": the pauses either side go too (the audio event in between with them), leaving 50 ms
+    // of air beside "world." and "Next".
+    auto cuts = drift::sourceCutsForWords(*t, clip, {3}, pad);
+    QCOMPARE(cuts.size(), 1);
+    QCOMPARE(cuts.at(0).startUs, drift::secondsToUs(1.25));
+    QCOMPARE(cuts.at(0).endUs, drift::secondsToUs(2.95));
+
+    // The first word reaches the clip's start; a short pause keeps half of itself as air.
+    cuts = drift::sourceCutsForWords(*t, clip, {0}, pad);
+    QCOMPARE(cuts.size(), 1);
+    QCOMPARE(cuts.at(0).startUs, drift::TimeUs(0));
+    QCOMPARE(cuts.at(0).endUs, drift::secondsToUs(0.825));
+
+    // Neighbouring words are one run; the last words reach the clip's end. Spacing and events
+    // given by index are not speech and are skipped.
+    cuts = drift::sourceCutsForWords(*t, clip, {7, 6, 4, 1}, pad);
+    QCOMPARE(cuts.size(), 1);
+    QCOMPARE(cuts.at(0).startUs, drift::secondsToUs(3.3));
+    QCOMPARE(cuts.at(0).endUs, drift::secondsToUs(5.0));
+
+    // Two runs stay two cuts, in source order.
+    cuts = drift::sourceCutsForWords(*t, clip, {6, 0}, pad);
+    QCOMPARE(cuts.size(), 2);
+    QVERIFY(cuts.at(0).endUs <= cuts.at(1).startUs);
+
+    // Words the clip does not play are left alone.
+    drift::Clip tail = clip;
+    tail.srcIn = drift::secondsToUs(3.0);
+    QVERIFY(drift::sourceCutsForWords(*t, tail, {0, 2}, pad).isEmpty());
+    QVERIFY(drift::sourceCutsForWords(*t, clip, {}, pad).isEmpty());
+    QVERIFY(drift::sourceCutsForWords(*t, clip, {99, -1}, pad).isEmpty());
+}
+
+void CoreTest::timeAfterCutClosesGaps()
+{
+    const QList<drift::TimeRangeUs> removed{sec(5, 6), sec(2, 3)}; // unsorted on purpose
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(1)), drift::secondsToUs(1));
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(2)), drift::secondsToUs(2));
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(2.5)), drift::secondsToUs(2));
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(3)), drift::secondsToUs(2));
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(4)), drift::secondsToUs(3));
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(5.5)), drift::secondsToUs(4));
+    QCOMPARE(drift::timeAfterCut(removed, drift::secondsToUs(7)), drift::secondsToUs(5));
+    QCOMPARE(drift::timeAfterCut({}, drift::secondsToUs(7)), drift::secondsToUs(7));
+}
+
+// Dafin: captions made from the media follow a cut: moved, re-read where they lost words, gone
+// when nothing is left; hand-written cues keep their place.
+void CoreTest::captionsFollowCutRetimeAndReread()
+{
+    drift::Project project;
+    drift::MediaAsset asset;
+    asset.id = QStringLiteral("a");
+    asset.kind = drift::MediaKind::Audio;
+    project.addAsset(asset);
+    const auto transcript = sampleTranscript();
+    project.setTranscript(QStringLiteral("a"), transcript);
+
+    drift::Clip media;
+    media.id = QStringLiteral("m");
+    media.assetId = QStringLiteral("a");
+    media.type = drift::ClipType::Audio;
+    media.path = QStringLiteral("/tmp/a.wav");
+    media.srcIn = 0;
+    media.srcOut = drift::secondsToUs(5);
+    media.timelineStart = drift::secondsToUs(10);
+    media.timelineDuration = drift::secondsToUs(5);
+
+    drift::Clip sub;
+    sub.id = QStringLiteral("s");
+    sub.type = drift::ClipType::Subtitle;
+    sub.timelineStart = drift::secondsToUs(10);
+    sub.timelineDuration = drift::secondsToUs(5);
+    sub.srcOut = sub.timelineDuration;
+    const auto cue = [](double s, double e, const QString &text, const QString &source) {
+        return drift::SubtitleCue{drift::secondsToUs(s), drift::secondsToUs(e), text, source};
+    };
+    sub.subtitleCues = {cue(0.5, 1.5, QStringLiteral("Hello world. um"), QStringLiteral("a")),
+                        cue(1.3, 1.5, QStringLiteral("um"), QStringLiteral("a")),
+                        cue(1.6, 2.4, QStringLiteral("(laughs)"), QString()),
+                        cue(3.0, 3.9, QStringLiteral("Next speaker, here"), QStringLiteral("a"))};
+    sub.name = drift::subtitleClipName(sub.subtitleCues);
+    project.tracks() = {drift::Track{.type = drift::TrackType::Audio}, drift::Track{.type = drift::TrackType::Subtitle}};
+    project.tracks()[0].clips = {media};
+    project.tracks()[1].clips = {sub};
+
+    // "um" was cut: source 1.25–2.95, timeline 11.25–12.95.
+    QVERIFY(drift::captionsFollowCut(project, media, {sec(11.25, 12.95)}, transcript.get()));
+    const drift::Clip &out = project.tracks().at(1).clips.at(0);
+    QCOMPARE(out.timelineStart, drift::secondsToUs(10));
+    QCOMPARE(out.timelineDuration, drift::secondsToUs(3.3));
+    QCOMPARE(out.subtitleCues.size(), 3);
+    QCOMPARE(out.subtitleCues.at(0).text, QStringLiteral("Hello world."));
+    QCOMPARE(out.subtitleCues.at(0).startUs, drift::secondsToUs(0.5));
+    QCOMPARE(out.subtitleCues.at(0).endUs, drift::secondsToUs(1.25));
+    QCOMPARE(out.subtitleCues.at(1).text, QStringLiteral("Next speaker, here"));
+    QCOMPARE(out.subtitleCues.at(1).startUs, drift::secondsToUs(1.3));
+    QCOMPARE(out.subtitleCues.at(1).endUs, drift::secondsToUs(2.2));
+    // The hand-written cue stays where it was on the timeline (11.6–12.4).
+    QCOMPARE(out.subtitleCues.at(2).text, QStringLiteral("(laughs)"));
+    QCOMPARE(out.subtitleCues.at(2).startUs, drift::secondsToUs(1.6));
+    QCOMPARE(out.name, drift::subtitleClipName(out.subtitleCues));
+
+    // Nothing removed, or another media's cut, changes nothing.
+    QVERIFY(!drift::captionsFollowCut(project, media, {}, transcript.get()));
+    drift::Clip other = media;
+    other.assetId = QStringLiteral("b");
+    QVERIFY(!drift::captionsFollowCut(project, other, {sec(10, 11)}, nullptr));
+
+    // A caption clip left with no cue goes.
+    project.tracks()[1].clips[0].subtitleCues = {cue(0.2, 0.4, QStringLiteral("Hello"), QStringLiteral("a"))};
+    QVERIFY(drift::captionsFollowCut(project, media, {sec(10.1, 10.5)}, transcript.get()));
+    QVERIFY(project.tracks().at(1).clips.isEmpty());
 }
 
 

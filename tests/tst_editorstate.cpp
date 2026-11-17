@@ -347,6 +347,8 @@ private slots:
     void subtitleFileRoundTripVtt();
     void generateSubtitlesRefusesOverlappingSources();
     void aiCaptionsComeFromTheStoredTranscript();
+    void aiTextEditCutsWordsFromLinkedClips();
+    void aiCleanupRemovesOnlyTickedFillers();
     void separatedAudioTracksMirrorVideoHierarchy();
     void linkedAudioUnlinkAndMove();
     void linkUnrelatedClipsMoveTogetherKeepTiming();
@@ -7231,6 +7233,226 @@ void EditorStateTest::aiCaptionsComeFromTheStoredTranscript()
     QVERIFY(ai->setLineText(1, QString()));
     QCOMPARE(captions().size(), 1);
     QCOMPARE(ai->transcriptLines().size(), 1);
+}
+
+// Dafin: AI › Text-based editing. Deleting words cuts their source ranges from the clip and its
+// linked partner, closes the gaps and rewrites the captions over them, as one undo step; the take
+// stays listed across the pieces; protected footage is refused and nothing changes.
+void EditorStateTest::aiTextEditCutsWordsFromLinkedClips()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendLinkedVideoAudioPair(*state.project());
+
+    const auto word = [](double s, double e, const QString &text,
+                         drift::TranscriptTokenType type = drift::TranscriptTokenType::Word) {
+        drift::TranscriptWord w;
+        w.startUs = drift::secondsToUs(s);
+        w.endUs = drift::secondsToUs(e);
+        w.text = text;
+        w.type = type;
+        return w;
+    };
+    auto transcript = std::make_shared<drift::Transcript>();
+    transcript->language = QStringLiteral("en");
+    transcript->wordTimingsAligned = true;
+    transcript->source.path = QStringLiteral("/tmp/video.mp4");
+    transcript->words = {word(0.2, 0.5, QStringLiteral("Hello")), word(0.5, 0.9, QStringLiteral("world.")),
+                         word(1.2, 1.4, QStringLiteral("um"), drift::TranscriptTokenType::Filler),
+                         word(2.0, 2.3, QStringLiteral("Second")), word(2.3, 2.7, QStringLiteral("line"))};
+    state.project()->setTranscript(QStringLiteral("asset-video"), transcript);
+
+    AiToolsController *ai = state.ai();
+    QVERIFY(ai);
+    state.selectClip(0, 0);
+    QTRY_VERIFY(ai->canCaption());
+    QVERIFY(ai->createCaptions(QString(), 2));
+    const auto captionText = [&]() {
+        QStringList out;
+        for (const drift::Track &track : state.project()->tracks()) {
+            for (const drift::Clip &clip : track.clips) {
+                if (clip.type != drift::ClipType::Subtitle)
+                    continue;
+                for (const drift::SubtitleCue &cue : clip.subtitleCues)
+                    out.append(cue.text);
+            }
+        }
+        return out.join(QLatin1Char('|'));
+    };
+    QVERIFY(captionText().contains(QStringLiteral("world.")));
+
+    // The linked pair is captioned through its sound, so that is the take listed.
+    ai->setTranscriptVisible(true);
+    QCOMPARE(ai->transcriptClipId(), QStringLiteral("clip-audio"));
+    const auto rowOf = [&](const QString &text) {
+        const QVariantList rows = ai->transcriptWords();
+        for (int r = 0; r < rows.size(); ++r) {
+            if (rows.at(r).toMap().value(QStringLiteral("text")).toString() == text)
+                return r;
+        }
+        return -1;
+    };
+    const int worldRow = rowOf(QStringLiteral("world."));
+    QVERIFY(worldRow >= 0);
+    const QVariantMap world = ai->transcriptWords().at(worldRow).toMap();
+    QCOMPARE(world.value(QStringLiteral("i")).toInt(), 1);
+    QCOMPARE(world.value(QStringLiteral("clip")).toString(), QStringLiteral("clip-audio"));
+    const QVariantMap line0 = ai->transcriptLines().at(0).toMap();
+    QVERIFY(line0.contains(QStringLiteral("firstRow")));
+    QVERIFY(line0.value(QStringLiteral("rowCount")).toInt() > 0);
+
+    const int undoBefore = state.m_undoStack.index();
+    QVERIFY(ai->cutWords({QVariantMap{{QStringLiteral("clip"), QStringLiteral("clip-audio")}, {QStringLiteral("i"), 1}}}));
+    QCOMPARE(state.m_undoStack.index(), undoBefore + 1);
+
+    // From the end of "Hello" to 50 ms before "um": both clips of the pair, cut at the same place.
+    // (The caption track went on top, so the pair's tracks are found by type.)
+    const auto trackOf = [&](drift::TrackType type) {
+        for (int t = 0; t < state.project()->tracks().size(); ++t) {
+            if (state.project()->tracks().at(t).type == type)
+                return t;
+        }
+        return -1;
+    };
+    const int videoTrack = trackOf(drift::TrackType::Video);
+    const int audioTrack = trackOf(drift::TrackType::Audio);
+    QVERIFY(videoTrack >= 0 && audioTrack >= 0);
+    const drift::TimeUs removed = (drift::secondsToUs(1.2) - 50'000) - drift::secondsToUs(0.5);
+    const auto &video = state.project()->tracks().at(videoTrack).clips;
+    const auto &audio = state.project()->tracks().at(audioTrack).clips;
+    QCOMPARE(video.size(), 2);
+    QCOMPARE(audio.size(), 2);
+    QCOMPARE(video.at(0).timelineDuration, drift::secondsToUs(0.5));
+    QCOMPARE(video.last().timelineEnd(), drift::secondsToUs(4.0) - removed);
+    QCOMPARE(audio.last().timelineEnd(), drift::secondsToUs(4.0) - removed);
+    QCOMPARE(video.at(1).linkId, audio.at(1).linkId);
+    QCOMPARE(audio.at(1).srcIn, drift::secondsToUs(1.2) - 50'000);
+    // The 30 ms de-click on the edges the cut made.
+    QCOMPARE(audio.at(0).audioFadeOutUs, drift::TimeUs(30'000));
+    QCOMPARE(audio.at(1).audioFadeInUs, drift::TimeUs(30'000));
+
+    // Captions follow: the word is gone from them.
+    QVERIFY(!captionText().contains(QStringLiteral("world.")));
+    QVERIFY(captionText().contains(QStringLiteral("Hello")));
+
+    // The take is still listed across both pieces, without the cut word.
+    QTRY_VERIFY(rowOf(QStringLiteral("Second")) >= 0);
+    QCOMPARE(rowOf(QStringLiteral("world.")), -1);
+    QVERIFY(ai->transcriptWords().at(rowOf(QStringLiteral("Second"))).toMap().value(QStringLiteral("clip")).toString()
+            != QStringLiteral("clip-audio"));
+
+    // One undo brings back both clips and the captions.
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(videoTrack).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(audioTrack).clips.size(), 1);
+    QCOMPARE(state.project()->tracks().at(audioTrack).clips.at(0).timelineDuration, drift::secondsToUs(4.0));
+    QVERIFY(captionText().contains(QStringLiteral("world.")));
+
+    // Protected footage is refused before anything changes.
+    state.selectClip(audioTrack, 0);
+    drift::ProtectedRange guard;
+    guard.assetId = QStringLiteral("asset-video");
+    guard.srcStartUs = drift::secondsToUs(2.0);
+    guard.srcEndUs = drift::secondsToUs(2.5);
+    guard.reason = QStringLiteral("button press");
+    state.project()->setProtectedRanges({guard});
+    const int undoProtected = state.m_undoStack.index();
+    QVERIFY(!ai->cutWords({QVariantMap{{QStringLiteral("clip"), QStringLiteral("clip-audio")}, {QStringLiteral("i"), 3}}}));
+    QCOMPARE(state.m_undoStack.index(), undoProtected);
+    QCOMPARE(state.project()->tracks().at(audioTrack).clips.size(), 1);
+    QVERIFY(state.lastMessage().contains(QStringLiteral("protected")));
+    // Words outside it still cut.
+    QVERIFY(ai->cutWords({QVariantMap{{QStringLiteral("clip"), QStringLiteral("clip-audio")}, {QStringLiteral("i"), 0}}}));
+}
+
+// Dafin: AI › Silence & filler words. The filler list is per language and editable; Find lists
+// the fillers the transcript holds, Remove cuts only the ticked ones as one undo step, and a list
+// found before the clip moved is not applied.
+void EditorStateTest::aiCleanupRemovesOnlyTickedFillers()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    appendCombinedVideoClip(*state.project());
+
+    AiToolsController *ai = state.ai();
+    QVERIFY(ai);
+    const QString lang = QStringLiteral("xx-test");
+    ai->resetFillerWords(lang);
+    const auto restore = qScopeGuard([ai, lang] {
+        ai->resetFillerWords(lang);
+        ai->resetFillerWords(QStringLiteral("en"));
+    });
+    QVERIFY(ai->fillerWords(lang).isEmpty());
+    ai->setFillerWords(lang, {QVariantMap{{QStringLiteral("text"), QStringLiteral(" you  know ")}},
+                              QVariantMap{{QStringLiteral("text"), QStringLiteral("You know")},
+                                          {QStringLiteral("enabled"), false}},
+                              QVariantMap{{QStringLiteral("text"), QStringLiteral("hmm")},
+                                          {QStringLiteral("enabled"), false}}});
+    QCOMPARE(ai->fillerWords(lang).size(), 2);
+    QCOMPARE(ai->fillerWords(lang).at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("you know"));
+    QVERIFY(!ai->fillerWords(lang).at(1).toMap().value(QStringLiteral("enabled")).toBool());
+    ai->resetFillerWords(QStringLiteral("en"));
+    QCOMPARE(ai->fillerWords(QStringLiteral("en")).size(), 7);
+
+    const auto word = [](double s, double e, const QString &text) {
+        drift::TranscriptWord w;
+        w.startUs = drift::secondsToUs(s);
+        w.endUs = drift::secondsToUs(e);
+        w.text = text;
+        return w;
+    };
+    auto transcript = std::make_shared<drift::Transcript>();
+    transcript->language = QStringLiteral("en");
+    transcript->source.path = QStringLiteral("/tmp/video.mp4");
+    transcript->words = {word(0.2, 0.5, QStringLiteral("So")), word(0.8, 1.0, QStringLiteral("um,")),
+                         word(1.3, 1.6, QStringLiteral("this")), word(2.0, 2.2, QStringLiteral("Uhh")),
+                         word(2.5, 2.9, QStringLiteral("works."))};
+    state.project()->setTranscript(QStringLiteral("asset-video"), transcript);
+    state.selectClip(0, 0);
+    ai->setTranscriptVisible(true);
+    QCOMPARE(ai->fillerLanguage(), QStringLiteral("en"));
+
+    // Already transcribed: Transcribe makes no caption clip and needs no model.
+    QTRY_VERIFY(ai->canCaption());
+    QVERIFY(ai->transcribe(QString()));
+    QVERIFY(!ai->captioning());
+    for (const drift::Track &track : state.project()->tracks()) {
+        for (const drift::Clip &clip : track.clips)
+            QVERIFY(clip.type != drift::ClipType::Subtitle);
+    }
+
+    QVERIFY(ai->findCleanup(false, true, -40.0, 0.6, 0.1, QStringLiteral("en")));
+    QVERIFY(!ai->cleanupBusy());
+    QVERIFY(ai->cleanupFound());
+    QCOMPARE(ai->cleanupClipId(), QStringLiteral("clip-video"));
+    const QVariantList hits = ai->cleanupHits();
+    QCOMPARE(hits.size(), 2);
+    QCOMPARE(hits.at(0).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("filler"));
+    QCOMPARE(hits.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("um,"));
+    QCOMPARE(hits.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Uhh"));
+    // "um" goes with the pauses around it, 50 ms of air left beside "So" and "this".
+    const drift::TimeUs umCut = (drift::secondsToUs(1.3) - 50'000) - (drift::secondsToUs(0.5) + 50'000);
+    QCOMPARE(drift::secondsToUs(ai->cleanupSeconds({0})), umCut);
+    QVERIFY(ai->cleanupSeconds({0, 1}) > ai->cleanupSeconds({0}));
+
+    const int undoBefore = state.m_undoStack.index();
+    QVERIFY(ai->removeCleanupHits({0}));
+    QCOMPARE(state.m_undoStack.index(), undoBefore + 1);
+    QVERIFY(ai->cleanupHits().isEmpty());
+    const auto &clips = state.project()->tracks().at(0).clips;
+    QCOMPARE(clips.size(), 2);
+    QCOMPARE(clips.last().timelineEnd(), drift::secondsToUs(4.0) - umCut);
+
+    // Found again, only "Uhh" is left; moving the clip afterwards makes the list stale.
+    QVERIFY(ai->findCleanup(false, true, -40.0, 0.6, 0.1, QStringLiteral("en")));
+    QCOMPARE(ai->cleanupHits().size(), 1);
+    state.project()->tracks()[0].clips[1].timelineStart += drift::secondsToUs(1.0);
+    QVERIFY(!ai->removeCleanupHits({0}));
+    QVERIFY(ai->cleanupHits().isEmpty());
+    QCOMPARE(state.m_undoStack.index(), undoBefore + 1);
+
+    state.undo();
+    QCOMPARE(state.project()->tracks().at(0).clips.size(), 1);
 }
 
 void EditorStateTest::editsCannotOverlapAClipCompletely()

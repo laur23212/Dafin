@@ -16,10 +16,10 @@ Item {
         { id: "captions", icon: "captions", available: true,
           title: qsTr("Auto captions"),
           description: qsTr("Speech to text: captions on the timeline and a transcript you can correct.") },
-        { id: "textEdit", icon: "file-text", available: false,
+        { id: "textEdit", icon: "file-text", available: true,
           title: qsTr("Text-based editing"),
           description: qsTr("Delete words in the transcript to cut them from the video.") },
-        { id: "silence", icon: "audio-waveform", available: false,
+        { id: "silence", icon: "audio-waveform", available: true,
           title: qsTr("Silence & filler words"),
           description: qsTr("Remove pauses and filler words like “um” and “uh”.") },
         { id: "sceneCut", icon: "scissors", available: true,
@@ -182,6 +182,8 @@ Item {
             sourceComponent: {
                 switch (root.currentTool ? root.currentTool.id : "") {
                 case "captions": return captionsTool
+                case "textEdit": return textEditTool
+                case "silence": return silenceTool
                 case "sceneCut": return sceneCutTool
                 case "denoise": return denoiseTool
                 case "tts": return speechTool
@@ -216,5 +218,15 @@ Item {
     Component {
         id: enhanceTool
         AiEnhancePanel { }
+    }
+
+    Component {
+        id: textEditTool
+        AiTextEditPanel { }
+    }
+
+    Component {
+        id: silenceTool
+        AiCleanupPanel { }
     }
 }

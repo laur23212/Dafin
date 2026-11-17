@@ -44,4 +44,37 @@ bool replaceTranscriptWords(Transcript &transcript, int firstWord, int lastWord,
 // is left there.
 QString transcriptTextInWindow(const Transcript &transcript, TimeUs startUs, TimeUs endUs);
 
+// Dafin: AI › Silence & filler words. One entry of a language's filler list: a word or a short
+// phrase ("you know"), and whether Find looks for it.
+struct FillerWord
+{
+    QString text;
+    bool enabled = true;
+    bool operator==(const FillerWord &) const = default;
+};
+
+// The list Dafin ships for `language` (a Whisper code, "en" or "ro"; a region such as "en-GB"
+// counts as its language). Empty for languages without one.
+QList<FillerWord> defaultFillerWords(const QString &language);
+
+// How a spoken word is compared with a filler: case-folded, letters and digits only, and each run
+// of one repeated letter squeezed to one ("Ummm," → "um", "ăă" → "ă", "Hmm" → "hm"), so a
+// drawn-out hesitation matches however long Whisper spelled it.
+QString fillerMatchKey(const QString &text);
+
+struct FillerHit
+{
+    int firstWord = -1; // into transcript.words
+    int lastWord = -1;
+    TimeUs startUs = 0; // the asset's source µs
+    TimeUs endUs = 0;
+    QString text;       // as said, words joined by single spaces
+};
+
+// The speech in [inUs, outUs) that says one of the enabled `fillers`. A phrase matches that many
+// consecutive speech tokens; where several entries match at one word the longest wins, and hits
+// never overlap. In source order.
+QList<FillerHit> findFillerWords(const Transcript &transcript, TimeUs inUs, TimeUs outUs,
+                                 const QList<FillerWord> &fillers);
+
 } // namespace drift
