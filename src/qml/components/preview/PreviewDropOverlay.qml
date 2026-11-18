@@ -83,14 +83,13 @@ Item {
 
         // Import first, then wait for metadata just like the timeline's external drop.
         // Each file gets its own new track in the preview, in the original drop order.
-        const started = MediaImport.importUrls(urls, true, function(added) {
-            if (added <= 0)
-                return
-            const firstIndex = AssetLibrary.count - added
+        // Dafin: by row, so a file already in Media (a downloaded library card) lands too — it
+        // adds no row, and "the last `added` rows" used to place nothing for it.
+        const started = MediaImport.importUrlsAsIndices(urls, true, function(indices) {
             function placeNext(offset) {
-                if (offset >= added)
+                if (offset >= indices.length)
                     return
-                root.drop("media", firstIndex + offset, "", localX, localY,
+                root.drop("media", indices[offset], "", localX, localY,
                           function() { placeNext(offset + 1) })
             }
             placeNext(0)

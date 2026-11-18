@@ -2645,6 +2645,9 @@ qt_add_qml_module(drift
         src/qml/components/timeline/TimelineOverviewBackground.qml
         src/qml/components/timeline/TimelineNewTrackGhostLane.qml
         src/qml/components/timeline/TimelineNewTrackGhostClip.qml
+        src/qml/components/timeline/TimelinePendingDownloads.qml
+        src/qml/components/timeline/TimelineAudioPlaceholder.qml
+        src/qml/components/timeline/TimelineStartHint.qml
         src/qml/components/timeline/TimelineNewTrackGhostBoundary.qml
         src/qml/components/timeline/TimelineNewTrackGhost.qml
         src/qml/components/timeline/TimelineMarqueeRect.qml
