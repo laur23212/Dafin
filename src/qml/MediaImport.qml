@@ -120,6 +120,58 @@ QtObject {
         return mediaImport._start(urls, [], fromDrop, onFinished)
     }
 
+    // Dafin: the Media rows a drop of `urls` stands for, in drop order, handed to onDone(indices)
+    // once they are probed. A file already in Media — a downloaded library card dragged out again —
+    // is its existing row: no second import, no "Imported" toast, no wait. importUrls() reports
+    // such a file as 0 added (the import reuses the row), which is why dropping one used to place
+    // nothing at all. Returns false when nothing was started (onDone is then never called).
+    function importUrlsAsIndices(urls, fromDrop, onDone) {
+        if (!urls || urls.length === 0)
+            return false
+        function collect(extraFrom) {
+            let out = []
+            for (let i = 0; i < urls.length; ++i) {
+                const index = AssetLibrary.indexOfUrl(urls[i])
+                if (index >= 0 && out.indexOf(index) < 0)
+                    out.push(index)
+            }
+            // Rows the import added under another path (a sandbox copy, say) still count.
+            for (let i = Math.max(0, extraFrom); i < AssetLibrary.count; ++i) {
+                if (out.indexOf(i) < 0)
+                    out.push(i)
+            }
+            return out
+        }
+        let missing = []
+        for (let i = 0; i < urls.length; ++i) {
+            if (AssetLibrary.indexOfUrl(urls[i]) < 0)
+                missing.push(urls[i])
+        }
+        if (missing.length === 0) {
+            const indices = collect(AssetLibrary.count)
+            let pending = []
+            for (let i = 0; i < indices.length; ++i) {
+                const id = AssetLibrary.assetIdAt(indices[i])
+                if (AssetLibrary.isImportPending(id))
+                    pending.push(id)
+            }
+            if (pending.length === 0) {
+                if (onDone)
+                    onDone(indices)
+                return true
+            }
+            mediaImport.awaitProbes(pending, function () {
+                if (onDone)
+                    onDone(collect(AssetLibrary.count))
+            })
+            return true
+        }
+        return mediaImport.importUrls(missing, fromDrop, function (added) {
+            if (onDone)
+                onDone(collect(AssetLibrary.count - Math.max(0, added)))
+        })
+    }
+
     function _start(urls, sequencePaths, fromDrop, onFinished) {
         // Async, because on Android reading a picked file means copying it out of the SAF
         // stream first. Run inline, that copy blocked the GUI thread for the whole transfer —
@@ -321,12 +373,15 @@ QtObject {
                 else
                     Toasts.warning(qsTr("Imported %1 of %2 files. %3 could not be read.")
                                    .arg(added).arg(requested).arg(skipped))
+            } else if (added === 1) {
+                Toasts.success(qsTr("Imported 1 file."))
             } else if (added > 0) {
                 Toasts.success(qsTr("Imported %n files.", "", added))
             } else if (failed > 0) {
                 Toasts.error(mediaImport.openFailedMessage(requested))
             } else if (materialized > 0) {
-                Toasts.success(qsTr("Imported %n files.", "", requested))
+                Toasts.success(requested === 1 ? qsTr("Imported 1 file.")
+                                               : qsTr("Imported %n files.", "", requested))
             } else if (requested === 1) {
                 Toasts.error(qsTr("Could not import that file — the format may be unsupported."))
             } else {

@@ -25,6 +25,9 @@ Item {
     property bool resizable: false
     // Resizing writes the phone's own width preference.
     property bool phone: false
+    // Dafin: draw the label of the "Audio 1" lane a project with no sound track shows under its
+    // last row (TimelineAudioPlaceholder).
+    property bool audioPlaceholder: false
 
     // Transform layer brackets. Desktop reserves a gutter on the left for them (one indent per
     // nesting level); the compact header draws them over the grip instead.
@@ -296,6 +299,33 @@ Item {
                 }
             }
             onScrollRequested: (dy) => root.scrollRequested(dy)
+        }
+    }
+
+    Item {
+        visible: root.audioPlaceholder && root.tracks.length > 0
+        x: root.bracketGutter + 8
+        y: root.trackRowTop(root.tracks.length) - root.contentY
+        width: root.width - x - 8
+        height: Theme.trackHeightAudio
+        opacity: 0.6
+
+        Row {
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: 6
+            IconGlyph {
+                anchors.verticalCenter: parent.verticalCenter
+                glyph: Theme.icons.music
+                iconSize: 12
+                iconColor: Theme.mutedForeground
+            }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.trackTypeLabel("audio", false, false) + " 1"
+                color: Theme.mutedForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeTiny
+            }
         }
     }
 

@@ -1432,6 +1432,11 @@ void AssetLibrary::refreshMissing()
     bumpBadges();
 }
 
+int AssetLibrary::indexOfUrl(const QUrl &url) const
+{
+    return url.isLocalFile() ? indexOfPath(url.toLocalFile()) : -1;
+}
+
 QString AssetLibrary::assetIdForPath(const QString &path) const
 {
     const int index = path.isEmpty() ? -1 : indexOfPath(path);

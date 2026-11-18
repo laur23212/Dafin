@@ -632,6 +632,9 @@ PanelFrame {
     // Computed once per model change instead of at each of the ten call sites below — one of
     // which is the drag bounds of every clip delegate, making it O(clips x tracks) on any edit.
     readonly property real totalTracksHeightCached: (root.tracks, root.totalTracksHeight())
+    // Dafin: false while the project has no track that takes sound; the empty lane under the
+    // last track then shows as a waiting "Audio 1" (TimelineAudioPlaceholder), as in Filmora.
+    readonly property bool hasAudioTrack: (root.tracks, root.firstCompatibleTrackIndexForKind("audio") >= 0)
 
     function totalTracksHeight() {
         var h = 0;
@@ -736,6 +739,11 @@ PanelFrame {
         const count = tracks.length
         if (count === 0)
             return { "newTrack": true, "insertIndex": 0 }
+        // Dafin: with no audio track yet, sound always goes to the "Audio 1" lane waiting under
+        // the last track (as in Filmora), wherever over the tracks it is let go — it used to make
+        // a new track above or below whichever row the pointer was on, flipping as it moved.
+        if (mediaKind === "audio" && !root.hasAudioTrack)
+            return { "newTrack": true, "insertIndex": count }
 
         var cursor = 0
         for (var i = 0; i < count; i++) {
@@ -746,9 +754,11 @@ PanelFrame {
             // Claim the trailing gap too, so the 6px between rows resolves to a
             // boundary rather than to nothing.
             if (y < rowEnd + Theme.trackGap / 2) {
+                // Dafin: sound over a row that cannot take it goes under that row, never above
+                // it; pictures keep the half-row rule.
                 if (!EditorState.trackAcceptsKind(i, mediaKind))
                     return { "newTrack": true,
-                             "insertIndex": y < cursor + h / 2 ? i : i + 1 }
+                             "insertIndex": mediaKind === "audio" || y >= cursor + h / 2 ? i + 1 : i }
                 const edge = newTrackEdge(i)
                 // Only the topmost row needs a leading band: on every other row
                 // that boundary is already the previous row's trailing band, and
@@ -929,6 +939,15 @@ PanelFrame {
     }
 
     function updateUrlDropPreview(drop) {
+        // Dafin: a file already in Media (a downloaded library card) is previewed as that row —
+        // its real kind and length, snapped and stacked like a drag from Media — instead of as a
+        // five-second guess.
+        const known = drop.hasUrls && drop.urls.length === 1 ? AssetLibrary.indexOfUrl(drop.urls[0]) : -1
+        if (known >= 0) {
+            pendingDropKind = assetKind(known)
+            updateAssetDropPreview(known, drop.x, drop.y)
+            return
+        }
         // A drag that cannot say what it carries yet — some platforms only hand the payload over
         // on release — is previewed as video rather than not previewed at all. The drop itself
         // re-reads the urls and places by what they really are.
@@ -974,6 +993,15 @@ PanelFrame {
             urls = rest
         }
 
+        // Dafin: one file already in Media lands at once, exactly like a drag from Media.
+        const known = urls.length === 1 ? AssetLibrary.indexOfUrl(urls[0]) : -1
+        if (known >= 0) {
+            clearUrlDropState()
+            clearLandingPreview()
+            performAssetDrop(known, dropX, dropY)
+            return
+        }
+
         const kind = urlDropKind(urls)
         if (kind.length === 0) {
             clearUrlDropState()
@@ -991,16 +1019,15 @@ PanelFrame {
         const target = resolveDropTarget(kind, dropY)
 
         root.importDropPending = true
-        const started = MediaImport.importUrls(urls, true, function (added) {
+        // Dafin: by row rather than "the last `added` rows": a file of the drop that was already in
+        // Media adds no row, and used to make the whole drop place nothing. MediaImport waits for
+        // the probes first, so durations and resolutions are real by now — which is what the clip
+        // lengths and the canvas setup both need.
+        const started = MediaImport.importUrlsAsIndices(urls, true, function (indices) {
             root.clearUrlDropState()
             root.clearLandingPreview()
-            if (added <= 0)
-                return
-            // The idiom every caller of this callback uses: the rows it reports are the last
-            // `added` in the library. MediaImport waits for their probes first, so their
-            // durations and resolutions are real by now — which is what the clip lengths and the
-            // canvas setup both need.
-            root.placeImportedAssets(AssetLibrary.count - added, added, atSeconds, target)
+            if (indices.length > 0)
+                root.placeAssetIndices(indices, atSeconds, target)
         })
 
         if (!started) {
@@ -1017,6 +1044,151 @@ PanelFrame {
         if (idx >= 0)
             return { "newTrack": false, "track": idx }
         return { "newTrack": true, "insertIndex": tracks.length }
+    }
+
+    // Online cards not downloaded yet -------------------------------------------------------
+    //
+    // Dafin: a stock video, music or sound effect card drags onto the timeline before it is
+    // downloaded, as in Filmora. The outline shows the length the catalog gives; on release the
+    // download starts and a placeholder with its progress stays where the clip will land, so the
+    // editor never blocks (Filmora shows a modal "Downloading" box). When the file is in Media
+    // and probed, the clip is placed there with its real length.
+
+    // { key, title, kind, at, duration, target, assetId } per drop still downloading or probing.
+    property var pendingOnlineDrops: []
+
+    function onlineDropKind(item) {
+        const k = item ? (item.kind || "") : ""
+        if (k === "music" || k === "sfx")
+            return "audio"
+        if (k === "video")
+            return "video"
+        return "image"
+    }
+
+    function onlineDropDuration(item) {
+        const d = item ? Number(item.duration || 0) : 0
+        return d > 0 ? d : 5.0
+    }
+
+    function updateOnlineDropPreview(item, dropX, dropY) {
+        if (!item) {
+            clearLandingPreview()
+            return
+        }
+        const kind = onlineDropKind(item)
+        pendingDropKind = kind
+        clearEffectDropHighlight()
+        updateDropPreviewForKind(kind, onlineDropDuration(item), dropX, dropY)
+    }
+
+    function performOnlineDrop(item, dropX, dropY) {
+        clearUrlDropState()
+        clearLandingPreview()
+        if (!item || !item.key)
+            return
+        const kind = onlineDropKind(item)
+        const duration = onlineDropDuration(item)
+        const atSeconds = snapClipStart(Math.max(0, dropX / pxPerSecond), duration).start
+        const target = resolveDropTarget(kind, dropY, atSeconds, duration)
+        const list = pendingOnlineDrops.slice()
+        list.push({ "key": item.key, "title": item.title || "", "kind": kind, "at": atSeconds,
+                    "duration": duration, "target": target, "assetId": "" })
+        // Registered before download(): a file downloaded earlier is re-imported, and
+        // `downloaded` is emitted, inside that very call.
+        pendingOnlineDrops = list
+        OnlineAssets.download(item)
+        // Not taken at all (a licence that forbids it, say): no placeholder left waiting.
+        if (OnlineAssets.downloadState(item.key) === "none")
+            removePendingOnline(p => p.key === item.key && p.assetId.length === 0)
+    }
+
+    function removePendingOnline(predicate) {
+        const kept = []
+        const gone = []
+        for (let i = 0; i < pendingOnlineDrops.length; ++i)
+            (predicate(pendingOnlineDrops[i]) ? gone : kept).push(pendingOnlineDrops[i])
+        if (gone.length > 0)
+            pendingOnlineDrops = kept
+        return gone
+    }
+
+    // Places the drops whose file is in Media and probed. The track picked at drop time is kept
+    // when it still takes the clip; stacking runs again with the real length.
+    function placeReadyOnlineDrops() {
+        const ready = removePendingOnline(function (p) {
+            return p.assetId.length > 0 && !AssetLibrary.isImportPending(p.assetId)
+        })
+        for (let i = 0; i < ready.length; ++i)
+            placeOnlineDrop(ready[i])
+        onlineProbeTimeout.running = pendingOnlineDrops.some(p => p.assetId.length > 0)
+    }
+
+    function placeOnlineDrop(p) {
+        const assetIndex = AssetLibrary.indexOfId(p.assetId)
+        if (assetIndex < 0)
+            return
+        const kind = assetKind(assetIndex)
+        let target = p.target
+        if (!target.newTrack && !(target.track < tracks.length && EditorState.trackAcceptsKind(target.track, kind)))
+            target = targetForFollowOnKind(kind)
+        else if (target.newTrack && target.insertIndex > tracks.length)
+            target = { "newTrack": true, "insertIndex": tracks.length }
+        if (!target.newTrack)
+            target = EditorState.stackTargetForKind(target.track, kind, p.at, assetDurationSeconds(assetIndex))
+        placeAssetAtTarget(assetIndex, p.at, target)
+    }
+
+    Connections {
+        target: OnlineAssets
+        function onDownloaded(key, binAssetId) {
+            let found = false
+            const list = root.pendingOnlineDrops.slice()
+            for (let i = 0; i < list.length; ++i) {
+                if (list[i].key === key && list[i].assetId.length === 0) {
+                    list[i] = Object.assign({}, list[i], { "assetId": binAssetId || "" })
+                    found = true
+                }
+            }
+            if (!found)
+                return
+            if (!binAssetId) {
+                root.removePendingOnline(p => p.key === key)
+                return
+            }
+            root.pendingOnlineDrops = list
+            root.placeReadyOnlineDrops()
+        }
+        function onDownloadFailed(key, message) {
+            const gone = root.removePendingOnline(p => p.key === key)
+            if (gone.length > 0)
+                Toasts.error(message ? qsTr("“%1” could not be added: %2").arg(gone[0].title).arg(message)
+                                     : qsTr("“%1” could not be added.").arg(gone[0].title))
+        }
+        // A cancelled download (the card's ring clicked) leaves no clip to wait for.
+        function onDownloadsRevisionChanged() {
+            root.removePendingOnline(function (p) {
+                return p.assetId.length === 0 && OnlineAssets.downloadState(p.key) === "none"
+            })
+        }
+    }
+
+    Connections {
+        target: AssetLibrary
+        enabled: root.pendingOnlineDrops.length > 0
+        function onAssetMetadataChanged(assetId) { root.placeReadyOnlineDrops() }
+    }
+
+    // A probe that never answers must not leave a placeholder forever: after 15 s the clip is
+    // placed with whatever is known (the same wait MediaImport gives an import).
+    Timer {
+        id: onlineProbeTimeout
+        interval: 15000
+        onTriggered: {
+            const stuck = root.removePendingOnline(p => p.assetId.length > 0)
+            for (let i = 0; i < stuck.length; ++i)
+                root.placeOnlineDrop(stuck[i])
+        }
     }
 
     // The toolbar's + button picks files and places them at the playhead as soon as
@@ -1046,11 +1218,19 @@ PanelFrame {
     // back to back after it. One at a time rather than a loop, because placing the first can
     // block on the canvas setup dialog and the rest have to queue behind that answer.
     function placeImportedAssets(firstIndex, count, atSeconds, target) {
+        let indices = []
+        for (let i = 0; i < count; ++i)
+            indices.push(firstIndex + i)
+        placeAssetIndices(indices, atSeconds, target)
+    }
+
+    function placeAssetIndices(indices, atSeconds, target) {
+        const count = indices.length
         function placeAt(n, cursor, landing) {
             if (n >= count)
                 return
 
-            const assetIndex = firstIndex + n
+            const assetIndex = indices[n]
             const kind = assetKind(assetIndex)
             // The promised spot belongs to the first file. Each one after it follows on the track
             // the previous one actually landed on, whenever that track will have it, so a batch
@@ -1497,6 +1677,7 @@ PanelFrame {
                     resizable: true
                     tracks: root.tracks
                     contentY: flick.contentY
+                    audioPlaceholder: !root.hasAudioTrack
                     onScrollRequested: (dy) => {
                         flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height,
                                                               flick.contentY + dy))
@@ -1625,6 +1806,15 @@ PanelFrame {
                     // one button among sixteen in the toolbar.
                     TimelineEmptyState {
                         view: flick
+                        panel: root
+                    }
+
+                    // Dafin: Filmora's empty-project cues — a line on the empty first track and the
+                    // "Audio 1" lane waiting under it.
+                    TimelineStartHint {
+                        panel: root
+                    }
+                    TimelineAudioPlaceholder {
                         panel: root
                     }
 
@@ -2088,10 +2278,16 @@ PanelFrame {
                         // "text/uri-list" is a drag from outside the app — the file manager,
                         // usually. It carries files that have not been imported yet, where
                         // "text/plain" carries the index of a row already in the bin.
-                        keys: ["text/plain", "text/uri-list"].concat(AssetDrag.placeableKeys())
+                        keys: ["text/plain", "text/uri-list", AssetDrag.onlineKey].concat(AssetDrag.placeableKeys())
 
                         function isFileDrag(drop) {
                             return drop.keys.indexOf("text/uri-list") !== -1
+                        }
+
+                        // Dafin: an online card not downloaded yet (its catalog item rides in
+                        // AssetDrag.current; the mime data only names it).
+                        function onlineItem(drop) {
+                            return drop.keys.indexOf(AssetDrag.onlineKey) !== -1 ? AssetDrag.current.item : null
                         }
 
                         // Shapes, stickers, emoji, text styles and adjustment layers: placed like
@@ -2110,6 +2306,10 @@ PanelFrame {
                         }
 
                         function updateAssetDrag(drop) {
+                            if (drop.keys.indexOf(AssetDrag.onlineKey) !== -1) {
+                                root.updateOnlineDropPreview(onlineItem(drop), drop.x, drop.y)
+                                return
+                            }
                             if (isFileDrag(drop)) {
                                 root.updateUrlDropPreview(drop)
                                 return
@@ -2136,6 +2336,10 @@ PanelFrame {
                         }
                         onDropped: (drop) => {
                             drop.accept(Qt.CopyAction)
+                            if (drop.keys.indexOf(AssetDrag.onlineKey) !== -1) {
+                                root.performOnlineDrop(onlineItem(drop), drop.x, drop.y)
+                                return
+                            }
                             if (isFileDrag(drop)) {
                                 // Not cleared first, unlike the branch below: performUrlDrop
                                 // keeps the outline on screen at the frozen spot for as long as
@@ -2161,6 +2365,11 @@ PanelFrame {
                     // no DropArea geometry moves while a drag is live — and drawn
                     // at real track height so it reads as a track, not a hairline.
                     TimelineNewTrackGhost {
+                        panel: root
+                    }
+
+                    // Dafin: clips dropped from an online card, waiting for their download.
+                    TimelinePendingDownloads {
                         panel: root
                     }
 

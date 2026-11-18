@@ -23,10 +23,13 @@ Item {
         if (t === "subtitle") return Theme.trackHeightSubtitle
         return Theme.trackHeightText
     }
+    // Dafin: a track added under the last one is drawn in the empty lane it will take (where the
+    // "Audio 1" lane waits), not straddling the last row's bottom edge.
+    readonly property bool appending: panel.dropNewTrackIndex >= panel.tracks.length
     x: 0
     y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
        + panel.newTrackBoundaryY(panel.dropNewTrackIndex)
-       - laneHeight / 2
+       + (appending ? Theme.trackGap / 2 : -laneHeight / 2)
     width: parent.width
     height: laneHeight
     z: 240
@@ -35,7 +38,7 @@ Item {
 
     // The boundary itself, so it is unambiguous which gap the
     // lane is going into.
-    TimelineNewTrackGhostBoundary { }
+    TimelineNewTrackGhostBoundary { visible: !newTrackIndicator.appending }
 
     TimelineNewTrackGhostClip {
         panel: newTrackIndicator.panel

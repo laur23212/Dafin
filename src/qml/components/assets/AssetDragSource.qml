@@ -22,6 +22,10 @@ Item {
     // lands. Used by Lottie stickers and titles, which are files rather than catalog ids.
     property url fileUrl: ""
     readonly property bool fileDrag: fileUrl.toString().length > 0
+    // Dafin: an online catalog item not downloaded yet. The timeline downloads it on the drop and
+    // places it where it was let go (AssetDrag.onlineKey).
+    property var onlineItem: null
+    readonly property bool onlineDrag: !!onlineItem && !fileDrag
 
     readonly property bool active: mouseDrag.active || lift.lifted
     readonly property bool pressed: tap.pressed || lift.pressed
@@ -37,9 +41,13 @@ Item {
     Drag.active: mouseDrag.active
     Drag.dragType: Drag.Automatic
     Drag.supportedActions: Qt.CopyAction
-    Drag.keys: root.fileDrag ? ["text/uri-list"] : [AssetDrag.mimeKey(root.kind)]
+    Drag.keys: root.fileDrag ? ["text/uri-list"]
+             : root.onlineDrag ? [AssetDrag.onlineKey]
+             : [AssetDrag.mimeKey(root.kind)]
     Drag.mimeData: root.fileDrag ? ({ "text/uri-list": root.fileUrl.toString() })
-                                 : AssetDrag.mimeData(root.kind, root.payload, root.label)
+                 : root.onlineDrag ? ({ "application/x-dafin-online": String(root.onlineItem.key || ""),
+                                        "application/x-drift-asset-label": root.label })
+                 : AssetDrag.mimeData(root.kind, root.payload, root.label)
     // Dafin: ghost card under the pointer while dragging (see AssetDragGhost).
     AssetDragGhost {
         id: ghost
@@ -89,7 +97,9 @@ Item {
             onActiveChanged: {
                 // A file drag is marked "file" so the assets panel knows it came from inside
                 // and does not file it into My Lotties again.
-                if (active)
+                if (active && root.onlineDrag)
+                    AssetDrag.begin("online", root.onlineItem.key || "", root.label, root.onlineItem)
+                else if (active)
                     AssetDrag.begin(root.fileDrag ? "file" : root.kind, root.fileDrag ? root.fileUrl : root.payload, root.label)
                 else
                     AssetDrag.end()

@@ -124,6 +124,10 @@ public:
     Q_INVOKABLE QVariantMap assetAt(int index) const;
     Q_INVOKABLE QString assetIdAt(int index) const;
     Q_INVOKABLE int indexOfId(const QString &id) const;
+    // Dafin: the row of a file:// url that is already in Media, -1 when it is not (or is not a
+    // local file). A downloaded library card dragged out again carries its file's url, and the
+    // drop places that row instead of importing the file a second time.
+    Q_INVOKABLE int indexOfUrl(const QUrl &url) const;
     Q_INVOKABLE QString thumbnailAt(int index) const;
     Q_INVOKABLE QString filmstripAt(int index) const;
     Q_INVOKABLE void ensureMedia(int index);

@@ -64,6 +64,11 @@ Item {
     // straight onto the timeline as that file.
     readonly property string localAudioUrl: isAudio && item.downloadUrl && String(item.downloadUrl).startsWith("file:")
                                             ? String(item.downloadUrl) : ""
+    // Dafin: not on this computer yet, but it can be downloaded: the card drags as the online
+    // item and the timeline downloads it where it is dropped.
+    readonly property bool canDragOnline: (isAudio || kind === "video") && !isMogrt && !userItem
+                                          && readyPath.length === 0 && localAudioUrl.length === 0
+                                          && !!item.downloadable && !!item.key
 
     width: cardWidth
     height: preview.height + caption.height + Theme.spacingXs
@@ -292,6 +297,26 @@ Item {
                  : root.isAudio ? Theme.icons.music
                  : root.kind === "video" ? Theme.icons.film
                  : Theme.icons.smile
+        }
+
+        // ── Dafin: a stock video, music or sound effect card that is not downloaded yet drags onto
+        //    the timeline too, as in Filmora: the outline shows where it lands, the drop starts the
+        //    download, and the clip appears there when it is done (TimelinePanel.performOnlineDrop).
+        //    A click still plays a sound; a double-click still downloads. ──
+        AssetDragSource {
+            z: -1
+            anchors.fill: parent
+            visible: root.canDragOnline
+            enabled: visible
+            liftEnabled: false
+            kind: "media"
+            payload: ""
+            onlineItem: root.canDragOnline ? root.item : null
+            label: root.item.title || ""
+            thumbnail: root.isAudio ? "" : (root.item.thumbnailUrl || "")
+            glyph: root.isAudio ? Theme.icons.music : Theme.icons.film
+            onTapped: if (root.isAudio) root.playing = !root.playing
+            onDoubleTapped: root.startDownload()
         }
 
         // ── a template drags onto the timeline like any title; a click adds it at the playhead ──

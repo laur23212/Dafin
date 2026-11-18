@@ -32,10 +32,15 @@ QtObject {
         "splitScreen": "application/x-dafin-split-screen"
     })
     readonly property string labelKey: "application/x-drift-asset-label"
+    // Dafin: an online card not downloaded yet (stock video, music, a sound effect). The mime data
+    // carries its key; the catalog item itself rides in `current.item`, because the drop starts
+    // the download and needs all of it. Kept out of mimeKeys on purpose: only the timeline takes
+    // it, so nothing else (effects on clips, the assets panel) reacts to it.
+    readonly property string onlineKey: "application/x-dafin-online"
 
     // The drag in flight from this app, if any. A platform drop may not see the mime data until
     // release (Wayland withholds it), so targets read the payload from here first.
-    property var current: ({ "kind": "", "payload": "", "label": "" })
+    property var current: ({ "kind": "", "payload": "", "label": "", "item": null })
     readonly property bool active: current.kind !== ""
 
     function mimeKey(kind) {
@@ -81,8 +86,8 @@ QtObject {
         return drop.getDataAsString(labelKey)
     }
 
-    function begin(kind, payload, label) {
-        current = { "kind": kind, "payload": String(payload), "label": label || "" }
+    function begin(kind, payload, label, item) {
+        current = { "kind": kind, "payload": String(payload), "label": label || "", "item": item || null }
         if (kind === "media")
             EditorState.draggingAssetIndex = Number(payload)
     }
@@ -93,7 +98,7 @@ QtObject {
         Qt.callLater(function() {
             if (assetDrag.current.kind === "media")
                 EditorState.draggingAssetIndex = -1
-            assetDrag.current = { "kind": "", "payload": "", "label": "" }
+            assetDrag.current = { "kind": "", "payload": "", "label": "", "item": null }
         })
     }
 }
