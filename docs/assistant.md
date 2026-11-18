@@ -33,6 +33,25 @@ instead…** (the old Agent access dialog, still in Settings › Agent access to
   changes before you click.
 - A request is stopped after 40 tool calls; ask again to continue.
 
+## AI Fill (timeline)
+
+The **✦ AI Fill** button on the timeline toolbar uses the same AI service. Drag across the timeline
+to mark a space (a click marks 3 s), describe what goes there in the card beside it, and press
+Enter. The model gets a conversation of its own, separate from the chat, with every tool the
+chat has (so a request can reach beyond the space: "…and arrows on the next clip") plus two more:
+
+| Tool | What it does |
+|---|---|
+| `check_fill({json \| svg})` | Parse a document and report what will draw and what is skipped, without placing it. |
+| `fill_region({json \| svg, title})` | Place the animation exactly on the marked space (on the drawn row when it is a free graphic lane, else on a new graphic track right above it), or, for **Change it** / **Try again**, give the clip there a new version. One undo step. Calling it again within the same request replaces that request's version. |
+
+Protected ranges, the irreversible-action dialog and "Allow the assistant to see frames" apply as in
+the chat, and an `ask_user` question shows as buttons on the AI Fill card. A document file is read
+in, so each version (its request, document and time) keeps its own copy; versions are saved with the
+project, up to 20, and the card's **◀ Version N of M ▶** switches between them as an undoable edit.
+Everything else the AI does is ordinary edits (Ctrl+Z). 40 tool calls per request, as in the chat.
+Token use is shown and logged as for the chat.
+
 ## Token use
 
 Shown under the message box after each request, as the provider reports it (input, output,

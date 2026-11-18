@@ -350,6 +350,15 @@ Item {
         onOpenAgentAccess: agentAccessDialog.openDialog()
     }
 
+    // Dafin AI Fill: its card sends the user here when no AI service is set up yet.
+    Connections {
+        target: ShellBridge
+        function onAiAssistSetupRequested() {
+            aiAssistPanel.showSettings = true
+            aiAssistPanel.open()
+        }
+    }
+
     LazyLoader {
         id: videoSizeDialogLoader
         sourceComponent: Component { VideoSizeDialog { } }

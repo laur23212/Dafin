@@ -28,6 +28,7 @@ PanelFrame {
     //   "split"     Blade — click a clip to split it (toolbar scissors / B)
     //   "trimStart"  click a clip to drop everything left of the cut line
     //   "trimEnd"    click a clip to drop everything right of the cut line
+    //   "aiFill"     Dafin: drag to mark a space and describe what the AI puts there
     // While a cut tool is active, hovering the timeline shows a red dashed
     // virtual playhead; trim tools also tint the doomed side of the clip.
     property string timelineTool: ""
@@ -2397,6 +2398,12 @@ PanelFrame {
                     // gradient over the doomed side) and intercepts the click.
                     TimelineCutOverlay {
                         panel: root
+                    }
+
+                    // Dafin AI Fill: mark a space, describe it, get an animation there.
+                    TimelineAiFillOverlay {
+                        panel: root
+                        view: flick
                     }
                 }
             }

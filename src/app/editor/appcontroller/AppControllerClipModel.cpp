@@ -246,6 +246,12 @@ QVariantMap vectorSourceToMap(const drift::VectorSource &v, drift::TimeUs timeli
     };
     if (!keyframes.isEmpty())
         map.insert(QStringLiteral("keyframes"), keyframes);
+    // Dafin AI Fill: how many versions the AI made and which one is showing (1-based), so the
+    // timeline can badge the clip and the AI Fill card can offer the others.
+    if (!v.generated.isEmpty()) {
+        map.insert(QStringLiteral("aiVersions"), int(v.generated.versions.size()));
+        map.insert(QStringLiteral("aiVersion"), v.generated.current + 1);
+    }
     return map;
 }
 } // namespace
@@ -1731,6 +1737,7 @@ QVariantList AppController::actions() const
         action(QStringLiteral("toggleLoop"), tr("Loop work area playback")),
         action(QStringLiteral("selectTool"), tr("Select tool")),
         action(QStringLiteral("bladeTool"), tr("Cut tool / Brush mask")),
+        action(QStringLiteral("aiFillTool"), tr("AI Fill: mark a space on the timeline and describe what goes there")),
         action(QStringLiteral("addKeyframe"), tr("Add or remove keyframe at the playhead")),
         action(QStringLiteral("toggleSnap"), tr("Turn timeline snapping on or off")),
         action(QStringLiteral("removeAllGaps"), tr("Remove all gaps on the selected track")),

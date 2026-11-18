@@ -181,6 +181,9 @@ QHash<QString, QString> defaultShortcuts()
         // TimelinePanel they were neither.
         {QStringLiteral("selectTool"), QStringLiteral("V")},
         {QStringLiteral("bladeTool"), QStringLiteral("B")},
+        // Dafin: the AI Fill tool (mark a space on the timeline, describe what goes there). A tool
+        // mode like the two above, so Main.qml dispatches it too. Not bound out of the box.
+        {QStringLiteral("aiFillTool"), QString()},
         // Dafin: the timeline toolbar's keyframe button, on Filmora's key. Not plain K: that is
         // shuttle stop beside J and L in Source Lab, and "key the rows" in the Keyframes panel.
         {QStringLiteral("addKeyframe"), QStringLiteral("Alt+K")},

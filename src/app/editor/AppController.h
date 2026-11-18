@@ -1289,6 +1289,23 @@ public:
     Q_INVOKABLE QVariantMap setVectorSource(int trackIndex, int clipIndex, const QString &source,
                                             const QVariantMap &opts = {});
     Q_INVOKABLE QString setVectorOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
+    // Dafin AI Fill (the timeline's AI Fill tool). `region`: start, end (seconds), track (the top
+    // row the user drew over, -1 = any), clipId (an AI Fill clip to give a new version; empty =
+    // a new clip), prompt, title (clip name), requestId. A document path is read in, so each
+    // version keeps its own copy. A new
+    // clip lands exactly on the region: on the drawn track when it is a free graphic lane, else on
+    // a new graphic track right above it. Either way the version is kept in the clip's history and
+    // the whole change is one undo step. Reply: {ok, error?} plus id, track, index, version,
+    // versions and the inspect summary.
+    Q_INVOKABLE QVariantMap commitAiFill(const QVariantMap &region, const QString &source,
+                                         const QString &kind = {});
+    // {ok, id, track, index, start, end, current, versions:[{prompt, created}]}; ok is false when
+    // the clip is gone or was not made by AI Fill.
+    Q_INVOKABLE QVariantMap aiFillVersions(const QString &clipId) const;
+    // Puts version `index` back on the clip, as an undoable edit. Error string, empty on success.
+    Q_INVOKABLE QString switchAiFillVersion(const QString &clipId, int index);
+    // Clips overlapping [start, end): [{id, track, index, kind, name, start, end}], at most 40.
+    QVariantList clipsInRange(double startSeconds, double endSeconds) const;
     // Keys: firstPage, lastPage (0 = through the end), layout, gridColumns, gap.
     Q_INVOKABLE QString setPdfOptions(int trackIndex, int clipIndex, const QVariantMap &opts);
     // A null/invalid value removes the override. Returns an error string, empty on success.

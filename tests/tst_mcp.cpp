@@ -249,6 +249,9 @@ private slots:
     void assistantStopClosesOpenCalls();
     void assistantIrreversibleNeedsAClick();
     void assistantKeyNeverLeaks();
+    void aiFillPlacesExactlyAndKeepsVersions();
+    void aiFillAssistantHasEveryTool();
+    void aiFillNeedsSetupAndAKnownClip();
     void getWaveformImageReportsWords();
     void setEffectStringParamSetsFileParam();
     void addShapeReturnsMintedId();
@@ -9067,6 +9070,192 @@ void McpTest::assistantKeyNeverLeaks()
     if (ini.open(QIODevice::ReadOnly))
         QVERIFY(!ini.readAll().contains(key.toUtf8())); // the key lives in the secret store only
     QVERIFY(rig.secrets->values.value(QStringLiteral("assistant-anthropic")) == key.toUtf8());
+}
+
+// Dafin AI Fill: the animation lands on the marked space, on a graphic track, and every new
+// take is a version of the same clip that can be brought back (and undone).
+void McpTest::aiFillPlacesExactlyAndKeepsVersions()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    if (!state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    const QString docA = lottieFixture();
+    QVERIFY(!docA.isEmpty());
+    QString docB = docA;
+    docB.replace(QStringLiteral("\"nm\": \"Slide\""), QStringLiteral("\"nm\": \"Slide B\""));
+    QVERIFY(docB != docA);
+
+    QVariantMap region{{QStringLiteral("start"), 2.0}, {QStringLiteral("end"), 4.5}, {QStringLiteral("track"), -1},
+                       {QStringLiteral("prompt"), QStringLiteral("a sliding box")}, {QStringLiteral("requestId"), QStringLiteral("r1")},
+                       {QStringLiteral("title"), QStringLiteral("Box")}};
+    const QVariantMap added = state.commitAiFill(region, docA);
+    QVERIFY2(added.value(QStringLiteral("ok")).toBool(), qPrintable(added.value(QStringLiteral("error")).toString()));
+    const QString id = added.value(QStringLiteral("id")).toString();
+    QCOMPARE(added.value(QStringLiteral("version")).toInt(), 1);
+    QVariantList loc = state.locateClip(id);
+    QCOMPARE(loc.size(), 2);
+    QVariantMap clip = state.clipAt(loc.at(0).toInt(), loc.at(1).toInt());
+    QCOMPARE(clip.value(QStringLiteral("kind")).toString(), QStringLiteral("vector"));
+    QCOMPARE(clip.value(QStringLiteral("start")).toDouble(), 2.0);   // exactly the marked space,
+    QCOMPARE(clip.value(QStringLiteral("duration")).toDouble(), 2.5); // not the animation's own 2 s
+    QCOMPARE(clip.value(QStringLiteral("name")).toString(), QStringLiteral("Box"));
+    QCOMPARE(clip.value(QStringLiteral("vector")).toMap().value(QStringLiteral("aiVersions")).toInt(), 1);
+
+    // A new request on the same clip adds a version; its place and length stay.
+    region.insert(QStringLiteral("clipId"), id);
+    region.insert(QStringLiteral("requestId"), QStringLiteral("r2"));
+    region.insert(QStringLiteral("prompt"), QStringLiteral("slower"));
+    region.insert(QStringLiteral("start"), 9.0); // ignored for a change
+    QVERIFY(state.commitAiFill(region, docB).value(QStringLiteral("ok")).toBool());
+    // The same request handing over again replaces its own version rather than adding one.
+    const QVariantMap again = state.commitAiFill(region, docB);
+    QCOMPARE(again.value(QStringLiteral("versions")).toInt(), 2);
+    loc = state.locateClip(id);
+    clip = state.clipAt(loc.at(0).toInt(), loc.at(1).toInt());
+    QCOMPARE(clip.value(QStringLiteral("start")).toDouble(), 2.0);
+    QVERIFY(state.vectorSourceText(loc.at(0).toInt(), loc.at(1).toInt()).contains(QStringLiteral("Slide B")));
+
+    QVariantMap info = state.aiFillVersions(id);
+    QVERIFY(info.value(QStringLiteral("ok")).toBool());
+    QCOMPARE(info.value(QStringLiteral("current")).toInt(), 1);
+    QCOMPARE(info.value(QStringLiteral("versions")).toList().size(), 2);
+    QCOMPARE(info.value(QStringLiteral("versions")).toList().at(0).toMap().value(QStringLiteral("prompt")).toString(),
+             QStringLiteral("a sliding box"));
+
+    // Going back to version 1 is an edit like any other: undo returns to version 2.
+    QCOMPARE(state.switchAiFillVersion(id, 0), QString());
+    loc = state.locateClip(id);
+    QVERIFY(!state.vectorSourceText(loc.at(0).toInt(), loc.at(1).toInt()).contains(QStringLiteral("Slide B")));
+    QCOMPARE(state.aiFillVersions(id).value(QStringLiteral("current")).toInt(), 0);
+    state.undo();
+    QCOMPARE(state.aiFillVersions(id).value(QStringLiteral("current")).toInt(), 1);
+    QVERIFY(!state.switchAiFillVersion(id, 7).isEmpty());
+
+    // A broken document or an empty space changes nothing.
+    const int before = totalClips(state);
+    QVariantMap fresh{{QStringLiteral("start"), 0.0}, {QStringLiteral("end"), 1.0}};
+    QVERIFY(!state.commitAiFill(fresh, QStringLiteral("{\"nope\":1}")).value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.commitAiFill({{QStringLiteral("start"), 3.0}, {QStringLiteral("end"), 3.0}}, docA).value(QStringLiteral("ok")).toBool());
+    QCOMPARE(totalClips(state), before);
+
+    // A document file is read in, so the version keeps its own copy.
+    const QVariantMap fromFile = state.commitAiFill(fresh, QStringLiteral(DRIFT_TEST_DATA_DIR "/vector/slide.json"));
+    QVERIFY2(fromFile.value(QStringLiteral("ok")).toBool(), qPrintable(fromFile.value(QStringLiteral("error")).toString()));
+    loc = state.locateClip(fromFile.value(QStringLiteral("id")).toString());
+    QVERIFY(state.clipAt(loc.at(0).toInt(), loc.at(1).toInt()).value(QStringLiteral("vector")).toMap()
+                .value(QStringLiteral("inline")).toBool());
+
+    // A clip AI Fill did not make has no versions to offer or switch.
+    const QJsonObject plain = drift::mcp::McpDispatcher(&state).applyOne(
+        QStringLiteral("add_lottie"), {{QStringLiteral("json"), docA}, {QStringLiteral("at"), 8.0}});
+    QVERIFY(plain.value(QStringLiteral("ok")).toBool());
+    QVERIFY(!state.aiFillVersions(plain.value(QStringLiteral("id")).toString()).value(QStringLiteral("ok")).toBool());
+}
+
+// The AI Fill conversation can do whatever the chat can (the request may reach beyond the marked
+// space) plus fill_region; it asks its questions on the card; the chat history is left as it was.
+void McpTest::aiFillAssistantHasEveryTool()
+{
+    AssistantRig rig;
+    if (!rig.state.vectorSupportAvailable())
+        QSKIP("built without Skia");
+    const QString doc = lottieFixture();
+    const QJsonObject ask{{"question", "Which colour?"}, {"options", QJsonArray{"Teal", "Purple"}}};
+    rig.net->replies = {
+        anthropicToolUse({{QStringLiteral("catalog"), QJsonObject{{"brief", true}}}}),
+        anthropicToolUse({{QStringLiteral("ask_user"), ask}}),
+        anthropicToolUse({{QStringLiteral("fill_region"), QJsonObject{{"json", doc}, {"title", "Slide"}}},
+                          {QStringLiteral("add_lottie"), QJsonObject{}}}),
+        anthropicText(QStringLiteral("Added a sliding box.")),
+    };
+    QSignalSpy finished(&rig.assistant, &AssistantController::turnFinished);
+    QVERIFY(rig.assistant.generateFill({{QStringLiteral("prompt"), QStringLiteral("a sliding box, and arrows on the next clip")},
+                                        {QStringLiteral("start"), 1.0},
+                                        {QStringLiteral("end"), 3.0},
+                                        {QStringLiteral("track"), -1}}));
+    const QByteArray first = rig.net->requests.at(0).body;
+    QVERIFY(first.contains("from AI Fill on the timeline"));
+    QVERIFY(first.contains("\"name\":\"fill_region\""));
+    QVERIFY(first.contains("\"name\":\"check_fill\""));
+    QVERIFY(first.contains("\"name\":\"catalog\""));
+    QVERIFY(first.contains("\"name\":\"apply\""));
+    QVERIFY(first.contains("\"name\":\"ask_user\""));
+    QVERIFY(first.contains("Marked space: 1.00 s to 3.00 s"));
+    QVERIFY(first.contains("arrows on the next clip"));
+
+    // The question waits for the card's buttons, like the chat panel's.
+    QCOMPARE(finished.size(), 0);
+    const QVariantMap question = rig.assistant.question();
+    QVERIFY(!question.value(QStringLiteral("id")).toString().isEmpty());
+    QCOMPARE(rig.assistant.fill().value(QStringLiteral("state")).toString(), QStringLiteral("working"));
+    rig.assistant.answerQuestion(question.value(QStringLiteral("id")).toString(), 0);
+    QCOMPARE(finished.size(), 1);
+
+    // catalog ran as in the chat; fill_region placed the box; the bad add_lottie just failed.
+    const QList<ChatMessage> results = rig.toolResults(); // history is the chat's again, so read the requests
+    QVERIFY(results.isEmpty());
+    QVERIFY(!rig.net->requests.at(1).body.contains("Not available"));
+    QCOMPARE(rig.net->requests.size(), 4);
+    QVERIFY(rig.net->requests.at(3).body.contains("Placed in the marked space"));
+    QVERIFY(rig.net->requests.at(3).body.contains("\"is_error\":true"));
+
+    const QVariantMap fill = rig.assistant.fill();
+    QCOMPARE(fill.value(QStringLiteral("state")).toString(), QStringLiteral("done"));
+    QCOMPARE(fill.value(QStringLiteral("versions")).toInt(), 1);
+    QVERIFY(fill.value(QStringLiteral("changed")).toBool());
+    QCOMPARE(fill.value(QStringLiteral("text")).toString(), QStringLiteral("Added a sliding box."));
+    const QString id = fill.value(QStringLiteral("clipId")).toString();
+    QVERIFY(rig.state.aiFillVersions(id).value(QStringLiteral("ok")).toBool());
+    QVERIFY(rig.assistant.history().isEmpty());
+    QVERIFY(rig.assistant.messages().isEmpty());
+    QVERIFY(!rig.assistant.busy());
+
+    // "Change it" sends the current document and the earlier request, and adds version 2.
+    QString changed = doc;
+    changed.replace(QStringLiteral("\"nm\": \"Slide\""), QStringLiteral("\"nm\": \"Slide B\""));
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("fill_region"), QJsonObject{{"json", changed}}}}),
+                        anthropicText(QStringLiteral("Slower now."))};
+    const int sent = rig.net->requests.size();
+    QVERIFY(rig.assistant.generateFill({{QStringLiteral("prompt"), QStringLiteral("slower")},
+                                        {QStringLiteral("start"), 1.0},
+                                        {QStringLiteral("end"), 3.0},
+                                        {QStringLiteral("clipId"), id}}));
+    const QByteArray change = rig.net->requests.at(sent).body;
+    QVERIFY(change.contains("wants a CHANGE"));
+    QVERIFY(change.contains("a sliding box"));
+    QCOMPARE(rig.assistant.fill().value(QStringLiteral("versions")).toInt(), 2);
+    QCOMPARE(rig.assistant.fill().value(QStringLiteral("clipId")).toString(), id);
+
+    // A request about other places (or just a question) ends done without a clip in the space.
+    rig.net->replies = {anthropicText(QStringLiteral("There is no next clip yet."))};
+    QVERIFY(rig.assistant.generateFill({{QStringLiteral("prompt"), QStringLiteral("add arrows on the next clip")},
+                                        {QStringLiteral("start"), 5.0},
+                                        {QStringLiteral("end"), 6.0}}));
+    QCOMPARE(rig.assistant.fill().value(QStringLiteral("state")).toString(), QStringLiteral("done"));
+    QVERIFY(rig.assistant.fill().value(QStringLiteral("clipId")).toString().isEmpty());
+    QVERIFY(!rig.assistant.fill().value(QStringLiteral("changed")).toBool());
+    QCOMPARE(rig.assistant.fill().value(QStringLiteral("text")).toString(), QStringLiteral("There is no next clip yet."));
+}
+
+void McpTest::aiFillNeedsSetupAndAKnownClip()
+{
+    AssistantRig rig(false);
+    QVERIFY(!rig.assistant.generateFill({{QStringLiteral("prompt"), QStringLiteral("a title")},
+                                         {QStringLiteral("start"), 0.0},
+                                         {QStringLiteral("end"), 2.0}}));
+    QVERIFY(rig.net->requests.isEmpty());
+    QCOMPARE(rig.assistant.fill().value(QStringLiteral("state")).toString(), QStringLiteral("error"));
+    QVERIFY(rig.assistant.fill().value(QStringLiteral("setup")).toBool());
+
+    AssistantRig ready;
+    QVERIFY(!ready.assistant.generateFill({{QStringLiteral("prompt"), QString()}, {QStringLiteral("start"), 0.0}, {QStringLiteral("end"), 2.0}}));
+    QVERIFY(!ready.assistant.generateFill({{QStringLiteral("prompt"), QStringLiteral("x")}, {QStringLiteral("start"), 1.0}, {QStringLiteral("end"), 1.0}}));
+    if (ready.state.vectorSupportAvailable())
+        QVERIFY(!ready.assistant.generateFill({{QStringLiteral("prompt"), QStringLiteral("x")}, {QStringLiteral("start"), 0.0},
+                                               {QStringLiteral("end"), 2.0}, {QStringLiteral("clipId"), QStringLiteral("gone")}}));
+    QVERIFY(ready.net->requests.isEmpty());
+    QVERIFY(!ready.assistant.fill().value(QStringLiteral("setup")).toBool());
 }
 
 QTEST_MAIN(McpTest)
