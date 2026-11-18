@@ -91,6 +91,20 @@ Column {
                     EditorState.commitPreviewDrag()
             }
         }
+        DurationField {
+            width: parent.width
+            useSeconds: true
+            minSeconds: inspector.animSlot === "loop" ? 0.1 : 0
+            maxSeconds: inspector.animSlot === "loop" ? 10 : 5
+            seconds: inspector.animSlot === "loop"
+                     ? (Number(inspector.slotData.period) || 1)
+                     : (Number(inspector.slotData.duration) || 0)
+            onEdited: s => {
+                const patch = {}
+                patch[inspector.animSlot === "loop" ? "period" : "duration"] = s
+                inspector.setSlot(patch)
+            }
+        }
     }
 
     Row {
@@ -139,20 +153,16 @@ Column {
                 font.pixelSize: Theme.fontSizeXs
                 font.family: Theme.fontFamily
             }
-            ThemedNumberField {
+            DurationField {
                 id: staggerField
                 width: parent.width
-                decimals: 0
-                step: 10
-                from: 0
-                to: 2000
-                unit: "ms"
+                useSeconds: false
+                minSeconds: 0
+                maxSeconds: 2
+                stepSeconds: 0.01
                 enabled: (inspector.slotData.unit || "block") !== "block"
-                Binding on value {
-                    when: !staggerField.activeFocus
-                    value: Math.round((Number(inspector.slotData.stagger) || 0) * 1000)
-                }
-                onEdited: v => inspector.setSlot({ "stagger": v / 1000 })
+                seconds: Number(inspector.slotData.stagger) || 0
+                onEdited: s => inspector.setSlot({ "stagger": s })
             }
         }
     }
