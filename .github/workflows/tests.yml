@@ -194,7 +194,8 @@ jobs:
           add-tools-to-path: true
 
       # Deliberately the same key package.yml uses, so the two workflows share one JUCE clone
-      # and ONNX header download instead of each paying for it.
+      # instead of each paying for it. (ONNX Runtime is not in here: its headers are vendored in
+      # third_party/onnxruntime and nothing is downloaded with DRIFT_BUNDLE_ONNXRUNTIME=OFF.)
       - name: Cache FetchContent dependencies
         uses: actions/cache@v4
         with:

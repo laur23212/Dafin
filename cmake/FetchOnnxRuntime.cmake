@@ -1,119 +1,142 @@
-# Download a prebuilt ONNX Runtime release when it is not installed locally.
-# On success sets ONNXRUNTIME_ROOT (and DRIFT_ONNXRUNTIME_FETCHED).
+# Provide the ONNX Runtime headers (and, for a dev build that bundles one, a CPU runtime) when they
+# are not installed locally. On success sets ONNXRUNTIME_ROOT (and DRIFT_ONNXRUNTIME_FETCHED).
 #
-# Only the CPU release is ever fetched, and only two things are taken from it: the headers Drift
-# compiles against, and — when DRIFT_BUNDLE_ONNXRUNTIME is on — a runtime for the build tree to
-# load so a dev build works before any addon is installed. The library is never linked; which
-# runtime the shipped app uses is the user's runtime choice, not a configure-time one
-# (src/engine/ml/runtime/OrtRuntime.cpp).
+# Drift links no ONNX Runtime: it compiles against the headers and dlopens the runtime the user
+# installs (src/engine/ml/runtime/OrtRuntime.cpp). So:
+#   - a build that bundles no runtime (DRIFT_BUNDLE_ONNXRUNTIME=OFF: every CI, package, Android and
+#     wasm build) takes the headers vendored in third_party/onnxruntime and downloads nothing;
+#   - a dev build that stages a CPU runtime into its build tree (DRIFT_BUNDLE_ONNXRUNTIME=ON)
+#     downloads the official NuGet package, Microsoft.ML.OnnxRuntime, pinned by SHA-256, and takes
+#     the headers and its platform's runtime from it.
+#
+# Dafin: until 2026-11-17 this downloaded onnxruntime-<platform>-<version>.tgz/.zip from the GitHub
+# releases of microsoft/onnxruntime. That repository and every release asset have answered 404
+# since about 22:20 UTC that day, which failed every configure. The NuGet package is Microsoft's
+# own build of the same release (its headers are byte-identical to the GitHub tarball's once CRLF
+# is turned into LF; see third_party/onnxruntime/README.md).
 
 if(DRIFT_ONNXRUNTIME_FETCHED)
     return()
 endif()
 
 set(_onnxruntime_version "1.27.0")
+set(_onnxruntime_vendored "${CMAKE_SOURCE_DIR}/third_party/onnxruntime")
 
-if(ANDROID OR EMSCRIPTEN)
-    # Only the headers are ever used here — the app links no ONNX Runtime at all and dlopens one at
-    # startup (src/engine/ml/runtime/OrtRuntime.cpp), which on Android arrives as an Acceleration addon. The
-    # C and C++ API headers are identical across platforms and architectures, so the linux-x64
-    # tarball is a valid source for them; nothing from its lib/ directory is linked or staged
-    # (drift_bundle_onnxruntime is skipped on Android, and scripts/build.sh passes
-    # DRIFT_BUNDLE_ONNXRUNTIME=OFF). Using the official android AAR instead would mean unzipping a
-    # second archive format to obtain byte-identical headers. The wasm build likewise has no
-    # runtime to load and needs only the headers.
-    set(_onnxruntime_archive "onnxruntime-linux-x64-${_onnxruntime_version}.tgz")
-    set(_onnxruntime_sha256 "547e40a48f1fe73e3f812d7c88a948612c23f896b91e4e2ee1e232d7b468246f")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
-        set(_onnxruntime_archive "onnxruntime-linux-aarch64-${_onnxruntime_version}.tgz")
-        set(_onnxruntime_sha256 "3e4d83ac06924a32a07b6d7f91ce6f852876153fc0bbdf931bf517a140bfbe48")
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
-        set(_onnxruntime_archive "onnxruntime-linux-x64-${_onnxruntime_version}.tgz")
-        set(_onnxruntime_sha256 "547e40a48f1fe73e3f812d7c88a948612c23f896b91e4e2ee1e232d7b468246f")
+# Upstream publishes no x86_64 (or universal2) macOS runtime, on GitHub or NuGet; an Intel Mac can
+# only take the headers. Bundling is forced off rather than stage an arm64 runtime an x86_64
+# process would fail to dlopen with no explanation.
+if(APPLE AND NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64" AND DRIFT_BUNDLE_ONNXRUNTIME)
+    message(STATUS
+        "ONNX Runtime publishes no x86_64 macOS build; using the vendored headers and disabling "
+        "DRIFT_BUNDLE_ONNXRUNTIME. Install an Acceleration addon, or point DRIFT_ONNXRUNTIME_DIR "
+        "at an x86_64 runtime.")
+    set(DRIFT_BUNDLE_ONNXRUNTIME OFF CACHE BOOL
+        "Stage a CPU ONNX Runtime into the build tree for development" FORCE)
+endif()
+
+# find_path / find_library cache their results, so a build tree configured against a previous
+# prefix would keep resolving to it.
+unset(OnnxRuntime_INCLUDE_DIR CACHE)
+unset(OnnxRuntime_LIBRARY CACHE)
+
+# ---- headers only: vendored, no network ---------------------------------------------------------
+# Android and wasm never bundle a runtime (Android gets one as an Acceleration addon; a browser has
+# none to dlopen), whatever DRIFT_BUNDLE_ONNXRUNTIME says.
+if(ANDROID OR EMSCRIPTEN OR NOT DRIFT_BUNDLE_ONNXRUNTIME)
+    if(NOT EXISTS "${_onnxruntime_vendored}/include/onnxruntime_cxx_api.h")
+        message(FATAL_ERROR
+            "The vendored ONNX Runtime headers are missing (${_onnxruntime_vendored}/include). "
+            "Restore them from git, or set ONNXRUNTIME_ROOT to an ONNX Runtime install.")
     endif()
-elseif(APPLE)
-    # Upstream stopped publishing an osx-x86_64 (and universal2) release; 1.27.0 ships arm64 only.
-    # An Intel Mac used to fall through to the FATAL_ERROR below and could not configure at all.
-    # The headers are identical across platforms and architectures — the same reason the Android
-    # branch above reads them out of the linux-x64 tarball — so the arm64 archive is a valid
-    # source for them here too. Its dylib is not: bundling is forced off rather than stage an
-    # arm64 runtime an x86_64 process would fail to dlopen with no explanation.
-    set(_onnxruntime_archive "onnxruntime-osx-arm64-${_onnxruntime_version}.tgz")
-    set(_onnxruntime_sha256 "545e81c58152353acb0d1e8bd6ce4b62f830c0961f5b3acfedc790ffd76e477a")
-    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64|ARM64")
-        if(DRIFT_BUNDLE_ONNXRUNTIME)
-            message(STATUS
-                "ONNX Runtime publishes no x86_64 macOS build; taking headers from the arm64 "
-                "release and disabling DRIFT_BUNDLE_ONNXRUNTIME. Install an Acceleration addon, "
-                "or point DRIFT_ONNXRUNTIME_DIR at an x86_64 runtime.")
-        endif()
-        set(DRIFT_BUNDLE_ONNXRUNTIME OFF CACHE BOOL
-            "Stage a CPU ONNX Runtime into the build tree for development" FORCE)
-    endif()
+    set(ONNXRUNTIME_ROOT "${_onnxruntime_vendored}" CACHE PATH
+        "ONNX Runtime install prefix (vendored headers)" FORCE)
+    set(OnnxRuntime_ROOT "${_onnxruntime_vendored}" CACHE PATH
+        "ONNX Runtime install prefix (vendored headers)" FORCE)
+    set(DRIFT_ONNXRUNTIME_VERSION "${_onnxruntime_version}" CACHE STRING
+        "Version of the ONNX Runtime headers" FORCE)
+    set(DRIFT_ONNXRUNTIME_FETCHED TRUE)
+    message(STATUS "ONNX Runtime ${_onnxruntime_version} headers: vendored (${_onnxruntime_vendored})")
+    return()
+endif()
+
+# ---- a runtime to bundle: the NuGet package -----------------------------------------------------
+if(APPLE)
+    set(_onnxruntime_rid "osx-arm64")
 elseif(WIN32)
     if(CMAKE_SYSTEM_PROCESSOR MATCHES "ARM64|aarch64")
-        set(_onnxruntime_archive "onnxruntime-win-arm64-${_onnxruntime_version}.zip")
-        set(_onnxruntime_sha256 "a32f2650575b3c20df462e337519fd1cc4105356130d11dba9771c6f374d952f")
+        set(_onnxruntime_rid "win-arm64")
     else()
-        set(_onnxruntime_archive "onnxruntime-win-x64-${_onnxruntime_version}.zip")
-        set(_onnxruntime_sha256 "c5c81710938e68079ff1a192b04897faabe4b43830d48f39f27ecd4e16138bfc")
+        set(_onnxruntime_rid "win-x64")
+    endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|ARM64")
+        set(_onnxruntime_rid "linux-arm64")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+        set(_onnxruntime_rid "linux-x64")
     endif()
 endif()
 
-if(NOT _onnxruntime_archive)
+if(NOT _onnxruntime_rid)
     message(FATAL_ERROR
-        "Automatic ONNX Runtime download is not supported for "
-        "${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}. "
-        "Install ONNX Runtime manually and set ONNXRUNTIME_ROOT.")
+        "No prebuilt ONNX Runtime to bundle for ${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR}. "
+        "Configure with -DDRIFT_BUNDLE_ONNXRUNTIME=OFF (the vendored headers are enough to build), "
+        "or install ONNX Runtime and set ONNXRUNTIME_ROOT.")
 endif()
 
+# One package holds every platform's runtime (about 135 MB); it is fetched once per build tree.
+set(_onnxruntime_archive "microsoft.ml.onnxruntime.${_onnxruntime_version}.nupkg")
+set(_onnxruntime_sha256 "c725e8cefdfe4de08befb9f79b3f218c162439cdcdb97cbbb5192888d58ea669")
 set(_onnxruntime_url
-    "https://github.com/microsoft/onnxruntime/releases/download/v${_onnxruntime_version}/${_onnxruntime_archive}")
+    "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime/${_onnxruntime_version}/${_onnxruntime_archive}")
 
-set(_onnxruntime_staging "${CMAKE_BINARY_DIR}/_deps/onnxruntime/cpu")
+set(_onnxruntime_staging "${CMAKE_BINARY_DIR}/_deps/onnxruntime/nuget")
+set(_onnxruntime_prefix "${_onnxruntime_staging}/onnxruntime-${_onnxruntime_rid}-${_onnxruntime_version}")
+file(GLOB _onnxruntime_have_lib "${_onnxruntime_prefix}/lib/*onnxruntime*")
 
-file(GLOB _onnxruntime_prefixes LIST_DIRECTORIES true
-    "${_onnxruntime_staging}/onnxruntime-*")
-if(_onnxruntime_prefixes)
-    list(GET _onnxruntime_prefixes 0 _onnxruntime_prefix)
-else()
-    set(_onnxruntime_prefix "${_onnxruntime_staging}/${_onnxruntime_archive}")
-    get_filename_component(_onnxruntime_prefix "${_onnxruntime_prefix}" NAME_WE)
-endif()
-
-if(NOT EXISTS "${_onnxruntime_prefix}/include/onnxruntime_cxx_api.h")
+if(NOT EXISTS "${_onnxruntime_prefix}/include/onnxruntime_cxx_api.h" OR NOT _onnxruntime_have_lib)
     file(MAKE_DIRECTORY "${_onnxruntime_staging}")
     set(_onnxruntime_archive_path "${_onnxruntime_staging}/${_onnxruntime_archive}")
 
+    if(EXISTS "${_onnxruntime_archive_path}")
+        file(SHA256 "${_onnxruntime_archive_path}" _onnxruntime_have_sha)
+        if(NOT _onnxruntime_have_sha STREQUAL _onnxruntime_sha256)
+            # A partial or failed earlier download: never extract it, fetch it again.
+            file(REMOVE "${_onnxruntime_archive_path}")
+        endif()
+    endif()
+
     if(NOT EXISTS "${_onnxruntime_archive_path}")
-        message(STATUS "Downloading ONNX Runtime ${_onnxruntime_version}: ${_onnxruntime_url}")
+        message(STATUS "Downloading ONNX Runtime ${_onnxruntime_version} (NuGet): ${_onnxruntime_url}")
         file(DOWNLOAD "${_onnxruntime_url}" "${_onnxruntime_archive_path}"
             EXPECTED_HASH SHA256=${_onnxruntime_sha256}
+            STATUS _onnxruntime_status
             SHOW_PROGRESS)
+        list(GET _onnxruntime_status 0 _onnxruntime_code)
+        if(NOT _onnxruntime_code EQUAL 0)
+            file(REMOVE "${_onnxruntime_archive_path}")
+            message(FATAL_ERROR
+                "Could not download ONNX Runtime ${_onnxruntime_version} from ${_onnxruntime_url}: "
+                "${_onnxruntime_status}. Configure with -DDRIFT_BUNDLE_ONNXRUNTIME=OFF to build with "
+                "the vendored headers and no bundled runtime.")
+        endif()
     endif()
 
+    set(_onnxruntime_unpack "${_onnxruntime_staging}/unpack")
+    file(REMOVE_RECURSE "${_onnxruntime_unpack}" "${_onnxruntime_prefix}")
     file(ARCHIVE_EXTRACT
         INPUT "${_onnxruntime_archive_path}"
-        DESTINATION "${_onnxruntime_staging}")
-endif()
-
-if(NOT EXISTS "${_onnxruntime_prefix}/include/onnxruntime_cxx_api.h")
-    file(GLOB _onnxruntime_prefixes LIST_DIRECTORIES true
-        "${_onnxruntime_staging}/onnxruntime-*")
-    if(_onnxruntime_prefixes)
-        list(GET _onnxruntime_prefixes 0 _onnxruntime_prefix)
-    endif()
+        DESTINATION "${_onnxruntime_unpack}"
+        PATTERNS "build/native/include/*" "runtimes/${_onnxruntime_rid}/native/*")
+    # The layout FindOnnxRuntime expects: <prefix>/include and <prefix>/lib.
+    file(COPY "${_onnxruntime_unpack}/build/native/include/" DESTINATION "${_onnxruntime_prefix}/include")
+    file(COPY "${_onnxruntime_unpack}/runtimes/${_onnxruntime_rid}/native/" DESTINATION "${_onnxruntime_prefix}/lib")
+    file(REMOVE_RECURSE "${_onnxruntime_unpack}")
 endif()
 
 if(NOT EXISTS "${_onnxruntime_prefix}/include/onnxruntime_cxx_api.h")
     message(FATAL_ERROR
         "Failed to extract ONNX Runtime from ${_onnxruntime_archive}")
 endif()
-
-# find_path caches its result, so a build tree configured against a previous prefix would keep
-# resolving to it.
-unset(OnnxRuntime_INCLUDE_DIR CACHE)
 
 set(ONNXRUNTIME_ROOT "${_onnxruntime_prefix}" CACHE PATH
     "ONNX Runtime install prefix (auto-downloaded)" FORCE)
@@ -122,4 +145,4 @@ set(OnnxRuntime_ROOT "${_onnxruntime_prefix}" CACHE PATH
 set(DRIFT_ONNXRUNTIME_VERSION "${_onnxruntime_version}" CACHE STRING
     "Version of the fetched ONNX Runtime" FORCE)
 set(DRIFT_ONNXRUNTIME_FETCHED TRUE)
-message(STATUS "ONNX Runtime ${_onnxruntime_version} headers ready at ${ONNXRUNTIME_ROOT}")
+message(STATUS "ONNX Runtime ${_onnxruntime_version} (${_onnxruntime_rid}) ready at ${ONNXRUNTIME_ROOT}")
