@@ -27,6 +27,42 @@ ThemedTextField {
 
     inputMethodHints: Qt.ImhFormattedNumbersOnly
 
+    // Dafin: keep the digits inside the box. Narrow padding, centred, and the text shrinks a
+    // little (never below 8 px) when the longest value this field can show would not fit.
+    leftPadding: Theme.spacingMd
+    rightPadding: Theme.spacingMd
+    topPadding: 0
+    bottomPadding: 0
+    verticalAlignment: TextInput.AlignVCenter
+
+    readonly property real _baseSize: Theme.fontSizeSm
+    readonly property real _room: Math.max(1, width - leftPadding - rightPadding)
+
+    function _longestText() {
+        let longest = text
+        const candidates = [format(value)]
+        if (Math.abs(from) < 1e6)
+            candidates.push(format(from))
+        if (Math.abs(to) < 1e6)
+            candidates.push(format(to))
+        for (const c of candidates) {
+            if (c.length > longest.length)
+                longest = c
+        }
+        return longest
+    }
+
+    TextMetrics {
+        id: fitMetrics
+        font.family: root.font.family
+        font.pixelSize: root._baseSize
+        text: root._longestText()
+    }
+
+    font.pixelSize: fitMetrics.width > root._room
+                    ? Math.max(8, Math.floor(root._baseSize * root._room / fitMetrics.width))
+                    : root._baseSize
+
     readonly property bool _bounded: from > -1e9 || to < 1e9
     readonly property string rangeHint: _bounded
         ? qsTr("Allowed range: %1 – %2%3").arg(format(from)).arg(format(to))
