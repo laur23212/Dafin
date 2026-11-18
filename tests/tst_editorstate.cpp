@@ -7370,6 +7370,17 @@ void EditorStateTest::aiTextEditCutsWordsFromLinkedClips()
 // found before the clip moved is not applied.
 void EditorStateTest::aiCleanupRemovesOnlyTickedFillers()
 {
+    // The filler list lives in QSettings; on Windows a QSettings with no organization name
+    // saves nothing, so give this test its own names (and put the old ones back).
+    const QString oldOrg = QCoreApplication::organizationName();
+    const QString oldApp = QCoreApplication::applicationName();
+    QCoreApplication::setOrganizationName(QStringLiteral("DafinFillerTest"));
+    QCoreApplication::setApplicationName(QStringLiteral("DafinFillerTest"));
+    const auto restoreNames = qScopeGuard([oldOrg, oldApp] {
+        QCoreApplication::setOrganizationName(oldOrg);
+        QCoreApplication::setApplicationName(oldApp);
+    });
+
     AssetLibrary library;
     AppController state(&library);
     appendCombinedVideoClip(*state.project());
