@@ -105,6 +105,15 @@ Column {
                     EditorState.commitPreviewDrag()
             }
         }
+        DurationField {
+            width: parent.width
+            useSeconds: false
+            minSeconds: 0
+            maxSeconds: 10
+            stepSeconds: 0.01
+            seconds: (Number(root.info.maxReadMs) || 0) / 1000
+            onEdited: s => EditorState.setTextAnimationTiming(EditorState.selectedTrack, EditorState.selectedClip, { "maxReadMs": Math.round(s * 1000) })
+        }
         Text {
             width: parent.width
             wrapMode: Text.WordWrap

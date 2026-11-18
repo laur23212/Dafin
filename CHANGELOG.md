@@ -14,3 +14,5 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 - Tutorial: a Tutorial button left of the Marketplace button opens a scrollable feature list; each feature has a summary and a guided tour that dims the screen, outlines the real button or panel and explains it step by step. Small ? buttons on the Assets, Properties, Preview and Timeline panels open their page. A welcome offers it once on first start.
 
 ## 🎨 Improved
+
+- Text animation timing: Stagger, Duration/Period and "Readable within" can now be typed in milliseconds or seconds. A small ms / s button beside each field switches the unit (seconds show three decimals, so 1 ms precision either way).
