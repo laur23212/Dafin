@@ -418,6 +418,49 @@ private slots:
         QCOMPARE(splits, 1);
     }
 
+    // Filmora keeps copies of an item's files in folders such as All/Data or 9/Data, with no
+    // resinfo.json of their own. They used to become extra effects named "All" and "9" with no
+    // picture; they are part of the item.
+    void variantFoldersArePartOfTheirItem()
+    {
+        QTemporaryDir source;
+        QTemporaryDir out;
+        const QDir src(source.path());
+        auto variant = [](const QString &dir) {
+            writeShaderItem(dir, 1, 3, QStringLiteral("x"), QString(), kFilterFrag, filterConf(false), false);
+            QVERIFY(QFile::remove(QDir(dir).filePath(QStringLiteral("resinfo.json"))));
+        };
+
+        // Shader in its own Data/ and copied into All/ and 9/.
+        const QString wobble = src.filePath(QStringLiteral("Filter/3_Wobble"));
+        writeShaderItem(wobble, 5001, 3, QStringLiteral("Wobble"), QString(), kFilterFrag,
+                        filterConf(false), false);
+        variant(QDir(wobble).filePath(QStringLiteral("All")));
+        variant(QDir(wobble).filePath(QStringLiteral("9")));
+        // Shader only under All/Data: the item uses it, with its own name and thumbnail.
+        const QString glow = src.filePath(QStringLiteral("Overlay/4_Glow"));
+        writeResinfo(glow, 5002, 4, QStringLiteral("Soft Glow"));
+        writeFile(QDir(glow).filePath(QStringLiteral("thumbnail.png")), "png");
+        variant(QDir(glow).filePath(QStringLiteral("All")));
+        // No resinfo.json anywhere: named after the folder above "All".
+        variant(src.filePath(QStringLiteral("Extra/Neon Haze/All")));
+
+        const ImportReport report = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(report.effects, 3);
+        QStringList names;
+        for (const ImportedItem &item : report.items) {
+            if (item.kind == QLatin1String("effect"))
+                names.append(item.name);
+        }
+        names.sort();
+        QCOMPARE(names, (QStringList{QStringLiteral("Neon Haze"), QStringLiteral("Soft Glow"),
+                                     QStringLiteral("Wobble")}));
+        const QJsonObject glowPkg =
+            readJson(QDir(out.path()).filePath(QStringLiteral("effects/fm-5002/effect.json")));
+        QCOMPARE(glowPkg.value(QStringLiteral("displayName")).toString(), QStringLiteral("Soft Glow"));
+        QCOMPARE(glowPkg.value(QStringLiteral("thumbnail")).toString(), QStringLiteral("thumbnail.png"));
+    }
+
     void anEmptyFolderKeepsWhatWasConverted()
     {
         QTemporaryDir source;

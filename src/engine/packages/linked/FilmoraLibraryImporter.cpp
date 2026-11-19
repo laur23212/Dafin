@@ -24,7 +24,8 @@ namespace dafin::linked {
 namespace {
 
 // Bump when the conversion changes, so every item is converted again.
-constexpr int kImporterVersion = 2;
+// 3: variant folders ("All", "9" ...) inside an item are part of it, not items named "All".
+constexpr int kImporterVersion = 3;
 
 // Failsafe caps: a folder that is not what it seems (a whole drive, a damaged file) must not
 // stall or exhaust the import.
@@ -157,6 +158,29 @@ QString humanName(const QString &folderOrFile)
     return withoutNumberPrefix(folderOrFile).replace(QLatin1Char('_'), QLatin1Char(' ')).simplified();
 }
 
+// A folder name that says nothing about the item: Filmora's variant and data folders ("All",
+// "Data", "9", an aspect ratio "16_9"). An item found in one is named after the folder above.
+bool isGenericFolderName(const QString &name)
+{
+    static const QRegularExpression kGeneric(
+        QStringLiteral("^(all|data|default|\\d+|\\d+_\\d+)$"), QRegularExpression::CaseInsensitiveOption);
+    return name.trimmed().isEmpty() || kGeneric.match(name.trimmed()).hasMatch();
+}
+
+// The folder that names an item: the item's own, or, while that has a generic name, the folder
+// above it (at most three levels, never the drive root).
+QString namingDir(const QString &itemDir)
+{
+    QString dir = QDir::cleanPath(itemDir);
+    for (int depth = 0; depth < 3 && isGenericFolderName(QFileInfo(dir).fileName()); ++depth) {
+        const QString parent = QFileInfo(dir).absolutePath();
+        if (parent == dir || QDir(parent).isRoot())
+            break;
+        dir = parent;
+    }
+    return dir;
+}
+
 QString englishTitle(const QJsonObject &info, const QString &itemDir)
 {
     const QJsonObject titles = info.value(QStringLiteral("titles")).toObject();
@@ -166,8 +190,27 @@ QString englishTitle(const QJsonObject &info, const QString &itemDir)
     if (title.isEmpty())
         title = humanName(info.value(QStringLiteral("slug")).toString());
     if (title.isEmpty())
-        title = humanName(QFileInfo(itemDir).fileName());
+        title = humanName(QFileInfo(namingDir(itemDir)).fileName());
     return title;
+}
+
+// The item's card picture: its thumbnail.png, or that of the folder that names it.
+QString thumbnailFor(const QString &itemDir)
+{
+    for (const QString &dir : {itemDir, namingDir(itemDir)}) {
+        const QString thumb = QDir(dir).filePath(QStringLiteral("thumbnail.png"));
+        if (QFileInfo(thumb).isFile())
+            return thumb;
+    }
+    return {};
+}
+
+// A Data folder that holds a Filmora shader effect (filter.xml or a .conf).
+bool hasShaderFiles(const QString &dataDir)
+{
+    const QDir data(dataDir);
+    return QFileInfo(data.filePath(QStringLiteral("filter.xml"))).isFile()
+           || !data.entryList({QStringLiteral("*.conf")}, QDir::Files).isEmpty();
 }
 
 // "colorInterval" -> "Color interval", "uRadius" -> "Radius", "glow_color" -> "Glow color".
@@ -572,10 +615,11 @@ const QStringList kAudioSuffixes = {QStringLiteral("mp3"), QStringLiteral("wav")
 // What an item is by what is in it, whatever its resinfo.json says and wherever it sits: a
 // scrambled library (a split screen beside a title and a transition, items in the wrong
 // folders, a resinfo.json lost) still sorts. TypeUnknown when nothing tells.
-int typeFromContent(const QString &itemDir)
+// `dataDir` is where the item's shader files are when not in its own Data/ (a variant folder).
+int typeFromContent(const QString &itemDir, const QString &dataDir = {})
 {
     const QDir item(itemDir);
-    const QDir data(item.filePath(QStringLiteral("Data")));
+    const QDir data(dataDir.isEmpty() ? item.filePath(QStringLiteral("Data")) : dataDir);
     const QByteArray filterXml = readSmall(data.filePath(QStringLiteral("filter.xml")));
     const QStringList confs = data.entryList({QStringLiteral("*.conf")}, QDir::Files);
     if (!filterXml.isEmpty() || !confs.isEmpty()) {
@@ -657,9 +701,24 @@ class Converter
 {
 public:
     Converter(const QString &outRoot, const ShaderCheck &check, const QString &crashedKey,
-              const QSet<QString> &itemDirs)
-        : m_outRoot(outRoot), m_check(check), m_crashedKey(crashedKey), m_itemDirs(itemDirs)
+              const QSet<QString> &itemDirs, const QHash<QString, QStringList> &variantData)
+        : m_outRoot(outRoot), m_check(check), m_crashedKey(crashedKey), m_itemDirs(itemDirs),
+          m_variantData(variantData)
     {
+    }
+
+    // Where the item's shader files are: its own Data/, or, when that has none, the Data/ of one
+    // of its variant folders (Filmora keeps some effects' files only under All/Data).
+    QString dataDirFor(const QString &itemDir) const
+    {
+        const QString own = QDir(itemDir).filePath(QStringLiteral("Data"));
+        if (hasShaderFiles(own))
+            return own;
+        for (const QString &variant : m_variantData.value(itemDir)) {
+            if (hasShaderFiles(variant))
+                return variant;
+        }
+        return own;
     }
 
     static QString markerPath(const QString &outRoot)
@@ -774,7 +833,7 @@ private:
     void convertShaderOrLook(const QString &key, const QString &itemDir, const QJsonObject &info,
                              bool transition, Record *r)
     {
-        const QDir data(QDir(itemDir).filePath(QStringLiteral("Data")));
+        const QDir data(dataDirFor(itemDir));
         QString confName;
         static const QRegularExpression kConfig(QStringLiteral("<ConfigFile>\\s*([^<]+?)\\s*</ConfigFile>"));
         const QRegularExpressionMatch m =
@@ -880,7 +939,8 @@ private:
         for (const QJsonValue &c : info.value(QStringLiteral("categories")).toArray())
             hints.categorySlugs.append(c.toObject().value(QStringLiteral("slug")).toString());
         hints.title = r->name;
-        hints.folderNames = {info.value(QStringLiteral("slug")).toString(), QFileInfo(itemDir).fileName()};
+        hints.folderNames = {info.value(QStringLiteral("slug")).toString(),
+                             QFileInfo(namingDir(itemDir)).fileName()};
         hints.paramNames = paramNames;
         hints.shader = shader.source;
         const QString category = smartCategory(kindDir(kind), hints);
@@ -913,8 +973,9 @@ private:
             pkg.insert(QStringLiteral("backend"), QStringLiteral("gpu"));
 
         // A small picture for the card: the item's own thumbnail, copied (a few KB).
-        const QString thumb = QDir(itemDir).filePath(QStringLiteral("thumbnail.png"));
-        if (QFileInfo(thumb).size() < kMaxSettingsFile && QFile::copy(thumb, out.filePath(QStringLiteral("thumbnail.png")))) {
+        const QString thumb = thumbnailFor(itemDir);
+        if (!thumb.isEmpty() && QFileInfo(thumb).size() < kMaxSettingsFile
+            && QFile::copy(thumb, out.filePath(QStringLiteral("thumbnail.png")))) {
             if (transition) {
                 pkg.insert(QStringLiteral("previewStrip"), QStringLiteral("thumbnail.png"));
                 pkg.insert(QStringLiteral("previewFrames"), 1);
@@ -976,8 +1037,8 @@ private:
                                 : QStringLiteral("No video, picture or Lottie in the folder");
             return;
         }
-        QString thumbnail = QDir(itemDir).filePath(QStringLiteral("thumbnail.png"));
-        if (!QFileInfo::exists(thumbnail))
+        QString thumbnail = thumbnailFor(itemDir);
+        if (thumbnail.isEmpty())
             thumbnail = kImageSuffixes.contains(QFileInfo(media).suffix().toLower()) ? media : QString();
 
         QString categoryName = categoryNames(info).value(0);
@@ -1048,6 +1109,7 @@ private:
     const ShaderCheck &m_check;
     QString m_crashedKey;
     const QSet<QString> &m_itemDirs;
+    const QHash<QString, QStringList> &m_variantData; // item -> its variant folders' Data/
 };
 
 // One family.json per font family found anywhere in the folder, each face once.
@@ -1456,7 +1518,8 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
     // ── 1. One walk: Filmora items (folders with resinfo.json, or Data/filter.xml) and the files
     //       outside them.
     QStringList allFiles;
-    QSet<QString> itemDirSet;
+    QSet<QString> resinfoDirs;    // folders with a resinfo.json: Filmora items
+    QSet<QString> shaderOnlyDirs; // folders with Data/filter.xml (and maybe no resinfo.json)
     bool capped = false;
     {
         QDirIterator it(source.absolutePath(), QDir::Files, QDirIterator::Subdirectories);
@@ -1469,15 +1532,51 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
             allFiles.append(path);
             const QFileInfo fi(path);
             if (fi.fileName() == QLatin1String("resinfo.json")) {
-                itemDirSet.insert(fi.absolutePath());
+                resinfoDirs.insert(fi.absolutePath());
             } else if (fi.fileName().compare(QLatin1String("filter.xml"), Qt::CaseInsensitive) == 0
-                       && fi.absoluteDir().dirName() == QLatin1String("Data")) {
-                itemDirSet.insert(QFileInfo(fi.absolutePath()).absolutePath());
+                       && fi.absoluteDir().dirName().compare(QLatin1String("Data"), Qt::CaseInsensitive) == 0) {
+                shaderOnlyDirs.insert(QFileInfo(fi.absolutePath()).absolutePath());
             }
         }
     }
     if (capped)
         report.note = QStringLiteral("Only the first %1 files were read; link a smaller folder").arg(kMaxFiles);
+
+    // A folder with Data/filter.xml but no resinfo.json inside a Filmora item (its "All", "9" ...
+    // folders) is a copy of that item's own files, not an item of its own: it used to appear as
+    // an extra effect named "All" with no picture. Its Data/ is kept for the item, which uses it
+    // when its own Data/ holds no shader. Elsewhere such a folder is still an item by itself.
+    const QString rootPath = source.absolutePath();
+    QSet<QString> itemDirSet = resinfoDirs;
+    QHash<QString, QStringList> variantData;
+    for (const QString &dir : std::as_const(shaderOnlyDirs)) {
+        if (resinfoDirs.contains(dir))
+            continue;
+        QString owner;
+        for (QString parent = QFileInfo(dir).absolutePath(); parent.size() >= rootPath.size();
+             parent = QFileInfo(parent).absolutePath()) {
+            if (resinfoDirs.contains(parent)) {
+                owner = parent;
+                break;
+            }
+            if (parent == rootPath)
+                break;
+        }
+        if (owner.isEmpty())
+            itemDirSet.insert(dir);
+        else
+            variantData[owner].append(QDir(dir).filePath(QStringLiteral("Data")));
+    }
+    // "All" first (Filmora's full set), then by name, so the choice is the same on every scan.
+    for (QStringList &dataDirs : variantData) {
+        std::sort(dataDirs.begin(), dataDirs.end(), [](const QString &a, const QString &b) {
+            const bool aAll = QFileInfo(QFileInfo(a).absolutePath()).fileName().compare(
+                                  QLatin1String("All"), Qt::CaseInsensitive) == 0;
+            const bool bAll = QFileInfo(QFileInfo(b).absolutePath()).fileName().compare(
+                                  QLatin1String("All"), Qt::CaseInsensitive) == 0;
+            return aAll != bAll ? aAll : a < b;
+        });
+    }
 
     // Every item is its own, even one that ended up inside another item's folder: each is
     // sorted by its own resinfo.json and content, never by where it sits.
@@ -1519,7 +1618,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
     QSet<QString> changed;
     QSet<QString> claimed;              // package folders written or kept in this run
     QHash<QString, QString> identities; // identity -> the first item that had it
-    Converter converter(outRoot, check, crashedKey, itemDirSet);
+    Converter converter(outRoot, check, crashedKey, itemDirSet, variantData);
 
     auto process = [&](const QString &key, const QString &path, const QString &name,
                        const std::function<Record()> &convert, const QString &identity) {
@@ -1599,7 +1698,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
         int sniffed = -1;
         auto sniff = [&] {
             if (sniffed < 0)
-                sniffed = typeFromContent(itemDir);
+                sniffed = typeFromContent(itemDir, converter.dataDirFor(itemDir));
             return sniffed;
         };
         int type = info.value(QStringLiteral("type")).toInt();
