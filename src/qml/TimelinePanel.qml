@@ -410,7 +410,22 @@ PanelFrame {
         moveFollowDeltaY = deltaY || 0
     }
 
+    // While a clip is dragged, how far right (px) it has reached. Lets the timeline grow past the
+    // project end so the view can keep following the clip; reset when the drag ends.
+    property real dragReachPx: 0
+
+    function noteDragReach(rightPx) {
+        const rounded = Math.ceil(rightPx / 128) * 128
+        if (rounded > dragReachPx)
+            dragReachPx = rounded
+    }
+
     function clearMoveFollow() {
+        if (dragReachPx > 0) {
+            dragReachPx = 0
+            // The content may now be shorter than where the view was scrolled to.
+            Qt.callLater(function() { flick.returnToBounds() })
+        }
         moveFollowActive = false
         moveLeaderTrack = -1
         moveLeaderClip = -1
@@ -1841,7 +1856,8 @@ PanelFrame {
                                                      + Theme.timelineBookmarkRowHeight
 
                 contentWidth: Math.max(width,
-                    EditorState.durationSeconds * root.pxPerSecond + root.timelineEndPadPx)
+                    EditorState.durationSeconds * root.pxPerSecond + root.timelineEndPadPx,
+                    root.dragReachPx > 0 ? root.dragReachPx + root.timelineEndPadPx : 0)
                 // Was `height`, so once the tracks were taller than the panel the
                 // lower ones were silently truncated and could not be reached at
                 // all. totalTracksHeight() was already computed but never used.

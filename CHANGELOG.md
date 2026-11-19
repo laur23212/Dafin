@@ -16,4 +16,5 @@ Tracks work done on `main` **since the last public release**. Use this to see wh
 
 ## 🎨 Improved
 
+- Timeline: while you hold a clip with the mouse near the left or right edge of the timeline, or outside it, the timeline scrolls that way by itself (slowly at the edge, faster the further out you go) and can run past the end of the project, so a clip can be moved far without zooming out or dragging the scrollbar. It stops as soon as you let go.
 - Text animation timing: Stagger, Duration/Period and "Readable within" can now be typed in milliseconds or seconds. A small ms / s button beside each field switches the unit (seconds show three decimals, so 1 ms precision either way).

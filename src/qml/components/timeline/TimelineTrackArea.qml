@@ -47,6 +47,9 @@ Item {
         }
         onMoveUpdated: (clipIndex, rect, dx, dy) => {
             area.panel.updateMoveFollow(dx, dy)
+            // Let the timeline grow under a clip dragged past the project end (desktop panel).
+            if (typeof area.panel.noteDragReach === "function")
+                area.panel.noteDragReach(rect.x + rect.width)
             const info = renderer.clipInfo(clipIndex)
             const desired = Math.max(0, (rect.x - Theme.clipSelectionRingWidth) / area.panel.pxPerSecond)
             const pos = renderer.mapToItem(area.timelineColumn, rect.x + rect.width / 2,
@@ -244,15 +247,57 @@ Item {
         }
     }
 
-    // Touch: scroll the timeline while a picked-up clip is held near an edge.
+    // Scroll the timeline while a clip is held near an edge. Runs only while a drag is in
+    // progress, so it stops the moment the button (or finger) is released or the drag is canceled.
     Timer {
+        id: edgeScrollTimer
         interval: 16
         repeat: true
-        running: renderer.touchDragging && typeof area.panel.dragEdgeScroll === "function"
+        running: renderer.dragging && typeof area.panel.dragEdgeScroll === "function"
+
+        // Mouse: how long the pointer has been in the edge zone, for the short dwell + ease-in.
+        property real heldMs: 0
+        onRunningChanged: heldMs = 0
 
         function step(depth) { return Math.min(24, 6 + depth * 0.4) }
 
+        // Mouse: horizontal only. Slow at the edge of the zone, full speed once the pointer is well
+        // outside the timeline, so one gesture can cross the whole project.
+        function mouseScroll() {
+            const panel = area.panel
+            const viewW = panel.timelineViewW
+            const px = renderer.dragPointer.x - panel.timelineViewX
+            const edgeX = Math.min(56, viewW * 0.15)
+            let depth = 0
+            let dir = 0
+            if (px < edgeX) {
+                depth = edgeX - px
+                dir = -1
+            } else if (px > viewW - edgeX) {
+                depth = px - (viewW - edgeX)
+                dir = 1
+            }
+            if (dir === 0) {
+                heldMs = 0
+                return
+            }
+            heldMs += interval
+            // Brief dwell first, so grabbing a clip near the edge and nudging it does not
+            // send the view running; then ease in over a third of a second.
+            if (heldMs < 120)
+                return
+            const ease = Math.max(0.2, Math.min(1, (heldMs - 120) / 300))
+            const t = Math.min(1, depth / (edgeX + 60))
+            const applied = panel.dragEdgeScroll(dir * (3 + 33 * t) * ease, 0)
+            if (applied.x !== 0)
+                renderer.refreshDrag()
+        }
+
         onTriggered: {
+            if (!renderer.touchDragging) {
+                mouseScroll()
+                return
+            }
             const panel = area.panel
             const px = renderer.dragPointer.x - panel.timelineViewX
             const py = renderer.mapToItem(area.timelineColumn, 0, renderer.dragPointer.y).y
