@@ -683,7 +683,8 @@ add_test(NAME Diagnostics COMMAND tst_diagnostics)
 # that only redo what changed (made-up fixtures, no GUI, no GL).
 qt_add_executable(tst_linkedlibraries
     tst_linkedlibraries.cpp
-    ../src/engine/packages/linked/FilmoraLibraryImporter.cpp)
+    ../src/engine/packages/linked/FilmoraLibraryImporter.cpp
+    ../src/engine/packages/linked/FilmoraTitleConverter.cpp)
 target_include_directories(tst_linkedlibraries PRIVATE ../src)
 target_compile_definitions(tst_linkedlibraries PRIVATE DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(tst_linkedlibraries PRIVATE Qt6::Test Qt6::Core)

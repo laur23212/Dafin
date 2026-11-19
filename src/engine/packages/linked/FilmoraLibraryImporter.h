@@ -12,9 +12,10 @@
 // Dafin: linked effect libraries. A folder of effects downloaded by Filmora (its Filter, Overlay,
 // transition, Element, resFont, title ... resource folders), or simply a folder of fonts,
 // stickers and .cube looks, is read and turned into ordinary Dafin packages under
-// <AppData>/linked-libraries/<key>/{effects,transitions,stickers,fonts,looks}. Those folders are
-// search roots of their kinds (PackageSearchPaths), so the converted items show up in the
-// Effects, Transitions, Stickers, Looks and font lists exactly like the built-in ones.
+// <AppData>/linked-libraries/<key>/{effects,transitions,stickers,fonts,looks,text-styles}. Those
+// folders are search roots of their kinds (PackageSearchPaths; TitleTemplateCatalog for
+// text-styles), so the converted items show up in the Effects, Transitions, Stickers, Looks,
+// Titles and font lists exactly like the built-in ones.
 //
 // A Filmora item is a folder with a resinfo.json (its id, type, English title and categories) and
 // the content under Data/:
@@ -23,8 +24,9 @@
 //   type 2 transition         GPU shader with two inputs                             -> transition
 //   type 7 element            a video (alpha WebM) or picture + thumbnail.png        -> sticker
 //   type 35 font              Data/*.ttf|otf                                         -> font
-//   type 1 title              only the fonts in its Font/ folder; the title itself needs
-//                             Filmora's title engine and is listed as not supported
+//   type 1 title              a Dafin title template (FilmoraTitleConverter): text, font,
+//                             fill, outline, shadow, animation, its Filmora filters as clip
+//                             effects; plus the fonts in its Font/ folder         -> text-styles
 // A folder with Data/filter.xml but no resinfo.json is read too (type from filter.xml and the
 // folder names). Files outside any item are used by what they are: fonts (a "Fonts" folder,
 // say), .cube looks, and stickers (videos, pictures, Lottie JSON), categorised by their folder.
@@ -37,7 +39,7 @@ namespace dafin::linked {
 
 struct ImportedItem
 {
-    QString kind;       // "effect", "transition", "sticker", "font", "look"; empty when skipped
+    QString kind;       // "effect", "transition", "sticker", "font", "look", "title"; empty when skipped
     QString name;       // English title, or the file name
     QString category;   // the Dafin category id it went into
     QString source;     // the item's folder, or the loose file
@@ -51,13 +53,14 @@ struct ImportReport
     int stickers = 0;
     int fonts = 0; // font families (a family can bring several faces)
     int looks = 0;
+    int titles = 0; // Filmora titles turned into Dafin title templates
     QList<ImportedItem> items;  // every item and usable loose file found
     QStringList changedKinds;   // package kinds ("effects", "stickers", ...) whose files changed
     bool cancelled = false;
     QString error;              // the folder itself could not be used (nothing was changed)
     QString note;               // worth saying but not an error (a size cap was reached)
 
-    int imported() const { return effects + transitions + stickers + fonts + looks; }
+    int imported() const { return effects + transitions + stickers + fonts + looks + titles; }
     int skipped() const;
 };
 

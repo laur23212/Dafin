@@ -1,5 +1,7 @@
 #include "engine/packages/linked/FilmoraLibraryImporter.h"
 
+#include "engine/packages/linked/FilmoraTitleConverter.h"
+
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -25,7 +27,8 @@ namespace {
 
 // Bump when the conversion changes, so every item is converted again.
 // 3: variant folders ("All", "9" ...) inside an item are part of it, not items named "All".
-constexpr int kImporterVersion = 3;
+// 4: Filmora titles become Dafin title templates (text-styles).
+constexpr int kImporterVersion = 4;
 
 // Failsafe caps: a folder that is not what it seems (a whole drive, a damaged file) must not
 // stall or exhaust the import.
@@ -40,6 +43,7 @@ const QString kTransitions = QStringLiteral("transitions");
 const QString kStickers = QStringLiteral("stickers");
 const QString kFonts = QStringLiteral("fonts");
 const QString kLooks = QStringLiteral("looks");
+const QString kTitles = QStringLiteral("text-styles"); // TitleTemplateCatalog reads <root>/text-styles/*.json
 
 // Filmora's resource types (resinfo.json "type").
 enum FilmoraType {
@@ -81,6 +85,16 @@ bool writeBytes(const QString &path, const QByteArray &bytes)
         return false;
     }
     return file.commit();
+}
+
+// An item's output: a package folder, or a single file (a title template).
+void removeOutput(const QString &outRoot, const QString &rel)
+{
+    const QString path = QDir(outRoot).filePath(rel);
+    if (QFileInfo(path).isDir())
+        QDir(path).removeRecursively();
+    else
+        QFile::remove(path);
 }
 
 bool writeJson(const QString &path, const QJsonObject &object)
@@ -595,6 +609,8 @@ QString kindDir(const QString &kind)
         return kFonts;
     if (kind == QLatin1String("look"))
         return kLooks;
+    if (kind == QLatin1String("title"))
+        return kTitles;
     return {};
 }
 
@@ -762,10 +778,9 @@ public:
             break;
         }
         case TypeTitle: {
-            // The title itself needs Filmora's title engine; its fonts are still worth having.
+            // Its own fonts first (the title asks for them by name), then the title itself.
             addFonts(filesWithSuffix(QDir(itemDir).filePath(QStringLiteral("Font")), kFontSuffixes, false), &r);
-            const QString reason = QStringLiteral("Filmora title: needs Filmora's own title engine");
-            r.skipReason = r.kind.isEmpty() ? reason : reason + QStringLiteral(" (its fonts were added)");
+            convertTitle(itemDir, info, &r);
             break;
         }
         case TypeTextAnimation:
@@ -1057,6 +1072,78 @@ private:
         };
     }
 
+    // A Filmora title as a Dafin title template: <outRoot>/text-styles/fm-<id>.json.
+    void convertTitle(const QString &itemDir, const QJsonObject &info, Record *r)
+    {
+        const QString name = englishTitle(info, itemDir);
+        const bool hasFonts = !r->fonts.isEmpty();
+        auto fail = [&](const QString &reason) {
+            r->name = name;
+            r->skipReason = hasFonts ? reason + QStringLiteral(" (its fonts were added)") : reason;
+        };
+        const QString dataPath = QDir(itemDir).filePath(QStringLiteral("Data/data.json"));
+        const QByteArray data = readSmall(dataPath, 4 * kMaxSettingsFile);
+        if (data.isEmpty()) {
+            fail(QFileInfo::exists(dataPath) ? QStringLiteral("Filmora title: its file is too large or unreadable")
+                                             : QStringLiteral("Filmora title: Data/data.json is missing"));
+            return;
+        }
+
+        TitleContext context;
+        context.effect = m_effectLookup;
+        // The title names its font as Filmora shows it ("Paytone One Regular"); the files in its
+        // Font/ folder say what family that is installed under.
+        const QJsonArray fonts = r->fonts;
+        context.font = [fonts](const QString &fontName) -> std::optional<TitleFont> {
+            const QString wanted = fontName.simplified();
+            std::optional<TitleFont> prefix;
+            for (const QJsonValue &v : fonts) {
+                const QJsonObject f = v.toObject();
+                const QString family = f.value(QStringLiteral("family")).toString();
+                const QString legacy = f.value(QStringLiteral("legacyFamily")).toString();
+                const QString style = f.value(QStringLiteral("style")).toString();
+                const TitleFont face{family, f.value(QStringLiteral("weight")).toInt(400),
+                                     f.value(QStringLiteral("italic")).toBool()};
+                for (const QString &candidate : {family + QLatin1Char(' ') + style, legacy + QLatin1Char(' ') + style,
+                                                 family, legacy}) {
+                    if (!candidate.trimmed().isEmpty()
+                        && candidate.simplified().compare(wanted, Qt::CaseInsensitive) == 0)
+                        return face;
+                }
+                if (!prefix && !family.isEmpty() && wanted.startsWith(family, Qt::CaseInsensitive))
+                    prefix = TitleFont{family, splitFontName(wanted).weight, splitFontName(wanted).italic};
+            }
+            return prefix;
+        };
+
+        const QString packageName = packageNameFor(info, itemDir);
+        const TitleConversion title = convertFilmoraTitle(
+            data, QStringLiteral("filmora.") + packageName.mid(3), name, categoryNames(info).value(0), context);
+        if (!title.ok) {
+            fail(QStringLiteral("Filmora title: ") + title.error);
+            return;
+        }
+        const QString rel = kTitles + QLatin1Char('/') + packageName + QStringLiteral(".json");
+        if (!writeJson(QDir(m_outRoot).filePath(rel), title.templateJson)) {
+            fail(QStringLiteral("Could not save the converted copy (is the disk full?)"));
+            return;
+        }
+        r->kind = QStringLiteral("title");
+        r->name = name;
+        r->category = title.templateJson.value(QStringLiteral("category")).toString();
+        r->outputs.append(rel);
+        r->skipReason = title.leftOut.isEmpty()
+                            ? QString()
+                            : QStringLiteral("Title added without %1").arg(title.leftOut.join(QStringLiteral(", ")));
+    }
+
+public:
+    void setEffectLookup(const std::function<std::optional<LinkedEffectInfo>(qint64)> &lookup)
+    {
+        m_effectLookup = lookup;
+    }
+
+private:
     // Fonts are only read here; the families are written once for the whole folder.
     void addFonts(const QStringList &files, Record *r)
     {
@@ -1110,6 +1197,7 @@ private:
     QString m_crashedKey;
     const QSet<QString> &m_itemDirs;
     const QHash<QString, QStringList> &m_variantData; // item -> its variant folders' Data/
+    std::function<std::optional<LinkedEffectInfo>(qint64)> m_effectLookup; // for titles' filters
 };
 
 // One family.json per font family found anywhere in the folder, each face once.
@@ -1620,16 +1708,20 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
     QHash<QString, QString> identities; // identity -> the first item that had it
     Converter converter(outRoot, check, crashedKey, itemDirSet, variantData);
 
+    // `stampExtra`: what else the conversion depends on (for a title, the effects it can use).
     auto process = [&](const QString &key, const QString &path, const QString &name,
-                       const std::function<Record()> &convert, const QString &identity) {
-        const QString stamp = stampFor(path);
+                       const std::function<Record()> &convert, const QString &identity,
+                       const QString &stampExtra = QString()) {
+        const QString stamp = stampExtra.isEmpty()
+                                  ? stampFor(path)
+                                  : hashOf(stampFor(path) + QLatin1Char('|') + stampExtra, 20);
         Record record = Record::fromJson(oldItems.value(key).toObject());
 
         if (!identity.isEmpty() && identities.contains(identity)) {
             // Failsafe: the same item twice. Only the first is used; this copy is listed.
             for (const QString &rel : std::as_const(record.outputs)) {
                 if (!claimed.contains(rel)) {
-                    QDir(QDir(outRoot).filePath(rel)).removeRecursively();
+                    removeOutput(outRoot, rel);
                     changed.insert(rel.section(QLatin1Char('/'), 0, 0));
                 }
             }
@@ -1651,7 +1743,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
             for (const QString &rel : std::as_const(record.outputs)) {
                 if (claimed.contains(rel))
                     continue;
-                QDir(QDir(outRoot).filePath(rel)).removeRecursively();
+                removeOutput(outRoot, rel);
                 changed.insert(rel.section(QLatin1Char('/'), 0, 0));
             }
             try {
@@ -1685,42 +1777,109 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
             ++report.stickers;
         else if (record.kind == QLatin1String("look"))
             ++report.looks;
+        else if (record.kind == QLatin1String("title"))
+            ++report.titles;
     };
 
-    for (const QString &itemDir : std::as_const(itemDirs)) {
-        if (cancel && cancel->load()) {
-            report.cancelled = true;
-            return report; // the old index stays, so the next run picks up where this one stopped
+    // Filmora filters converted to Dafin effects, by Filmora id, so a title that uses one gets it
+    // as a clip effect: those of this folder, then those of the other linked folders.
+    QHash<qint64, QString> effectDirs; // Filmora id -> package folder
+    QStringList siblingEffectDirs;     // <linked-libraries>/<other>/effects/fm-<id>
+    if (QFileInfo(outRoot).absoluteDir().dirName() == QLatin1String("linked-libraries")) {
+        const QDir linkedRoot = QFileInfo(outRoot).absoluteDir();
+        for (const QString &library : linkedRoot.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
+            if (library == QDir(outRoot).dirName())
+                continue;
+            const QDir effectsDir(linkedRoot.filePath(library + QLatin1Char('/') + kEffects));
+            for (const QString &pkg : effectsDir.entryList({QStringLiteral("fm-*")}, QDir::Dirs, QDir::Name))
+                siblingEffectDirs.append(effectsDir.filePath(pkg));
         }
-        const QString key = source.relativeFilePath(itemDir);
-        QJsonObject info = readObject(QDir(itemDir).filePath(QStringLiteral("resinfo.json")));
-        // Read only when needed: most items say what they are, and rescans must stay quick.
-        int sniffed = -1;
-        auto sniff = [&] {
-            if (sniffed < 0)
-                sniffed = typeFromContent(itemDir, converter.dataDirFor(itemDir));
-            return sniffed;
-        };
-        int type = info.value(QStringLiteral("type")).toInt();
-        if (type <= 0) // no resinfo.json, or a damaged one: what is inside, then where it sits
-            type = sniff() != TypeUnknown ? sniff() : typeFromFolders(itemDir);
-        const QString identity = identityFor(info, type, itemDir);
-        const Record record = process(
-            key, itemDir, englishTitle(info, itemDir),
-            [&] {
-                Record r = converter.convertItem(key, itemDir, info, type);
-                // Filed under the wrong type (a sticker labelled as a filter, say): what is
-                // inside decides.
-                if (r.kind.isEmpty() && sniff() != type && isConvertibleType(sniff())) {
-                    Record byContent = converter.convertItem(key, itemDir, info, sniff());
-                    if (!byContent.kind.isEmpty())
-                        return byContent;
+    }
+    QHash<qint64, std::optional<LinkedEffectInfo>> effectCache;
+    converter.setEffectLookup([&](qint64 filmoraId) -> std::optional<LinkedEffectInfo> {
+        const auto cached = effectCache.constFind(filmoraId);
+        if (cached != effectCache.cend())
+            return *cached;
+        QString dir = effectDirs.value(filmoraId);
+        if (dir.isEmpty()) {
+            const QString wanted = QStringLiteral("/fm-%1").arg(filmoraId);
+            for (const QString &sibling : std::as_const(siblingEffectDirs)) {
+                if (sibling.endsWith(wanted)) {
+                    dir = sibling;
+                    break;
                 }
-                return r;
-            },
-            identity);
-        newItems.insert(key, record.toJson());
-        tally(record, itemDir);
+            }
+        }
+        std::optional<LinkedEffectInfo> found;
+        const QJsonObject pkg = dir.isEmpty() ? QJsonObject() : readObject(QDir(dir).filePath(QStringLiteral("effect.json")));
+        if (!pkg.value(QStringLiteral("id")).toString().isEmpty()) {
+            LinkedEffectInfo info;
+            info.dafinId = pkg.value(QStringLiteral("id")).toString();
+            for (const QJsonValue &v : pkg.value(QStringLiteral("parameters")).toArray()) {
+                const QJsonObject p = v.toObject();
+                info.params.append({p.value(QStringLiteral("identifier")).toString(),
+                                    p.value(QStringLiteral("type")).toString(),
+                                    p.value(QStringLiteral("minValue")).toDouble(0.0),
+                                    p.value(QStringLiteral("maxValue")).toDouble(1.0)});
+            }
+            found = info;
+        }
+        effectCache.insert(filmoraId, found);
+        return found;
+    });
+
+    // Two passes: titles last, so the effects they use are already converted.
+    QString titleStampExtra;
+    for (int pass = 0; pass < 2; ++pass) {
+        if (pass == 1) {
+            QStringList available;
+            for (auto it = effectDirs.cbegin(); it != effectDirs.cend(); ++it)
+                available.append(QString::number(it.key()));
+            for (const QString &sibling : std::as_const(siblingEffectDirs))
+                available.append(QFileInfo(sibling).fileName());
+            available.sort();
+            titleStampExtra = QStringLiteral("fx:") + hashOf(available.join(QLatin1Char(',')), 16);
+        }
+        for (const QString &itemDir : std::as_const(itemDirs)) {
+            if (cancel && cancel->load()) {
+                report.cancelled = true;
+                return report; // the old index stays, so the next run picks up where this one stopped
+            }
+            const QString key = source.relativeFilePath(itemDir);
+            QJsonObject info = readObject(QDir(itemDir).filePath(QStringLiteral("resinfo.json")));
+            // Read only when needed: most items say what they are, and rescans must stay quick.
+            int sniffed = -1;
+            auto sniff = [&] {
+                if (sniffed < 0)
+                    sniffed = typeFromContent(itemDir, converter.dataDirFor(itemDir));
+                return sniffed;
+            };
+            int type = info.value(QStringLiteral("type")).toInt();
+            if (type <= 0) // no resinfo.json, or a damaged one: what is inside, then where it sits
+                type = sniff() != TypeUnknown ? sniff() : typeFromFolders(itemDir);
+            if ((type == TypeTitle) != (pass == 1))
+                continue;
+            const QString identity = identityFor(info, type, itemDir);
+            const Record record = process(
+                key, itemDir, englishTitle(info, itemDir),
+                [&] {
+                    Record r = converter.convertItem(key, itemDir, info, type);
+                    // Filed under the wrong type (a sticker labelled as a filter, say): what is
+                    // inside decides.
+                    if (r.kind.isEmpty() && sniff() != type && isConvertibleType(sniff())) {
+                        Record byContent = converter.convertItem(key, itemDir, info, sniff());
+                        if (!byContent.kind.isEmpty())
+                            return byContent;
+                    }
+                    return r;
+                },
+                identity, pass == 1 ? titleStampExtra : QString());
+            newItems.insert(key, record.toJson());
+            tally(record, itemDir);
+            const qint64 filmoraId = info.value(QStringLiteral("id")).toVariant().toLongLong();
+            if (record.kind == QLatin1String("effect") && filmoraId > 0 && !record.outputs.isEmpty())
+                effectDirs.insert(filmoraId, QDir(outRoot).filePath(record.outputs.first()));
+        }
     }
 
     for (const QString &path : std::as_const(looseFiles)) {
@@ -1749,7 +1908,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
             for (const QString &rel : gone.outputs) {
                 if (claimed.contains(rel))
                     continue;
-                QDir(QDir(outRoot).filePath(rel)).removeRecursively();
+                removeOutput(outRoot, rel);
                 changed.insert(rel.section(QLatin1Char('/'), 0, 0));
             }
         }
@@ -1844,7 +2003,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
                                      {QStringLiteral("source"), source.absolutePath()},
                                      {QStringLiteral("items"), newItems}});
 
-    for (const QString &kind : {kEffects, kTransitions, kStickers, kFonts, kLooks}) {
+    for (const QString &kind : {kEffects, kTransitions, kStickers, kFonts, kLooks, kTitles}) {
         if (changed.contains(kind))
             report.changedKinds.append(kind);
     }

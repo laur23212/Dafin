@@ -99,10 +99,11 @@ SettingsPage {
         searchId: "asset-providers-linked-folders"
         description: qsTr("Point Dafin at a folder of effects downloaded by Filmora (Filter, Overlay, transition, Element, resFont, title…), "
                           + "or at any folder of fonts, stickers (videos, pictures, Lotties) and .cube looks. "
-                          + "Dafin reads it and puts what it can use into Effects, Transitions, Stickers, Looks and the font list, each in the category it fits, like its own. "
+                          + "Dafin reads it and puts what it can use into Titles, Effects, Transitions, Stickers, Looks and the font list, each in the category it fits, like its own. "
+                          + "Filmora titles become editable Dafin titles (Titles › Text styles › Filmora) with their font, colours, outline, shadow, animation and effects; 3D looks are drawn flat with depth. "
                           + "Fonts anywhere in it (a Fonts folder, say) are added too, so titles and templates that ask for them by name find them. "
                           + "The folder stays where it is, so keep it there; changes in it are picked up when Dafin starts.")
-        keywords: "filmora effects filters transitions elements stickers fonts folder link import library resinfo typeface"
+        keywords: "filmora effects filters transitions elements stickers fonts titles text folder link import library resinfo typeface"
         query: page.query
         stacked: true
 
@@ -116,6 +117,7 @@ SettingsPage {
             if (f.found === 0)
                 return qsTr("No Filmora effects found in this folder")
             const parts = []
+            if (f.titles > 0) parts.push(qsTr("%n title(s)", "", f.titles))
             if (f.effects > 0) parts.push(qsTr("%n effect(s)", "", f.effects))
             if (f.transitions > 0) parts.push(qsTr("%n transition(s)", "", f.transitions))
             if (f.stickers > 0) parts.push(qsTr("%n sticker(s)", "", f.stickers))

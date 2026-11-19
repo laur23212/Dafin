@@ -187,6 +187,8 @@ QString originLabel(const QString &origin)
         return QCoreApplication::translate("AppController", "My template");
     if (origin == QLatin1String("installed"))
         return QCoreApplication::translate("AppController", "Installed");
+    if (origin == QLatin1String("linked"))
+        return QCoreApplication::translate("AppController", "From a linked folder");
     return QCoreApplication::translate("AppController", "Built-in");
 }
 

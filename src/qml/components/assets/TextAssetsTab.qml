@@ -23,8 +23,10 @@ Item {
         void root.templatesTick
         return EditorState.textTemplates()
     }
-    readonly property var builtinPresets: presets.filter(p => p.origin !== "installed")
+    readonly property var builtinPresets: presets.filter(p => p.origin !== "installed" && p.origin !== "linked")
     readonly property var installedPresets: presets.filter(p => p.origin === "installed")
+    // Dafin: Filmora titles converted from linked folders (Settings › Asset Providers).
+    readonly property var linkedPresets: presets.filter(p => p.origin === "linked")
 
     property int userPresetsTick: 0
     readonly property var allUserPresets: {
@@ -42,7 +44,7 @@ Item {
     }
     // Dafin: the My area (favorites and the user's groups) covers every title card: built-in,
     // installed and the user's own templates. section is then "__favorites__" or a group id.
-    readonly property var allTitles: builtinPresets.map(p => Object.assign({ "_titleKind": "builtin" }, p))
+    readonly property var allTitles: builtinPresets.concat(linkedPresets).map(p => Object.assign({ "_titleKind": "builtin" }, p))
                                      .concat(installedPresets.map(p => Object.assign({ "_titleKind": "installed" }, p)))
                                      .concat(allUserPresets.map(p => Object.assign({ "_titleKind": "user" }, p)))
     readonly property bool showsMyList: AssetGroups.isMyList(root.section)
@@ -80,6 +82,15 @@ Item {
         function onUserTextPresetsChanged() { root.userPresetsTick++ }
         function onTextTemplatesChanged() { root.templatesTick++ }
         function onTemplateCategoriesChanged() { root.categoriesTick++ }
+    }
+
+    // Titles from linked folders arrive after a scan, without the editor being told.
+    Connections {
+        target: Addons
+        function onKindChanged(kind) {
+            if (kind === "text-styles")
+                root.templatesTick++
+        }
     }
 
     readonly property string styleFileFilter: qsTr("Dafin template (*.drifttextstyle)")
@@ -130,6 +141,15 @@ Item {
                 variant: "outline"
                 selected: root.section === "builtin"
                 onClicked: root.section = "builtin"
+            }
+
+            ThemedChip {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.linkedPresets.length > 0
+                text: qsTr("Filmora · %1").arg(root.linkedPresets.length)
+                variant: "outline"
+                selected: root.section === "linked"
+                onClicked: root.section = "linked"
             }
 
             ThemedChip {
@@ -302,8 +322,8 @@ Item {
         cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
-        visible: root.section === "builtin" && !root.searching
-        model: root.builtinPresets
+        visible: (root.section === "builtin" || root.section === "linked") && !root.searching
+        model: root.section === "linked" ? root.linkedPresets : root.builtinPresets
 
         delegate: TextStylePackCard {
             cardSize: packGrid.cardSize

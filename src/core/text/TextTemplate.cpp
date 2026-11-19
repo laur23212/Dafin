@@ -1611,6 +1611,14 @@ void TitleTemplateCatalog::ensureLoaded() const
         loadDir(dir, QStringLiteral("installed"));
     if (!installedDir().isEmpty())
         loadDir(installedDir(), QStringLiteral("installed"));
+    // Dafin: Filmora titles converted from linked folders (FilmoraLibraryImporter), one
+    // <AppData>/linked-libraries/<key>/text-styles per linked folder. Listed under their own chip.
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (!base.isEmpty()) {
+        const QDir linked(QDir(base).filePath(QStringLiteral("linked-libraries")));
+        for (const QString &library : linked.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name))
+            loadDir(linked.filePath(library + QStringLiteral("/text-styles")), QStringLiteral("linked"));
+    }
 }
 
 QList<TextPreset> TitleTemplateCatalog::templates() const

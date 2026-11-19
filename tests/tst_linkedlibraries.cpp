@@ -1,6 +1,7 @@
 // Dafin: linked Filmora effect folders (FilmoraLibraryImporter). The fixtures are written here,
 // in Filmora's layout but with made-up content, so no Filmora asset is kept in the repository.
 #include "engine/packages/linked/FilmoraLibraryImporter.h"
+#include "engine/packages/linked/FilmoraTitleConverter.h"
 
 #include <QDir>
 #include <QFile>
@@ -100,6 +101,74 @@ QJsonObject readJson(const QString &path)
     if (!file.open(QIODevice::ReadOnly))
         return {};
     return QJsonDocument::fromJson(file.readAll()).object();
+}
+
+// One effect on a Filmora title clip: its display name, the Filmora resource it comes from
+// (userData key 12, base64 JSON) and its parameters.
+QJsonObject titleEffect(const QString &display, qint64 resourceId, int resType, const QJsonObject &params)
+{
+    QJsonArray paramList;
+    for (auto it = params.constBegin(); it != params.constEnd(); ++it)
+        paramList.append(QJsonObject{{QStringLiteral("name"), it.key()},
+                                     {QStringLiteral("fxParam"), QJsonObject{{QStringLiteral("paramType"), 3},
+                                                                             {QStringLiteral("unValue"), it.value()}}}});
+    const QByteArray ref = QJsonDocument(QJsonObject{{QStringLiteral("id"), resourceId},
+                                                     {QStringLiteral("res_type"), resType}}).toJson(QJsonDocument::Compact);
+    return QJsonObject{{QStringLiteral("display"), display},
+                       {QStringLiteral("id"), QStringLiteral("0000-%1").arg(display)},
+                       {QStringLiteral("paramList"), paramList},
+                       {QStringLiteral("userData"), QJsonArray{QJsonObject{{QStringLiteral("key"), 12},
+                                                                           {QStringLiteral("data"), QString::fromLatin1(ref.toBase64())}}}}};
+}
+
+// A Filmora title item in Filmora's layout (resinfo.json, Data/data.json holding a small project
+// with one text clip whose look is a JSON string in scriptBuf), with made-up content.
+void writeTitleItem(const QString &itemDir, qint64 id, const QString &title, const QString &text,
+                    const QJsonArray &effects, const QJsonObject &extraClipFields = {})
+{
+    writeResinfo(itemDir, id, 1, title, QStringLiteral("Social Media"));
+    const QJsonObject script{
+        {QStringLiteral("Text"), text},
+        {QStringLiteral("ViewSize"), QStringLiteral("1920:1080")},
+        {QStringLiteral("Layout"), QJsonObject{{QStringLiteral("TextAlign"), QStringLiteral("left")}}},
+        {QStringLiteral("TextData"),
+         QJsonArray{QJsonObject{
+             {QStringLiteral("CharData"), text},
+             {QStringLiteral("Basic"), QJsonObject{{QStringLiteral("FontName"), QStringLiteral("Lato Bold")},
+                                                   {QStringLiteral("FontSize"), 120.4},
+                                                   {QStringLiteral("TextAlpha"), 255},
+                                                   // Windows COLORREF 0x00BBGGRR: this is #102030.
+                                                   {QStringLiteral("TextColor"), QJsonArray{QJsonObject{{QStringLiteral("Color"), 0x302010}}}}}},
+             {QStringLiteral("Border"), QJsonObject{{QStringLiteral("Enable"), 1}, {QStringLiteral("Size"), 6},
+                                                    {QStringLiteral("Alpha"), 255}, {QStringLiteral("Color"), 0x0000ff}}},
+             {QStringLiteral("Shadow"), QJsonObject{{QStringLiteral("Enable"), 1}, {QStringLiteral("Alpha"), 128},
+                                                    {QStringLiteral("BlurRadius"), 5}, {QStringLiteral("Color"), 0},
+                                                    {QStringLiteral("Direction"), 3}, {QStringLiteral("Distance"), 2}}}}}},
+    };
+    QJsonArray chain{QJsonObject{{QStringLiteral("display"), QStringLiteral("transform")},
+                                 {QStringLiteral("id"), QStringLiteral("video/effect/transform")},
+                                 {QStringLiteral("paramList"),
+                                  QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("Position_x")},
+                                                         {QStringLiteral("fxParam"), QJsonObject{{QStringLiteral("unValue"), 0.5}}}},
+                                             QJsonObject{{QStringLiteral("name"), QStringLiteral("Position_y")},
+                                                         {QStringLiteral("fxParam"), QJsonObject{{QStringLiteral("unValue"), 0.85}}}}}}}};
+    for (const QJsonValue &e : effects)
+        chain.append(e);
+    QJsonObject clip{{QStringLiteral("type"), 4},
+                     {QStringLiteral("tlEnd"), 50000000},
+                     {QStringLiteral("scriptBuf"), QString::fromUtf8(QJsonDocument(script).toJson(QJsonDocument::Compact))},
+                     {QStringLiteral("effectChainList"), QJsonArray{QJsonObject{{QStringLiteral("effectList"), chain}}}}};
+    for (auto it = extraClipFields.constBegin(); it != extraClipFields.constEnd(); ++it)
+        clip.insert(it.key(), it.value());
+    const QJsonObject data{
+        {QStringLiteral("projectName"), QStringLiteral("TlbTitleClip")},
+        {QStringLiteral("tlEnd"), 50000000},
+        {QStringLiteral("subTimeline"),
+         QJsonObject{{QStringLiteral("timelineInfos"),
+                      QJsonArray{QJsonObject{{QStringLiteral("trackInfos"),
+                                              QJsonArray{QJsonObject{{QStringLiteral("clipList"), QJsonArray{clip}}}}}}}}}},
+    };
+    writeFile(QDir(itemDir).filePath(QStringLiteral("Data/data.json")), QJsonDocument(data).toJson());
 }
 
 } // namespace
@@ -416,6 +485,134 @@ private slots:
         }
         QCOMPARE(titles, 1);
         QCOMPARE(splits, 1);
+    }
+
+    // A Filmora title becomes a Dafin title template: text, font, colours, outline, shadow,
+    // position, animations, its converted Filmora filter as a clip effect, Glow as a glow layer.
+    void filmoraTitleBecomesADafinTitle()
+    {
+        QTemporaryDir source;
+        QTemporaryDir out;
+        const QDir src(source.path());
+        writeShaderItem(src.filePath(QStringLiteral("Filter/3_Wobble")), 9001, 3, QStringLiteral("Wobble"),
+                        QString(), kFilterFrag, filterConf(false), false);
+        const QString title = src.filePath(QStringLiteral("title/1_Neon"));
+        writeTitleItem(title, 9100, QStringLiteral("Neon Lower"), QStringLiteral("HELLO"),
+                       QJsonArray{titleEffect(QStringLiteral("Wobble"), 9001, 3,
+                                              QJsonObject{{QStringLiteral("speed"), 25.0}, {QStringLiteral("steps"), 3}}),
+                                  titleEffect(QStringLiteral("Glow"), 38912, 3,
+                                              QJsonObject{{QStringLiteral("radius"), 5}, {QStringLiteral("alpha"), 50}}),
+                                  titleEffect(QStringLiteral("SparkleFX"), 123, 3, QJsonObject{})},
+                       QJsonObject{{QStringLiteral("inAnimation"),
+                                    QJsonObject{{QStringLiteral("name"), QStringLiteral("Center Gradually Appears")},
+                                                {QStringLiteral("duration"), 5000000}}},
+                                   {QStringLiteral("outAnimation"),
+                                    QJsonObject{{QStringLiteral("name"), QStringLiteral("Slide Left")},
+                                                {QStringLiteral("duration"), 3000000}}}});
+        copyFile(repoFont(QStringLiteral("lato/Lato-Bold.ttf")), QDir(title).filePath(QStringLiteral("Font/1_Lato.ttf")));
+
+        const ImportReport report = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(report.titles, 1);
+        QCOMPARE(report.effects, 1);
+        QVERIFY(report.changedKinds.contains(QStringLiteral("text-styles")));
+        const QJsonObject t = readJson(QDir(out.path()).filePath(QStringLiteral("text-styles/fm-9100.json")));
+        QCOMPARE(t.value(QStringLiteral("format")).toInt(), 1);
+        QCOMPARE(t.value(QStringLiteral("id")).toString(), QStringLiteral("filmora.9100"));
+        QCOMPARE(t.value(QStringLiteral("label")).toString(), QStringLiteral("Neon Lower"));
+        QCOMPARE(t.value(QStringLiteral("sampleText")).toString(), QStringLiteral("HELLO"));
+        QCOMPARE(t.value(QStringLiteral("category")).toString(), QStringLiteral("Social Media"));
+
+        const QJsonObject style = t.value(QStringLiteral("style")).toObject();
+        QCOMPARE(style.value(QStringLiteral("fontFamily")).toString(), QStringLiteral("Lato")); // from the font file
+        QCOMPARE(style.value(QStringLiteral("fontWeight")).toInt(), 700);
+        QVERIFY(style.value(QStringLiteral("pixelSize")).isDouble());
+        QCOMPARE(style.value(QStringLiteral("pixelSize")).toDouble(), 120.0); // a whole number
+        QCOMPARE(style.value(QStringLiteral("valign")).toString(), QStringLiteral("bottom"));
+        QStringList ids;
+        QHash<QString, QJsonObject> layers;
+        for (const QJsonValue &v : style.value(QStringLiteral("layers")).toArray()) {
+            ids.append(v.toObject().value(QStringLiteral("id")).toString());
+            layers.insert(ids.last(), v.toObject());
+        }
+        QCOMPARE(ids, (QStringList{QStringLiteral("shadow"), QStringLiteral("glow"), QStringLiteral("outline"),
+                                   QStringLiteral("fill")}));
+        auto colorOf = [&](const QString &id) {
+            return layers.value(id).value(QStringLiteral("paint")).toObject().value(QStringLiteral("color")).toString();
+        };
+        QCOMPARE(colorOf(QStringLiteral("fill")), QStringLiteral("#ff102030"));
+        QCOMPARE(colorOf(QStringLiteral("outline")), QStringLiteral("#ffff0000"));
+        QCOMPARE(layers.value(QStringLiteral("outline")).value(QStringLiteral("width")).toDouble(), 6.0);
+        QVERIFY(layers.value(QStringLiteral("shadow")).value(QStringLiteral("offsetY")).toDouble() > 0.0);
+
+        const QJsonArray effects = t.value(QStringLiteral("effects")).toArray();
+        QCOMPARE(effects.size(), 1);
+        const QJsonObject wobble = effects.at(0).toObject();
+        QCOMPARE(wobble.value(QStringLiteral("effect")).toString(), QStringLiteral("filmora.9001"));
+        const QJsonObject params = wobble.value(QStringLiteral("parameters")).toObject();
+        QCOMPARE(params.value(QStringLiteral("fm_speed")).toDouble(), 10.0); // 25 clamped to its range
+        QCOMPARE(params.value(QStringLiteral("fm_steps")).toDouble(), 3.0);
+        QVERIFY(style.value(QStringLiteral("effectPadding")).toDouble() > 0.0);
+
+        const QJsonObject animation = style.value(QStringLiteral("animation")).toObject();
+        const QJsonObject in = animation.value(QStringLiteral("in")).toObject();
+        QCOMPARE(in.value(QStringLiteral("preset")).toString(), QStringLiteral("fade"));
+        QCOMPARE(in.value(QStringLiteral("params")).toObject().value(QStringLiteral("order")).toString(),
+                 QStringLiteral("centerOut"));
+        QCOMPARE(in.value(QStringLiteral("params")).toObject().value(QStringLiteral("duration")).toDouble(), 0.5);
+        const QJsonObject outAnim = animation.value(QStringLiteral("out")).toObject();
+        QCOMPARE(outAnim.value(QStringLiteral("preset")).toString(), QStringLiteral("slide-left"));
+        QCOMPARE(outAnim.value(QStringLiteral("params")).toObject().value(QStringLiteral("ease")).toString(),
+                 QStringLiteral("easeIn"));
+
+        // Added, with what was left out named.
+        const ImportedItem *item = nullptr;
+        for (const ImportedItem &i : report.items) {
+            if (i.kind == QLatin1String("title"))
+                item = &i;
+        }
+        QVERIFY(item);
+        QVERIFY(item->skipReason.contains(QLatin1String("SparkleFX")));
+        QVERIFY(!item->skipReason.contains(QLatin1String("Glow")));
+
+        // The filter gone from the folder: the title is converted again, without it.
+        QVERIFY(QDir(src.filePath(QStringLiteral("Filter"))).removeRecursively());
+        const ImportReport again = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(again.titles, 1);
+        const QJsonObject t2 = readJson(QDir(out.path()).filePath(QStringLiteral("text-styles/fm-9100.json")));
+        QVERIFY(t2.value(QStringLiteral("effects")).toArray().isEmpty());
+
+        // Gone altogether: its template goes too (a sticker stays, so the folder is not empty,
+        // which would read as a drive that is not connected).
+        writeFile(src.filePath(QStringLiteral("Stickers/star.png")), "png");
+        QVERIFY(QDir(title).removeRecursively());
+        importFilmoraFolder(source.path(), out.path());
+        QVERIFY(!QFileInfo::exists(QDir(out.path()).filePath(QStringLiteral("text-styles/fm-9100.json"))));
+    }
+
+    void filmoraTitleNamesMapToDafin()
+    {
+        QCOMPARE(filmoraColor(0x302010), QStringLiteral("#ff102030"));
+        QCOMPARE(filmoraColor(0xffffff, 128), QStringLiteral("#80ffffff"));
+        const TitleFont bold = splitFontName(QStringLiteral("Montserrat Extra Bold Italic"));
+        QCOMPARE(bold.family, QStringLiteral("Montserrat"));
+        QCOMPARE(bold.weight, 800);
+        QVERIFY(bold.italic);
+        QCOMPARE(splitFontName(QStringLiteral("Paytone One Regular")).family, QStringLiteral("Paytone One"));
+        QCOMPARE(splitFontName(QStringLiteral("Bernard MT Condensed")).family, QStringLiteral("Bernard MT Condensed"));
+        QJsonObject params;
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Typewriter"), QStringLiteral("in"), &params), QStringLiteral("typewriter"));
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Zoom Out"), QStringLiteral("out"), &params), QStringLiteral("shrink"));
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Drop In"), QStringLiteral("out"), &params), QStringLiteral("fall"));
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Stamp"), QStringLiteral("out"), &params), QStringLiteral("fade-scale"));
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Swing"), QStringLiteral("loop"), &params), QStringLiteral("swing"));
+        QVERIFY(dafinAnimationFor(QStringLiteral("Mystery"), QStringLiteral("loop"), &params).isEmpty());
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Mystery"), QStringLiteral("in"), &params), QStringLiteral("fade"));
+
+        // A title with no text (shapes only) is listed, not made into an empty title.
+        const TitleConversion empty = convertFilmoraTitle("{\"projectName\":\"TlbTitleClip\"}", QStringLiteral("filmora.1"),
+                                                          QStringLiteral("Empty"), QString());
+        QVERIFY(!empty.ok);
+        QVERIFY(!empty.error.isEmpty());
     }
 
     // Filmora keeps copies of an item's files in folders such as All/Data or 9/Data, with no

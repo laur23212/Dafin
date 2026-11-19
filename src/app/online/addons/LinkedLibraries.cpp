@@ -44,7 +44,7 @@ bool isInside(const QString &inner, const QString &outer)
 
 const QStringList kAllKinds = {QStringLiteral("effects"), QStringLiteral("transitions"),
                                QStringLiteral("stickers"), QStringLiteral("fonts"),
-                               QStringLiteral("looks")};
+                               QStringLiteral("looks"), QStringLiteral("text-styles")};
 
 } // namespace
 
@@ -82,6 +82,7 @@ QVariantList LinkedLibraries::folders() const
             folder.insert(QStringLiteral("stickers"), report->stickers);
             folder.insert(QStringLiteral("fonts"), report->fonts);
             folder.insert(QStringLiteral("looks"), report->looks);
+            folder.insert(QStringLiteral("titles"), report->titles);
             folder.insert(QStringLiteral("skipped"), report->skipped());
             folder.insert(QStringLiteral("found"), int(report->items.size()));
             folder.insert(QStringLiteral("error"), report->error);

@@ -1038,6 +1038,8 @@ add_library(driftengine STATIC
     src/engine/packages/effects/EffectPackageLoader.cpp
     src/engine/packages/linked/FilmoraLibraryImporter.h
     src/engine/packages/linked/FilmoraLibraryImporter.cpp
+    src/engine/packages/linked/FilmoraTitleConverter.h
+    src/engine/packages/linked/FilmoraTitleConverter.cpp
     src/engine/packages/transitions/TransitionCatalog.h
     src/engine/packages/transitions/TransitionCatalog.cpp
     src/engine/packages/transitions/TransitionPackageLoader.h
