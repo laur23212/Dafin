@@ -956,7 +956,8 @@ bool isClipTargetedKind(const QString &kind)
 {
     return kind == QLatin1String("effect") || kind == QLatin1String("audioEffect")
            || kind == QLatin1String("template") || kind == QLatin1String("effectStack")
-           || kind == QLatin1String("mask") || kind == QLatin1String("maskMedia");
+           || kind == QLatin1String("mask") || kind == QLatin1String("maskMedia")
+           || kind == QLatin1String("animation");
 }
 
 } // namespace drift::appdetail
@@ -1108,6 +1109,11 @@ QVariantMap AppController::planAssetDrop(const QString &kind, const QString &pay
         const bool fits = kind == QLatin1String("audioEffect")
                               ? (audioTrack || track.type == drift::TrackType::Video)
                               : !audioTrack && !(maskKind && track.isAdjustmentLane());
+        if (kind == QLatin1String("animation")) {
+            const drift::ClipType clipType = track.clips.at(clipIndex).type;
+            if (clipType == drift::ClipType::Adjustment || clipType == drift::ClipType::Audio)
+                return rejectDrop(tr("Animations go on a video, image, shape or text clip."));
+        }
         if (!fits) {
             return rejectDrop(kind == QLatin1String("audioEffect")
                                   ? tr("Audio effects go on clips with sound.")
@@ -1206,6 +1212,16 @@ QVariantMap AppController::dropAsset(const QString &kind, const QString &payload
             addMaskToClip(track, clip, payload);
         else if (kind == QLatin1String("maskMedia"))
             m_masking->addAssetMaskToClip(track, clip, payload.toInt());
+        else if (kind == QLatin1String("animation")) {
+            // Dafin: payload is "animIn:<kind>" / "animOut:<kind>", the same slots the Animation
+            // menu edits. Only the kind changes: an existing duration and curve stay, and a slot
+            // that had none gets setClipAnimation's 0.5 s default.
+            const QString which = payload.section(QLatin1Char(':'), 0, 0);
+            const QString animKind = payload.section(QLatin1Char(':'), 1);
+            if ((which == QLatin1String("animIn") || which == QLatin1String("animOut")) && !animKind.isEmpty()) {
+                setClipAnimation(track, clip, which, {{QStringLiteral("kind"), animKind}});
+            }
+        }
         // Effects and masks select what they made (the stack's host, the mask clip), which is
         // where their inspector lives; the rest leave the target selected.
         if (kind != QLatin1String("effect") && kind != QLatin1String("mask")

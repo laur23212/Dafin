@@ -20,6 +20,8 @@ QtObject {
         "template": "application/x-drift-effect-template",
         "effectStack": "application/x-drift-effect-stack",
         "transition": "application/x-drift-transition",
+        // Dafin: a clip In/Out animation chip; the payload is "animIn:<kind>" or "animOut:<kind>".
+        "animation": "application/x-drift-animation",
         "shape": "application/x-drift-shape",
         "mask": "application/x-drift-mask",
         "sticker": "application/x-drift-sticker",

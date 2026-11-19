@@ -1508,6 +1508,12 @@ QVariantMap PreviewController::dropAsset(const QString &kind, const QString &pay
             m_app.applyEffectPreset(track, clip, payload);
         else if (kind == QLatin1String("mask"))
             m_app.addMaskToClip(track, clip, payload);
+        else if (kind == QLatin1String("animation")) {
+            const QString which = payload.section(QLatin1Char(':'), 0, 0);
+            const QString animKind = payload.section(QLatin1Char(':'), 1);
+            if ((which == QLatin1String("animIn") || which == QLatin1String("animOut")) && !animKind.isEmpty())
+                m_app.setClipAnimation(track, clip, which, {{QStringLiteral("kind"), animKind}});
+        }
         if (kind != QLatin1String("effect") && kind != QLatin1String("mask"))
             m_app.selectClip(track, clip);
         return plan;

@@ -2385,6 +2385,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/SubtitlesTab.qml
         src/qml/components/assets/AiToolsTab.qml
         src/qml/components/assets/AiToolCard.qml
+        src/qml/components/assets/AnimationChips.qml
         src/qml/components/assets/AiCaptionsPanel.qml
         src/qml/components/assets/AiToolPage.qml
         src/qml/components/assets/AiHint.qml

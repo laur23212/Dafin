@@ -71,6 +71,15 @@ Item {
 
         Item { width: 1; height: Theme.spacingSm }
 
+        // Dafin: In / Out animations (fade, slide, zoom...) to drop on a clip.
+        AnimationChips {
+            id: animationChips
+            x: Theme.pagePadding
+            width: parent.width - Theme.pagePadding * 2
+        }
+
+        Item { width: 1; height: Theme.spacingSm }
+
         AssetCategoryChips {
             id: transitionCategoryChips
             width: parent.width
@@ -86,7 +95,8 @@ Item {
         Item {
             width: parent.width
             height: Math.max(0, parent.height - transitionSearch.height
-                             - Theme.spacingSm - transitionCategoryChips.height)
+                             - Theme.spacingSm * 2 - animationChips.height
+                             - transitionCategoryChips.height)
 
             // A category whose filter matches nothing used to leave a
             // blank scroll area with no explanation.
