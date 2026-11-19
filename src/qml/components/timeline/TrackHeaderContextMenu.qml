@@ -172,10 +172,8 @@ ThemedContextMenu {
     ThemedMenuItem {
         text: qsTr("Delete track")
         icon.name: Theme.icons.trash
-        onTriggered: {
-            column.pendingDeleteTrack = header.index
-            deleteDialog.open()
-        }
+        // No confirmation modal: the edit is one undo step and the status bar says so.
+        onTriggered: EditorState.removeTrack(header.index)
     }
     ThemedMenuItem {
         text: qsTr("Remove empty tracks")

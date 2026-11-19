@@ -71,8 +71,17 @@ AbstractButton {
             Rectangle {
                 radius: Theme.c.iconButton.radius
                 color: {
-                    if (root.active)
+                    // Selected tool keeps its fill but still answers the pointer: darker
+                    // while pressed, slightly lighter on hover. Disabled stays flat.
+                    if (root.active) {
+                        if (!root.enabled)
+                            return Theme.c.iconButton.backgroundActive
+                        if (root.down)
+                            return Qt.darker(Theme.c.iconButton.backgroundActive, 1.2)
+                        if (root.hovered)
+                            return Qt.lighter(Theme.c.iconButton.backgroundActive, 1.1)
                         return Theme.c.iconButton.backgroundActive
+                    }
                     if (!root.enabled)
                         return "transparent"
                     // Both variants now tint on hover. The old "text" variant dimmed to

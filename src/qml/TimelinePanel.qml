@@ -1337,8 +1337,9 @@ PanelFrame {
         effectPresetNameDialog.openWith(qsTr("Save effect preset"), name)
     }
 
+    // No confirmation modal: one undo step, and the status bar reports the result.
     function requestConvertTextToSubtitle() {
-        convertToSubtitleDialog.open()
+        EditorState.convertSelectionToSubtitle()
     }
 
     function requestReplaceClip(trackIndex, clipIndex) {
@@ -2495,22 +2496,6 @@ PanelFrame {
             seekStrip.bookmarkRenameIndex = -1
         }
         onRejected: seekStrip.bookmarkRenameIndex = -1
-    }
-
-    ThemedDialog {
-        id: convertToSubtitleDialog
-        title: qsTr("Convert to subtitle?")
-        acceptText: qsTr("Convert")
-        preferredWidth: Theme.dialogWidthSm
-
-        contentItem: ThemedLabel {
-            width: parent ? parent.width : Theme.dialogWidthSm
-            wrapMode: Text.WordWrap
-            size: "sm"
-            text: qsTr("The selected text clips will be replaced by one subtitle clip. Every caption will use the position and style of the first text clip.")
-        }
-
-        onAccepted: EditorState.convertSelectionToSubtitle()
     }
 
     TimelineReplaceClipDialog {
