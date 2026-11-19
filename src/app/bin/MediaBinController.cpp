@@ -9,6 +9,7 @@
 #include "engine/decode/probe/MediaProbe.h"
 
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QFutureWatcher>
@@ -1094,6 +1095,52 @@ void MediaBinController::relinkSiblings()
     m_app->projectFile()->setDirty(true);
     m_app->setLastMessage(tr("Relinked %n file(s)", nullptr, int(remap.size())),
                           QStringLiteral("success"));
+}
+
+int MediaBinController::relinkMissingFromFolder(const QUrl &folder)
+{
+    AssetLibrary *library = m_app->m_assetLibrary;
+    const QString root = folder.toLocalFile();
+    if (!library || root.isEmpty() || !QFileInfo(root).isDir())
+        return 0;
+
+    // The missing files, by lower-cased name: one walk of the folder serves all of them.
+    QHash<QString, QList<const drift::MediaAsset *>> wanted;
+    for (const QString &id : m_app->m_project.assetOrder()) {
+        if (!library->isMissing(id))
+            continue;
+        if (const drift::MediaAsset *asset = m_app->m_project.asset(id))
+            wanted[QFileInfo(asset->path).fileName().toLower()].append(asset);
+    }
+    if (wanted.isEmpty())
+        return 0;
+
+    QHash<QString, QString> remap;
+    constexpr int kMaxFilesWalked = 200000;
+    int walked = 0;
+    QDirIterator it(root, QDir::Files | QDir::Readable, QDirIterator::Subdirectories);
+    while (it.hasNext() && walked++ < kMaxFilesWalked) {
+        const QFileInfo candidate(it.next());
+        const auto found = wanted.constFind(candidate.fileName().toLower());
+        if (found == wanted.constEnd())
+            continue;
+        const QString candidatePath = candidate.absoluteFilePath();
+        if (library->indexOfPath(candidatePath) >= 0)
+            continue;
+        for (const drift::MediaAsset *asset : found.value()) {
+            if (remap.contains(asset->path))
+                continue;
+            // Projects from before fingerprints have no size to compare; a name match is taken.
+            if (asset->sourceSize > 0 && candidate.size() != asset->sourceSize)
+                continue;
+            remap.insert(asset->path, candidatePath);
+        }
+    }
+    if (remap.isEmpty())
+        return 0;
+    m_siblingRelink = remap;
+    relinkSiblings();
+    return int(remap.size());
 }
 
 int MediaBinController::rebindClipsToAsset(const QString &assetId, const drift::MediaAsset &asset,

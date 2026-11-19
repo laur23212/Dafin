@@ -364,7 +364,7 @@ ApplicationWindow {
         }
         const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, helpDialogLoader.item, debugInfoDialogLoader.item,
                         settingsDialogLoader.item, imageViewerDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
-                        missingAddonsDialogLoader.item,
+                        missingAddonsDialogLoader.item, missingMediaDialogLoader.item,
                         projectSetupDialogLoader.item, layoutChooserDialogLoader.item,
                         languageChooserDialogLoader.item, recoveryDialogLoader.item,
                         resumeExportDialogLoader.item,
@@ -578,6 +578,13 @@ ApplicationWindow {
         function onUnfinishedExportChanged() {
             if (EditorState.unfinishedExport && EditorState.unfinishedExport.dir)
                 resumeExportTimer.start()
+        }
+    }
+
+    LazyLoader {
+        id: missingMediaDialogLoader
+        sourceComponent: Component {
+            MissingMediaDialog { }
         }
     }
 
@@ -1663,6 +1670,10 @@ ApplicationWindow {
 
         function onMissingAddons(addons) {
             missingAddonsDialogLoader.ensure().openFor(addons)
+        }
+
+        function onMissingMediaFound(count) {
+            missingMediaDialogLoader.ensure().openFor(count)
         }
 
         function onPackageFinished(ok, message) {

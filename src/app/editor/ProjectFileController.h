@@ -208,6 +208,9 @@ signals:
     // Addons the freshly opened project needs but that are not installed. Each entry is
     // id / name / version / kinds, for MissingAddonsDialog.
     void missingAddons(const QVariantList &addons);
+    // Dafin: a project opened with `count` media files that could not be found. QML offers to find
+    // them in a folder (MissingMediaDialog); the per-file Locate file… in Media stays available.
+    void missingMediaFound(int count);
     // Dafin: a project would not open but a good backup of it exists (see ProjectSafety.h). QML offers
     // it in BackupOfferDialog; `savedAt` is the backup's own time, ready to show.
     void backupAvailable(const QString &projectPath, const QString &backupPath, const QString &savedAt);
@@ -341,6 +344,10 @@ private:
     bool m_recoveryAvailable = false;
     QVariantMap m_recoveryInfo;
     QUrl m_pendingStartupProject;
+    // Dafin: a document the shell launched Dafin with while an unanswered crash snapshot was waiting.
+    // The snapshot is answered first (Restore / New session); this opens afterwards, through the same
+    // unsaved-work prompt as any other external open, so a launched document never deletes it unseen.
+    QUrl m_startupProjectAfterRecovery;
     QUrl m_lastExternalProject;
     bool m_uiReady = false;
     bool m_isolatedSession = false;

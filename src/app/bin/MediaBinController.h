@@ -138,6 +138,10 @@ public:
     Q_INVOKABLE void convertToConstantFrameRate(const QStringList &assetIds);
     // Applies the relinks offered by the last siblingRelinkAvailable, as one undoable edit.
     Q_INVOKABLE void relinkSiblings();
+    // Dafin: looks for every missing media file under `folder` (all its subfolders), matching by file
+    // name and, when the project knows it, size; relinks what it finds as one undoable edit, through
+    // relinkSiblings. Returns how many files were found (0 = nothing changed).
+    Q_INVOKABLE int relinkMissingFromFolder(const QUrl &folder);
 
 signals:
     void currentFolderIdChanged();

@@ -51,6 +51,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTimer>
+#include <utility>
 #include <QUuid>
 #include <QtConcurrent>
 
@@ -113,6 +114,14 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
         writeRecoveryFile();
     });
     m_autosaveTimer->start(kAutosaveIntervalMs);
+    // Dafin: once the crash snapshot has been answered, open the document the shell launched us with.
+    connect(this, &ProjectFileController::recoveryChanged, this, [this] {
+        if (m_recoveryAvailable || !m_startupProjectAfterRecovery.isValid())
+            return;
+        const QUrl url = std::exchange(m_startupProjectAfterRecovery, QUrl());
+        // After the restore / new-session load has finished its own bookkeeping.
+        QTimer::singleShot(0, this, [this, url] { emit m_app->externalProjectOpenRequested(url); });
+    });
     connect(qApp, &QCoreApplication::aboutToQuit, this, [this] {
         // Remember the open project so opt-in reopen can load a clean .drift next launch.
         if (!m_isolatedSession)
@@ -1769,6 +1778,8 @@ void ProjectFileController::finishLoad(int generation, const QUrl &url,
     m_app->setLastMessage(message, missing > 0 ? QStringLiteral("warning") : QStringLiteral("success"));
     reportMissingAddons(bundle.addons);
     finishProjectLoad(true, message);
+    if (missing > 0 && !openedBackup)
+        emit missingMediaFound(missing);
 }
 
 void ProjectFileController::offerBackupFor(const QUrl &url)
@@ -2430,6 +2441,13 @@ bool ProjectFileController::consumeStartupProject()
         return false;
     const QUrl url = m_pendingStartupProject;
     m_pendingStartupProject.clear();
+    // Dafin: loading a project clears the recovery snapshot, so a launched document must not jump the
+    // queue while one is waiting for its Restore / New session answer. Start-up carries on to the
+    // recovery prompt, and the document opens once that is answered.
+    if (m_recoveryAvailable && !m_isolatedSession) {
+        m_startupProjectAfterRecovery = url;
+        return false;
+    }
     loadProject(url);
     return true;
 }

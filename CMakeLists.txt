@@ -2996,6 +2996,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/CircularProgress.qml
         src/qml/components/dialogs/RecoveryDialog.qml
         src/qml/components/dialogs/BackupOfferDialog.qml
+        src/qml/components/dialogs/MissingMediaDialog.qml
         src/qml/components/dialogs/ResumeExportDialog.qml
         src/qml/components/dialogs/UnsavedChangesDialog.qml
         src/qml/components/dialogs/PasteAttributesVideoSection.qml
