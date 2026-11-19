@@ -31,11 +31,13 @@ Item {
         // Leave room for the playhead head so its drag can start first.
         z: 1
 
-        // Filmora-style: a click puts the bar there; holding and dragging sideways zooms the
-        // timeline around the bar (right = zoom in, left = zoom out). Dragging the head still scrubs.
+        // Filmora-style: a single click puts the bar there; holding and dragging sideways only
+        // zooms the timeline around the bar (right = zoom in, left = zoom out) and leaves the bar
+        // where it was. Dragging the head still scrubs.
         readonly property real zoomDragStartPx: 6
         readonly property real zoomPxPerDoubling: 120
         property real pressPanelX: 0
+        property real pressLocalX: 0
         property real startZoom: 1
         property real anchorSeconds: 0
         property real anchorViewportX: 0
@@ -46,16 +48,24 @@ Item {
                 EditorState.snapTime(Math.max(0, x) / seekStrip.panel.pxPerSecond)
         }
 
-        // Seeking is not a selection change: scrubbing to look at a
-        // different point used to drop the clip you were editing.
+        // The bar only moves on a click (press and release without zooming). Seeking is not a
+        // selection change: scrubbing to look at a different point used to drop the clip you
+        // were editing.
         onPressed: (mouse) => {
             seekStrip.panel.forceActiveFocus()
-            seekStrip.panel.beginPlayheadSeek()
-            scrubTo(mouse.x)
+            pressLocalX = mouse.x
             pressPanelX = mapToItem(seekStrip.panel, mouse.x, mouse.y).x
             startZoom = seekStrip.panel.zoom
-            anchorSeconds = Math.max(0, EditorState.playheadSeconds)
-            anchorViewportX = anchorSeconds * seekStrip.panel.pxPerSecond - seekStrip.view.contentX
+            // Zoom around the bar; if the bar is off screen, around the pressed point.
+            const barSeconds = Math.max(0, EditorState.playheadSeconds)
+            const barViewportX = barSeconds * seekStrip.panel.pxPerSecond - seekStrip.view.contentX
+            if (barViewportX >= 0 && barViewportX <= seekStrip.view.width) {
+                anchorSeconds = barSeconds
+                anchorViewportX = barViewportX
+            } else {
+                anchorSeconds = Math.max(0, mouse.x / seekStrip.panel.pxPerSecond)
+                anchorViewportX = anchorSeconds * seekStrip.panel.pxPerSecond - seekStrip.view.contentX
+            }
             zooming = false
         }
         onPositionChanged: (mouse) => {
@@ -69,13 +79,15 @@ Item {
                                               anchorSeconds, anchorViewportX)
         }
         onReleased: {
+            const wasZooming = zooming
             zooming = false
+            if (wasZooming)
+                return
+            seekStrip.panel.beginPlayheadSeek()
+            scrubTo(pressLocalX)
             seekStrip.panel.endPlayheadSeek()
         }
-        onCanceled: {
-            zooming = false
-            seekStrip.panel.endPlayheadSeek()
-        }
+        onCanceled: zooming = false
         // MouseArea would otherwise swallow wheel and block Ctrl-zoom.
         onWheel: (wheel) => seekStrip.panel.handleTimelineWheel(wheel)
 
