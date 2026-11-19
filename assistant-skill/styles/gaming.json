@@ -1,0 +1,64 @@
+{
+  "id": "gaming",
+  "version": "0.2.0",
+  "label": "Gaming Highlights",
+  "family": "entertainment",
+  "description": "Impact-led highlights balancing setup, payoff, reaction and occasional deliberate chaos.",
+  "intent": "Make the highlight understandable and exciting; setup is often necessary for the payoff.",
+  "visual_refresh_target_s": [
+    0.8,
+    3.0
+  ],
+  "broll_shot_target_s": [
+    0.5,
+    2.5
+  ],
+  "talking_head_refresh_s": 5.0,
+  "caption_max_chars_per_second": 18,
+  "caption_min_hold_s": 0.7,
+  "title_min_hold_s": 0.9,
+  "safe_margin": 0.08,
+  "text_entrance_ms": [
+    90,
+    240
+  ],
+  "text_exit_ms": [
+    80,
+    180
+  ],
+  "max_competing_animations": 3,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_on_action",
+    "selective_speed_ramp",
+    "impact_freeze"
+  ],
+  "avoid": [
+    "cutting away before the decisive play",
+    "excessive shake that hides the action",
+    "music masking team communication",
+    "replays with no new information"
+  ],
+  "opening": "Show the most compelling moment without fabricating a reaction or removing necessary context.",
+  "editing": "Retain approach → impact → reaction, varying density with game intensity.",
+  "typography": "Concise high-contrast annotations; avoid obscuring important gameplay HUD.",
+  "sound": "Protect game cues and speech; emphasize major actions, not every button press.",
+  "critique": "Can the viewer follow why the play matters and experience the impact?",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

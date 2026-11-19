@@ -1,0 +1,67 @@
+{
+  "id": "tutorial",
+  "version": "0.2.0",
+  "label": "Tutorial / Screen Recording",
+  "family": "education",
+  "description": "Instructional video with optional Direct-to-Task treatment: omit irrelevant setup, show real steps immediately and preserve comprehension.",
+  "intent": "Optimize correct understanding per unit of viewer time, not clicks or obligatory rewatches. Preserve indispensable context, warnings, actions and visible outcomes.",
+  "visual_refresh_target_s": [
+    3.0,
+    9.0
+  ],
+  "broll_shot_target_s": [
+    2.0,
+    6.5
+  ],
+  "talking_head_refresh_s": 12.0,
+  "caption_max_chars_per_second": 16,
+  "caption_min_hold_s": 1.0,
+  "title_min_hold_s": 1.2,
+  "safe_margin": 0.06,
+  "text_entrance_ms": [
+    180,
+    350
+  ],
+  "text_exit_ms": [
+    130,
+    280
+  ],
+  "max_competing_animations": 1,
+  "preferred_transitions": [
+    "hard_cut",
+    "step_reveal",
+    "motivated_zoom"
+  ],
+  "avoid": [
+    "cutting before a UI response is visible",
+    "zooming so tightly that interface context disappears",
+    "flashy caption animations during a complex click sequence",
+    "unrelated origin stories or decorative preambles",
+    "fake urgency or artificial cliffhangers",
+    "cutting critical warnings/prerequisites for brevity",
+    "editing so fast that a viewer must replay to understand",
+    "jump cuts that hide a required click or application response"
+  ],
+  "opening": "Lead with the concrete user problem or first useful on-screen action. Mention prerequisites only when needed; omit broad backstory and ornamental intros. If context matters, give it briefly before the affected step.",
+  "editing": "Cut repeated phrasing, empty lead-ins and demonstrably irrelevant talk. Compress only verified idle waits; never speed up crucial cursor movements, labels, changed settings or result confirmation beyond readability. Keep step→visible response→outcome, preserve required context and truthful source chronology.",
+  "typography": "Compact labels near the demonstrated controls, show shortcuts and exact setting names. Never obscure controls, require forced replays or skip accessibility needs.",
+  "sound": "Narration clear, direct and accurate, with natural breathing room around complex actions. No filler music or gratuitous sound accents over instructions.",
+  "critique": "Can someone understand what to do and why, without gratuitous background or being forced to rewind? Can a novice identify each essential step, warning, and resulting UI state?",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

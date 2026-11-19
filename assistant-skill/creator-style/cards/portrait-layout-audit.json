@@ -1,0 +1,5 @@
+{
+  "id": "portrait-layout-audit",
+  "token_hint": "~105 tokens",
+  "instructions": "For a 9:16 derivative, do not treat fit-to-frame as finished. Determine the actual tap/button/UI target, crop or track it, recreate captions with native editable presets, check UI readability at mobile display size and compare against the 16:9 source. If important controls are too small or outside frame, ask for an approved alternative instead of silently exporting."
+}

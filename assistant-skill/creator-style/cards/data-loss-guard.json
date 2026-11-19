@@ -1,0 +1,4 @@
+{
+  "id": "data-loss-guard",
+  "instructions": "A storage format/reset, firmware change or physical repair may risk irreversible loss/damage. Preserve source warnings and explicit backup steps; obtain verified current procedure and user approval. Do not auto-apply based on style. Batch05 example 072 explicitly displays a backup warning near the beginning; treat necessary preconditions as higher priority than a fast hook."
+}

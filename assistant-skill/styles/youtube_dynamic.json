@@ -1,0 +1,64 @@
+{
+  "id": "youtube_dynamic",
+  "version": "0.2.0",
+  "label": "YouTube Dynamic",
+  "family": "youtube",
+  "description": "Creator-led YouTube videos with energetic B-roll, selective kinetic text and frequent purposeful visual refreshes.",
+  "intent": "Make the premise clear quickly; reward attention with proof, novelty and rhythm rather than nonstop effects.",
+  "visual_refresh_target_s": [
+    1.5,
+    3.5
+  ],
+  "broll_shot_target_s": [
+    0.9,
+    3.2
+  ],
+  "talking_head_refresh_s": 5.5,
+  "caption_max_chars_per_second": 18,
+  "caption_min_hold_s": 0.75,
+  "title_min_hold_s": 0.9,
+  "safe_margin": 0.06,
+  "text_entrance_ms": [
+    110,
+    240
+  ],
+  "text_exit_ms": [
+    90,
+    180
+  ],
+  "max_competing_animations": 2,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_cut",
+    "motivated_whip",
+    "occasional_dissolve"
+  ],
+  "avoid": [
+    "unmotivated zoom on every sentence",
+    "SFX on every word",
+    "constant 2-second cuts",
+    "decorative motion that delays comprehension"
+  ],
+  "opening": "Show the actual subject or useful result early; make the title/thumbnail promise legible in the opening.",
+  "editing": "Cut by idea and emphasis. Vary shot length; use punch-ins or inserts for specific narrative reasons, not a metronome.",
+  "typography": "One dominant sans family, two weights at most per shot; kinetic emphasis on meaning-bearing words; minimal text at once.",
+  "sound": "Dialogue first. Short accents at important transitions only; intentional silence and restraint are allowed.",
+  "critique": "Ask whether each visual refresh adds information, contrast or emotion.",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

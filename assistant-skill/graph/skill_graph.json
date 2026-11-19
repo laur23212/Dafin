@@ -1,0 +1,598 @@
+{
+  "format": 1,
+  "version": "0.9.2",
+  "summary": "Deterministic task-first routing. Genre and platform are secondary; Skills are loaded lazily. Tool group IDs are advisory names, not native MCP methods.",
+  "tasks": [
+    {
+      "id": "audio_repair",
+      "phrases": [
+        "volume clipping",
+        "clipped audio",
+        "fix the audio",
+        "audio clipping",
+        "reduce noise",
+        "remove noise",
+        "denoise",
+        "fix volume",
+        "normalize volume",
+        "audio peaks",
+        "dialogue cleanup",
+        "curata sunet",
+        "repara audio"
+      ],
+      "owner": "sound-director",
+      "support": [],
+      "skip": [
+        "story-structure",
+        "youtube-story-strategist",
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "audio.inspect",
+        "audio.adjust"
+      ],
+      "review": [
+        "audio_peaks",
+        "dialogue_intelligibility"
+      ],
+      "purpose": "technical"
+    },
+    {
+      "id": "title_motion",
+      "phrases": [
+        "animated title",
+        "kinetic title",
+        "kinetic text",
+        "animate the title",
+        "title animation",
+        "lower third animation",
+        "animatie titlu",
+        "text animat",
+        "animated titles",
+        "kinetic titles",
+        "animated text",
+        "kinetic words",
+        "moving titles"
+      ],
+      "owner": "typography-director",
+      "support": [
+        "motion-director"
+      ],
+      "skip": [
+        "youtube-story-strategist",
+        "story-structure",
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "text.inspect",
+        "text.animate",
+        "preview.frames"
+      ],
+      "review": [
+        "text_readability",
+        "motion_timing"
+      ],
+      "purpose": "creative"
+    },
+    {
+      "id": "title_design",
+      "phrases": [
+        "title",
+        "titles",
+        "lower third",
+        "font pairing",
+        "typography",
+        "text overlay",
+        "titlu",
+        "titluri"
+      ],
+      "owner": "typography-director",
+      "support": [],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "text.inspect",
+        "text.style",
+        "preview.frames"
+      ],
+      "review": [
+        "text_readability"
+      ],
+      "purpose": "creative"
+    },
+    {
+      "id": "subtitles",
+      "phrases": [
+        "captions",
+        "subtitles",
+        "caption styling",
+        "subtitle style",
+        "subtitrari",
+        "subtitrare"
+      ],
+      "owner": "typography-director",
+      "support": [],
+      "skip": [
+        "story-structure",
+        "youtube-story-strategist"
+      ],
+      "tool_groups": [
+        "transcript.read",
+        "captions.inspect",
+        "captions.edit"
+      ],
+      "review": [
+        "caption_readability",
+        "caption_sync"
+      ],
+      "purpose": "technical"
+    },
+    {
+      "id": "tutorial",
+      "phrases": [
+        "tutorial",
+        "screen recording",
+        "screencast",
+        "step by step",
+        "how to use",
+        "how to enable",
+        "how to export",
+        "walkthrough",
+        "demonstrate the steps",
+        "software lesson",
+        "tutorial pas cu pas",
+        "inregistrare ecran",
+        "no fluff tutorial",
+        "quick software tutorial",
+        "straight to the point tutorial",
+        "direct tutorial"
+      ],
+      "owner": "editorial-director",
+      "support": [
+        "typography-director"
+      ],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention",
+        "story-structure"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "transcript.read",
+        "preview.frames"
+      ],
+      "review": [
+        "first_useful_action",
+        "step_completeness",
+        "action_result_visibility",
+        "relevance_of_talk",
+        "wait_compression_safety",
+        "screen_legibility"
+      ],
+      "purpose": "instruction"
+    },
+    {
+      "id": "explainer",
+      "phrases": [
+        "explainer",
+        "explain how",
+        "science explainer",
+        "video essay",
+        "educational video",
+        "explain the concept",
+        "video explicativ",
+        "explica conceptul"
+      ],
+      "owner": "editorial-director",
+      "support": [
+        "viewer-experience-director"
+      ],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "transcript.read",
+        "preview.frames"
+      ],
+      "review": [
+        "concept_clarity",
+        "evidence_support",
+        "visual_verbal_alignment"
+      ],
+      "purpose": "instruction"
+    },
+    {
+      "id": "challenge_story",
+      "phrases": [
+        "challenge video",
+        "challenge",
+        "escalating obstacles",
+        "stakes",
+        "subplot",
+        "competition video",
+        "survival challenge",
+        "rewards across the video",
+        "re-engagement points"
+      ],
+      "owner": "youtube-story-strategist",
+      "support": [
+        "editorial-director"
+      ],
+      "skip": [
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "transcript.read",
+        "story.annotate"
+      ],
+      "review": [
+        "real_stakes",
+        "earned_payoffs",
+        "story_continuity"
+      ],
+      "purpose": "narrative"
+    },
+    {
+      "id": "documentary",
+      "phrases": [
+        "documentary",
+        "documentaries",
+        "investigative video",
+        "historical documentary",
+        "documentar",
+        "interview documentary"
+      ],
+      "owner": "story-structure",
+      "support": [
+        "editorial-director"
+      ],
+      "skip": [
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "transcript.read",
+        "preview.frames"
+      ],
+      "review": [
+        "factual_context",
+        "reaction_integrity",
+        "story_clarity"
+      ],
+      "purpose": "narrative"
+    },
+    {
+      "id": "film_scene",
+      "phrases": [
+        "movie scene",
+        "film scene",
+        "dramatic scene",
+        "short film",
+        "cinematic sequence",
+        "secventa cinematografica"
+      ],
+      "owner": "editorial-director",
+      "support": [
+        "viewer-experience-director"
+      ],
+      "skip": [
+        "youtube-retention",
+        "youtube-story-strategist"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "preview.frames",
+        "audio.inspect"
+      ],
+      "review": [
+        "performance",
+        "attention_flow",
+        "continuity"
+      ],
+      "purpose": "narrative"
+    },
+    {
+      "id": "color_grade",
+      "phrases": [
+        "color grade",
+        "colour grade",
+        "color correction",
+        "colour correction",
+        "white balance",
+        "skin tones",
+        "color grading",
+        "grading",
+        "corectie culoare"
+      ],
+      "owner": "art-director",
+      "support": [],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention",
+        "story-structure"
+      ],
+      "tool_groups": [
+        "color.inspect",
+        "color.adjust",
+        "preview.frames"
+      ],
+      "review": [
+        "exposure",
+        "consistency"
+      ],
+      "purpose": "technical"
+    },
+    {
+      "id": "export",
+      "phrases": [
+        "export",
+        "render settings",
+        "bitrate",
+        "codec",
+        "encode",
+        "compression quality",
+        "exporta",
+        "setari export"
+      ],
+      "owner": null,
+      "support": [],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention",
+        "story-structure",
+        "editorial-director"
+      ],
+      "tool_groups": [
+        "export.inspect",
+        "export.configure"
+      ],
+      "review": [
+        "output_format"
+      ],
+      "purpose": "technical"
+    },
+    {
+      "id": "retention_analysis",
+      "phrases": [
+        "retention graph",
+        "audience retention",
+        "drop off in analytics",
+        "youtube analytics",
+        "retention curve"
+      ],
+      "owner": "youtube-retention",
+      "support": [],
+      "skip": [
+        "story-structure",
+        "motion-director"
+      ],
+      "tool_groups": [
+        "analytics.read"
+      ],
+      "review": [
+        "noncausal_interpretation"
+      ],
+      "purpose": "analysis"
+    },
+    {
+      "id": "podcast",
+      "phrases": [
+        "podcast",
+        "interview edit",
+        "multicam interview",
+        "long interview",
+        "roundtable"
+      ],
+      "owner": "editorial-director",
+      "support": [
+        "sound-director"
+      ],
+      "skip": [
+        "youtube-retention",
+        "youtube-story-strategist"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "audio.inspect",
+        "transcript.read"
+      ],
+      "review": [
+        "speaker_continuity",
+        "audio_clarity"
+      ],
+      "purpose": "editorial"
+    },
+    {
+      "id": "asset_request",
+      "phrases": [
+        "generate b-roll",
+        "generate an image",
+        "missing visual",
+        "need an illustration",
+        "create illustration",
+        "illustrative asset"
+      ],
+      "owner": "art-director",
+      "support": [],
+      "skip": [
+        "youtube-retention",
+        "story-structure"
+      ],
+      "tool_groups": [
+        "assets.inspect",
+        "assets.plan"
+      ],
+      "review": [
+        "authenticity",
+        "asset_licensing"
+      ],
+      "purpose": "creative"
+    },
+    {
+      "id": "visual_polish",
+      "phrases": [
+        "visual polish",
+        "modern look",
+        "make it look polished",
+        "make it prettier",
+        "more professional looking",
+        "more polished",
+        "polish the visuals",
+        "make it pretty",
+        "make this prettier",
+        "make it beautiful",
+        "make the visuals beautiful"
+      ],
+      "owner": "art-director",
+      "support": [],
+      "skip": [
+        "youtube-retention",
+        "youtube-story-strategist",
+        "story-structure"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "color.inspect",
+        "preview.frames"
+      ],
+      "review": [
+        "composition",
+        "style_consistency"
+      ],
+      "purpose": "creative"
+    },
+    {
+      "id": "cinematic_treatment",
+      "phrases": [
+        "cinematic look",
+        "cinematic feel",
+        "film-like atmosphere",
+        "film look",
+        "cinematic grade",
+        "cinematic style",
+        "stil cinematografic"
+      ],
+      "owner": "art-director",
+      "support": [],
+      "skip": [
+        "youtube-retention",
+        "youtube-story-strategist"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "preview.frames"
+      ],
+      "review": [
+        "shot_motivation",
+        "atmosphere",
+        "composition"
+      ],
+      "purpose": "creative"
+    },
+    {
+      "id": "narrative_review",
+      "phrases": [
+        "improve the story",
+        "story clarity",
+        "better storytelling",
+        "story progression",
+        "narrative structure"
+      ],
+      "owner": "story-structure",
+      "support": [
+        "editorial-director"
+      ],
+      "skip": [
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "transcript.read"
+      ],
+      "review": [
+        "cause_and_effect",
+        "earned_resolution"
+      ],
+      "purpose": "narrative"
+    },
+    {
+      "id": "clarity_review",
+      "phrases": [
+        "easier to understand",
+        "improve clarity",
+        "make it clearer",
+        "confusing explanation"
+      ],
+      "owner": "viewer-experience-director",
+      "support": [],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "timeline.inspect",
+        "transcript.read",
+        "preview.frames"
+      ],
+      "review": [
+        "comprehension",
+        "visual_verbal_alignment"
+      ],
+      "purpose": "instruction"
+    },
+    {
+      "id": "general_edit",
+      "phrases": [],
+      "owner": "editorial-director",
+      "support": [],
+      "skip": [
+        "youtube-story-strategist",
+        "youtube-retention"
+      ],
+      "tool_groups": [
+        "timeline.inspect"
+      ],
+      "review": [
+        "scope_clarity"
+      ],
+      "purpose": "unknown"
+    }
+  ],
+  "task_priority": [
+    "audio_repair",
+    "color_grade",
+    "retention_analysis",
+    "subtitles",
+    "title_motion",
+    "title_design",
+    "export",
+    "tutorial",
+    "explainer",
+    "challenge_story",
+    "documentary",
+    "film_scene",
+    "podcast",
+    "asset_request",
+    "visual_polish",
+    "cinematic_treatment",
+    "narrative_review",
+    "clarity_review",
+    "general_edit"
+  ],
+  "core_rules": [
+    "honor_explicit_constraints",
+    "never_invent_media_evidence",
+    "no_edit_authorization_from_skill",
+    "verify_native_revision_and_permissions",
+    "reuse_whisper_and_existing_tools"
+  ],
+  "on_demand_casebook": {
+    "max_cases": 2,
+    "no_auto_fetch": true
+  }
+}

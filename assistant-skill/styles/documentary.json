@@ -1,0 +1,64 @@
+{
+  "id": "documentary",
+  "version": "0.2.0",
+  "label": "Documentary",
+  "family": "film",
+  "description": "Credible, evidence-led storytelling with interview authenticity and contextual visuals.",
+  "intent": "Tell a truthful, coherent story; never sacrifice factual meaning for retention.",
+  "visual_refresh_target_s": [
+    2.5,
+    7.5
+  ],
+  "broll_shot_target_s": [
+    2.0,
+    6.0
+  ],
+  "talking_head_refresh_s": 11.0,
+  "caption_max_chars_per_second": 16,
+  "caption_min_hold_s": 1.0,
+  "title_min_hold_s": 1.5,
+  "safe_margin": 0.07,
+  "text_entrance_ms": [
+    220,
+    450
+  ],
+  "text_exit_ms": [
+    160,
+    380
+  ],
+  "max_competing_animations": 1,
+  "preferred_transitions": [
+    "hard_cut",
+    "j_cut",
+    "l_cut",
+    "motivated_dissolve"
+  ],
+  "avoid": [
+    "cutting an interview to reverse its meaning",
+    "fake documentary inserts presented as real",
+    "unnecessary cinematic swooshes",
+    "omitting relevant attribution"
+  ],
+  "opening": "Present the question, tension or compelling observed moment without deceptive framing.",
+  "editing": "Build a paper edit; support claims with verifiable footage, dates and labels; preserve pauses when they are meaningful.",
+  "typography": "Legible lower thirds and source labels, consistent with the piece; no unnecessary word-by-word text.",
+  "sound": "Natural room tone bridges and careful dialogue treatment; preserve authenticity.",
+  "critique": "Does the sequence preserve context and distinguish archive, recreation, opinion and fact?",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

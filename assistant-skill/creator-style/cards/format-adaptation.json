@@ -1,0 +1,4 @@
+{
+  "id": "format-adaptation",
+  "instructions": "Repurpose from a known source edit. Use parent-video ID and source range mapping; rebuild crops, safe areas, animated word timing and overlays for vertical. Independently preview mobile legibility. Relevant: 035,036. Reformat from landscape to portrait must recompose tiny desktop UI and mobile-safe text, not merely shrink or pillarbox the full picture. 070/071 may inform visual layouts only, not automated disruption."
+}

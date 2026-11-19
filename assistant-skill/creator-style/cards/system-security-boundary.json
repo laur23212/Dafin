@@ -1,0 +1,4 @@
+{
+  "id": "system-security-boundary",
+  "instructions": "Security settings, BIOS, TPM and Secure Boot are version/device-dependent and can affect boot and system access. Historical Windows 10/11 or Asus footage is not a verified current procedure. Reuse visible visuals for style only; verify actual target OS/firmware and ask for approval before any system changes. Never execute BIOS changes via editing automation."
+}

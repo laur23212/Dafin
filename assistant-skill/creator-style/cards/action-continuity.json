@@ -1,0 +1,4 @@
+{
+  "id": "action-continuity",
+  "instructions": "Preserve game controls, spatial movement and outcome; do not cut a stationary-looking section that contains an essential wait or input. Source: 002-004."
+}

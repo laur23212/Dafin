@@ -1,0 +1,5 @@
+{
+  "id": "edition-family",
+  "token_hint": "~100 tokens",
+  "instructions": "Use known source audio/video hashes and editor source IDs to create an edition family. Reuse transcript/action-event analysis only for verified shared ranges. Keep per-variant text layouts and source provenance, protect conditional remedies, save independent reversible versions, and report unmatched sections for review. Similar titles alone are insufficient for reuse."
+}

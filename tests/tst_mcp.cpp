@@ -249,6 +249,7 @@ private slots:
     void assistantStopClosesOpenCalls();
     void assistantIrreversibleNeedsAClick();
     void assistantKeyNeverLeaks();
+    void assistantBuiltInSkillIsTheDefault();
     void aiFillPlacesExactlyAndKeepsVersions();
     void aiFillAssistantHasEveryTool();
     void aiFillNeedsSetupAndAKnownClip();
@@ -9070,6 +9071,46 @@ void McpTest::assistantKeyNeverLeaks()
     if (ini.open(QIODevice::ReadOnly))
         QVERIFY(!ini.readAll().contains(key.toUtf8())); // the key lives in the secret store only
     QVERIFY(rig.secrets->values.value(QStringLiteral("assistant-anthropic")) == key.toUtf8());
+}
+
+// The editing skill is built into Dafin: with no folder set the prompt carries it, the model can read
+// more of it one file at a time, and nothing outside the skill can be read.
+void McpTest::assistantBuiltInSkillIsTheDefault()
+{
+    AssistantRig rig;
+    QVERIFY(rig.assistant.knowledgeFolder().isEmpty());
+    const QString prompt = rig.assistant.systemPrompt();
+    QVERIFY(prompt.contains(QStringLiteral("built into Dafin")));
+    QVERIFY(prompt.contains(QStringLiteral("dafin-baseline-editing-skill")));
+    QVERIFY(prompt.size() < 40000);
+
+    const QJsonObject good{{"path", "skills/sound-director/SKILL.md"}};
+    const QJsonObject bad{{"path", "../../etc/passwd"}};
+    const QJsonObject wrongType{{"path", "skills/sound-director/notes.exe"}};
+    rig.net->replies = {anthropicToolUse({{QStringLiteral("read_skill_file"), good}}),
+                        anthropicToolUse({{QStringLiteral("read_skill_file"), bad}}),
+                        anthropicToolUse({{QStringLiteral("read_skill_file"), wrongType}}),
+                        anthropicText(QStringLiteral("Done."))};
+    rig.assistant.send(QStringLiteral("Fix the hum"));
+    const QList<ChatMessage> results = rig.toolResults();
+    QCOMPARE(results.size(), 3);
+    QVERIFY(!results.at(0).isError);
+    QVERIFY(results.at(0).text.contains(QStringLiteral("sound")));
+    QVERIFY(results.at(1).isError);
+    QVERIFY(results.at(2).isError);
+
+    // The user's own folder (with a SKILL.md) replaces the built-in one; an empty folder does not.
+    QTemporaryDir own;
+    QFile f(own.filePath(QStringLiteral("SKILL.md")));
+    QVERIFY(f.open(QIODevice::WriteOnly));
+    f.write("# my own skill marker-XYZ");
+    f.close();
+    rig.assistant.setKnowledgeFolder(own.path());
+    QVERIFY(rig.assistant.systemPrompt().contains(QStringLiteral("marker-XYZ")));
+    QVERIFY(!rig.assistant.systemPrompt().contains(QStringLiteral("dafin-baseline-editing-skill")));
+    QTemporaryDir empty;
+    rig.assistant.setKnowledgeFolder(empty.path());
+    QVERIFY(rig.assistant.systemPrompt().contains(QStringLiteral("dafin-baseline-editing-skill")));
 }
 
 // Dafin AI Fill: the animation lands on the marked space, on a graphic track, and every new

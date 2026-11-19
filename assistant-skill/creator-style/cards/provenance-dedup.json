@@ -1,0 +1,4 @@
+{
+  "id": "provenance-dedup",
+  "instructions": "Group same-topic, reused footage, aspect-ratio variants or revised titles as related examples. Preserve asset and timeline lineage. Never double-count 035/036 or 043/045 as two independent confirmations of a style rule."
+}

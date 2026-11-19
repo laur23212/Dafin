@@ -26,6 +26,8 @@ namespace {
 
 constexpr auto kDefaultAnthropicModel = "claude-sonnet-5-5";
 constexpr int kKnowledgeMaxChars = 24000;
+constexpr int kSkillFileMaxChars = 12000;
+const QString kBuiltInSkillRoot = QStringLiteral(":/assistant-skill");
 
 QString compactArgs(const QJsonObject &args)
 {
@@ -307,6 +309,14 @@ QList<ToolSpec> AssistantController::toolSpecs() const
                                "permission for anything irreversible. Do not ask what you can find out "
                                "with a tool."),
                 askUserSchema()});
+    out.append({QStringLiteral("read_skill_file"),
+                QStringLiteral("Read one file of the editing knowledge (relative path such as "
+                               "skills/sound-director/SKILL.md). Read-only, up to 12000 characters. Open only "
+                               "the files the task needs."),
+                QJsonObject{{QStringLiteral("type"), QStringLiteral("object")},
+                            {QStringLiteral("properties"),
+                             QJsonObject{{QStringLiteral("path"), QJsonObject{{QStringLiteral("type"), QStringLiteral("string")}}}}},
+                            {QStringLiteral("required"), QJsonArray{QStringLiteral("path")}}}});
     return out;
 }
 
@@ -326,17 +336,44 @@ QString AssistantController::systemPrompt() const
     s += allowFrames()
              ? QStringLiteral("You can check visual results with capture or frames; keep them small.\n")
              : QStringLiteral("You cannot see frames from the footage; say what the user should check by eye.\n");
-    const QString folder = knowledgeFolder();
-    if (!folder.isEmpty()) {
-        QFile f(QDir(folder).filePath(QStringLiteral("SKILL.md")));
-        if (f.open(QIODevice::ReadOnly)) {
-            QString knowledge = QString::fromUtf8(f.read(kKnowledgeMaxChars * 4)).left(kKnowledgeMaxChars);
-            s += QStringLiteral("\nEditing knowledge the user added (their own SKILL.md; follow it where it applies, "
-                                "Dafin's tool results win over it):\n");
-            s += knowledge;
-        }
+    const QString root = skillRoot();
+    const bool builtIn = root == kBuiltInSkillRoot;
+    QFile f(QDir(root).filePath(QStringLiteral("SKILL.md")));
+    if (f.open(QIODevice::ReadOnly)) {
+        QString knowledge = QString::fromUtf8(f.read(kKnowledgeMaxChars * 4)).left(kKnowledgeMaxChars);
+        s += builtIn ? QStringLiteral("\nEditing knowledge built into Dafin (follow it where it applies, Dafin's tool "
+                                      "results win over it; read more of it with read_skill_file):\n")
+                     : QStringLiteral("\nEditing knowledge the user added (their own SKILL.md; follow it where it applies, "
+                                      "Dafin's tool results win over it; read more of it with read_skill_file):\n");
+        s += knowledge;
     }
     return s;
+}
+
+QString AssistantController::skillRoot() const
+{
+    const QString folder = knowledgeFolder();
+    if (!folder.isEmpty() && QFileInfo::exists(QDir(folder).filePath(QStringLiteral("SKILL.md"))))
+        return folder;
+    return kBuiltInSkillRoot; // nothing set, or the chosen folder has no SKILL.md: the built-in skill
+}
+
+QString AssistantController::readSkillFile(const QString &relPath, QString *error) const
+{
+    const QString rel = QDir::cleanPath(relPath.trimmed());
+    const bool okType = rel.endsWith(QLatin1String(".md")) || rel.endsWith(QLatin1String(".json"));
+    if (rel.isEmpty() || rel.startsWith(QLatin1Char('/')) || rel.startsWith(QLatin1String("..")) || rel.contains(QLatin1Char(':'))
+        || rel.contains(QLatin1Char('\\')) || !okType) {
+        *error = QStringLiteral("read_skill_file takes a relative .md or .json path inside the skill, for example skills/sound-director/SKILL.md.");
+        return {};
+    }
+    QFile f(QDir(skillRoot()).filePath(rel));
+    if (!f.open(QIODevice::ReadOnly)) {
+        *error = QStringLiteral("No such skill file: %1").arg(rel);
+        return {};
+    }
+    const QString text = QString::fromUtf8(f.read(kSkillFileMaxChars * 4));
+    return text.size() > kSkillFileMaxChars ? text.left(kSkillFileMaxChars) + QStringLiteral("\n[cut at 12000 characters]") : text;
 }
 
 void AssistantController::addMessage(const QString &kind, const QString &text, const QVariantMap &extra)
@@ -506,6 +543,18 @@ void AssistantController::processQueue()
             runFillTool(call);
             if (generation != m_generation)
                 return;
+            continue;
+        }
+        if (call.name == QLatin1String("read_skill_file")) {
+            QString err;
+            const QString text = readSkillFile(call.args.value(QStringLiteral("path")).toString(), &err);
+            ++m_turnToolCalls;
+            if (text.isEmpty()) {
+                addToolResult(call, err.isEmpty() ? QStringLiteral("Empty file.") : err, true);
+                ++m_turnFailedCalls;
+            } else {
+                addToolResult(call, text, false);
+            }
             continue;
         }
         if (call.name == QLatin1String("ask_user")) {

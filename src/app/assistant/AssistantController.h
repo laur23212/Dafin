@@ -146,6 +146,10 @@ private:
     void onReply(quint64 generation, int status, const QByteArray &body, const QString &netError);
     void processQueue();
     void runToolCall(const ToolCall &call);
+    // Editing knowledge: the user's own folder if it holds a SKILL.md, else the skill built into Dafin
+    // (assistant-skill/, a Qt resource). readSkillFile only ever reads inside that root.
+    QString skillRoot() const;
+    QString readSkillFile(const QString &relPath, QString *error) const;
     void addToolResult(const ToolCall &call, const QString &text, bool isError,
                        const QList<ImagePart> &images = {});
     void closeOpenCalls(const QString &why);

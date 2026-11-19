@@ -1,0 +1,4 @@
+{
+  "id": "setup-depth",
+  "instructions": "For multi-step controllers, firmware, docking, TV menus or OS setup, maintain actual ordered steps, prerequisites, alternative path, and confirmed result. Running long is acceptable. Relevant: 033,034,037,042,043,045."
+}

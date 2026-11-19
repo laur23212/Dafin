@@ -870,6 +870,16 @@ qt_add_resources(driftcore "drift_text_styles"
     FILES ${DAFIN_TEXT_STYLE_FILES}
 )
 
+# Dafin: the built-in editing skill for AI Assist (Taste Engine + opt-in Creator Style, text only, no frames).
+file(GLOB_RECURSE DAFIN_ASSISTANT_SKILL_FILES CONFIGURE_DEPENDS
+    RELATIVE "${CMAKE_SOURCE_DIR}/assistant-skill"
+    "${CMAKE_SOURCE_DIR}/assistant-skill/*.md" "${CMAKE_SOURCE_DIR}/assistant-skill/*.json")
+qt_add_resources(driftcore "dafin_assistant_skill"
+    PREFIX "/assistant-skill"
+    BASE "${CMAKE_SOURCE_DIR}/assistant-skill"
+    FILES ${DAFIN_ASSISTANT_SKILL_FILES}
+)
+
 # Audio effect DSP. JUCE modules compile into whatever target links them, so keeping them in a
 # library of their own is what stops JUCE's headers, its compile definitions and its build time
 # from spreading across driftengine. AudioEffectRack.h is the only header that leaves here and it

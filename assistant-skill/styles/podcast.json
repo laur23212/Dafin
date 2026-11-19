@@ -1,0 +1,62 @@
+{
+  "label": "Podcast / Interview",
+  "family": "interview",
+  "description": "Conversation-first multicam cuts; preserve authentic exchange and natural phrasing.",
+  "intent": "Clarify a conversation without turning it into a hyperactive montage.",
+  "visual_refresh_target_s": [
+    4,
+    12
+  ],
+  "broll_shot_target_s": [
+    2,
+    6
+  ],
+  "talking_head_refresh_s": 13,
+  "caption_max_chars_per_second": 17,
+  "caption_min_hold_s": 1,
+  "title_min_hold_s": 1.4,
+  "safe_margin": 0.06,
+  "text_entrance_ms": [
+    180,
+    350
+  ],
+  "text_exit_ms": [
+    140,
+    260
+  ],
+  "max_competing_animations": 1,
+  "preferred_transitions": [
+    "hard_cut",
+    "j_cut",
+    "l_cut"
+  ],
+  "avoid": [
+    "camera switching on a metronome",
+    "removing every breath",
+    "misleading jump-cut between answers"
+  ],
+  "opening": "Begin with a truthful exchange that signals the value of the conversation.",
+  "editing": "Cut on speaker/reaction/subject shift; preserve hesitations that carry meaning.",
+  "typography": "Speaker IDs and occasional quote pull-outs; no constant kinetic distraction.",
+  "sound": "Match and clean speech across angles; silence can be valuable.",
+  "critique": "Does it sound and feel like a real exchange?",
+  "id": "podcast",
+  "version": "0.2.0",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}
