@@ -897,6 +897,11 @@ PanelFrame {
         const saved = root.tabState[tabId] || {}
         if (saved.search)
             tab.searchText = saved.search
+        // Dafin: the first time a tab opens it starts on Favorites, when it has any.
+        if (saved.category === undefined && AssetGroups.hasFavorites(tabId)) {
+            tab.activeCategory = AssetGroups.favoritesId
+            return
+        }
         if (saved.category === undefined || !tab.categories)
             return
         if (saved.category === "__favorites__" || saved.category === "__recent__" || saved.category === "__mine__"
@@ -1195,6 +1200,8 @@ PanelFrame {
                                     const saved = root.tabState["text"] || {}
                                     if (saved.section)
                                         section = saved.section
+                                    else if (AssetGroups.hasFavorites("titles"))
+                                        section = AssetGroups.favoritesId
                                 }
                                 onSectionChanged: root.rememberTab("text", "section", section)
                                 onAdded: root.addCompleted()

@@ -32,6 +32,11 @@ QtObject {
         return typeof listId === "string" && listId.indexOf("grp-") === 0
     }
 
+    // True when the tab has at least one favorite: tabs open on Favorites only then.
+    function hasFavorites(tabId) {
+        return EditorState.assetListItems(tabId, favoritesId).length > 0
+    }
+
     function isRecent(listId) {
         return listId === recentId
     }

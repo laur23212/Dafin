@@ -108,7 +108,12 @@ PanelFrame {
     }
 
     onShownChanged: syncActive()
-    Component.onCompleted: syncActive()
+    Component.onCompleted: {
+        // Dafin: opens on Favorites when there are any.
+        if (AssetGroups.hasFavorites("looks"))
+            activeCategory = AssetGroups.favoritesId
+        syncActive()
+    }
     Component.onDestruction: colorState.thumbnailsActive = false
     onTargetChanged: if (shown) colorState.requestThumbnails()
 
