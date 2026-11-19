@@ -1,0 +1,63 @@
+{
+  "label": "Commercial / Product",
+  "family": "advertising",
+  "description": "Short product-led promos driven by proof, hierarchy, and a clear call to action.",
+  "intent": "Show the actual product benefit clearly and avoid unverifiable claims.",
+  "visual_refresh_target_s": [
+    1.3,
+    3
+  ],
+  "broll_shot_target_s": [
+    0.8,
+    2.8
+  ],
+  "talking_head_refresh_s": 5,
+  "caption_max_chars_per_second": 17,
+  "caption_min_hold_s": 0.85,
+  "title_min_hold_s": 1,
+  "safe_margin": 0.065,
+  "text_entrance_ms": [
+    110,
+    240
+  ],
+  "text_exit_ms": [
+    90,
+    170
+  ],
+  "max_competing_animations": 2,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_cut",
+    "motivated_reveal"
+  ],
+  "avoid": [
+    "invented customer testimonials",
+    "unsupported superlative claims",
+    "too many CTAs",
+    "effect-first product obscuring"
+  ],
+  "opening": "Show a real benefit or the product in actual use, supported by supplied evidence.",
+  "editing": "Problem → demonstration/proof → concise offer → next action.",
+  "typography": "One strong claim per composition; consistent brand tokens.",
+  "sound": "Audio reinforces product actions without masking proof.",
+  "critique": "Does every promise have evidence and is the product unmistakable?",
+  "id": "commercial",
+  "version": "0.2.0",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

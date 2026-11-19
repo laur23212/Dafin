@@ -1,0 +1,8 @@
+# Language-aware text and motion (Dafin v0.5)
+
+- **Subtitle versus kinetic title**: Different audiences and tasks. Spoken subtitles require timing, line segmentation, speaker intent, accessibility. Kinetic text is a graphic with optional speech sync; do not apply broadcast subtitle limits blindly.
+- **English delivery reference only**: Netflix subtitle templates list 17 characters/second for adult content and 15 for children. See https://partnerhelp.netflixstudios.com/hc/en-us/articles/219375728-Timed-Text-Style-Guide-Subtitle-Templates . This is NOT an official YouTube requirement.
+- **Line length reference**: Netflix says around 42 characters per line for many languages, with language-specific exceptions; Romanian TTSG uses 42. Check actual font width, safe zones, aspect ratio and edited copy. Sources: https://partnerhelp.netflixstudios.com/hc/en-us/articles/215274938-What-is-the-maximum-number-of-characters-per-line-allowed-in-Timed-Text-assets and https://partnerhelp.netflixstudios.com/hc/en-us/articles/220294068-Romanian-Timed-Text-Style-Guide .
+- **English/RO are not identical**. Do not apply an English speed benchmark to Romanian by default; allow a curator-approved per-language option.
+- **Motion**: Use entrance, stagger, and exit to compute settled hold; natural, meaningful easing matters more than one universal duration. Google's UI motion times are reference patterns, NOT video-editing prescriptions: https://m1.material.io/motion/duration-easing.html .
+- **Review requirement**: metadata catches possible problems, never proves contrast, obstruction, eye trace, emotion or readable delivery on a phone.

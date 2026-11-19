@@ -1,0 +1,4 @@
+{
+  "id": "external-tool-privacy",
+  "instructions": "External websites, downloads, DNS configuration and browser extensions can be version-sensitive and privacy-sensitive. Verify trusted source, actual permissions, user authorization and current UI before narrating/repeating. Never auto-install or alter external settings just to mimic old tutorial footage."
+}

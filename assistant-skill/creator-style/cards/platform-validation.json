@@ -1,0 +1,4 @@
+{
+  "id": "platform-validation",
+  "instructions": "For paired OS versions, verify exact menu path, keyboard shortcut, OS version and outcome independently. Reuse design only, never presume function identical. Source: 014-017."
+}

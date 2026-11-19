@@ -1,0 +1,73 @@
+{
+  "id": "cinematic",
+  "version": "0.8.0",
+  "label": "Cinematic",
+  "family": "film",
+  "description": "Film-language storytelling led by viewpoint, performance, dramatic information, sound, and motivated rhythm; not an automatic slow-motion filter.",
+  "intent": "Protect genuine dramatic meaning and the audience viewpoint. The cut should advance feeling, information or perception; tempo can be fast, still or contrasting.",
+  "visual_refresh_target_s": [
+    3.0,
+    9.0
+  ],
+  "broll_shot_target_s": [
+    2.5,
+    7.0
+  ],
+  "talking_head_refresh_s": 14.0,
+  "caption_max_chars_per_second": 15,
+  "caption_min_hold_s": 1.2,
+  "title_min_hold_s": 2.0,
+  "safe_margin": 0.075,
+  "text_entrance_ms": [
+    350,
+    850
+  ],
+  "text_exit_ms": [
+    250,
+    650
+  ],
+  "max_competing_animations": 1,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_on_action",
+    "j_cut",
+    "l_cut",
+    "motivated_dissolve",
+    "motivated_graphic_match",
+    "sound_bridge"
+  ],
+  "avoid": [
+    "retention-driven graphic every 2 seconds",
+    "default whooshes",
+    "bright outlined words over emotionally quiet footage",
+    "unearned slow motion",
+    "mechanically long shots mistaken for cinema",
+    "forced teal/orange grading or fake film grain as proof of taste",
+    "reaction shots sourced from the wrong moment",
+    "unearned continuity-breaking juxtaposition",
+    "covering dramatic silence with generic stock score",
+    "automatic 2.39:1 crop that hides evidence"
+  ],
+  "opening": "Introduce a visual/sound situation, character need or dramatic question through genuine footage; withhold or reveal information only when the narrative warrants it.",
+  "editing": "Emotion and performance > story meaning > rhythm > eye guidance > spatial continuity when tradeoffs arise. Preserve emotional transitions, establish cause/effect and geography when needed, use subjective POV/reaction only with truthful context. No mandated shot length or obligatory transition.",
+  "typography": "Minimal motivated titles and credits; sparse readable lower thirds when needed, never assume cinema means letterbox bars or an arbitrary expensive-looking font.",
+  "sound": "Use room tone, diegetic perspective, scene-specific textures, selective score and intentional silence. Consider J/L audio bridges only when authentic source handles exist and rights are clear.",
+  "critique": "Does the scene convey whose perspective matters? Is the emotional transition continuous? Does the audience understand cause/effect and the sonic world? Would a sustained shot or meaningful contrast beat another cut?",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

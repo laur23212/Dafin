@@ -1,0 +1,66 @@
+{
+  "schema": "dafin.creator-style.route-index.v6",
+  "version": "6.0.0",
+  "activation": "user_opt_in_only",
+  "core_card": "cards/core.json",
+  "task_routes": {
+    "one_setting_shortcut": [
+      "ui-targets"
+    ],
+    "software_or_phone_ui": [
+      "ui-targets",
+      "ui-version-check"
+    ],
+    "account_management": [
+      "ui-targets",
+      "auth-and-privacy",
+      "ui-version-check"
+    ],
+    "hardware_demonstration": [
+      "physical-demonstration",
+      "action-continuity"
+    ],
+    "device_troubleshooting": [
+      "conditional-fixes",
+      "warnings"
+    ],
+    "multi_fix_or_risky_reset": [
+      "conditional-fixes",
+      "warnings",
+      "data-loss-guard"
+    ],
+    "landscape_portrait_variant": [
+      "edition-family",
+      "format-adaptation",
+      "portrait-layout-audit",
+      "provenance-dedup"
+    ],
+    "related_alternate_remedy": [
+      "edition-scope",
+      "conditional-fixes",
+      "data-loss-guard",
+      "provenance-dedup"
+    ],
+    "expressive_title_if_requested": [
+      "expressive-elements"
+    ]
+  },
+  "mandatory_overlays": {
+    "device_data_loss": [
+      "data-loss-guard",
+      "warnings"
+    ],
+    "third_party_accounts": [
+      "auth-and-privacy"
+    ],
+    "version_sensitive_ui": [
+      "ui-version-check"
+    ],
+    "privacy_sensitive_reference": [
+      "auth-and-privacy"
+    ]
+  },
+  "evidence_on_demand": "CREATOR_STYLE_PROFILE_V6.json and evidence/SOURCE_MANIFEST_BATCH0*.json",
+  "source_match_notes": "Audio similarity in evidence/AUDIO_RELATIONS_BATCH06.json verifies only first 12s of listed pairs; require real source-range matches before reuse.",
+  "policy": "Do not load unrelated cards or full 90-video history; never suppress mandatory safety guidance merely to hit a token budget."
+}

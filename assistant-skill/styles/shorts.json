@@ -1,0 +1,63 @@
+{
+  "id": "shorts",
+  "version": "0.2.0",
+  "label": "Shorts / Reels",
+  "family": "social",
+  "description": "Vertical, mobile-first edits with one clear idea, visually legible captions and a fast payoff.",
+  "intent": "Deliver one compelling idea quickly; do not confuse speed with noise.",
+  "visual_refresh_target_s": [
+    0.9,
+    2.5
+  ],
+  "broll_shot_target_s": [
+    0.6,
+    2.2
+  ],
+  "talking_head_refresh_s": 4.0,
+  "caption_max_chars_per_second": 17,
+  "caption_min_hold_s": 0.7,
+  "title_min_hold_s": 0.8,
+  "safe_margin": 0.12,
+  "text_entrance_ms": [
+    90,
+    190
+  ],
+  "text_exit_ms": [
+    80,
+    150
+  ],
+  "max_competing_animations": 2,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_cut",
+    "small_scale_punch"
+  ],
+  "avoid": [
+    "tiny text",
+    "multiple simultaneous callouts",
+    "cropping faces during reframing",
+    "word pops on every syllable"
+  ],
+  "opening": "Start with the strongest truthful visual or question; communicate what the clip is about immediately.",
+  "editing": "One idea per video; keep pacing responsive to speech and subject action; preserve payoff rather than overcutting.",
+  "typography": "Large concise captions in tested mobile-safe area; highlight one keyword, not every word.",
+  "sound": "Clear voice, a restrained music bed and selective emphasis.",
+  "critique": "Is the premise understandable with sound off? Is important content clear on a small phone?",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

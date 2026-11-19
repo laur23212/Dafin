@@ -1,0 +1,5 @@
+{
+  "id": "core",
+  "token_hint": "~110 tokens",
+  "instructions": "User-opt-in only. Show the actual problem/object immediately; prioritize the shortest complete, correct sequence. Preserve prerequisites, UI states, result, accessibility and warnings. Trim only after transcript+frame evidence. Prefer meaningful demonstrations over arbitrary shot frequency. No fabricated rerun incentive."
+}

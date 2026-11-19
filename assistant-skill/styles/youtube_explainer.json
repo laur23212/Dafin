@@ -1,0 +1,62 @@
+{
+  "id": "youtube_explainer",
+  "version": "0.2.0",
+  "label": "YouTube Explainer",
+  "family": "youtube",
+  "description": "Information-dense tutorials and explainers; energetic when useful, patient during demonstrations.",
+  "intent": "Help viewers understand and remember an idea, not just stay visually stimulated.",
+  "visual_refresh_target_s": [
+    2.0,
+    5.5
+  ],
+  "broll_shot_target_s": [
+    1.5,
+    4.5
+  ],
+  "talking_head_refresh_s": 8.0,
+  "caption_max_chars_per_second": 17,
+  "caption_min_hold_s": 0.9,
+  "title_min_hold_s": 1.15,
+  "safe_margin": 0.065,
+  "text_entrance_ms": [
+    150,
+    320
+  ],
+  "text_exit_ms": [
+    110,
+    230
+  ],
+  "max_competing_animations": 2,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_cut",
+    "step_reveal"
+  ],
+  "avoid": [
+    "cutting away during an essential on-screen step",
+    "full-screen motion while explaining a dense concept",
+    "decorative transitions between every point"
+  ],
+  "opening": "State the question and show what the viewer will know or be able to do.",
+  "editing": "One idea per beat; synchronize narration and demonstration; keep complex diagrams visible long enough to parse.",
+  "typography": "Visual hierarchy: topic, key phrase, supporting label; highlight only one concept at a time.",
+  "sound": "Quiet background music optional; leave high speech intelligibility and avoid overlapping explanation with stings.",
+  "critique": "Can a first-time viewer actually follow the argument and the demonstrated steps?",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

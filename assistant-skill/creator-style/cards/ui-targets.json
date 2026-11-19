@@ -1,0 +1,4 @@
+{
+  "id": "ui-targets",
+  "instructions": "Use short numbered labels and red arrows when the viewer must locate controls; align to verified interface state and visible coordinates. Keep vertical phone UI sufficiently legible; if labels compete with small UI text, enlarge the UI instead. Source: 020 and 030."
+}

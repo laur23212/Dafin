@@ -1,0 +1,62 @@
+{
+  "label": "YouTube Storytelling",
+  "family": "youtube",
+  "description": "Creator-led stories and vlogs; character, context and an earned payoff with a rhythm that breathes.",
+  "intent": "Tell a story that unfolds through concrete events and meaningful reactions.",
+  "visual_refresh_target_s": [
+    1.8,
+    4.5
+  ],
+  "broll_shot_target_s": [
+    1.5,
+    4.0
+  ],
+  "talking_head_refresh_s": 7.0,
+  "caption_max_chars_per_second": 17,
+  "caption_min_hold_s": 0.9,
+  "title_min_hold_s": 1.1,
+  "safe_margin": 0.065,
+  "text_entrance_ms": [
+    150,
+    300
+  ],
+  "text_exit_ms": [
+    100,
+    220
+  ],
+  "max_competing_animations": 2,
+  "preferred_transitions": [
+    "hard_cut",
+    "match_cut",
+    "motivated_dissolve"
+  ],
+  "avoid": [
+    "montage before stakes are clear",
+    "forced cuts during an emotional reaction",
+    "generic stock clips unrelated to events"
+  ],
+  "opening": "Introduce a truthful compelling situation and what is at stake.",
+  "editing": "Progress from situation to complication to reaction to consequence; let the payoff breathe. Borrow cinema grammar selectively: point-of-view and reaction pairs, motivated sound bridges, purposeful close-ups and silence, without sacrificing click-promise clarity or authentic chronology.",
+  "typography": "Concise place/time labels or emphasis, not constant captions unless asked.",
+  "sound": "Music changes with story tension; retain authentic live sound and breaths.",
+  "critique": "Would a viewer understand who wants what and why the moment matters? Whose perspective does the viewer occupy, and does each reveal change understanding rather than merely refresh the screen?",
+  "id": "youtube_storytelling",
+  "version": "0.8.0",
+  "creative_contrast": [
+    {
+      "move": "attention_change",
+      "when": "A new idea, action or visual fact arrives"
+    },
+    {
+      "move": "intentional_hold",
+      "when": "The viewer needs to read, understand or feel something"
+    }
+  ],
+  "shot_intents": [
+    "prove",
+    "explain",
+    "react",
+    "orient",
+    "payoff"
+  ]
+}

@@ -209,11 +209,11 @@ Popup {
                     onToggled: Assistant.allowFrames = checked
                 }
 
-                ThemedLabel { text: qsTr("Editing knowledge folder (optional)") }
+                ThemedLabel { text: qsTr("Editing knowledge folder (optional; built-in by default)") }
                 ThemedTextField {
                     Layout.fillWidth: true
                     text: Assistant.knowledgeFolder
-                    placeholderText: qsTr("Folder with a SKILL.md, e.g. your Taste Engine")
+                    placeholderText: qsTr("Empty = built-in editing skill. Or a folder with your own SKILL.md")
                     Accessible.name: qsTr("Editing knowledge folder")
                     onEditingFinished: Assistant.knowledgeFolder = text
                 }

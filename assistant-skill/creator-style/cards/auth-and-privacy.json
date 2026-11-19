@@ -1,0 +1,4 @@
+{
+  "id": "auth-and-privacy",
+  "instructions": "Review authentication/account UIs without sharing account names, credentials or device IDs. CAPTCHA demonstrations must not be translated into automatic bot evasion. Relevant: 041."
+}
