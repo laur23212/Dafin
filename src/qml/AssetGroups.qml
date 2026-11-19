@@ -11,6 +11,9 @@ QtObject {
     id: groups
 
     readonly property string favoritesId: "__favorites__"
+    // "Recently Used": filled when a card is applied or dropped (EditorState.noteAssetUsed),
+    // newest first. A list like favorites, but it cannot be reordered.
+    readonly property string recentId: "__recent__"
 
     // Bumped on every change, so a binding that reads lists through the functions below refreshes.
     property int tick: 0
@@ -29,8 +32,18 @@ QtObject {
         return typeof listId === "string" && listId.indexOf("grp-") === 0
     }
 
+    function isRecent(listId) {
+        return listId === recentId
+    }
+
     function isMyList(listId) {
-        return listId === favoritesId || isGroup(listId)
+        return listId === favoritesId || listId === recentId || isGroup(listId)
+    }
+
+    // Counts the card as used: it leads the tab's Recently Used list.
+    function noteUsed(tabId, itemId) {
+        if (tabId && itemId)
+            EditorState.noteAssetUsed(tabId, String(itemId))
     }
 
     function setActive(tabId, listId) {

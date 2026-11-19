@@ -1693,6 +1693,12 @@ void AppController::toggleAssetFavorite(const QString &tabId, const QString &ite
     emit assetGroupsChanged();
 }
 
+void AppController::noteAssetUsed(const QString &tabId, const QString &itemId)
+{
+    if (m_assetGroups.noteUsed(tabId, itemId))
+        emit assetGroupsChanged();
+}
+
 QStringList AppController::assetListItems(const QString &tabId, const QString &listId) const
 {
     return m_assetGroups.items(tabId, listId);

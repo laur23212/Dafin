@@ -72,6 +72,9 @@ AssetGroupStore::Tab AssetGroupStore::parse(const QByteArray &json)
         return tab;
     const QJsonObject root = doc.object();
     tab.favorites = cleanIds(root.value(QStringLiteral("favorites")).toArray());
+    tab.recents = cleanIds(root.value(QStringLiteral("recents")).toArray());
+    while (tab.recents.size() > recentLimit())
+        tab.recents.removeLast();
     QSet<QString> groupIds;
     QStringList names;
     for (const QJsonValue &v : root.value(QStringLiteral("groups")).toArray()) {
@@ -101,6 +104,7 @@ QByteArray AssetGroupStore::serialise(const Tab &tab)
                                   {QStringLiteral("items"), QJsonArray::fromStringList(g.items)}});
     const QJsonObject root{{QStringLiteral("version"), 1},
                            {QStringLiteral("favorites"), QJsonArray::fromStringList(tab.favorites)},
+                           {QStringLiteral("recents"), QJsonArray::fromStringList(tab.recents)},
                            {QStringLiteral("groups"), groups}};
     return QJsonDocument(root).toJson(QJsonDocument::Compact);
 }
@@ -152,6 +156,8 @@ QStringList *AssetGroupStore::list(const QString &tabId, const QString &listId) 
 {
     if (listId == favoritesId())
         return &tab(tabId).favorites;
+    if (listId == recentId())
+        return &tab(tabId).recents;
     Group *g = findGroup(tabId, listId);
     return g ? &g->items : nullptr;
 }
@@ -302,10 +308,25 @@ QStringList AssetGroupStore::items(const QString &tabId, const QString &listId) 
     return ids ? *ids : QStringList();
 }
 
+bool AssetGroupStore::noteUsed(const QString &tabId, const QString &itemId)
+{
+    if (!validTab(tabId) || itemId.isEmpty())
+        return false;
+    QStringList &recents = tab(tabId).recents;
+    if (!recents.isEmpty() && recents.first() == itemId)
+        return false;
+    recents.removeAll(itemId);
+    recents.prepend(itemId);
+    while (recents.size() > recentLimit())
+        recents.removeLast();
+    save(tabId);
+    return true;
+}
+
 bool AssetGroupStore::moveItem(const QString &tabId, const QString &listId, const QString &itemId,
                                const QString &targetId)
 {
-    if (!validTab(tabId) || itemId == targetId)
+    if (!validTab(tabId) || itemId == targetId || listId == recentId())
         return false;
     QStringList *ids = list(tabId, listId);
     if (!ids)

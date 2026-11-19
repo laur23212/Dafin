@@ -49,6 +49,25 @@ Item {
     readonly property var myTitles: showsMyList ? AssetGroups.pick("titles", root.section, root.allTitles, p => p.id) : []
     readonly property real topArea: myBar.y + myBar.height
 
+    // Dafin: search by name across every title (built-in, installed, mine). While there is
+    // a query, the section chips' grids give way to one result grid and the My bar is hidden.
+    property alias searchText: titleSearch.text
+    readonly property string query: titleSearch.text.trim().toLowerCase()
+    readonly property bool searching: query.length > 0
+    readonly property var searchResults: {
+        const q = root.query
+        if (q.length === 0)
+            return []
+        return root.allTitles.filter(p => {
+            const hay = [p.label, p.name, p.id, p.category, p.description,
+                         Array.isArray(p.tags) ? p.tags.join(" ") : p.tags]
+                .filter(x => typeof x === "string").join(" ").toLowerCase()
+            return hay.indexOf(q) >= 0
+        })
+    }
+    // What the shared card grid shows: search results, else Favorites / Recently used / a group.
+    readonly property var shownTitles: searching ? searchResults : myTitles
+
     readonly property var activeCategory: {
         for (const c of root.categories)
             if (c.id === root.category)
@@ -164,7 +183,7 @@ Item {
         width: parent.width
         y: root.topArea + Theme.spacingSm
         height: visible ? Theme.controlHeightSm + Theme.spacingSm : 0
-        visible: root.section === "mine"
+        visible: root.section === "mine" && !root.searching
 
         Flickable {
             x: Theme.pagePadding
@@ -237,9 +256,16 @@ Item {
     }
 
     // Dafin: ⭐ Favorites, the user's groups and + New group, under the section chips.
+    AssetSearchBar {
+        id: titleSearch
+        y: toolbar.height
+        placeholderText: qsTr("Search titles")
+    }
+
     AssetCategoryChips {
         id: myBar
-        y: toolbar.height + Theme.spacingSm
+        y: titleSearch.y + titleSearch.height
+        searching: root.searching
         width: parent.width
         tabId: "titles"
         activeCategory: root.section
@@ -276,7 +302,7 @@ Item {
         cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
-        visible: root.section === "builtin"
+        visible: root.section === "builtin" && !root.searching
         model: root.builtinPresets
 
         delegate: TextStylePackCard {
@@ -305,7 +331,7 @@ Item {
         cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
-        visible: root.section === "mine" && root.userPresets.length > 0
+        visible: root.section === "mine" && !root.searching && root.userPresets.length > 0
         model: root.userPresets
 
         delegate: TextStyleUserCard {
@@ -338,7 +364,7 @@ Item {
         cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
-        visible: root.section === "installed"
+        visible: root.section === "installed" && !root.searching
         model: root.installedPresets
 
         delegate: TextStyleUserCard {
@@ -367,8 +393,8 @@ Item {
         cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 0.55) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
-        visible: root.showsMyList && root.myTitles.length > 0
-        model: root.myTitles
+        visible: (root.showsMyList || root.searching) && root.shownTitles.length > 0
+        model: root.shownTitles
 
         delegate: Item {
             id: myCell
@@ -413,19 +439,23 @@ Item {
         anchors.fill: myGrid
         view: myGrid
         tabId: "titles"
-        listId: root.section
-        keyAt: i => root.myTitles[i] ? root.myTitles[i].id : ""
+        listId: root.searching ? "" : root.section
+        keyAt: i => root.shownTitles[i] ? root.shownTitles[i].id : ""
     }
 
     EmptyState {
         anchors.horizontalCenter: parent.horizontalCenter
         y: root.topArea + Math.max(0, (parent.height - root.topArea - height) / 2)
         width: Math.min(parent.width - Theme.spacing3xl, 260)
-        visible: root.showsMyList && root.myTitles.length === 0
+        visible: (root.showsMyList || root.searching) && root.shownTitles.length === 0
         compact: true
-        glyph: Theme.icons.star
-        title: root.section === AssetGroups.favoritesId ? qsTr("No favorite titles yet") : qsTr("This group is empty")
-        hint: root.section === AssetGroups.favoritesId
+        glyph: root.searching ? Theme.icons.search : Theme.icons.star
+        title: root.searching ? qsTr("No titles match “%1”").arg(titleSearch.text.trim())
+               : root.section === AssetGroups.recentId ? qsTr("No recently used titles")
+               : root.section === AssetGroups.favoritesId ? qsTr("No favorite titles yet") : qsTr("This group is empty")
+        hint: root.searching ? qsTr("Try a different name.")
+              : root.section === AssetGroups.recentId ? qsTr("Titles you add show up here.")
+              : root.section === AssetGroups.favoritesId
               ? qsTr("Star a title to keep it here.")
               : qsTr("Right-click a title and choose Add to group, or drop it on the group.")
     }
@@ -434,7 +464,7 @@ Item {
         anchors.horizontalCenter: parent.horizontalCenter
         y: root.topArea + Math.max(0, (parent.height - root.topArea - height) / 2)
         width: Math.min(parent.width - Theme.spacing3xl, 260)
-        visible: root.section === "mine" && root.userPresets.length === 0
+        visible: root.section === "mine" && !root.searching && root.userPresets.length === 0
         compact: true
         glyph: Theme.icons.type
         title: root.category === "" ? qsTr("No saved templates") : qsTr("Nothing in this category yet")

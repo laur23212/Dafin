@@ -30,6 +30,10 @@ public:
     // The favorites list answers to this id wherever a list id is taken.
     static QString favoritesId() { return QStringLiteral("__favorites__"); }
     static bool isGroupId(const QString &listId) { return listId.startsWith(QLatin1String("grp-")); }
+    // "Recently Used": the newest item first, kept per tab, never more than recentLimit().
+    // Read-only as a list (it answers to this id in items()); it is filled by noteUsed().
+    static QString recentId() { return QStringLiteral("__recent__"); }
+    static int recentLimit() { return 24; }
 
     QStringList favorites(const QString &tab) const;
     bool isFavorite(const QString &tab, const QString &itemId) const;
@@ -55,6 +59,10 @@ public:
     // Puts itemId where targetId is now (the rest shift by one), in favorites or a group.
     bool moveItem(const QString &tab, const QString &listId, const QString &itemId, const QString &targetId);
 
+    // An item was just used (applied, dropped on the timeline): it goes to the front of the tab's
+    // Recently Used list, or moves there. Returns false when nothing changed (already first).
+    bool noteUsed(const QString &tab, const QString &itemId);
+
     // Forgets what was read, so the next call reads the settings again (a restart, in tests).
     void reload();
 
@@ -64,6 +72,7 @@ private:
     struct Tab
     {
         QStringList favorites;
+        QStringList recents;
         QList<Group> groups;
     };
 

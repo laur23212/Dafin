@@ -99,8 +99,22 @@ Item {
             }
         }
 
+        // Dafin: Recently Used, the last cards applied or dropped from this tab, newest first.
+        IconButton {
+            id: recentButton
+            visible: root.tabId.length > 0
+            anchors.verticalCenter: parent.verticalCenter
+            glyph: Theme.icons.clock
+            variant: "ghost"
+            buttonSize: Theme.controlHeightSm
+            iconSize: 14
+            active: root.activeCategory === AssetGroups.recentId
+            tooltip: qsTr("Recently used")
+            onClicked: root.categoryActivated(AssetGroups.recentId)
+        }
+
         ScrollStrip {
-            width: Math.max(0, row.width - favButton.width - row.spacing)
+            width: Math.max(0, row.width - favButton.width - (recentButton.visible ? recentButton.width + row.spacing : 0) - row.spacing)
             height: parent.height
 
             Row {

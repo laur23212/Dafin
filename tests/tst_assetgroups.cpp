@@ -23,6 +23,7 @@ private slots:
     void unknownIdsAreKeptAndHarmless();
     void damagedSettingsReadAsEmpty();
     void tabsAreSeparate();
+    void recentlyUsedLeadsAndPersists();
 
 private:
     QString m_org;
@@ -207,6 +208,31 @@ void AssetGroupsTest::tabsAreSeparate()
     // The same name in another tab is not a duplicate.
     store.addGroup(QStringLiteral("stickers"), QStringLiteral("Same"));
     QCOMPARE(store.groups(QStringLiteral("stickers")).at(0).name, QStringLiteral("Same"));
+}
+
+void AssetGroupsTest::recentlyUsedLeadsAndPersists()
+{
+    const QString tab = QStringLiteral("effects");
+    const QString recent = AssetGroupStore::recentId();
+    {
+        AssetGroupStore store;
+        QVERIFY(store.noteUsed(tab, QStringLiteral("a")));
+        QVERIFY(store.noteUsed(tab, QStringLiteral("b")));
+        QVERIFY(store.noteUsed(tab, QStringLiteral("a"))); // moves to the front, no twin
+        QVERIFY(!store.noteUsed(tab, QStringLiteral("a"))); // already first: nothing changed
+        QCOMPARE(store.items(tab, recent), (QStringList{QStringLiteral("a"), QStringLiteral("b")}));
+        // Not reorderable, and not mixed into favorites or other tabs.
+        QVERIFY(!store.moveItem(tab, recent, QStringLiteral("b"), QStringLiteral("a")));
+        QVERIFY(store.favorites(tab).isEmpty());
+        QVERIFY(store.items(QStringLiteral("stickers"), recent).isEmpty());
+        for (int i = 0; i < AssetGroupStore::recentLimit() + 5; ++i)
+            store.noteUsed(tab, QStringLiteral("id%1").arg(i));
+        QCOMPARE(store.items(tab, recent).size(), AssetGroupStore::recentLimit());
+        QCOMPARE(store.items(tab, recent).first(), QStringLiteral("id%1").arg(AssetGroupStore::recentLimit() + 4));
+    }
+    AssetGroupStore again; // a restart
+    QCOMPARE(again.items(tab, recent).size(), AssetGroupStore::recentLimit());
+    QVERIFY(!again.noteUsed(QStringLiteral("a/b"), QStringLiteral("x"))); // not a tab id
 }
 
 QTEST_GUILESS_MAIN(AssetGroupsTest)

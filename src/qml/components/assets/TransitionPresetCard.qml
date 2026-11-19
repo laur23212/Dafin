@@ -55,6 +55,11 @@ Column {
     // Dafin: what a drop on a group chip or a reorder reads from the drag's source (AssetGroups).
     readonly property string groupTab: "transitions"
     readonly property string groupItem: root.modelData.kind || ""
+    // Dafin: a drop that was accepted counts as a use (Recently Used).
+    Drag.onDragFinished: (dropAction) => {
+        if (dropAction !== Qt.IgnoreAction)
+            AssetGroups.noteUsed("transitions", root.modelData.kind)
+    }
     Drag.active: transitionDrag.active
     Drag.dragType: Drag.Automatic
     Drag.supportedActions: Qt.CopyAction

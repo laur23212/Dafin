@@ -899,7 +899,7 @@ PanelFrame {
             tab.searchText = saved.search
         if (saved.category === undefined || !tab.categories)
             return
-        if (saved.category === "__favorites__" || saved.category === "__mine__"
+        if (saved.category === "__favorites__" || saved.category === "__recent__" || saved.category === "__mine__"
                 || tab.categories.some(category => category.id === saved.category))
             tab.activeCategory = saved.category
     }

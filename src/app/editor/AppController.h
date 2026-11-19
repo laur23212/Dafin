@@ -1786,6 +1786,8 @@ public:
     // Dafin: the "My" area of each asset tab and the font list (AssetGroupStore): ordered
     // favorites ("__favorites__") and the user's groups ({id, name, count}), each an ordered list
     // of item ids. Ids the tab no longer has are kept and simply not shown.
+    // Dafin: an asset was applied or dropped: it leads the tab's Recently Used list.
+    Q_INVOKABLE void noteAssetUsed(const QString &tabId, const QString &itemId);
     Q_INVOKABLE QStringList assetListItems(const QString &tabId, const QString &listId) const;
     Q_INVOKABLE QVariantList assetGroups(const QString &tabId) const;
     // Returns the new group's id ("" for a blank name); a taken name is numbered. With itemId,

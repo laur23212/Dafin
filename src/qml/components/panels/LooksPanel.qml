@@ -309,7 +309,10 @@ PanelFrame {
                 text: card.modelData.label
             }
             TapHandler {
-                onTapped: root.colorState.setLook(card.modelData.id)
+                onTapped: {
+                    AssetGroups.noteUsed("looks", card.modelData.id)
+                    root.colorState.setLook(card.modelData.id)
+                }
             }
             // Dafin: in Favorites and the user's groups a look drags onto another's place.
             readonly property string groupTab: "looks"

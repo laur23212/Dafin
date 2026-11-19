@@ -26,6 +26,11 @@ Column {
     // Dafin: what a drop on a group chip or a reorder reads from the drag's source (AssetGroups).
     readonly property string groupTab: "sounds"
     readonly property string groupItem: root.modelData.id || ""
+    // Dafin: a drop that was accepted counts as a use (Recently Used).
+    Drag.onDragFinished: (dropAction) => {
+        if (dropAction !== Qt.IgnoreAction)
+            AssetGroups.noteUsed("sounds", root.modelData.id)
+    }
     Drag.active: presetDrag.active
     Drag.dragType: Drag.Automatic
     Drag.supportedActions: Qt.CopyAction

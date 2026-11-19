@@ -43,6 +43,16 @@ Item {
     signal doubleTapped()
     signal contextMenuRequested()
 
+    // Dafin: a tap or an accepted drop counts as a use of the card (Recently Used).
+    function noteUsed() {
+        if (root.groupTab.length > 0 && root.groupItem.length > 0)
+            AssetGroups.noteUsed(root.groupTab, root.groupItem)
+    }
+    Drag.onDragFinished: (dropAction) => {
+        if (dropAction !== Qt.IgnoreAction)
+            root.noteUsed()
+    }
+
     Drag.active: mouseDrag.active
     Drag.dragType: Drag.Automatic
     Drag.supportedActions: Qt.CopyAction
@@ -84,7 +94,7 @@ Item {
             id: tap
             acceptedButtons: Qt.LeftButton
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad | PointerDevice.Stylus
-            onTapped: root.tapped()
+            onTapped: { root.noteUsed(); root.tapped() }
             onDoubleTapped: root.doubleTapped()
         }
 

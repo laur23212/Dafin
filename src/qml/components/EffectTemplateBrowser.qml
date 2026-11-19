@@ -46,6 +46,7 @@ Column {
     }
 
     function applyTemplate(templateId) {
+        AssetGroups.noteUsed("templates", templateId)
         if (EditorState.selectedClip < 0)
             return
         EditorState.applyEffectTemplate(EditorState.selectedTrack, EditorState.selectedClip, templateId)

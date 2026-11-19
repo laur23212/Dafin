@@ -64,6 +64,7 @@ Column {
     }
 
     function applyPreset(effectId) {
+        AssetGroups.noteUsed("sounds", effectId)
         if (EditorState.selectedClip < 0)
             return
         EditorState.addAudioEffect(EditorState.selectedTrack, EditorState.selectedClip, effectId)

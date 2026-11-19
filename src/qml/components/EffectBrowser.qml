@@ -73,6 +73,7 @@ Column {
     }
 
     function applyPreset(effectId) {
+        AssetGroups.noteUsed("effects", effectId)
         if (EditorState.selectedClip < 0) {
             EditorState.addAdjustmentClipWithEffect(effectId, -1, -1)
             return

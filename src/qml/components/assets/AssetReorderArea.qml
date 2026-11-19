@@ -40,7 +40,7 @@ DropArea {
     }
 
     onEntered: (drag) => {
-        root.draggedId = AssetGroups.isMyList(root.listId) ? AssetGroups.draggedItem(root.tabId, drag) : ""
+        root.draggedId = (AssetGroups.isMyList(root.listId) && !AssetGroups.isRecent(root.listId)) ? AssetGroups.draggedItem(root.tabId, drag) : ""
         if (!root.armed) {
             drag.accepted = false
             return
