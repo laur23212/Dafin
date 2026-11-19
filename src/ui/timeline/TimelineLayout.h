@@ -61,4 +61,8 @@ enum class Zone { None, Body, Hover };
 // the clip in which the overlay has to exist so those handles can be reached.
 Zone hitZone(const QRectF &clip, const QPointF &point, double edgeMargin, double hotspotExtra);
 
+// The edge strip of a clip is at most a quarter of its width, so even a clip a few pixels wide keeps
+// a middle that selects and moves it, and two outer strips that trim it.
+double edgeStripWidth(double clipWidth, double wantedMargin);
+
 } // namespace timelinelayout

@@ -677,8 +677,10 @@ double TimelineTrackItem::edgeMargin(double clipWidth) const
     if (!m_viewState)
         return 14.0;
     const TimelineViewState::Style &s = m_viewState->styleValues();
-    return m_viewState->touchMode() ? std::min(s.edgeMarginTouch, clipWidth / 4.0)
-                                    : s.edgeMarginDesktop;
+    // Dafin: narrow clips on desktop too. A fixed 14 px strip left no body at all on a clip 28 px or
+    // narrower, so it could be neither selected nor moved, and its two trim areas overlapped.
+    return timelinelayout::edgeStripWidth(clipWidth, m_viewState->touchMode() ? s.edgeMarginTouch
+                                                                              : s.edgeMarginDesktop);
 }
 
 double TimelineTrackItem::hotspotExtra() const

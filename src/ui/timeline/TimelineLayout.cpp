@@ -96,4 +96,9 @@ Zone hitZone(const QRectF &clip, const QPointF &point, double edgeMargin, double
     return Zone::Hover;
 }
 
+double edgeStripWidth(double clipWidth, double wantedMargin)
+{
+    return std::max(0.0, std::min(wantedMargin, clipWidth / 4.0));
+}
+
 } // namespace timelinelayout

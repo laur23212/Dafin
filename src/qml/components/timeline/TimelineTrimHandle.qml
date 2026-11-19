@@ -61,10 +61,11 @@ Rectangle {
     MouseArea {
         id: trimMouse
         anchors.fill: parent
-        anchors.leftMargin: handle.edge < 0 ? -owner.trimHotspotExtra : -4
-        anchors.rightMargin: handle.edge > 0 ? -owner.trimHotspotExtra : -4
+        anchors.leftMargin: handle.edge < 0 ? -owner.trimHotspotExtra : -owner.trimInnerReach
+        anchors.rightMargin: handle.edge > 0 ? -owner.trimHotspotExtra : -owner.trimInnerReach
         // Leave the top corner for the fade dot.
         anchors.topMargin: owner.timelineFadeHandles && owner.showTrimHandles
+                           && owner.width >= Theme.clipControlsMinWidth
                            && !owner.touchMode ? (owner.height < 35 ? 10 : 16) : -6
         anchors.bottomMargin: -6
         // Same reason as the move drag: these are ~38px strips at both edges of

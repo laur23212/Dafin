@@ -14746,6 +14746,15 @@ void EditorStateTest::timelineLayoutCullsTilesAndHits()
     QCOMPARE(hitZone(clip, {105.0, 20.0}, 14.0, 10.0), Zone::Hover);
     QCOMPARE(hitZone(clip, {95.0, 20.0}, 14.0, 10.0), Zone::Hover);
     QCOMPARE(hitZone(clip, {80.0, 20.0}, 14.0, 10.0), Zone::None);
+
+    // Dafin: a clip 20 px wide keeps a middle (5 px strips) instead of being all edge.
+    QCOMPARE(edgeStripWidth(200.0, 14.0), 14.0);
+    QCOMPARE(edgeStripWidth(20.0, 14.0), 5.0);
+    QCOMPARE(edgeStripWidth(2.0, 14.0), 0.5);
+    const QRectF tiny(100.0, 0.0, 20.0, 40.0);
+    QCOMPARE(hitZone(tiny, {110.0, 20.0}, edgeStripWidth(20.0, 14.0), 10.0), Zone::Body);
+    QCOMPARE(hitZone(tiny, {102.0, 20.0}, edgeStripWidth(20.0, 14.0), 10.0), Zone::Hover);
+    QCOMPARE(hitZone(tiny, {92.0, 20.0}, edgeStripWidth(20.0, 14.0), 10.0), Zone::Hover);
 }
 
 // The QML overlay exists only for the clips that need trim handles: the selected ones.

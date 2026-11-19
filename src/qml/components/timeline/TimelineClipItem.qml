@@ -212,11 +212,9 @@ Item {
     readonly property bool pinnedToClip: clipData.kind === "adjustment"
                                          && !!clipData.linkedClipId
 
-    // Trim handles stay on whenever selected.
-    // Width is floored so the clip never becomes
-    // an unusable sliver; at that floor both
-    // edges stay trimmable and the middle moves.
-    readonly property bool showTrimHandles: selected && !pinnedToClip && width >= Theme.clipControlsMinWidth
+    // Trim handles stay on whenever selected, however narrow the clip: on a narrow clip they thin
+    // out to a quarter of its width each (see trimHandleWidth) and the grab reaches outside it.
+    readonly property bool showTrimHandles: selected && !pinnedToClip
     readonly property real minDurationSeconds: Math.max(
         1.0 / Math.max(1, EditorState.projectFile.projectFps()),
         Theme.clipMinWidth / panel.pxPerSecond)
@@ -225,7 +223,10 @@ Item {
     readonly property real trimHandleWidth: touchMode
                                             ? Math.min(Theme.androidClipTrimHandleWidth,
                                                        Math.max(6, width * 0.25))
-                                            : Theme.clipTrimHandleWidth
+                                            : Math.min(Theme.clipTrimHandleWidth, Math.max(2, width / 4))
+    // How far each trim area reaches into the clip past its bar. Narrow desktop clips keep their
+    // middle half free, so the two areas never overlap (the later one used to take every press).
+    readonly property real trimInnerReach: touchMode ? 4 : Math.min(4, Math.max(0, width / 4 - trimHandleWidth))
     readonly property real trimHotspotExtra: touchMode
                                              ? Theme.androidTrimHotspotExtra
                                              : 10
