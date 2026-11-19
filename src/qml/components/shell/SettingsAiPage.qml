@@ -114,8 +114,8 @@ SettingsPage {
     SettingsRow {
         title: qsTr("Agent access")
         searchId: "ai-agent-access"
-        description: qsTr("Let Cursor or Claude edit this project for you. Only programs on this device can connect.")
-        keywords: "mcp claude cursor agent server"
+        description: qsTr("Let ChatGPT, Claude, Cursor or Codex edit this project for you.")
+        keywords: "mcp claude cursor codex chatgpt openai agent server tunnel cloudflared"
         stacked: true
         query: page.query
 

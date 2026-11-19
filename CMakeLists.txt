@@ -1365,6 +1365,8 @@ qt_add_executable(drift
     src/app/jobs/vision/SegmentationPlan.h
     src/app/mcp/McpDetail.h
     src/app/mcp/McpUsage.h
+    src/app/mcp/ChatGptConnector.h
+    src/app/assistant/ModelCatalog.h
     src/app/editor/AppControllerDetail.h
     src/app/editor/EditorState.h
     src/app/editor/LayoutStore.h
@@ -1522,6 +1524,8 @@ target_sources(driftapp PRIVATE
     src/app/mcp/McpController.h
     src/app/mcp/McpController.cpp
     src/app/mcp/McpSafety.cpp
+    src/app/mcp/ChatGptConnector.cpp
+    src/app/assistant/ModelCatalog.cpp
     src/app/assistant/AssistantController.h
     src/app/assistant/AssistantController.cpp
     src/app/assistant/LlmProtocol.h
@@ -2886,6 +2890,8 @@ qt_add_qml_module(drift
         src/qml/components/dialogs/LayoutChooserDialog.qml
         src/qml/components/dialogs/LanguageChooserDialog.qml
         src/qml/components/shell/AgentAccessControls.qml
+        src/qml/components/shell/CopyButton.qml
+        src/qml/components/shell/ModelPicker.qml
         src/qml/components/dialogs/AgentAccessDialog.qml
         src/qml/components/dialogs/VideoSizeDialog.qml
         src/qml/components/shell/VideoSizeControls.qml

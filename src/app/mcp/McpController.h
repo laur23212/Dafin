@@ -24,6 +24,7 @@
 #include <memory>
 
 class AppController;
+class ChatGptConnector;
 
 namespace drift::mcp {
 class McpServer;
@@ -63,9 +64,14 @@ class McpController : public QObject
     // assistant that is already running; the assistant's own app does that.
     Q_PROPERTY(QString assistantModel READ assistantModel WRITE setAssistantModel NOTIFY assistantModelChanged)
     Q_PROPERTY(QString codexModel READ codexModel WRITE setCodexModel NOTIFY assistantModelChanged)
+    // The Codex dropdown: ModelCatalog's list, with the saved name added when it is not in it.
+    Q_PROPERTY(QVariantList codexModelOptions READ codexModelOptions NOTIFY assistantModelChanged)
     // Web access for website assistants such as ChatGPT. Off at every launch.
     Q_PROPERTY(bool webAccess READ webAccess WRITE setWebAccess NOTIFY webAccessChanged)
     Q_PROPERTY(QString webPath READ webPath NOTIFY webAccessChanged)
+    // Dafin: the one-click ChatGPT connection (tunnel helper, prompt, test). ChatGptConnector.h
+    Q_MOC_INCLUDE("app/mcp/ChatGptConnector.h")
+    Q_PROPERTY(ChatGptConnector *chatGpt READ chatGpt CONSTANT)
     // Dafin: ask the user (a real button in the editor) before an agent runs an op that cannot be
     // undone. On by default. Only the Settings switch changes it; no MCP op can.
     Q_PROPERTY(bool confirmIrreversible READ confirmIrreversible WRITE setConfirmIrreversible NOTIFY confirmIrreversibleChanged)
@@ -89,19 +95,20 @@ public:
     QString cursorSnippet() const;
     QString claudeCommand() const;
     QString stdioSnippet() const;
-    Q_INVOKABLE void copyCursorSnippet();
-    Q_INVOKABLE void copyClaudeCommand();
-    Q_INVOKABLE void copyStdioSnippet();
-    Q_INVOKABLE void copyAgentGuide();
-    Q_INVOKABLE void copyCodexSnippet();
+    Q_INVOKABLE bool copyCursorSnippet();
+    Q_INVOKABLE bool copyClaudeCommand();
+    Q_INVOKABLE bool copyStdioSnippet();
+    Q_INVOKABLE bool copyAgentGuide();
+    Q_INVOKABLE bool copyCodexSnippet();
     // "claude --model sonnet" / "codex --model <name>": a command to start the assistant on
     // the model chosen above (no --model when none is chosen).
-    Q_INVOKABLE void copyClaudeLaunchCommand();
-    Q_INVOKABLE void copyCodexLaunchCommand();
+    Q_INVOKABLE bool copyClaudeLaunchCommand();
+    Q_INVOKABLE bool copyCodexLaunchCommand();
     QString claudeLaunchCommand() const;
     QString codexLaunchCommand() const;
     QString assistantModel() const { return m_assistantModel; }
     QString codexModel() const { return m_codexModel; }
+    QVariantList codexModelOptions() const;
     Q_INVOKABLE void setAssistantModel(const QString &model);
     Q_INVOKABLE void setCodexModel(const QString &model);
 
@@ -114,13 +121,16 @@ public:
     Q_INVOKABLE bool copyChatGptUrl(const QString &publicAddress);
     // The command that opens a tunnel to this editor's port (cloudflared).
     Q_INVOKABLE QString tunnelCommand() const;
-    Q_INVOKABLE void copyTunnelCommand();
+    Q_INVOKABLE bool copyTunnelCommand();
+    ChatGptConnector *chatGpt() const { return m_chatGpt; }
+    // Any text, for QML's copy buttons. True only when the clipboard read back the same text.
+    Q_INVOKABLE bool copyText(const QString &text);
 
     QVariantList usageRows() const { return m_usage.rows(); }
     QVariantMap usageTotals() const { return m_usage.totals(); }
     QString usageClient() const;
     Q_INVOKABLE void resetUsage();
-    Q_INVOKABLE void copyUsageReport();
+    Q_INVOKABLE bool copyUsageReport();
     Q_INVOKABLE void rotateToken();
     bool startOnLaunch() const { return m_mcpStartOnLaunch; }
     Q_INVOKABLE void setStartOnLaunch(bool enabled);
@@ -431,6 +441,7 @@ private:
     drift::mcp::McpUsage m_usage;
     QString m_assistantModel;
     QString m_codexModel;
+    ChatGptConnector *m_chatGpt = nullptr;
     AgentImageLog *m_imageLog = nullptr;
     bool m_audioSheetBusy = false;
     QVariantMap m_audioSheetResult;

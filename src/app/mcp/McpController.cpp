@@ -1,4 +1,6 @@
 #include "app/mcp/McpController.h"
+#include "app/mcp/ChatGptConnector.h"
+#include "app/assistant/ModelCatalog.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/jobs/vision/SceneDetectController.h"
 
@@ -113,6 +115,7 @@ McpController::McpController(AppController *app, QObject *parent)
     , m_app(app)
     , m_imageLog(new AgentImageLog(this))
 {
+    m_chatGpt = new ChatGptConnector(this, this);
 #ifndef Q_OS_WASM
     m_mcp = std::make_unique<drift::mcp::McpServer>(m_app);
     connect(m_mcp.get(), &drift::mcp::McpServer::runningChanged, this,
@@ -433,46 +436,63 @@ void McpController::applyStartOnLaunch()
 
 namespace {
 
-void copyToClipboard(const QString &text)
+// True only when the clipboard reads back what was put there, so the button can say
+// "Copied" truthfully (a clipboard manager or a locked session can refuse it).
+bool copyToClipboard(const QString &text)
 {
     if (text.isEmpty())
-        return;
-    if (QClipboard *clip = QGuiApplication::clipboard())
-        clip->setText(text);
+        return false;
+    QClipboard *clip = QGuiApplication::clipboard();
+    if (!clip)
+        return false;
+    clip->setText(text);
+    return clip->text() == text;
 }
 
 } // namespace
 
-void McpController::copyCursorSnippet()
+bool McpController::copyCursorSnippet()
 {
-    copyToClipboard(cursorSnippet());
+    return copyToClipboard(cursorSnippet());
 }
 
-void McpController::copyClaudeCommand()
+bool McpController::copyClaudeCommand()
 {
-    copyToClipboard(claudeCommand());
+    return copyToClipboard(claudeCommand());
 }
 
-void McpController::copyStdioSnippet()
+bool McpController::copyStdioSnippet()
 {
-    copyToClipboard(stdioSnippet());
+    return copyToClipboard(stdioSnippet());
 }
 
-void McpController::copyCodexSnippet()
+bool McpController::copyCodexSnippet()
 {
 #ifndef Q_OS_WASM
-    copyToClipboard(m_mcp ? m_mcp->codexSnippet() : QString());
+    return copyToClipboard(m_mcp ? m_mcp->codexSnippet() : QString());
+#else
+    return false;
 #endif
 }
 
-void McpController::copyClaudeLaunchCommand()
+QVariantList McpController::codexModelOptions() const
 {
-    copyToClipboard(claudeLaunchCommand());
+    return dafin::assistant::withCurrent(dafin::assistant::codexModels(), m_codexModel);
 }
 
-void McpController::copyCodexLaunchCommand()
+bool McpController::copyText(const QString &text)
 {
-    copyToClipboard(codexLaunchCommand());
+    return copyToClipboard(text);
+}
+
+bool McpController::copyClaudeLaunchCommand()
+{
+    return copyToClipboard(claudeLaunchCommand());
+}
+
+bool McpController::copyCodexLaunchCommand()
+{
+    return copyToClipboard(codexLaunchCommand());
 }
 
 bool McpController::copyChatGptUrl(const QString &publicAddress)
@@ -480,18 +500,17 @@ bool McpController::copyChatGptUrl(const QString &publicAddress)
     const QString address = chatGptUrl(publicAddress);
     if (address.isEmpty())
         return false;
-    copyToClipboard(address);
-    return true;
+    return copyToClipboard(address);
 }
 
-void McpController::copyTunnelCommand()
+bool McpController::copyTunnelCommand()
 {
-    copyToClipboard(tunnelCommand());
+    return copyToClipboard(tunnelCommand());
 }
 
-void McpController::copyUsageReport()
+bool McpController::copyUsageReport()
 {
-    copyToClipboard(m_usage.report());
+    return copyToClipboard(m_usage.report());
 }
 
 QString McpController::agentGuide() const
@@ -512,9 +531,9 @@ QString McpController::agentGuide() const
 #endif
 }
 
-void McpController::copyAgentGuide()
+bool McpController::copyAgentGuide()
 {
-    copyToClipboard(agentGuide());
+    return copyToClipboard(agentGuide());
 }
 
 void McpController::rebuildClipIndexIfNeeded() const

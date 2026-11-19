@@ -5,6 +5,7 @@
 #include <QElapsedTimer>
 #include <QHash>
 #include <QObject>
+#include <QPointer>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -12,6 +13,8 @@
 #include <optional>
 
 class AppController;
+class QNetworkAccessManager;
+class QNetworkReply;
 class QSettings;
 
 namespace dafin::assets {
@@ -56,6 +59,13 @@ class AssistantController : public QObject
     //  clip in the space, "" when the request was about other places), version, versions, text,
     //  changed (the project changed), start, end, track}
     Q_PROPERTY(QVariantMap fill READ fill NOTIFY fillChanged)
+    // Dafin: the Model dropdown. The provider's own list once refreshModels() has loaded it
+    // (only with a key and consent), else the built-in list (ModelCatalog). The saved model is
+    // always among them. {value, label, hint, recommended}
+    Q_PROPERTY(QVariantList modelOptions READ modelOptions NOTIFY modelsChanged)
+    Q_PROPERTY(bool modelsLoading READ modelsLoading NOTIFY modelsChanged)
+    // "" or why the provider's list could not be loaded (the built-in list is shown then).
+    Q_PROPERTY(QString modelsMessage READ modelsMessage NOTIFY modelsChanged)
 
 public:
     static constexpr int kMaxToolCallsPerTurn = 40;
@@ -98,6 +108,13 @@ public:
     QString lastUsage() const { return m_lastUsage; }
     QString usageLogPath() const { return m_usageLogPath; }
     QVariantMap fill() const { return m_fillState; }
+    QVariantList modelOptions() const;
+    bool modelsLoading() const { return m_modelsLoading; }
+    QString modelsMessage() const { return m_modelsMessage; }
+    // Asks the provider which models this key can use. Does nothing without consent, or
+    // without a key for a provider that needs one; reuses the last list for the same
+    // provider, address and key unless `force`.
+    Q_INVOKABLE void refreshModels(bool force = false);
 
     Q_INVOKABLE void send(const QString &text);
     Q_INVOKABLE void stop();
@@ -133,6 +150,7 @@ signals:
     void usageChanged();
     void turnFinished(const QString &outcome);
     void fillChanged();
+    void modelsChanged();
 
 private:
     std::unique_ptr<QSettings> settings() const;
@@ -206,6 +224,14 @@ private:
     FillJob m_fill;
     QVariantMap m_fillState;
     QList<ChatMessage> m_chatAside;
+
+    // Model dropdown (refreshModels).
+    QNetworkAccessManager *m_modelsNam = nullptr;
+    QPointer<QNetworkReply> m_modelsReply;
+    QVariantList m_loadedModels;
+    QString m_modelsSignature; // provider|address|key hash the loaded list belongs to
+    bool m_modelsLoading = false;
+    QString m_modelsMessage;
 };
 
 } // namespace dafin::assistant

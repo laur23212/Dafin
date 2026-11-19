@@ -41,22 +41,37 @@ The key persists between sessions, so the block keeps working until **New key** 
 ### ChatGPT (web)
 
 ChatGPT runs on a website and only reaches public https addresses, with OAuth or no
-authentication, so it cannot use the bearer token. **Connect to ChatGPT…** therefore has four steps:
+authentication, so it cannot use the bearer token. **Connect ChatGPT** does the setup itself
+(`ChatGptConnector`, `EditorState.mcp.chatGpt`):
 
-1. **Allow ChatGPT (web access).** Off at every launch; also turned off when agent access is turned
-   off. While on, `POST /w/<secret>/mcp` is the homepage endpoint with the secret standing in for the
-   `Authorization` header. Nothing else is reachable that way (pinned toolboxes, GET, a wrong secret
-   all answer 404), and **New key** replaces the secret together with the token.
-2. **Start a tunnel.** Copy the command (`cloudflared tunnel --url http://127.0.0.1:<port>`) into a
-   terminal; it prints an `https://` address. Dafin does not bundle or start a tunnel.
-3. **Paste that address** into the box.
-4. **Copy ChatGPT address** gives `https://<tunnel address>/w/<secret>/mcp`. In ChatGPT: Settings →
-   Connectors → Advanced → Developer mode, Create, paste it, choose "No authentication" and confirm
-   trust. Which plans may add a custom connector, and whether it can change things or only read, is
-   up to OpenAI.
+1. Turns agent access and **web access** on. While web access is on, `POST /w/<secret>/mcp` is the
+   homepage endpoint with the secret standing in for the `Authorization` header; nothing else is
+   reachable that way (pinned toolboxes, GET, a wrong secret all answer 404), and **New key**
+   replaces the secret together with the token (the ChatGPT address is rebuilt).
+2. Finds `cloudflared`: Dafin's own copy in `<AppData>/tools/`, then PATH (and the Windows
+   installer / Homebrew locations). Without one it asks once, then downloads the latest release
+   asset for this platform (Windows amd64/386, Linux amd64/arm64) from Cloudflare's GitHub releases
+   and keeps it only if its SHA-256 equals the one GitHub publishes (the asset's `digest`, or the
+   checksum list in the release notes); otherwise it is deleted and nothing runs. macOS: Homebrew's
+   copy only.
+3. Starts `cloudflared tunnel --no-autoupdate --url http://127.0.0.1:<port>` in the background (no
+   console window on Windows), reads the `https://<name>.trycloudflare.com` address it prints and
+   waits for "Registered tunnel connection" (or 8 s; 45 s timeout in all).
+4. **Copy prompt for ChatGPT** copies a prompt with `https://<tunnel>/w/<secret>/mcp` in it that asks
+   ChatGPT to walk the user through adding a custom MCP server in its *current* interface, one step
+   at a time, then to read the project once to prove it works. Dafin no longer describes ChatGPT's
+   menus, which keep changing.
 
-Anyone who has that address can edit the open project until web access is turned off, so it is
-meant for a session you are watching, and the tunnel can be closed at any time.
+**Test connection** sends an MCP `initialize` to the public address, as ChatGPT would. **Stop**
+(also turning access off, New key, or quitting) closes the tunnel and web access. Details &
+security shows the helper's path, origin, SHA-256 and its last output lines. The old four manual
+steps are still there, under Details & security › Manual ChatGPT setup. Which plans may add a
+custom MCP server, and whether it may change things or only read, is up to OpenAI.
+
+Anyone who has that address can edit the open project until the connection is stopped, so it is
+meant for a session you are watching.
+
+Every copy button reads the clipboard back and shows "✓ Copied" only when the text arrived.
 
 ### Usage monitor and model
 
@@ -69,8 +84,9 @@ tokens, its price and its model are never sent to Dafin, so they are not shown; 
 is an estimate of Dafin's text replies (about four bytes per token) and says so. **Copy report**
 puts the table on the clipboard; **Reset** clears it.
 
-Dafin cannot change the model of an assistant that is already running. The model picker (Claude:
-default, Sonnet, Opus, Haiku; Codex: a model name) decides the model in **Copy Claude launch command**
+Dafin cannot change the model of an assistant that is already running. The model pickers (Claude:
+default, Sonnet, Opus, Haiku; Codex: a dropdown with Codex's default, a few names and Other…), under
+Details & security, decides the model in **Copy Claude launch command**
 (`claude --model sonnet`) and **Copy Codex launch command** (`codex --model <name>`). Most edits here
 are small, so a mid-size model at low or medium effort is usually enough.
 

@@ -337,6 +337,8 @@ qt_add_executable(tst_mcp
     ../src/app/editor/appcontroller/AppControllerTemplates.cpp
     ../src/app/mcp/McpController.cpp
     ../src/app/mcp/McpSafety.cpp
+    ../src/app/mcp/ChatGptConnector.cpp
+    ../src/app/assistant/ModelCatalog.cpp
     ../src/app/assistant/AssistantController.cpp
     ../src/app/assistant/LlmProtocol.cpp
     ../src/app/assistant/LlmTransport.cpp

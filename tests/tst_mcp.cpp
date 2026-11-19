@@ -7,6 +7,8 @@
 #include "core/edit/ProtectedRanges.h"
 #include "app/assistant/AssistantController.h"
 #include "app/assistant/LlmTransport.h"
+#include "app/assistant/ModelCatalog.h"
+#include "app/mcp/ChatGptConnector.h"
 #include "app/online/library/SecretStore.h"
 #include "app/online/CloudProviders.h"
 
@@ -250,6 +252,14 @@ private slots:
     void assistantIrreversibleNeedsAClick();
     void assistantKeyNeverLeaks();
     void assistantBuiltInSkillIsTheDefault();
+    void chatGptParsesTunnelAddress();
+    void chatGptPromptHoldsTheAddress();
+    void chatGptPicksAssetPerPlatform();
+    void chatGptChecksumFromRelease();
+    void chatGptConnectorStartsIdleAndStopIsSafe();
+    void modelCatalogParsesAndFilters();
+    void modelCatalogKeepsCurrent();
+    void assistantModelListNeedsConsent();
     void aiFillPlacesExactlyAndKeepsVersions();
     void aiFillAssistantHasEveryTool();
     void aiFillNeedsSetupAndAKnownClip();
@@ -9297,6 +9307,128 @@ void McpTest::aiFillNeedsSetupAndAKnownClip()
                                                {QStringLiteral("end"), 2.0}, {QStringLiteral("clipId"), QStringLiteral("gone")}}));
     QVERIFY(ready.net->requests.isEmpty());
     QVERIFY(!ready.assistant.fill().value(QStringLiteral("setup")).toBool());
+}
+
+void McpTest::chatGptParsesTunnelAddress()
+{
+    using dafin::chatgpt::parseTunnelAddress;
+    QCOMPARE(parseTunnelAddress(QStringLiteral(
+                 "2026-11-19T12:00:00Z INF |  https://Brave-Fox-12.trycloudflare.com                 |")),
+             QStringLiteral("https://brave-fox-12.trycloudflare.com"));
+    // cloudflared also names the service it registers with; that is not the tunnel.
+    QVERIFY(parseTunnelAddress(QStringLiteral("INF Requesting new quick Tunnel on https://api.trycloudflare.com...")).isEmpty());
+    QVERIFY(parseTunnelAddress(QStringLiteral("INF Registered tunnel connection connIndex=0")).isEmpty());
+    QVERIFY(parseTunnelAddress(QStringLiteral("see https://example.com/trycloudflare.com")).isEmpty());
+}
+
+void McpTest::chatGptPromptHoldsTheAddress()
+{
+    const QString url = QStringLiteral("https://brave-fox-12.trycloudflare.com/w/abc123/mcp");
+    const QString prompt = dafin::chatgpt::chatGptPrompt(url);
+    QVERIFY(prompt.contains(url));
+    QVERIFY(prompt.contains(QStringLiteral("MCP")));
+    QVERIFY(prompt.contains(QStringLiteral("Dafin")));
+    QVERIFY(prompt.contains(QStringLiteral("one step at a time")));
+}
+
+void McpTest::chatGptPicksAssetPerPlatform()
+{
+    const QJsonObject release = QJsonDocument::fromJson(R"({"assets":[
+        {"name":"cloudflared-linux-amd64","browser_download_url":"https://github.com/x/cloudflared-linux-amd64"},
+        {"name":"cloudflared-linux-amd64.deb","browser_download_url":"https://github.com/x/a.deb"},
+        {"name":"cloudflared-windows-amd64.exe","browser_download_url":"https://github.com/x/w.exe"},
+        {"name":"cloudflared-windows-386.exe","browser_download_url":"http://insecure/w32.exe"},
+        {"name":"cloudflared-darwin-arm64.tgz","browser_download_url":"https://github.com/x/m.tgz"}]})").object();
+    using dafin::chatgpt::pickReleaseAsset;
+    QCOMPARE(pickReleaseAsset(release, QStringLiteral("linux-amd64")).value("name").toString(),
+             QStringLiteral("cloudflared-linux-amd64"));
+    QCOMPARE(pickReleaseAsset(release, QStringLiteral("windows-amd64")).value("name").toString(),
+             QStringLiteral("cloudflared-windows-amd64.exe"));
+    QVERIFY(pickReleaseAsset(release, QStringLiteral("windows-386")).isEmpty()); // not https
+    QVERIFY(pickReleaseAsset(release, QStringLiteral("linux-arm64")).isEmpty()); // not listed
+    QVERIFY(pickReleaseAsset(release, QString()).isEmpty());                     // macOS
+}
+
+void McpTest::chatGptChecksumFromRelease()
+{
+    using dafin::chatgpt::checksumFromRelease;
+    const QString hex = QStringLiteral("AB").repeated(32);
+    const QJsonObject withDigest{{"name", "cloudflared-linux-amd64"}, {"digest", "sha256:" + hex}};
+    QCOMPARE(checksumFromRelease({}, withDigest), hex.toLower().toLatin1());
+
+    const QJsonObject plain{{"name", "cloudflared-linux-amd64"}};
+    const QString other = QStringLiteral("cd").repeated(32);
+    const QJsonObject release{{"body", QStringLiteral("SHA256 Checksums:\n```\ncloudflared-linux-amd64.deb: %1\n"
+                                                      "cloudflared-linux-amd64: %2\n```\n").arg(other, hex)}};
+    QCOMPARE(checksumFromRelease(release, plain), hex.toLower().toLatin1());
+
+    QVERIFY(checksumFromRelease(QJsonObject{{"body", "no sums here"}}, plain).isEmpty());
+    QVERIFY(checksumFromRelease({}, QJsonObject{{"name", "x"}, {"digest", "sha256:short"}}).isEmpty());
+}
+
+void McpTest::chatGptConnectorStartsIdleAndStopIsSafe()
+{
+    AssetLibrary library;
+    AppController state(&library);
+    ChatGptConnector *chat = state.mcp()->chatGpt();
+    QVERIFY(chat);
+    QCOMPARE(chat->state(), QStringLiteral("idle"));
+    QVERIFY(chat->prompt().isEmpty());
+    QVERIFY(!chat->copyPrompt()); // nothing to copy before it is connected
+    chat->confirmDownload();      // ignored unless it asked
+    QCOMPARE(chat->state(), QStringLiteral("idle"));
+    chat->stop();
+    QCOMPARE(chat->state(), QStringLiteral("idle"));
+    QVERIFY(!state.mcp()->webAccess());
+}
+
+void McpTest::modelCatalogParsesAndFilters()
+{
+    using namespace dafin::assistant;
+    const QVariantList claude = parseModelList(Provider::Anthropic, R"({"data":[
+        {"id":"claude-opus-5-5","display_name":"Claude Opus 5.5"},
+        {"id":"claude-sonnet-5-5","display_name":"Claude Sonnet 5.5"},
+        {"id":"claude-haiku-5-5","display_name":"Claude Haiku 5.5"}]})");
+    QCOMPARE(claude.size(), 3);
+    QCOMPARE(claude[0].toMap().value("label").toString(), QStringLiteral("Claude Opus 5.5"));
+    QVERIFY(!claude[0].toMap().value("recommended").toBool());
+    QVERIFY(claude[1].toMap().value("recommended").toBool());
+
+    const QVariantList openai = parseModelList(Provider::OpenAiCompat, R"({"data":[
+        {"id":"text-embedding-3-small","created":5},{"id":"gpt-old","created":1},
+        {"id":"whisper-1","created":9},{"id":"gpt-new-mini","created":7},{"id":"tts-1","created":8},
+        {"id":"nomic-embed-text","created":3}]})");
+    QCOMPARE(openai.size(), 2);
+    QCOMPARE(openai[0].toMap().value("value").toString(), QStringLiteral("gpt-new-mini")); // newest first
+    QCOMPARE(openai[1].toMap().value("value").toString(), QStringLiteral("gpt-old"));
+
+    QVERIFY(parseModelList(Provider::OpenAiCompat, "not json").isEmpty());
+    QVERIFY(builtInModels(Provider::OpenAiCompat, true).isEmpty()); // a local server's own list only
+    QVERIFY(!builtInModels(Provider::Anthropic, false).isEmpty());
+}
+
+void McpTest::modelCatalogKeepsCurrent()
+{
+    using namespace dafin::assistant;
+    const QVariantList base = builtInModels(Provider::Anthropic, false);
+    QCOMPARE(withCurrent(base, QStringLiteral("claude-sonnet-5-5")).size(), base.size());
+    const QVariantList mine = withCurrent(base, QStringLiteral("my-own-model"));
+    QCOMPARE(mine.size(), base.size() + 1);
+    QCOMPARE(mine[0].toMap().value("value").toString(), QStringLiteral("my-own-model"));
+    QCOMPARE(withCurrent(base, QString()).size(), base.size());
+    QCOMPARE(codexModels()[0].toMap().value("value").toString(), QString());
+}
+
+void McpTest::assistantModelListNeedsConsent()
+{
+    AssistantRig rig(false);
+    dafin::assistant::AssistantController &assistant = rig.assistant;
+    assistant.setProvider(QStringLiteral("anthropic"));
+    // No consent, no key: the built-in list, and nothing is asked of the network.
+    assistant.refreshModels(true);
+    QVERIFY(!assistant.modelsLoading());
+    QVERIFY(!assistant.modelOptions().isEmpty());
+    QCOMPARE(assistant.modelOptions()[0].toMap().value("value").toString(), assistant.model());
 }
 
 QTEST_MAIN(McpTest)

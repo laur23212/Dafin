@@ -131,14 +131,30 @@ Popup {
                     onActivated: index => Assistant.provider = index === 1 ? "openai" : "anthropic"
                 }
 
-                ThemedLabel { text: qsTr("Model") }
-                ThemedTextField {
+                ThemedLabel {
+                    visible: Assistant.provider === "openai" && Assistant.baseUrl.length === 0
                     Layout.fillWidth: true
-                    text: Assistant.model
-                    placeholderText: Assistant.provider === "openai" ? qsTr("e.g. the model name your server lists")
-                                                                     : qsTr("e.g. claude-sonnet-5-5")
-                    Accessible.name: qsTr("Model name")
-                    onEditingFinished: Assistant.model = text
+                    wrapMode: Text.WordWrap
+                    text: qsTr("This uses an OpenAI API key, which is billed apart from a ChatGPT subscription. To use your ChatGPT subscription instead, press Connect ChatGPT in Agent access.")
+                }
+
+                ThemedLabel { text: Assistant.modelsLoading ? qsTr("Model (loading the list…)") : qsTr("Model") }
+                // Dafin: a dropdown, filled from the service once the key is set and consent
+                // given (Assistant.refreshModels); a short built-in list before that.
+                ModelPicker {
+                    Layout.fillWidth: true
+                    options: Assistant.modelOptions
+                    current: Assistant.model
+                    placeholder: Assistant.provider === "openai" ? qsTr("The model name your server lists")
+                                                                 : qsTr("e.g. claude-sonnet-5-5")
+                    onPicked: value => Assistant.model = value
+                    onOpened: Assistant.refreshModels(false)
+                }
+                ThemedLabel {
+                    visible: Assistant.modelsMessage.length > 0
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: Assistant.modelsMessage
                 }
 
                 ThemedLabel { visible: Assistant.provider === "openai"; text: qsTr("Server address (leave empty for OpenAI)") }
@@ -148,7 +164,10 @@ Popup {
                     text: Assistant.baseUrl
                     placeholderText: "http://localhost:11434/v1"
                     Accessible.name: qsTr("Server address")
-                    onEditingFinished: Assistant.baseUrl = text
+                    onEditingFinished: {
+                        Assistant.baseUrl = text
+                        Assistant.refreshModels(false)
+                    }
                 }
 
                 ThemedLabel { text: qsTr("API key") }
@@ -185,6 +204,8 @@ Popup {
                         enabled: keyField.text.trim().length > 0
                         onClicked: {
                             keySaveError.visible = !Assistant.setApiKey(keyField.text)
+                            if (!keySaveError.visible)
+                                Assistant.refreshModels(true)
                             keyField.text = ""
                         }
                     }
@@ -230,7 +251,11 @@ Popup {
                 ThemedCheckBox {
                     text: qsTr("I understand and agree")
                     checked: Assistant.consent
-                    onToggled: Assistant.consent = checked
+                    onToggled: {
+                        Assistant.consent = checked
+                        if (checked)
+                            Assistant.refreshModels(false)
+                    }
                 }
 
                 ThemedLabel {

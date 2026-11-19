@@ -1,6 +1,7 @@
 #include "app/assistant/AssistantController.h"
 
 #include "app/assistant/LlmTransport.h"
+#include "app/assistant/ModelCatalog.h"
 #include "app/editor/AppController.h"
 #include "app/mcp/McpController.h"
 #include "app/mcp/tools/McpCatalog.h"
@@ -14,6 +15,10 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QCryptographicHash>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QSettings>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -73,6 +78,8 @@ AssistantController::AssistantController(AppController *app, const QString &sett
     , m_dispatcher(std::make_unique<drift::mcp::McpDispatcher>(app))
     , m_transport(std::make_unique<NetworkTransport>())
 {
+    // The dropdown's options depend on the provider and the saved model.
+    connect(this, &AssistantController::settingsChanged, this, &AssistantController::modelsChanged);
     const QString dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     m_usageLogPath = dir.isEmpty() ? QString() : dir + QStringLiteral("/assistant-usage.csv");
 }
@@ -1070,6 +1077,77 @@ void AssistantController::dismissFill()
         return;
     m_fillState.clear();
     emit fillChanged();
+}
+
+QVariantList AssistantController::modelOptions() const
+{
+    const Provider p = providerFromId(provider());
+    const QString signature = provider() + QLatin1Char('|') + baseUrl();
+    // A list loaded for another provider or address is not shown.
+    const bool loadedFits = !m_loadedModels.isEmpty() && m_modelsSignature.startsWith(signature + QLatin1Char('|'));
+    const QVariantList base = loadedFits ? m_loadedModels : builtInModels(p, !baseUrl().isEmpty());
+    return withCurrent(base, model());
+}
+
+void AssistantController::refreshModels(bool force)
+{
+    // Same promise as the chat: nothing leaves this computer before consent.
+    if (!consent())
+        return;
+    const QString key = apiKey();
+    const bool local = provider() == QLatin1String("openai") && !baseUrl().isEmpty();
+    if (key.isEmpty() && !local)
+        return;
+    const QString signature = provider() + QLatin1Char('|') + baseUrl() + QLatin1Char('|')
+                              + QString::fromLatin1(QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Sha256).toHex().left(16));
+    if (!force && signature == m_modelsSignature && (m_modelsLoading || !m_loadedModels.isEmpty()))
+        return;
+    if (m_modelsReply)
+        m_modelsReply->abort();
+    if (!m_modelsNam)
+        m_modelsNam = new QNetworkAccessManager(this);
+
+    const Provider p = providerFromId(provider());
+    QNetworkRequest request;
+    if (p == Provider::Anthropic) {
+        request.setUrl(QUrl(QStringLiteral("https://api.anthropic.com/v1/models?limit=100")));
+        request.setRawHeader("x-api-key", key.toUtf8());
+        request.setRawHeader("anthropic-version", "2023-06-01");
+    } else {
+        QString base = baseUrl().isEmpty() ? QStringLiteral("https://api.openai.com/v1") : baseUrl();
+        while (base.endsWith(QLatin1Char('/')))
+            base.chop(1);
+        request.setUrl(QUrl(base + QStringLiteral("/models")));
+        if (!key.isEmpty())
+            request.setRawHeader("Authorization", "Bearer " + key.toUtf8());
+    }
+    request.setTransferTimeout(15000);
+    m_modelsSignature = signature;
+    m_modelsLoading = true;
+    m_modelsMessage.clear();
+    emit modelsChanged();
+
+    QNetworkReply *reply = m_modelsNam->get(request);
+    m_modelsReply = reply;
+    connect(reply, &QNetworkReply::finished, this, [this, reply, p, signature] {
+        reply->deleteLater();
+        if (signature != m_modelsSignature)
+            return; // a newer request replaced this one
+        m_modelsLoading = false;
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QVariantList list = reply->error() == QNetworkReply::NoError
+                                      ? parseModelList(p, reply->readAll())
+                                      : QVariantList();
+        if (!list.isEmpty()) {
+            m_loadedModels = list;
+        } else {
+            m_loadedModels.clear();
+            m_modelsMessage = status == 401 || status == 403
+                                  ? tr("The service did not accept the API key, so its model list could not be loaded.")
+                                  : tr("Could not load the model list; showing the usual models.");
+        }
+        emit modelsChanged();
+    });
 }
 
 } // namespace dafin::assistant
