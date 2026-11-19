@@ -1364,7 +1364,6 @@ qt_add_executable(drift
     src/app/jobs/vision/SegmentationPlan.h
     src/app/mcp/McpDetail.h
     src/app/mcp/McpUsage.h
-    src/app/mcp/ChatGptConnector.h
     src/app/assistant/ModelCatalog.h
     src/app/editor/AppControllerDetail.h
     src/app/editor/EditorState.h
@@ -1523,6 +1522,7 @@ target_sources(driftapp PRIVATE
     src/app/mcp/McpController.h
     src/app/mcp/McpController.cpp
     src/app/mcp/McpSafety.cpp
+    src/app/mcp/ChatGptConnector.h
     src/app/mcp/ChatGptConnector.cpp
     src/app/assistant/ModelCatalog.cpp
     src/app/assistant/AssistantController.h
