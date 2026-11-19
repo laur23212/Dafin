@@ -63,7 +63,7 @@ TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &t
                                     const QString &label, const QString &category,
                                     const TitleContext &context = {});
 
-// Filmora's colour integers are Windows COLORREFs (0x00BBGGRR): "#aarrggbb".
+// Filmora's colour integers are 0xRRGGBB (red in the high byte; -1 means "not set"): "#aarrggbb".
 QString filmoraColor(qint64 value, int alpha = 255);
 
 // Dafin's closest animation preset for a Filmora animation name ("Center Gradually Appears"),

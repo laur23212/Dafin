@@ -28,7 +28,8 @@ namespace {
 // Bump when the conversion changes, so every item is converted again.
 // 3: variant folders ("All", "9" ...) inside an item are part of it, not items named "All".
 // 4: Filmora titles become Dafin title templates (text-styles).
-constexpr int kImporterVersion = 4;
+// 5: title colours read as 0xRRGGBB (they were read as COLORREFs, red and blue swapped).
+constexpr int kImporterVersion = 5;
 
 // Failsafe caps: a folder that is not what it seems (a whole drive, a damaged file) must not
 // stall or exhaust the import.

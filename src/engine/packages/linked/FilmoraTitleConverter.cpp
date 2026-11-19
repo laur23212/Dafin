@@ -208,9 +208,11 @@ const QSet<QString> &outOnlyPresets()
 
 QString filmoraColor(qint64 value, int alpha)
 {
+    // 0xRRGGBB, red in the high byte (not a Windows COLORREF): checked against the thumbnails of
+    // 39 titles with flat coloured text (57 colours matched this order, none the reverse).
     const quint32 v = quint32(value) & 0xffffffu;
-    return QLatin1Char('#') + hex2(alpha) + hex2(int(v & 0xff)) + hex2(int((v >> 8) & 0xff))
-           + hex2(int((v >> 16) & 0xff));
+    return QLatin1Char('#') + hex2(alpha) + hex2(int((v >> 16) & 0xff)) + hex2(int((v >> 8) & 0xff))
+           + hex2(int(v & 0xff));
 }
 
 TitleFont splitFontName(const QString &filmoraFontName)
@@ -303,7 +305,7 @@ QString dafinAnimationFor(const QString &filmoraName, const QString &slot, QJson
         preset = QStringLiteral("bounce");
     else if (nameHas(n, {"drop", "fall"}))
         preset = exit ? QStringLiteral("fall") : QStringLiteral("drop");
-    else if (nameHas(n, {"rotate", "spin", "roll", "twist"}))
+    else if (nameHas(n, {"rotat", "spin", "roll", "twist"}))
         preset = QStringLiteral("spin-in");
     else if (nameHas(n, {"flip"}))
         preset = QStringLiteral("flip");
@@ -330,7 +332,14 @@ QString dafinAnimationFor(const QString &filmoraName, const QString &slot, QJson
         preset = exit ? QStringLiteral("fade-scale") : QStringLiteral("stamp");
     else if (nameHas(n, {"word"}))
         preset = exit ? QStringLiteral("remove-by-word") : QStringLiteral("rise-by-word");
-    else if (nameHas(n, {"letter", "char"}))
+    else if (nameHas(n, {"verbatim"})) {
+        // "Appearing Verbatim" / "Disappear Verbatim" (Filmora's MG_2d_09): letter by letter.
+        preset = QStringLiteral("fade");
+        if (params) {
+            params->insert(QStringLiteral("unit"), QStringLiteral("character"));
+            params->insert(QStringLiteral("stagger"), 0.05);
+        }
+    } else if (nameHas(n, {"letter", "char"}))
         preset = QStringLiteral("fade-up-char");
     else if (nameHas(n, {"center", "centre", "middle"})) {
         // "Center Gradually Appears": letters fade in from the middle outwards.

@@ -137,10 +137,10 @@ void writeTitleItem(const QString &itemDir, qint64 id, const QString &title, con
              {QStringLiteral("Basic"), QJsonObject{{QStringLiteral("FontName"), QStringLiteral("Lato Bold")},
                                                    {QStringLiteral("FontSize"), 120.4},
                                                    {QStringLiteral("TextAlpha"), 255},
-                                                   // Windows COLORREF 0x00BBGGRR: this is #102030.
-                                                   {QStringLiteral("TextColor"), QJsonArray{QJsonObject{{QStringLiteral("Color"), 0x302010}}}}}},
+                                                   // 0xRRGGBB: this is #102030.
+                                                   {QStringLiteral("TextColor"), QJsonArray{QJsonObject{{QStringLiteral("Color"), 0x102030}}}}}},
              {QStringLiteral("Border"), QJsonObject{{QStringLiteral("Enable"), 1}, {QStringLiteral("Size"), 6},
-                                                    {QStringLiteral("Alpha"), 255}, {QStringLiteral("Color"), 0x0000ff}}},
+                                                    {QStringLiteral("Alpha"), 255}, {QStringLiteral("Color"), 0xff0000}}},
              {QStringLiteral("Shadow"), QJsonObject{{QStringLiteral("Enable"), 1}, {QStringLiteral("Alpha"), 128},
                                                     {QStringLiteral("BlurRadius"), 5}, {QStringLiteral("Color"), 0},
                                                     {QStringLiteral("Direction"), 3}, {QStringLiteral("Distance"), 2}}}}}},
@@ -591,7 +591,8 @@ private slots:
 
     void filmoraTitleNamesMapToDafin()
     {
-        QCOMPARE(filmoraColor(0x302010), QStringLiteral("#ff102030"));
+        QCOMPARE(filmoraColor(0x102030), QStringLiteral("#ff102030"));
+        QCOMPARE(filmoraColor(0xee7f35), QStringLiteral("#ffee7f35")); // an orange title, not blue
         QCOMPARE(filmoraColor(0xffffff, 128), QStringLiteral("#80ffffff"));
         const TitleFont bold = splitFontName(QStringLiteral("Montserrat Extra Bold Italic"));
         QCOMPARE(bold.family, QStringLiteral("Montserrat"));
@@ -605,6 +606,11 @@ private slots:
         QCOMPARE(dafinAnimationFor(QStringLiteral("Drop In"), QStringLiteral("out"), &params), QStringLiteral("fall"));
         QCOMPARE(dafinAnimationFor(QStringLiteral("Stamp"), QStringLiteral("out"), &params), QStringLiteral("fade-scale"));
         QCOMPARE(dafinAnimationFor(QStringLiteral("Swing"), QStringLiteral("loop"), &params), QStringLiteral("swing"));
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Vertical Rotation Appears"), QStringLiteral("in"), &params),
+                 QStringLiteral("spin-in"));
+        QJsonObject verbatim;
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Appearing Verbatim"), QStringLiteral("in"), &verbatim), QStringLiteral("fade"));
+        QCOMPARE(verbatim.value(QStringLiteral("unit")).toString(), QStringLiteral("character"));
         QVERIFY(dafinAnimationFor(QStringLiteral("Mystery"), QStringLiteral("loop"), &params).isEmpty());
         QCOMPARE(dafinAnimationFor(QStringLiteral("Mystery"), QStringLiteral("in"), &params), QStringLiteral("fade"));
 
