@@ -72,6 +72,9 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; effects\, transitions\, effect-templates\ and audio-effects\ package
 ; directories, which the app resolves relative to the executable.
 Source: "{#MyAppSource}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; The document icon of Dafin project files (.drift): navy page with the green laurel leaf. Kept apart from
+; the app icon, the way Filmora shows its .wfp files, so the exe, shortcuts and taskbar keep dafin.exe's icon.
+Source: "..\..\resources\windows\dafin-file.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Shortcuts left by an install from when the app was called Cadra, and the executable from
 ; before it was renamed dafin.exe ([Files] copies over the folder, it never removes anything).
@@ -98,7 +101,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Root: HKCR; Subkey: "Cadra.Project"; Flags: deletekey
 Root: HKCR; Subkey: ".drift"; ValueType: string; ValueName: ""; ValueData: "Dafin.Project"; Flags: uninsdeletevalue
 Root: HKCR; Subkey: "Dafin.Project"; ValueType: string; ValueName: ""; ValueData: "Dafin Project"; Flags: uninsdeletekey
-Root: HKCR; Subkey: "Dafin.Project\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
+Root: HKCR; Subkey: "Dafin.Project\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\dafin-file.ico"
 Root: HKCR; Subkey: "Dafin.Project\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
 #endif
 
