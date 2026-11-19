@@ -73,8 +73,14 @@ void DownloadCenter::upsert(const Job &incoming)
         } else if (entry.sampleClock.elapsed() >= kSampleMs) {
             const qint64 delta = incoming.bytesReceived - entry.sampleBytes;
             const qint64 ms = entry.sampleClock.restart();
-            if (ms > 0 && delta >= 0)
-                entry.speed = double(delta) * 1000.0 / double(ms);
+            if (ms > 0 && delta >= 0) {
+                // Smoothed over roughly the last 5-10 s (one sample per kSampleMs), so the
+                // speed and the time left built from it don't jump with every burst or stall.
+                const double instant = double(delta) * 1000.0 / double(ms);
+                constexpr double kSmoothing = 0.15;
+                entry.speed = entry.speed > 0 ? entry.speed + kSmoothing * (instant - entry.speed)
+                                              : instant;
+            }
             entry.sampleBytes = incoming.bytesReceived;
             structural = true;
         }
