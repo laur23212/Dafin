@@ -70,6 +70,11 @@ QString filmoraColor(qint64 value, int alpha = 255);
 // for slot "in", "out" or "loop"; extra preset params go into `params`. Empty when nothing fits.
 QString dafinAnimationFor(const QString &filmoraName, const QString &slot, QJsonObject *params);
 
+// Dafin's closest preset for one of Filmora's text animation presets by its id (a title's
+// "stringParam": "MG_2d_09", a "Dir Insert" GUID ...), for slot "in" or "out", with its settings in
+// `params`. Empty when the id is not one Dafin knows (then match by name).
+QString dafinAnimationForId(const QString &filmoraId, const QString &slot, QJsonObject *params);
+
 // "Paytone One Regular" -> family "Paytone One", weight 400; "Montserrat Bold Italic" -> 700, italic.
 TitleFont splitFontName(const QString &filmoraFontName);
 

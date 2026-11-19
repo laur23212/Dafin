@@ -311,7 +311,13 @@ QString dafinAnimationFor(const QString &filmoraName, const QString &slot, QJson
         preset = QStringLiteral("flip");
     else if (nameHas(n, {"wipe", "reveal", "mask", "erase"}))
         preset = QStringLiteral("wipe");
-    else if (nameHas(n, {"slide", "fly", "move", "push", "shift"})) {
+    else if (nameHas(n, {"pixel", "evaporat"}))
+        preset = QStringLiteral("blur-in");
+    else if (nameHas(n, {"skew"}))
+        preset = QStringLiteral("skew-slide");
+    else if (nameHas(n, {"door"}))
+        preset = QStringLiteral("flip");
+    else if (nameHas(n, {"slide", "fly", "move", "push", "shift", "insert"})) {
         if (nameHas(n, {"left"}))
             preset = QStringLiteral("slide-left");
         else if (nameHas(n, {"right"}))
@@ -324,7 +330,22 @@ QString dafinAnimationFor(const QString &filmoraName, const QString &slot, QJson
         preset = QStringLiteral("rise");
     else if (nameHas(n, {"flash", "flicker", "strobe"}))
         preset = exit ? QStringLiteral("fade") : QStringLiteral("flicker-in");
-    else if (nameHas(n, {"rain"}))
+    else if (nameHas(n, {"wavy", "wave"})) {
+        preset = QStringLiteral("leap-in");
+        if (params) {
+            params->insert(QStringLiteral("offsetX"), 0.0);
+            params->insert(QStringLiteral("offsetY"), 0.4);
+            params->insert(QStringLiteral("angle"), 0.0);
+            params->insert(QStringLiteral("from"), 0.0);
+        }
+    } else if (nameHas(n, {"random"})) {
+        preset = QStringLiteral("fade");
+        if (params) {
+            params->insert(QStringLiteral("unit"), QStringLiteral("character"));
+            params->insert(QStringLiteral("order"), QStringLiteral("random"));
+            params->insert(QStringLiteral("stagger"), 0.05);
+        }
+    } else if (nameHas(n, {"rain"}))
         preset = QStringLiteral("rain");
     else if (nameHas(n, {"converge", "gather", "assemble"}))
         preset = QStringLiteral("converge");
@@ -357,6 +378,83 @@ QString dafinAnimationFor(const QString &filmoraName, const QString &slot, QJson
     if (!exit && outOnlyPresets().contains(preset))
         preset = QStringLiteral("fade");
     return preset;
+}
+
+QString dafinAnimationForId(const QString &filmoraId, const QString &slot, QJsonObject *params)
+{
+    // Filmora's text animation presets by their id (the title's "stringParam"), each as the Dafin
+    // preset and settings that look closest. The same id serves the entrance and the exit (MG_2d_09
+    // is "Appearing Verbatim" and "Disappear Verbatim"); the slot decides the direction. Matched
+    // against the animation thumbnails in a linked library (their mid-animation frame).
+    struct Entry
+    {
+        const char *id;
+        const char *preset;
+        QList<QPair<const char *, QJsonValue>> params;
+    };
+    static const QList<Entry> kTable = {
+        // Letter by letter: each letter fades in, overlapping the next.
+        {"MG_2d_01", "pop", {{"unit", "character"}, {"stagger", 0.06}, {"duration", 0.3}, {"from", 80}}},
+        {"MG_2d_09", "fade", {{"unit", "character"}, {"stagger", 0.05}, {"duration", 0.35}}},
+        // Letters jump up from below, small and tilted.
+        {"MG_2d_02", "leap-in", {}},
+        // Every letter grows from small at once.
+        {"MG_2d_04", "pop", {{"unit", "character"}, {"stagger", 0.0}, {"from", 30}, {"duration", 0.5}}},
+        // Typed: each letter pops from nothing.
+        {"MG_2d_05", "pop", {{"unit", "character"}, {"stagger", 0.08}, {"from", 0}, {"duration", 0.15}}},
+        // Letters switch on in a random order.
+        {"MG_2d_06", "typewriter", {{"order", "random"}, {"stagger", 0.05}}},
+        // Typed, each letter rising into place.
+        {"MG_2d_08", "fade-up-char", {{"rise", 0.6}, {"stagger", 0.08}, {"duration", 0.25}}},
+        // Letters turn into place from below / a corner / the side.
+        {"MG_2d_10", "tumble-in", {{"offsetY", 0.8}, {"angle", -90}}},
+        {"MG_2d_11", "tumble-in", {{"offsetX", -0.8}, {"offsetY", 0.8}, {"angle", -120}, {"from", 40}}},
+        {"MG_2d_12", "tumble-in", {{"offsetX", 0.8}, {"offsetY", 0.0}, {"angle", 120}}},
+        {"MG_2d_13", "tumble-in", {{"offsetY", 0.3}, {"angle", -180}, {"from", 60}}},
+        {"MG_2d_15", "tumble-in", {{"offsetY", -1.0}, {"angle", 0}, {"spin", 90}, {"spread", 1.0}, {"from", 30}}},
+        {"MG_2d_16", "tumble-in", {{"offsetX", -0.6}, {"offsetY", -0.6}, {"angle", -90}, {"from", 60}}},
+        // Each letter pops up past its size and settles.
+        {"MG_2d_20", "pop", {{"unit", "character"}, {"stagger", 0.07}, {"from", 0}, {"duration", 0.4}}},
+        // Letters start bunched together and open out from the middle.
+        {"MG_2d_21", "bunch-open", {}},
+        // Each letter starts enlarged and shrinks into place.
+        {"MG_2d_22", "pop", {{"unit", "character"}, {"stagger", 0.08}, {"from", 200}, {"duration", 0.4}, {"ease", "easeOut"}}},
+        // Letters turn around their upright axis (squeezed flat, then open), the last letter
+        // first: in Filmora's frame the first letter is the one still turning.
+        {"MG_2d_23", "flip", {{"unit", "character"}, {"stagger", 0.06}, {"order", "backward"}}},
+        {"MG_2d_42", "flip", {{"unit", "character"}, {"stagger", 0.05}, {"order", "backward"}}},
+        {"MG_2d_43", "flip", {{"unit", "character"}, {"stagger", 0.08}}},
+        // Letters bob at different heights and settle.
+        {"MG_2d_25", "scatter-in", {{"spreadX", 0.0}, {"spreadY", 0.5}, {"spin", 0}, {"sizes", 0}, {"order", "forward"}, {"stagger", 0.04}, {"ease", "back"}}},
+        {"MG_2d_32", "fade", {{"unit", "character"}, {"order", "random"}, {"stagger", 0.05}, {"duration", 0.3}}},
+        {"MG_2d_33", "shake-in", {}},
+        {"MG_2d_34", "scatter-in", {}},
+        {"MG_2d_40", "leap-in", {{"offsetX", 0.0}, {"offsetY", 0.4}, {"angle", 0}, {"from", 0}, {"stagger", 0.05}}},
+        // Spaced-out letters close in from the centre.
+        {"MG_2d_41", "converge", {{"order", "centerOut"}, {"spread", 0.8}, {"blur", 0}, {"stagger", 0.0}}},
+        // Typing with a cursor.
+        {"Char_Cursor_01", "typewriter", {{"caret", true}}},
+        {"Char_Cursor_02", "typewriter", {{"caret", true}}},
+        // Filmora's "Dir Insert" moves (the whole text).
+        {"C6163B42-A2C4-45E2-8D5F-347A0CCC2631", "slide-up", {}},
+        {"09913F15-9C83-438F-A226-0EB26E8B8F7A", "slide-up", {}},
+        {"8C3B822D-8C59-4A7B-AF96-56E280CFB7C0", "slide-down", {}},
+        {"7A5B04FB-9AE0-46e7-B6CC-62BA64D8E16D", "slide-down", {}},
+        {"0A6EE4AB-01BC-4D82-AA52-03FFA6F708DC", "slide-left", {}},
+        {"13C68E5A-746D-4645-8A84-52CBBB7F113B", "slide-right", {}},
+    };
+    if (slot == QLatin1String("loop"))
+        return {};
+    for (const Entry &e : kTable) {
+        if (filmoraId.compare(QLatin1String(e.id), Qt::CaseInsensitive) != 0)
+            continue;
+        if (params) {
+            for (const auto &p : e.params)
+                params->insert(QLatin1String(p.first), p.second);
+        }
+        return QLatin1String(e.preset);
+    }
+    return {};
 }
 
 TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &templateId,
@@ -624,25 +722,68 @@ TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &t
     if (!effects.isEmpty())
         style.insert(QStringLiteral("effectPadding"), 48);
 
-    // Animation: Filmora's named in / out / loop animations, matched to Dafin's presets.
-    QJsonObject animation;
+    // Animation: Filmora's in / out / loop animations, matched to Dafin's presets by Filmora's
+    // preset id when it is one Dafin knows (dafinAnimationForId), else by name. An older title
+    // keeps its animation in the clip's "animation" field instead, its length as a fraction of
+    // the clip (inRatio / outRatio); a nameless one there is Filmora's "none".
+    struct SlotAnim
+    {
+        QString name;
+        QString id;
+        double seconds = 0.0;
+    };
+    QHash<QString, SlotAnim> slotAnims;
     for (const QString &slot : {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("loop")}) {
         const QJsonObject a = clip.value(slot + QStringLiteral("Animation")).toObject();
         const QString name = a.value(QStringLiteral("name")).toString();
-        if (name.isEmpty())
+        if (!name.isEmpty())
+            slotAnims.insert(slot, {name, a.value(QStringLiteral("stringParam")).toString(),
+                                    num(a.value(QStringLiteral("duration"))) / kFilmoraTicksPerSecond});
+    }
+    const QJsonObject legacy = clip.value(QStringLiteral("animation")).toObject();
+    const QString legacyName = legacy.value(QStringLiteral("name")).toString();
+    if (!slotAnims.contains(QStringLiteral("in")) && !slotAnims.contains(QStringLiteral("out"))
+        && !legacyName.isEmpty() && legacyName.compare(QLatin1String("No Animation"), Qt::CaseInsensitive) != 0) {
+        const double clipSeconds = (num(clip.value(QStringLiteral("tlEnd"))) - num(clip.value(QStringLiteral("tlBegin"))))
+                                   / kFilmoraTicksPerSecond;
+        const QString id = legacy.value(QStringLiteral("stringParam")).toString();
+        const double inRatio = num(legacy.value(QStringLiteral("inRatio")));
+        const double outRatio = num(legacy.value(QStringLiteral("outRatio")));
+        slotAnims.insert(QStringLiteral("in"), {legacyName, id, std::max(0.0, inRatio * clipSeconds)});
+        if (outRatio > 0.0)
+            slotAnims.insert(QStringLiteral("out"), {legacyName, id, outRatio * clipSeconds});
+    }
+    QJsonObject animation;
+    for (const QString &slot : {QStringLiteral("in"), QStringLiteral("out"), QStringLiteral("loop")}) {
+        if (!slotAnims.contains(slot))
             continue;
+        const SlotAnim a = slotAnims.value(slot);
         QJsonObject params;
-        const QString preset = dafinAnimationFor(name, slot, &params);
+        QString preset = dafinAnimationForId(a.id, slot, &params);
+        if (preset.isEmpty())
+            preset = dafinAnimationFor(a.name, slot, &params);
         if (preset.isEmpty()) {
-            out.leftOut.append(QStringLiteral("its \"%1\" animation").arg(name));
+            out.leftOut.append(QStringLiteral("its \"%1\" animation").arg(a.name));
             continue;
         }
-        if (slot != QLatin1String("loop") && preset != QLatin1String("typewriter")) {
-            const double seconds = num(a.value(QStringLiteral("duration"))) / kFilmoraTicksPerSecond;
-            if (seconds > 0.0)
-                params.insert(QStringLiteral("duration"), qBound(0.05, std::round(seconds * 100.0) / 100.0, 5.0));
-            if (slot == QLatin1String("out"))
-                params.insert(QStringLiteral("ease"), QStringLiteral("easeIn"));
+        if (slot != QLatin1String("loop")) {
+            // Filmora's length is the whole animation. A letter-by-letter one keeps its own pace
+            // per letter and is fitted whole into that length (timing.maxReadMs, the entrance);
+            // a whole-text one simply takes it as its duration.
+            const QString unit = params.value(QStringLiteral("unit")).toString();
+            const bool perLetter = preset == QLatin1String("typewriter") || unit == QLatin1String("character")
+                                   || unit == QLatin1String("word") || a.id.startsWith(QLatin1String("MG_2d"));
+            const double seconds = qBound(0.0, std::round(a.seconds * 100.0) / 100.0, 5.0);
+            if (perLetter) {
+                if (slot == QLatin1String("in") && seconds >= 0.05)
+                    animation.insert(QStringLiteral("timing"),
+                                     QJsonObject{{QStringLiteral("maxReadMs"), std::round(seconds * 1000.0)}});
+            } else {
+                if (seconds >= 0.05)
+                    params.insert(QStringLiteral("duration"), seconds);
+                if (slot == QLatin1String("out"))
+                    params.insert(QStringLiteral("ease"), QStringLiteral("easeIn"));
+            }
         }
         animation.insert(slot, QJsonObject{{QStringLiteral("preset"), preset}, {QStringLiteral("params"), params}});
     }

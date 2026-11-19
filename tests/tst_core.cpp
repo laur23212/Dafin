@@ -173,6 +173,7 @@ private slots:
     void textStyleMigratesFromV6();
     void textStyleV7RoundTrip();
     void textAnimationPresetsAreWellFormed();
+    void textScatterGivesEachFragmentItsOwnOffset();
     void legacyTextAnimationParity();
     void textKeyframeKeysAreDynamic();
     void textLooksRegenerate();
@@ -7668,7 +7669,8 @@ void CoreTest::textAnimationPresetsAreWellFormed()
         }
     }
     for (const char *id : {"fade", "slide-up", "slide-down", "slide-left", "slide-right", "pop", "blur-in", "typewriter",
-                           "rise", "bounce", "wave", "glitch-in", "flip", "squash", "flicker-in", "sway", "skew-slide"})
+                           "rise", "bounce", "wave", "glitch-in", "flip", "squash", "flicker-in", "sway", "skew-slide",
+                           "leap-in", "tumble-in", "scatter-in", "shake-in", "bunch-open"})
         QVERIFY2(ids.contains(QLatin1String(id)), id);
 
     // Out mirrors the displacement so an exit leaves the way its entrance arrived.
@@ -7700,6 +7702,81 @@ void CoreTest::textAnimationPresetsAreWellFormed()
     QCOMPARE(flicker.animators[0].props.opacity.at(0.0), 0.0);
     QCOMPARE(flicker.animators[0].props.opacity.at(0.19), 0.0);
     QCOMPARE(flicker.animators[0].props.opacity.at(1.0), 100.0);
+}
+
+// Scatter (Dafin): every fragment gets its own offset, angle and size, the same on every frame,
+// within the amounts, gone once the In has settled; another seed is another arrangement.
+void CoreTest::textScatterGivesEachFragmentItsOwnOffset()
+{
+    using namespace drift;
+    using namespace drift::textanim;
+    TextAnimator a;
+    a.selectors = {stagger(0, 400'000)};
+    a.props.scatter.x = 1.0;
+    a.props.scatter.y = 0.5;
+    a.props.scatter.rotation = 40.0;
+    a.props.scatter.scale = 50.0;
+    TextAnimationSet set;
+    set.in.animators = {a};
+    const ResolvedTextAnimation anim = resolveTextAnimation(set);
+    Domains domains;
+    const QList<FragmentInfo> frags = lineFragments(&domains);
+    const EvalContext start = contextAt(0, 2'000'000);
+    const Frame f0 = evaluateTextAnimation(anim.set, anim.resolved, frags, domains, start);
+    QSet<int> distinctDx;
+    bool someTurned = false;
+    for (const FragmentProps &p : f0.props) {
+        QVERIFY(std::abs(p.dx) <= start.emPx * 1.0 + 1e-6);
+        QVERIFY(std::abs(p.dy) <= start.emPx * 0.5 + 1e-6);
+        QVERIFY(std::abs(p.rotation) <= 40.0 + 1e-6);
+        QVERIFY(p.scaleX >= 0.5 - 1e-6 && p.scaleX <= 1.5 + 1e-6);
+        QCOMPARE(p.scaleX, p.scaleY);
+        distinctDx.insert(int(std::lround(p.dx)));
+        someTurned = someTurned || std::abs(p.rotation) > 5.0;
+    }
+    QVERIFY2(distinctDx.size() >= 8, qPrintable(QString::number(distinctDx.size())));
+    QVERIFY(someTurned);
+    // Stable: the same frame again gives the same offsets.
+    const Frame again = evaluateTextAnimation(anim.set, anim.resolved, frags, domains, start);
+    for (int i = 0; i < frags.size(); ++i)
+        QCOMPARE(again.props[i].dx, f0.props[i].dx);
+    // Halfway, half the offset (linear ease); settled, at rest.
+    const Frame half = evaluateTextAnimation(anim.set, anim.resolved, frags, domains, contextAt(200'000, 2'000'000));
+    QVERIFY(std::abs(half.props[3].dx - f0.props[3].dx * 0.5) < 1e-6);
+    const Frame settled = evaluateTextAnimation(anim.set, anim.resolved, frags, domains, contextAt(600'000, 2'000'000));
+    QString why;
+    QVERIFY2(allAtRest(settled, &why), qPrintable(why));
+    // Another seed, another arrangement.
+    TextAnimationSet reseeded = set;
+    reseeded.in.animators[0].props.scatter.seed = 7;
+    const ResolvedTextAnimation anim2 = resolveTextAnimation(reseeded);
+    const Frame g0 = evaluateTextAnimation(anim2.set, anim2.resolved, frags, domains, start);
+    int moved = 0;
+    for (int i = 0; i < frags.size(); ++i)
+        moved += std::abs(g0.props[i].dx - f0.props[i].dx) > 1.0 ? 1 : 0;
+    QVERIFY(moved >= 6);
+    // Room is reserved for it, and it survives the project file.
+    QVERIFY(animationBounds(anim.resolved, start).maxDx >= start.emPx);
+    QVERIFY(animationBounds(anim.resolved, start).maxRotationDeg >= 40.0);
+    const TextAnimator back = textAnimatorFromJson(textAnimatorToJson(reseeded.in.animators[0]));
+    QCOMPARE(back.props.scatter.x.value, 1.0);
+    QCOMPARE(back.props.scatter.y.value, 0.5);
+    QCOMPARE(back.props.scatter.rotation.value, 40.0);
+    QCOMPARE(back.props.scatter.scale.value, 50.0);
+    QCOMPARE(back.props.scatter.seed, quint32(7));
+    QCOMPARE(back.props.scatter.unit, TextLengthUnit::Em);
+    QVERIFY(!textAnimatorToJson(TextAnimator{}).value(QStringLiteral("props")).toObject().contains(QStringLiteral("scatter")));
+    // The presets built on it: Scatter in scatters, Tumble in's exit leaves the way it came.
+    const ResolvedPresetSlot scatterIn = resolvePresetSlot(
+        *TextAnimationPresetCatalog::instance().presetForId(QStringLiteral("scatter-in")), {}, TextAnimSlotKind::In);
+    QVERIFY(scatterIn.animators[0].props.scatter.isActive());
+    QCOMPARE(scatterIn.animators[0].props.scatter.seed, quint32(1));
+    const TextAnimationPreset tumble = *TextAnimationPresetCatalog::instance().presetForId(QStringLiteral("tumble-in"));
+    QCOMPARE(resolvePresetSlot(tumble, {}, TextAnimSlotKind::Out).animators[0].props.position.y.value,
+             resolvePresetSlot(tumble, {}, TextAnimSlotKind::In).animators[0].props.position.y.value);
+    const ResolvedPresetSlot open = resolvePresetSlot(
+        *TextAnimationPresetCatalog::instance().presetForId(QStringLiteral("bunch-open")), {}, TextAnimSlotKind::In);
+    QCOMPARE(open.animators[0].props.tracking.value, -0.45);
 }
 
 // Every legacy kind renders the same numbers through the engine as TextRaster::applyAnimation

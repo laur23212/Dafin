@@ -1,0 +1,105 @@
+{
+  "format": 1,
+  "id": "tumble-in",
+  "label": "Tumble in",
+  "category": "character",
+  "sampleText": "Tumble",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 247,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.05,
+    "duration": 0.6,
+    "ease": "easeOut"
+  },
+  "flags": {
+    "mirrorForOut": false
+  },
+  "params": [
+    {
+      "id": "offsetX",
+      "type": "scalar",
+      "label": "From the side",
+      "unit": "em",
+      "min": -3,
+      "max": 3,
+      "step": 0.05,
+      "default": 0
+    },
+    {
+      "id": "offsetY",
+      "type": "scalar",
+      "label": "From below",
+      "unit": "em",
+      "min": -3,
+      "max": 3,
+      "step": 0.05,
+      "default": 0.8
+    },
+    {
+      "id": "angle",
+      "type": "scalar",
+      "label": "Turn",
+      "unit": "°",
+      "min": -360,
+      "max": 360,
+      "step": 1,
+      "default": -90
+    },
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "Start size",
+      "unit": "%",
+      "min": 0,
+      "max": 200,
+      "step": 1,
+      "default": 50
+    },
+    {
+      "id": "spin",
+      "type": "scalar",
+      "label": "Each letter its own turn",
+      "unit": "°",
+      "min": 0,
+      "max": 180,
+      "step": 1,
+      "default": 30
+    },
+    {
+      "id": "spread",
+      "type": "scalar",
+      "label": "Each letter its own spot",
+      "unit": "em",
+      "min": 0,
+      "max": 3,
+      "step": 0.05,
+      "default": 0
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": "{offsetX}",
+          "y": "{offsetY}",
+          "unit": "em"
+        },
+        "rotation": "{angle}",
+        "scale": "{from}",
+        "opacity": 0,
+        "scatter": {
+          "x": "{spread}",
+          "y": "{spread}",
+          "rotation": "{spin}"
+        }
+      }
+    }
+  ]
+}

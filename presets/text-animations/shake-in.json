@@ -1,0 +1,71 @@
+{
+  "format": 1,
+  "id": "shake-in",
+  "label": "Shake in",
+  "category": "kinetic",
+  "sampleText": "Shake",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 249,
+  "defaults": {
+    "unit": "block",
+    "duration": 0.6,
+    "ease": "easeOut"
+  },
+  "params": [
+    {
+      "id": "amount",
+      "type": "scalar",
+      "label": "Shake",
+      "unit": "px",
+      "min": 0,
+      "max": 60,
+      "step": 1,
+      "default": 18
+    },
+    {
+      "id": "speed",
+      "type": "scalar",
+      "label": "Speed",
+      "unit": "Hz",
+      "min": 1,
+      "max": 30,
+      "step": 0.5,
+      "default": 14
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "opacity": 0
+      }
+    },
+    {
+      "selectors": [
+        "stagger",
+        {
+          "driver": "wiggle",
+          "domain": "{unit}",
+          "mode": "intersect",
+          "wave": "noise",
+          "frequencyHz": "{speed}",
+          "spatialPhaseDeg": 97,
+          "minAmount": -100,
+          "maxAmount": 100
+        }
+      ],
+      "props": {
+        "position": {
+          "x": "{amount}",
+          "y": 0,
+          "unit": "px"
+        }
+      }
+    }
+  ]
+}

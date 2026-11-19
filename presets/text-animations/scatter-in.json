@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "id": "scatter-in",
+  "label": "Scatter in",
+  "category": "character",
+  "sampleText": "Scatter",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 248,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.03,
+    "duration": 0.6,
+    "ease": "easeOut",
+    "order": "random"
+  },
+  "params": [
+    {
+      "id": "spreadX",
+      "type": "scalar",
+      "label": "Spread across",
+      "unit": "em",
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "default": 1.5
+    },
+    {
+      "id": "spreadY",
+      "type": "scalar",
+      "label": "Spread up and down",
+      "unit": "em",
+      "min": 0,
+      "max": 6,
+      "step": 0.1,
+      "default": 1.0
+    },
+    {
+      "id": "spin",
+      "type": "scalar",
+      "label": "Turn",
+      "unit": "°",
+      "min": 0,
+      "max": 180,
+      "step": 1,
+      "default": 30
+    },
+    {
+      "id": "sizes",
+      "type": "scalar",
+      "label": "Sizes",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 50
+    },
+    {
+      "id": "arrangement",
+      "type": "scalar",
+      "label": "Arrangement",
+      "min": 0,
+      "max": 99,
+      "step": 1,
+      "default": 1
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "opacity": 0,
+        "scatter": {
+          "x": "{spreadX}",
+          "y": "{spreadY}",
+          "rotation": "{spin}",
+          "scale": "{sizes}",
+          "seed": "{arrangement}"
+        }
+      }
+    }
+  ]
+}

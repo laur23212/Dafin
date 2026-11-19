@@ -125,6 +125,24 @@ struct TextAnimWipe
     double softness = 0.3;   // edge width as a fraction of the masked box
 };
 
+// Dafin: a different offset for every fragment, the same on every frame (seeded by the fragment's
+// place in the text), scaled by coverage like the other props: letters fly in from scattered
+// spots, tumble in at their own angles, start at their own sizes. Each amount is the largest
+// offset (a fragment gets a value between -amount and +amount); all 0 = off.
+struct TextAnimScatter
+{
+    TextAnimParam x{0.0};
+    TextAnimParam y{0.0};
+    TextLengthUnit unit = TextLengthUnit::Em;
+    TextAnimParam rotation{0.0}; // degrees
+    TextAnimParam scale{0.0};    // percent of the fragment's size, added to its scale
+    quint32 seed = 0;            // another seed, another (equally stable) arrangement
+
+    bool isActive() const;
+    // The fragment's offsets in -1..1: x, y, rotation, scale.
+    static double unit01(int fragmentKey, quint32 seed, int lane);
+};
+
 // The deltas an animator applies at coverage 1. Mirrors skottie's AnimatedProps plus skew and a
 // soft-mask wipe. Position/tracking are additive, scale multiplicative, opacity and colours lerp.
 struct TextAnimatorProps
@@ -152,6 +170,7 @@ struct TextAnimatorProps
     TextAnimParam lineSpacing{0.0}; // project px
     TextAnimParam strokeWidth{0.0}; // project px, additive
     TextAnimWipe wipe;
+    TextAnimScatter scatter; // per fragment only; ignored by whole-block animators
 };
 
 struct TextAnimator

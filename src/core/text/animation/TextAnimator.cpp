@@ -213,6 +213,11 @@ double hash01(quint32 a, quint32 b)
     return (h & 0xffffffu) / double(0xffffff);
 }
 
+double scatterUnit01(int fragmentKey, quint32 seed, int lane)
+{
+    return hash01(static_cast<quint32>(fragmentKey) * 4u + static_cast<quint32>(lane), seed ^ 0x5ca7u) * 2.0 - 1.0;
+}
+
 double waveValue(TextWiggleWave wave, double phase, double slot, quint32 seed)
 {
     switch (wave) {
@@ -443,11 +448,25 @@ QColor lerpColor(const QColor &a, const QColor &b, double t)
                             lerp(a.blueF(), b.blueF(), t), lerp(a.alphaF(), b.alphaF(), t));
 }
 
-// The props that stay per fragment even for a whole-block animator.
+// The props that stay per fragment even for a whole-block animator. `fragmentKey` (the fragment's
+// place in the text) picks its scatter offsets.
 void applyFragmentProps(const TextAnimatorProps &p, double a, double progress, FragmentProps &out,
-                        const EvalContext &ctx, bool includeMotion)
+                        const EvalContext &ctx, bool includeMotion, int fragmentKey = 0)
 {
     const double ap = std::max(a, 0.0);
+    if (includeMotion && p.scatter.isActive()) {
+        const TextAnimScatter &s = p.scatter;
+        const double rx = TextAnimScatter::unit01(fragmentKey, s.seed, 0);
+        const double ry = TextAnimScatter::unit01(fragmentKey, s.seed, 1);
+        const double rr = TextAnimScatter::unit01(fragmentKey, s.seed, 2);
+        const double rs = TextAnimScatter::unit01(fragmentKey, s.seed, 3);
+        out.dx += resolveLength(s.x.at(progress) * rx, s.unit, true, 0.0, ctx) * a;
+        out.dy += resolveLength(s.y.at(progress) * ry, s.unit, false, 0.0, ctx) * a;
+        out.rotation += s.rotation.at(progress) * rr * a;
+        const double grow = std::max(-0.99, s.scale.at(progress) * rs / 100.0 * a);
+        out.scaleX *= 1.0 + grow;
+        out.scaleY *= 1.0 + grow;
+    }
     if (includeMotion) {
         out.dx += resolveLength(p.position.x.at(progress), p.position.unit, true, p.position.maxPx, ctx) * a;
         out.dy += resolveLength(p.position.y.at(progress), p.position.unit, false, p.position.maxPx, ctx) * a;
@@ -769,7 +788,8 @@ Frame evaluateTextAnimation(const TextAnimationSet &set, const ResolvedSlots &re
                 coverage[i] = a;
             }
             for (int i = 0; i < n; ++i)
-                applyFragmentProps(animator.props, coverage[i], st.progress, frame.props[i], ctx, true);
+                applyFragmentProps(animator.props, coverage[i], st.progress, frame.props[i], ctx, true,
+                                   fragments[i].charIndex);
         }
     };
     runSlot(resolved.in, inTime);
@@ -908,6 +928,14 @@ Bounds animationBounds(const ResolvedSlots &resolved, const EvalContext &ctx)
                 b.maxScale *= scale * kOvershoot;
             b.maxRotationDeg += p.rotation.maxAbs();
             b.maxTrackingPx += std::abs(resolveLength(p.tracking.maxAbs(), p.trackingUnit, true, 0.0, ctx));
+            if (p.scatter.isActive()) {
+                b.maxDx += std::abs(resolveLength(p.scatter.x.maxAbs(), p.scatter.unit, true, 0.0, ctx)) * kOvershoot;
+                b.maxDy += std::abs(resolveLength(p.scatter.y.maxAbs(), p.scatter.unit, false, 0.0, ctx)) * kOvershoot;
+                b.maxRotationDeg += p.scatter.rotation.maxAbs();
+                const double grow = 1.0 + p.scatter.scale.maxAbs() / 100.0;
+                if (grow > 1.0)
+                    b.maxScale *= grow;
+            }
         }
     };
     visit(resolved.in);
@@ -917,6 +945,17 @@ Bounds animationBounds(const ResolvedSlots &resolved, const EvalContext &ctx)
 }
 
 } // namespace textanim
+
+bool TextAnimScatter::isActive() const
+{
+    return x.maxAbs() > 0.0 || y.maxAbs() > 0.0 || rotation.maxAbs() > 0.0 || scale.maxAbs() > 0.0;
+}
+
+double TextAnimScatter::unit01(int fragmentKey, quint32 seed, int lane)
+{
+    return textanim::scatterUnit01(fragmentKey, seed, lane);
+}
+
 } // namespace drift
 
 // ---------------------------------------------------------------------------------------------
@@ -1185,6 +1224,18 @@ QJsonObject textAnimatorToJson(const TextAnimator &a)
         props.insert(QStringLiteral("wipe"), QJsonObject{{QStringLiteral("enabled"), true},
                                                          {QStringLiteral("angleDeg"), p.wipe.angleDeg},
                                                          {QStringLiteral("softness"), p.wipe.softness}});
+    if (p.scatter.isActive()) {
+        QJsonObject scatter;
+        putParam(scatter, QStringLiteral("x"), p.scatter.x, 0.0);
+        putParam(scatter, QStringLiteral("y"), p.scatter.y, 0.0);
+        if (p.scatter.unit != TextLengthUnit::Em)
+            scatter.insert(QStringLiteral("unit"), textLengthUnitToString(p.scatter.unit));
+        putParam(scatter, QStringLiteral("rotation"), p.scatter.rotation, 0.0);
+        putParam(scatter, QStringLiteral("scale"), p.scatter.scale, 0.0);
+        if (p.scatter.seed != 0)
+            scatter.insert(QStringLiteral("seed"), static_cast<qint64>(p.scatter.seed));
+        props.insert(QStringLiteral("scatter"), scatter);
+    }
     QJsonArray selectors;
     for (const TextRangeSelector &s : a.selectors)
         selectors.append(textRangeSelectorToJson(s));
@@ -1238,6 +1289,17 @@ TextAnimator textAnimatorFromJson(const QJsonObject &o)
     p.trackingUnit = textLengthUnitFromString(props.value(QStringLiteral("trackingUnit")).toString());
     p.lineSpacing = textAnimParamFromJson(props.value(QStringLiteral("lineSpacing")), 0.0);
     p.strokeWidth = textAnimParamFromJson(props.value(QStringLiteral("strokeWidth")), 0.0);
+    const QJsonObject scatter = props.value(QStringLiteral("scatter")).toObject();
+    if (!scatter.isEmpty()) {
+        p.scatter.x = textAnimParamFromJson(scatter.value(QStringLiteral("x")), 0.0);
+        p.scatter.y = textAnimParamFromJson(scatter.value(QStringLiteral("y")), 0.0);
+        p.scatter.unit = scatter.contains(QStringLiteral("unit"))
+                             ? textLengthUnitFromString(scatter.value(QStringLiteral("unit")).toString())
+                             : TextLengthUnit::Em;
+        p.scatter.rotation = textAnimParamFromJson(scatter.value(QStringLiteral("rotation")), 0.0);
+        p.scatter.scale = textAnimParamFromJson(scatter.value(QStringLiteral("scale")), 0.0);
+        p.scatter.seed = static_cast<quint32>(scatter.value(QStringLiteral("seed")).toInteger(0));
+    }
     const QJsonObject wipe = props.value(QStringLiteral("wipe")).toObject();
     if (!wipe.isEmpty()) {
         p.wipe.enabled = jsonBool(wipe.value(QStringLiteral("enabled")), true);

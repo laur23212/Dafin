@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "id": "bunch-open",
+  "label": "Open out",
+  "category": "character",
+  "sampleText": "Open out",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 212,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0,
+    "duration": 0.6,
+    "ease": "easeOut",
+    "order": "centerOut"
+  },
+  "params": [
+    {
+      "id": "squeeze",
+      "type": "scalar",
+      "label": "Squeeze",
+      "unit": "em",
+      "min": 0,
+      "max": 1.5,
+      "step": 0.05,
+      "default": 0.45
+    },
+    {
+      "id": "startOpacity",
+      "type": "scalar",
+      "label": "Start opacity",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "default": 30
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "tracking": {
+          "$": "squeeze",
+          "mul": -1
+        },
+        "trackingUnit": "em",
+        "opacity": "{startOpacity}"
+      }
+    }
+  ]
+}

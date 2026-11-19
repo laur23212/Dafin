@@ -558,7 +558,9 @@ private slots:
         QCOMPARE(in.value(QStringLiteral("preset")).toString(), QStringLiteral("fade"));
         QCOMPARE(in.value(QStringLiteral("params")).toObject().value(QStringLiteral("order")).toString(),
                  QStringLiteral("centerOut"));
-        QCOMPARE(in.value(QStringLiteral("params")).toObject().value(QStringLiteral("duration")).toDouble(), 0.5);
+        // Letter by letter: each letter keeps its pace, the whole entrance fits Filmora's 0.5 s.
+        QVERIFY(!in.value(QStringLiteral("params")).toObject().contains(QStringLiteral("duration")));
+        QCOMPARE(animation.value(QStringLiteral("timing")).toObject().value(QStringLiteral("maxReadMs")).toDouble(), 500.0);
         const QJsonObject outAnim = animation.value(QStringLiteral("out")).toObject();
         QCOMPARE(outAnim.value(QStringLiteral("preset")).toString(), QStringLiteral("slide-left"));
         QCOMPARE(outAnim.value(QStringLiteral("params")).toObject().value(QStringLiteral("ease")).toString(),
@@ -613,6 +615,57 @@ private slots:
         QCOMPARE(verbatim.value(QStringLiteral("unit")).toString(), QStringLiteral("character"));
         QVERIFY(dafinAnimationFor(QStringLiteral("Mystery"), QStringLiteral("loop"), &params).isEmpty());
         QCOMPARE(dafinAnimationFor(QStringLiteral("Mystery"), QStringLiteral("in"), &params), QStringLiteral("fade"));
+
+        // By Filmora's preset id first: the same id is the entrance and the exit.
+        QJsonObject byId;
+        QCOMPARE(dafinAnimationForId(QStringLiteral("MG_2d_34"), QStringLiteral("in"), &byId), QStringLiteral("scatter-in"));
+        QCOMPARE(dafinAnimationForId(QStringLiteral("MG_2d_02"), QStringLiteral("out"), &byId), QStringLiteral("leap-in"));
+        byId = {};
+        QCOMPARE(dafinAnimationForId(QStringLiteral("MG_2d_22"), QStringLiteral("in"), &byId), QStringLiteral("pop"));
+        QCOMPARE(byId.value(QStringLiteral("from")).toDouble(), 200.0); // starts enlarged
+        QCOMPARE(dafinAnimationForId(QStringLiteral("8C3B822D-8C59-4A7B-AF96-56E280CFB7C0"), QStringLiteral("in"), &byId),
+                 QStringLiteral("slide-down"));
+        QVERIFY(dafinAnimationForId(QStringLiteral("MG_2d_99"), QStringLiteral("in"), &byId).isEmpty());
+        QVERIFY(dafinAnimationForId(QStringLiteral("MG_2d_09"), QStringLiteral("loop"), &byId).isEmpty());
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Right Dir Insert"), QStringLiteral("in"), &params), QStringLiteral("slide-right"));
+        QCOMPARE(dafinAnimationFor(QStringLiteral("Evaporate"), QStringLiteral("in"), &params), QStringLiteral("blur-in"));
+
+        // A title whose animation is in the clip's "animation" field (inRatio of the clip), and one
+        // whose "animation" is Filmora's nameless "none".
+        auto titleWith = [](const QJsonObject &clipFields) {
+            const QJsonObject script{{QStringLiteral("Text"), QStringLiteral("Hi")},
+                                     {QStringLiteral("TextData"), QJsonArray{QJsonObject{{QStringLiteral("CharData"), QStringLiteral("Hi")}}}}};
+            QJsonObject clip{{QStringLiteral("type"), 4}, {QStringLiteral("tlBegin"), 0}, {QStringLiteral("tlEnd"), 40000000},
+                             {QStringLiteral("scriptBuf"), QString::fromUtf8(QJsonDocument(script).toJson(QJsonDocument::Compact))}};
+            for (auto it = clipFields.constBegin(); it != clipFields.constEnd(); ++it)
+                clip.insert(it.key(), it.value());
+            const QJsonObject root{{QStringLiteral("subTimeline"),
+                                    QJsonObject{{QStringLiteral("timelineInfos"),
+                                                 QJsonArray{QJsonObject{{QStringLiteral("trackInfos"),
+                                                                         QJsonArray{QJsonObject{{QStringLiteral("clipList"), QJsonArray{clip}}}}}}}}}}};
+            return convertFilmoraTitle(QJsonDocument(root).toJson(), QStringLiteral("filmora.2"), QStringLiteral("T"), QString())
+                .templateJson.value(QStringLiteral("style")).toObject().value(QStringLiteral("animation")).toObject();
+        };
+        const QJsonObject legacy = titleWith({{QStringLiteral("animation"),
+                                               QJsonObject{{QStringLiteral("name"), QStringLiteral("Fade1")},
+                                                           {QStringLiteral("type"), 4},
+                                                           {QStringLiteral("stringParam"), QStringLiteral("0CAA397E-6EB2-4e51-9DF7-B7DDB338EB22")},
+                                                           {QStringLiteral("inRatio"), 0.1}, {QStringLiteral("outRatio"), 0.0}}}});
+        QCOMPARE(legacy.value(QStringLiteral("in")).toObject().value(QStringLiteral("preset")).toString(), QStringLiteral("fade"));
+        QCOMPARE(legacy.value(QStringLiteral("in")).toObject().value(QStringLiteral("params")).toObject()
+                     .value(QStringLiteral("duration")).toDouble(), 0.4); // a tenth of 4 s
+        QVERIFY(!legacy.contains(QStringLiteral("out")));
+        const QJsonObject none = titleWith({{QStringLiteral("animation"),
+                                             QJsonObject{{QStringLiteral("name"), QString()}, {QStringLiteral("type"), 2},
+                                                         {QStringLiteral("stringParam"), QStringLiteral("0A6EE4AB-01BC-4D82-AA52-03FFA6F708DC")},
+                                                         {QStringLiteral("inRatio"), 0.0}}}});
+        QVERIFY(none.isEmpty());
+        const QJsonObject scattered = titleWith({{QStringLiteral("inAnimation"),
+                                                  QJsonObject{{QStringLiteral("name"), QStringLiteral("Scatter and Fly in")},
+                                                              {QStringLiteral("type"), 5}, {QStringLiteral("stringParam"), QStringLiteral("MG_2d_34")},
+                                                              {QStringLiteral("duration"), 15000000}}}});
+        QCOMPARE(scattered.value(QStringLiteral("in")).toObject().value(QStringLiteral("preset")).toString(), QStringLiteral("scatter-in"));
+        QCOMPARE(scattered.value(QStringLiteral("timing")).toObject().value(QStringLiteral("maxReadMs")).toDouble(), 1500.0);
 
         // A title with no text (shapes only) is listed, not made into an empty title.
         const TitleConversion empty = convertFilmoraTitle("{\"projectName\":\"TlbTitleClip\"}", QStringLiteral("filmora.1"),

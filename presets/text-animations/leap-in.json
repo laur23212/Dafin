@@ -1,0 +1,80 @@
+{
+  "format": 1,
+  "id": "leap-in",
+  "label": "Leap in",
+  "category": "character",
+  "sampleText": "Leap up",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 246,
+  "defaults": {
+    "unit": "character",
+    "stagger": 0.06,
+    "duration": 0.5,
+    "ease": "back"
+  },
+  "flags": {
+    "mirrorForOut": false
+  },
+  "params": [
+    {
+      "id": "offsetX",
+      "type": "scalar",
+      "label": "From the side",
+      "unit": "em",
+      "min": -3,
+      "max": 3,
+      "step": 0.05,
+      "default": 0.3
+    },
+    {
+      "id": "offsetY",
+      "type": "scalar",
+      "label": "From below",
+      "unit": "em",
+      "min": -3,
+      "max": 3,
+      "step": 0.05,
+      "default": 0.9
+    },
+    {
+      "id": "angle",
+      "type": "scalar",
+      "label": "Tilt",
+      "unit": "°",
+      "min": -180,
+      "max": 180,
+      "step": 1,
+      "default": 20
+    },
+    {
+      "id": "from",
+      "type": "scalar",
+      "label": "Start size",
+      "unit": "%",
+      "min": 0,
+      "max": 200,
+      "step": 1,
+      "default": 40
+    }
+  ],
+  "animators": [
+    {
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "position": {
+          "x": "{offsetX}",
+          "y": "{offsetY}",
+          "unit": "em"
+        },
+        "rotation": "{angle}",
+        "scale": "{from}",
+        "opacity": 0
+      }
+    }
+  ]
+}
