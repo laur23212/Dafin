@@ -872,7 +872,6 @@ qt_add_resources(driftcore "drift_text_styles"
 
 # Dafin: the built-in editing skill for AI Assist (Taste Engine + opt-in Creator Style, text only, no frames).
 file(GLOB_RECURSE DAFIN_ASSISTANT_SKILL_FILES CONFIGURE_DEPENDS
-    RELATIVE "${CMAKE_SOURCE_DIR}/assistant-skill"
     "${CMAKE_SOURCE_DIR}/assistant-skill/*.md" "${CMAKE_SOURCE_DIR}/assistant-skill/*.json")
 qt_add_resources(driftcore "dafin_assistant_skill"
     PREFIX "/assistant-skill"
