@@ -567,7 +567,16 @@ PanelFrame {
     // Returns {start, guide}; guide < 0 means no snap occurred.
     // `excludeClipId` is the clip being dragged, if any: it is still parked at its old start in
     // the model, so leaving its edges in the target set pins every short drag back to the origin.
+    // Dafin: a library drop that ends within this many pixels of the very start lands exactly on 0.
+    readonly property real zeroSnapPx: 6
+
     function snapClipStart(desiredStart, duration, excludeClipId) {
+        // The very start always catches, with Snap on or off, so a clip can be put at 0 without
+        // aiming at a pixel. Alt still bypasses it, as it does every other snap. A clip being
+        // moved on the timeline passes its own id and keeps the ordinary rules.
+        if (excludeClipId === undefined && desiredStart * pxPerSecond <= zeroSnapPx
+                && !(Qt.application.keyboardModifiers & Qt.AltModifier))
+            return { "start": 0, "guide": 0 }
         // Dafin: sticky, both edges, targets built once per drag (see AppController::snapDragStart).
         const r = EditorState.snapDragStart(desiredStart, duration, excludeClipId || "")
         return { "start": r.start, "guide": r.guide }
@@ -940,26 +949,32 @@ PanelFrame {
     }
 
     function updateUrlDropPreview(drop) {
+        updateUrlDropPreviewAt(drop.hasUrls, drop.hasUrls ? drop.urls : [], drop.x, drop.y)
+    }
+
+    // The same, from what the drag carries and a point, so the edge auto-scroll can re-preview a
+    // drag it no longer holds the event for.
+    function updateUrlDropPreviewAt(hasUrls, urls, dropX, dropY) {
         // Dafin: a file already in Media (a downloaded library card) is previewed as that row —
         // its real kind and length, snapped and stacked like a drag from Media — instead of as a
         // five-second guess.
-        const known = drop.hasUrls && drop.urls.length === 1 ? AssetLibrary.indexOfUrl(drop.urls[0]) : -1
+        const known = hasUrls && urls.length === 1 ? AssetLibrary.indexOfUrl(urls[0]) : -1
         if (known >= 0) {
             pendingDropKind = assetKind(known)
-            updateAssetDropPreview(known, drop.x, drop.y)
+            updateAssetDropPreview(known, dropX, dropY)
             return
         }
         // A drag that cannot say what it carries yet — some platforms only hand the payload over
         // on release — is previewed as video rather than not previewed at all. The drop itself
         // re-reads the urls and places by what they really are.
-        const kind = drop.hasUrls ? urlDropKind(drop.urls) : "video"
+        const kind = hasUrls ? urlDropKind(urls) : "video"
         pendingDropKind = kind
         if (kind.length === 0) {
             // Nothing in the drag is media. Promise nothing rather than a spot it cannot land on.
             clearLandingPreview()
             return
         }
-        updateDropPreviewForKind(kind, urlDropPreviewDuration, drop.x, drop.y)
+        updateDropPreviewForKind(kind, urlDropPreviewDuration, dropX, dropY)
     }
 
     function clearUrlDropState() {
@@ -1517,6 +1532,82 @@ PanelFrame {
         }
     }
 
+    // Library drags on the desktop are native drags: the pointer cannot be captured, so a drop
+    // target must exist under it everywhere it can go. The track-label column has one (below), and
+    // while a drag from inside the app hovers the timeline this timer scrolls the view when the
+    // pointer rests near its left or right edge, so the start (and any far point) can be reached.
+    //
+    // `dragPreviewer` re-previews the drag at a content point; it was built from the drag event
+    // once, because the event itself is not kept past its handler.
+    property var dragPreviewer: null
+    // Which drop target is feeding the tracking: a target's leave event may arrive after the next
+    // target's enter, and must not end the tracking the next one has just started.
+    property var dragOwner: null
+    property real dragViewX: 0
+    property real dragColumnY: 0
+    readonly property bool inAppDragLive: EditorState.draggingAssetIndex >= 0 || AssetDrag.active
+
+    // Hover entry point for every timeline drop target. `previewer(x, y)` shows the landing at a
+    // content x and track-column y; `viewX` is the pointer's x within the visible timeline (it is
+    // negative over the label column).
+    function trackAssetDrag(owner, previewer, contentX, columnY, viewX) {
+        dragOwner = owner
+        dragPreviewer = previewer
+        dragViewX = viewX
+        dragColumnY = columnY
+        previewer(Math.max(0, contentX), columnY)
+        if (inAppDragLive && !dragEdgeScrollTimer.running)
+            dragEdgeScrollTimer.start()
+    }
+
+    function stopAssetDragTracking(owner) {
+        if (owner !== undefined && dragOwner !== owner)
+            return
+        dragOwner = null
+        dragPreviewer = null
+        dragEdgeScrollTimer.stop()
+    }
+
+    Timer {
+        id: dragEdgeScrollTimer
+        interval: 16
+        repeat: true
+        // Wider than the touch band, and eased: the closer to the edge (or past it, over the
+        // labels), the faster, so a clip can be walked to the start without overshooting.
+        readonly property real band: 64
+        readonly property real maxSpeed: 18
+
+        onTriggered: {
+            if (!root.dragPreviewer || !root.inAppDragLive) {
+                root.stopAssetDragTracking()
+                return
+            }
+            const vx = root.dragViewX
+            var dx = 0
+            if (vx < band)
+                dx = -maxSpeed * Math.min(1, (band - vx) / band)
+            else if (vx > flick.width - band)
+                dx = maxSpeed * Math.min(1, (vx - (flick.width - band)) / band)
+            if (dx === 0)
+                return
+            const applied = root.dragEdgeScroll(dx, 0)
+            if (applied.x === 0)
+                return
+            // The pointer has not moved, so no hover event comes: re-preview against the view
+            // that just scrolled, or the outline would stay pinned to what scrolled away.
+            root.dragPreviewer(Math.max(0, root.dragViewX) + flick.contentX, root.dragColumnY)
+        }
+    }
+
+    // A drag abandoned anywhere ends the tracking; hover events from the drop targets restart it.
+    Connections {
+        target: root
+        function onInAppDragLiveChanged() {
+            if (!root.inAppDragLive)
+                root.stopAssetDragTracking()
+        }
+    }
+
     function panTimelineBy(dx, dy) {
         contentXAnimation.stop()
         const maxX = Math.max(0, flick.contentWidth - flick.width)
@@ -1683,6 +1774,58 @@ PanelFrame {
                     onScrollRequested: (dy) => {
                         flick.contentY = Math.max(0, Math.min(flick.contentHeight - flick.height,
                                                               flick.contentY + dy))
+                    }
+                }
+
+                // Drops over the track labels. A library drag is a native drag, so it cannot be
+                // captured: once the pointer crossed the left edge of the scrollable tracks it
+                // was over nothing that took a drop, and the whole drag was cancelled, which is
+                // why a clip could never be put at time 0. This zone takes it instead and lands
+                // it at the left edge of the view (time 0 once the view is scrolled to the start),
+                // and the edge auto-scroll walks the view there while the pointer rests on it.
+                //
+                // A zero-size host, so the Column lays out nothing for it; the area is placed back
+                // over the whole column from wherever the host ended up.
+                Item {
+                    id: labelsDropHost
+                    width: 0
+                    height: 0
+
+                    DropArea {
+                        id: labelsAssetDrop
+                        x: 0
+                        y: -labelsDropHost.y
+                        width: labelsColumn.width
+                        height: labelsColumn.height
+                        keys: timelineAssetDrop.keys
+
+                        // Pointer y in the label column -> track-column y. Over the ruler corner
+                        // there is no track under the pointer, so it means the first row, not
+                        // the new-track band above it.
+                        function columnY(dropY) {
+                            if (dropY < flick.headerHeight)
+                                return root.newTrackEdge(0) + 1
+                            return dropY - flick.headerHeight + flick.contentY
+                        }
+
+                        function hover(drop) {
+                            root.trackAssetDrag(labelsAssetDrop, timelineAssetDrop.previewerFor(drop),
+                                                flick.contentX, columnY(drop.y), -1)
+                        }
+
+                        onEntered: (drop) => hover(drop)
+                        onPositionChanged: (drop) => hover(drop)
+                        onExited: {
+                            root.stopAssetDragTracking(labelsAssetDrop)
+                            root.clearUrlDropState()
+                            root.clearLandingPreview()
+                            root.clearEffectDropHighlight()
+                        }
+                        onDropped: (drop) => {
+                            drop.accept(Qt.CopyAction)
+                            root.stopAssetDragTracking(labelsAssetDrop)
+                            timelineAssetDrop.dropAt(drop, flick.contentX, columnY(drop.y))
+                        }
                     }
                 }
             }
@@ -2307,57 +2450,73 @@ PanelFrame {
                             return isNaN(idx) ? -1 : idx
                         }
 
-                        function updateAssetDrag(drop) {
+                        // What the drag carries, read once, as a function that previews it at a
+                        // content x / track-column y. The label-column zone and the edge
+                        // auto-scroll both re-preview through it, so a drag lands the same
+                        // wherever it is let go.
+                        function previewerFor(drop) {
                             if (drop.keys.indexOf(AssetDrag.onlineKey) !== -1) {
-                                root.updateOnlineDropPreview(onlineItem(drop), drop.x, drop.y)
-                                return
+                                const item = onlineItem(drop)
+                                return function (x, y) { root.updateOnlineDropPreview(item, x, y) }
                             }
                             if (isFileDrag(drop)) {
-                                root.updateUrlDropPreview(drop)
-                                return
+                                const hasUrls = drop.hasUrls
+                                const urls = hasUrls ? drop.urls : []
+                                return function (x, y) { root.updateUrlDropPreviewAt(hasUrls, urls, x, y) }
                             }
                             const kind = placeableKind(drop)
                             if (kind.length > 0) {
-                                root.dropRouter.hover(kind, AssetDrag.payloadFromDrop(drop, kind), drop.x, drop.y)
-                                return
+                                const payload = AssetDrag.payloadFromDrop(drop, kind)
+                                return function (x, y) { root.dropRouter.hover(kind, payload, x, y) }
                             }
                             const assetIndex = assetIndexFromDrop(drop)
-                            if (assetIndex < 0) {
-                                root.clearLandingPreview()
-                                return
-                            }
-                            root.updateAssetDropPreview(assetIndex, drop.x, drop.y)
+                            if (assetIndex < 0)
+                                return function () { root.clearLandingPreview() }
+                            return function (x, y) { root.updateAssetDropPreview(assetIndex, x, y) }
                         }
 
-                        onEntered: (drop) => updateAssetDrag(drop)
-                        onPositionChanged: (drop) => updateAssetDrag(drop)
-                        onExited: {
-                            root.clearUrlDropState()
-                            root.clearLandingPreview()
-                            root.clearEffectDropHighlight()
+                        function updateAssetDrag(drop) {
+                            root.trackAssetDrag(timelineAssetDrop, previewerFor(drop), drop.x, drop.y,
+                                                drop.x - flick.contentX)
                         }
-                        onDropped: (drop) => {
-                            drop.accept(Qt.CopyAction)
+
+                        // The drop itself at a content x / track-column y. Clamped to >= 0.
+                        function dropAt(drop, x, y) {
+                            x = Math.max(0, x)
                             if (drop.keys.indexOf(AssetDrag.onlineKey) !== -1) {
-                                root.performOnlineDrop(onlineItem(drop), drop.x, drop.y)
+                                root.performOnlineDrop(onlineItem(drop), x, y)
                                 return
                             }
                             if (isFileDrag(drop)) {
                                 // Not cleared first, unlike the branch below: performUrlDrop
                                 // keeps the outline on screen at the frozen spot for as long as
                                 // the import it starts is still running.
-                                root.performUrlDrop(drop.hasUrls ? drop.urls : [], drop.x, drop.y)
+                                root.performUrlDrop(drop.hasUrls ? drop.urls : [], x, y)
                                 return
                             }
                             const kind = placeableKind(drop)
                             if (kind.length > 0) {
                                 root.dropRouter.drop(kind, AssetDrag.payloadFromDrop(drop, kind),
-                                                     AssetDrag.labelFromDrop(drop, kind), drop.x, drop.y)
+                                                     AssetDrag.labelFromDrop(drop, kind), x, y)
                                 return
                             }
                             const assetIndex = assetIndexFromDrop(drop)
                             root.clearLandingPreview()
-                            root.performAssetDrop(assetIndex, drop.x, drop.y)
+                            root.performAssetDrop(assetIndex, x, y)
+                        }
+
+                        onEntered: (drop) => updateAssetDrag(drop)
+                        onPositionChanged: (drop) => updateAssetDrag(drop)
+                        onExited: {
+                            root.stopAssetDragTracking(timelineAssetDrop)
+                            root.clearUrlDropState()
+                            root.clearLandingPreview()
+                            root.clearEffectDropHighlight()
+                        }
+                        onDropped: (drop) => {
+                            drop.accept(Qt.CopyAction)
+                            root.stopAssetDragTracking(timelineAssetDrop)
+                            dropAt(drop, drop.x, drop.y)
                         }
                     }
 

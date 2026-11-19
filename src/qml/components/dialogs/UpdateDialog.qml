@@ -91,9 +91,12 @@ ThemedDialog {
             }
         }
 
+        // The one bar for this download: always present, never rebuilt. Its fill eases toward each
+        // new value, and it sweeps until the first real progress value arrives.
         ThemedProgressBar {
             width: parent.width
             visible: root.busy
+            indeterminate: Updates.downloading && Updates.progress <= 0
             value: Updates.progress
         }
 

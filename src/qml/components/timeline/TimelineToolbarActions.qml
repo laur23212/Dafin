@@ -12,8 +12,9 @@ QtObject {
     readonly property var actionMeta: ({
         "select": { glyph: Theme.icons.mousePointer, label: qsTr("Select"),
                     tip: qsTr("Select — normal editing"), shortcut: "selectTool" },
-        "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"),
-                 tip: qsTr("Cut mode — click a clip to split it"), shortcut: "bladeTool" },
+        // The instructions for the cut tools live in the one-line toolbar hint
+        // (TimelineToolbar.toolHint), not in a tooltip that opens over the timeline.
+        "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"), shortcut: "bladeTool" },
         // Dafin: mark a space on the timeline and describe what the AI should put there.
         "aiFill": { glyph: Theme.icons.sparkles, label: qsTr("AI Fill"),
                     tip: qsTr("AI Fill — drag across the timeline to mark a space, then describe the animation to put there (a title, lower third, arrow, counter…). Every try is kept as a version you can go back to"),
@@ -55,10 +56,8 @@ QtObject {
         "unlink": { glyph: Theme.icons.unlink, label: qsTr("Unlink video and audio"),
                     shortcut: "unlink" },
         "link": { glyph: Theme.icons.link, label: qsTr("Link selected clips"), shortcut: "link" },
-        "trimStart": { glyph: Theme.icons.trimStart, label: qsTr("Trim start"),
-                       tip: qsTr("Trim start — click a clip to drop everything left of the cut") },
-        "trimEnd": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end"),
-                     tip: qsTr("Trim end — click a clip to drop everything right of the cut") },
+        "trimStart": { glyph: Theme.icons.trimStart, label: qsTr("Trim start") },
+        "trimEnd": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end") },
         "deleteLeft": { glyph: Theme.icons.trimStart, label: qsTr("Trim start to playhead"),
                         shortcut: "deleteLeft" },
         "deleteRight": { glyph: Theme.icons.trimEnd, label: qsTr("Trim end to playhead"),

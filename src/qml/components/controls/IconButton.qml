@@ -14,6 +14,8 @@ AbstractButton {
 
     property string glyph: ""
     property string tooltip: ""
+    // Keeps the tooltip closed without emptying it (the accessible name still reads from it).
+    property bool tooltipSuppressed: false
     property real buttonSize: Theme.iconButtonSize
     property real iconSize: Theme.iconSizeBase
     property bool active: false
@@ -167,6 +169,7 @@ AbstractButton {
         // Shown on hover, and on keyboard focus so Tab users get the same labels.
         // Skip when the tooltip is just the visible label again.
         visible: root.tooltip.length > 0 && root.tooltip !== root.text
+                 && !root.tooltipSuppressed
                  && (root.hovered || root.visualFocus
                      || (touchPress.pressed && root.pressAndHeld))
     }

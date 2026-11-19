@@ -65,6 +65,19 @@ SettingsPage {
     }
 
     SettingsRow {
+        title: qsTr("Show cut tool hint")
+        searchId: "timeline-cut-tool-hint"
+        description: qsTr("A one-line hint in the timeline toolbar while the cut or trim tool is on. It never covers the timeline.")
+        keywords: "blade razor scissors instructions tip help split trim"
+        query: page.query
+
+        ThemedSwitch {
+            checked: EditorState.preferences.cutToolHintVisible
+            onToggled: EditorState.preferences.cutToolHintVisible = checked
+        }
+    }
+
+    SettingsRow {
         title: qsTr("Auto keyframes")
         searchId: "timeline-auto-keyframes"
         description: qsTr("Dragging a slider also creates keyframes.")

@@ -37,6 +37,9 @@ Item {
         visible: !slot.isSeparator
         glyph: slot.isSeparator ? "" : slot.host.actionMeta[slot.modelData].glyph
         tooltip: slot.isSeparator ? "" : slot.host.actionTooltip(slot.modelData)
+        // Pressing a cut tool leaves the pointer on its button; a tooltip would sit over the
+        // timeline for as long as it stayed there.
+        tooltipSuppressed: slot.host.cutToolActive(slot.modelData)
         active: slot.host.actionActive(slot.modelData)
         enabled: slot.host.actionEnabled(slot.modelData)
         onClicked: slot.host.triggerAction(slot.modelData)

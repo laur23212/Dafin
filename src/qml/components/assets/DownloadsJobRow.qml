@@ -5,7 +5,26 @@ import Drift
 // One download in the downloads window: file, progress, retry and cancel.
 Rectangle {
     id: root
+    // The list hands over a job id, not the job. The list model is only rebuilt when the set of
+    // jobs changes, so this row (and its progress bar) lives for the whole download instead of
+    // being torn down and recreated at every progress tick, which restarted the bar from empty.
+    // A job map is still accepted, for a caller that has one.
     required property var modelData
+
+    readonly property var liveJob: {
+        if (typeof modelData !== "string")
+            return modelData
+        const list = Downloads.jobs
+        for (let i = 0; i < list.length; ++i) {
+            if (list[i].id === modelData)
+                return list[i]
+        }
+        return null
+    }
+    // Last job seen, so a row that is about to be removed keeps drawing instead of going blank.
+    property var lastJob: ({})
+    onLiveJobChanged: if (liveJob) lastJob = liveJob
+    readonly property var job: liveJob ? liveJob : lastJob
     width: ListView.view ? ListView.view.width : 0
     height: rowLayout.implicitHeight + Theme.spacingXl * 2
     color: rowHover.hovered ? Theme.c.downloadsJobRow.backgroundHover : "transparent"
@@ -33,7 +52,7 @@ Rectangle {
 
             IconGlyph {
                 anchors.centerIn: parent
-                glyph: DownloadFormat.kindGlyph(root.modelData)
+                glyph: DownloadFormat.kindGlyph(root.job)
                 iconSize: Theme.iconSizeBase
                 iconColor: Theme.c.downloadsJobRow.icon
             }
@@ -51,9 +70,9 @@ Rectangle {
 
                 IconGlyph {
                     anchors.centerIn: parent
-                    glyph: DownloadFormat.statusGlyph(root.modelData)
+                    glyph: DownloadFormat.statusGlyph(root.job)
                     iconSize: Theme.iconSizeMd
-                    iconColor: DownloadFormat.statusColor(root.modelData)
+                    iconColor: DownloadFormat.statusColor(root.job)
                 }
             }
         }
@@ -64,26 +83,29 @@ Rectangle {
 
             Text {
                 Layout.fillWidth: true
-                text: root.modelData.title
+                text: root.job.title
                 color: Theme.c.downloadsJobRow.foreground
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeSm
                 elide: Text.ElideRight
             }
 
-            // Shown only once the length is known: a bar parked at 0 through
-            // "Preparing…" reads as a stall, and the phase line says more.
+            // One persistent bar per download: it eases toward each new value in place and
+            // never restarts from empty. It sweeps (indeterminate) until the length is known
+            // and the first real value has arrived, so a bar parked at 0 never reads as a stall.
             ThemedProgressBar {
                 Layout.fillWidth: true
-                visible: root.modelData.status === "downloading"
-                         && Number(root.modelData.bytesTotal) > 0
-                value: Number(root.modelData.progress || 0)
+                visible: root.job.status === "downloading"
+                indeterminate: !(Number(root.job.bytesTotal) > 0)
+                               || (Number(root.job.progress || 0) <= 0
+                                   && Number(root.job.bytesReceived || 0) <= 0)
+                value: Number(root.job.progress || 0)
             }
 
             Text {
                 Layout.fillWidth: true
-                text: DownloadFormat.detailLine(root.modelData)
-                color: root.modelData.status === "failed" ? Theme.c.downloadsJobRow.destructive
+                text: DownloadFormat.detailLine(root.job)
+                color: root.job.status === "failed" ? Theme.c.downloadsJobRow.destructive
                                                         : Theme.c.downloadsJobRow.foregroundMuted
                 font.family: Theme.fontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -97,9 +119,9 @@ Rectangle {
             // they will come here to check.
             Text {
                 Layout.fillWidth: true
-                visible: root.modelData.status === "done"
-                         && String(root.modelData.destinationDir).length > 0
-                text: root.modelData.destinationDir
+                visible: root.job.status === "done"
+                         && String(root.job.destinationDir).length > 0
+                text: root.job.destinationDir
                 color: Theme.c.downloadsJobRow.foregroundMuted
                 font.family: Theme.monoFontFamily
                 font.pixelSize: Theme.fontSizeXs
@@ -109,9 +131,9 @@ Rectangle {
 
         Text {
             Layout.alignment: Qt.AlignVCenter
-            visible: root.modelData.status === "downloading"
-                     && Number(root.modelData.bytesTotal) > 0
-            text: Math.round(Number(root.modelData.progress || 0) * 100) + "%"
+            visible: root.job.status === "downloading"
+                     && Number(root.job.bytesTotal) > 0
+            text: Math.round(Number(root.job.progress || 0) * 100) + "%"
             color: Theme.c.downloadsJobRow.foregroundMuted
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
@@ -119,23 +141,23 @@ Rectangle {
 
         IconButton {
             Layout.alignment: Qt.AlignVCenter
-            visible: root.modelData.retryable
+            visible: root.job.retryable
             glyph: Theme.icons.refresh
             tooltip: qsTr("Try again")
-            onClicked: root.modelData.kind === "update"
+            onClicked: root.job.kind === "update"
                        ? Updates.retryDownload()
-                       : Downloads.retry(root.modelData.itemId)
+                       : Downloads.retry(root.job.itemId)
         }
 
         IconButton {
             Layout.alignment: Qt.AlignVCenter
-            visible: !root.modelData.finished
+            visible: !root.job.finished
             glyph: Theme.icons.x
             tooltip: qsTr("Cancel")
-            enabled: root.modelData.status !== "preparing"
-            onClicked: root.modelData.kind === "update"
+            enabled: root.job.status !== "preparing"
+            onClicked: root.job.kind === "update"
                        ? Updates.cancelDownload()
-                       : Downloads.cancel(root.modelData.itemId)
+                       : Downloads.cancel(root.job.itemId)
         }
     }
 }

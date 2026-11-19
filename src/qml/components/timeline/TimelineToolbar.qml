@@ -49,6 +49,29 @@ Item {
     readonly property var actionMeta: actions.actionMeta
     readonly property var layout: actions.layout
 
+    // True while `id` is a cut / trim tool and that tool is the one switched on. Its tooltip stays
+    // shut then: the pointer is still resting on the button, and a pop-up there sits over the
+    // timeline the user is about to cut.
+    function cutToolActive(id) {
+        switch (id) {
+        case "cut": return panel.timelineTool === "split"
+        case "trimStart": return panel.timelineTool === "trimStart"
+        case "trimEnd": return panel.timelineTool === "trimEnd"
+        }
+        return false
+    }
+
+    // One line telling what a click does while a cut / trim tool is on. Shown in the toolbar,
+    // clear of the tracks, in place of the instruction pop-up the cut tooltip used to open.
+    readonly property string toolHint: {
+        switch (panel.timelineTool) {
+        case "split": return qsTr("Cut: click a clip to split it. Esc to leave.")
+        case "trimStart": return qsTr("Trim start: click a clip to drop everything left of the cut. Esc to leave.")
+        case "trimEnd": return qsTr("Trim end: click a clip to drop everything right of the cut. Esc to leave.")
+        }
+        return ""
+    }
+
     function actionTooltip(id) {
         const meta = actionMeta[id]
         let label = meta.tip || meta.label
@@ -470,6 +493,33 @@ Item {
     TimelineSequenceTabs {
         leftGroup: leftControls
         rightGroup: rightControls
+    }
+
+    // Cut / trim tool hint. Plain text with no input handling, so it can never block a click, and
+    // it lives in the toolbar's free middle, so it can never cover the tracks. It gives way to the
+    // sequence tabs, and hides when the gap is too narrow to read. The user can switch it off in
+    // Settings > Timeline.
+    Text {
+        id: toolHintLabel
+        readonly property real gapStart: Theme.spacingLg
+                                         + Math.min(leftControls.implicitWidth, leftControls.width)
+                                         + Theme.spacingLg
+        readonly property real gapEnd: toolbar.width - Theme.spacingLg - rightControls.width
+                                       - Theme.spacingLg
+        width: Math.max(0, gapEnd - gapStart)
+        x: Qt.application.layoutDirection === Qt.RightToLeft ? toolbar.width - gapStart - width
+                                                             : gapStart
+        anchors.verticalCenter: parent.verticalCenter
+        visible: toolbar.toolHint.length > 0
+                 && EditorState.preferences.cutToolHintVisible
+                 && EditorState.sequenceTabs.length === 0
+                 && width >= 160
+        text: toolbar.toolHint
+        elide: Text.ElideRight
+        maximumLineCount: 1
+        color: Theme.c.timelineToolbarTimecode.foregroundMuted
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.fontSizeXs
     }
 
     Row {
