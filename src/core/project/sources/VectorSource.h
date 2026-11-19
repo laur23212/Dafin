@@ -6,6 +6,7 @@
 #include <QByteArray>
 #include <QColor>
 #include <QJsonObject>
+#include <QList>
 #include <QMap>
 #include <QPointF>
 #include <QString>
@@ -57,6 +58,41 @@ struct VectorSlotValue
 QString vectorSlotTypeToString(VectorSlotValue::Type type);
 VectorSlotValue::Type vectorSlotTypeFromString(const QString &type);
 
+// Dafin AI Fill: every animation the AI made for one clip, kept so "Change it" or "Try again"
+// never throws an earlier one away. The clip shows versions[current]; switching back is an edit
+// like any other (undoable). Saved with the project only when there is at least one version.
+struct GeneratedVersion
+{
+    QString prompt;     // what the user asked for, for this version
+    VectorKind kind = VectorKind::Lottie;
+    QString source;     // the document text
+    QString createdUtc; // ISO 8601
+    // One per AI request: a second hand-over within the same request (the AI fixing its own
+    // first try) replaces that request's version instead of adding another.
+    QString requestId;
+
+    QJsonObject toJson() const;
+    static GeneratedVersion fromJson(const QJsonObject &o);
+    bool operator==(const GeneratedVersion &other) const;
+};
+
+struct GenerationHistory
+{
+    static constexpr int kMaxVersions = 20;
+
+    QList<GeneratedVersion> versions;
+    int current = -1;
+
+    bool isEmpty() const { return versions.isEmpty(); }
+    // Adds `v` and makes it current (or replaces the last version when it came from the same
+    // request). Past kMaxVersions the oldest version goes, except the one that was showing.
+    void record(const GeneratedVersion &v);
+
+    QJsonObject toJson() const;
+    static GenerationHistory fromJson(const QJsonObject &o);
+    bool operator==(const GenerationHistory &other) const;
+};
+
 struct VectorSource
 {
     VectorKind kind = VectorKind::Lottie;
@@ -82,6 +118,8 @@ struct VectorSource
     // Keyed by slot key plus an optional colour channel ("svg.logo.fill.r", "svg.strokeWidth");
     // times are relative to the clip start. Baked into slotValues by resolvedAt().
     QMap<QString, KeyframeTrack<double>> keyframes;
+    // Dafin AI Fill: the versions the AI made for this clip; empty for any other vector clip.
+    GenerationHistory generated;
 
     bool isInline() const { return !source.isEmpty(); }
     bool isEmpty() const { return source.isEmpty() && path.isEmpty(); }

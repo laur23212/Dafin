@@ -15,9 +15,11 @@
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/render2d/vector/VectorInspect.h"
 
+#include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QUuid>
 
 using namespace drift::appdetail;
 using drift::mcpdetail::findClipById;
@@ -672,6 +674,241 @@ QVariantMap AppController::setVectorSource(int trackIndex, int clipIndex, const 
 
     QVariantMap out = report.toJson().toVariantMap();
     out.insert(QStringLiteral("id"), clip.id);
+    return out;
+}
+
+namespace {
+
+// True when nothing on `track` overlaps [start, end).
+bool trackSpanFree(const drift::Track &track, drift::TimeUs start, drift::TimeUs end)
+{
+    for (const drift::Clip &c : track.clips) {
+        if (c.timelineStart < end && c.timelineStart + c.timelineDuration > start)
+            return false;
+    }
+    return true;
+}
+
+QVariantMap aiFillFailure(const QString &error)
+{
+    return {{QStringLiteral("ok"), false}, {QStringLiteral("error"), error}};
+}
+
+} // namespace
+
+QVariantMap AppController::commitAiFill(const QVariantMap &region, const QString &source,
+                                        const QString &kind)
+{
+    const double startSeconds = region.value(QStringLiteral("start")).toDouble();
+    const double endSeconds = region.value(QStringLiteral("end")).toDouble();
+    if (!(startSeconds >= 0.0) || !(endSeconds > startSeconds))
+        return aiFillFailure(QStringLiteral("the marked space has no length"));
+    if (!vectorSupportAvailable())
+        return aiFillFailure(QStringLiteral("this build has no vector renderer"));
+
+    drift::VectorSource vector;
+    QString error = resolveVectorInput(source, kind, &vector);
+    // A file is read in: each version keeps its own copy of the document, so it can come back even
+    // after the file is changed or gone.
+    if (error.isEmpty() && !vector.isInline()) {
+        const QByteArray bytes = drift::vec::vectorSourceBytes(vector);
+        if (bytes.isEmpty())
+            error = QStringLiteral("could not read ") + vector.path;
+        else if (bytes.size() > kMaxInlineVectorBytes)
+            error = QStringLiteral("document exceeds 8 MB");
+        vector.source = QString::fromUtf8(bytes);
+        vector.path.clear();
+    }
+    if (error.isEmpty() && !drift::vec::probeVectorSource(vector, &error))
+        error = QStringLiteral("document did not parse: ") + error;
+    if (!error.isEmpty())
+        return aiFillFailure(error);
+    const drift::vec::InspectReport report =
+        drift::vec::inspectVector(drift::vec::vectorSourceBytes(vector), vector.kind);
+
+    drift::GeneratedVersion version;
+    version.prompt = region.value(QStringLiteral("prompt")).toString().trimmed().left(2000);
+    version.kind = vector.kind;
+    version.source = vector.source;
+    version.createdUtc = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
+    version.requestId = region.value(QStringLiteral("requestId")).toString();
+    const QString title = region.value(QStringLiteral("title")).toString().trimmed().left(60);
+
+    const drift::TimeUs start = drift::secondsToUs(startSeconds);
+    const drift::TimeUs duration =
+        qMax(drift::secondsToUs(endSeconds) - start, drift::minClipDurationUs(m_project.fps()));
+    const QString clipId = region.value(QStringLiteral("clipId")).toString();
+    const drift::Project before = m_project;
+    int targetTrack = -1;
+    int targetClip = -1;
+
+    if (!clipId.isEmpty()) {
+        // A new version of an AI Fill clip: the document changes, its place and length stay.
+        const QVariantList loc = locateClip(clipId);
+        if (loc.size() != 2)
+            return aiFillFailure(QStringLiteral("the animation being changed is gone (deleted or undone)"));
+        targetTrack = loc.at(0).toInt();
+        targetClip = loc.at(1).toInt();
+        drift::Clip &clip = m_project.tracks()[targetTrack].clips[targetClip];
+        if (clip.type != drift::ClipType::Vector || clip.vector.generated.isEmpty())
+            return aiFillFailure(QStringLiteral("that clip was not made by AI Fill"));
+        drift::VectorSource next = vector;
+        next.fit = clip.vector.fit;
+        next.loop = clip.vector.loop;
+        next.startOffsetUs = clip.vector.startOffsetUs;
+        next.generated = clip.vector.generated;
+        next.generated.record(version);
+        clip.vector = next;
+        if (!title.isEmpty())
+            clip.name = title;
+        clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+        clip.filmstripPath = clip.thumbnailPath;
+        pushProjectEdit(before, tr("AI Fill: new version"));
+        finishEdit(tr("AI Fill: new version"));
+    } else {
+        // Where the user drew: that row when it is a graphic lane with room, else a new graphic
+        // track right above it (so the animation sits over what it was drawn over). Rows that hold
+        // no pictures (audio, captions) get a graphic track above everything instead.
+        const int top = region.value(QStringLiteral("track"), -1).toInt();
+        const QList<drift::Track> &tracks = m_project.tracks();
+        if (top >= 0 && top < tracks.size()) {
+            const drift::Track &row = tracks.at(top);
+            if (row.allowsClipType(drift::ClipType::Vector) && trackSpanFree(row, start, start + duration))
+                targetTrack = top;
+            else if (row.allowsClipType(drift::ClipType::Vector) || row.allowsClipType(drift::ClipType::Video)
+                     || row.allowsClipType(drift::ClipType::Image))
+                targetTrack = drift::insertTrackAboveForClipType(m_project, top, drift::ClipType::Vector);
+        }
+        if (targetTrack < 0)
+            targetTrack = drift::ensureFreeTrackForClipType(m_project, drift::ClipType::Vector, start,
+                                                            duration, true);
+        if (targetTrack < 0) {
+            m_project = before;
+            return aiFillFailure(QStringLiteral("no graphic track"));
+        }
+
+        drift::Clip clip;
+        clip.id = QUuid::createUuid().toString(QUuid::WithoutBraces);
+        clip.type = drift::ClipType::Vector;
+        clip.vector = vector;
+        clip.name = !title.isEmpty() ? title
+                    : !vector.title.isEmpty() ? vector.title
+                                              : tr("AI Fill");
+        clip.timelineStart = start;
+        clip.timelineDuration = duration;
+        clip.srcIn = 0;
+        clip.srcOut = duration;
+        fitClipLayoutToCanvas(clip, vector.width, vector.height, m_project.width(), m_project.height());
+        clip.vector.generated.record(version);
+        clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+        clip.filmstripPath = clip.thumbnailPath;
+        drift::Track &track = m_project.tracks()[targetTrack];
+        track.clips.append(clip);
+        targetClip = track.clips.size() - 1;
+        pushProjectEdit(before, tr("AI Fill"));
+        finishEdit(tr("AI Fill added"));
+        // Structural normalisation may have re-sorted the track: find the clip by id again.
+        const QVariantList loc = locateClip(clip.id);
+        if (loc.size() == 2) {
+            targetTrack = loc.at(0).toInt();
+            targetClip = loc.at(1).toInt();
+        }
+        selectClip(targetTrack, targetClip);
+    }
+
+    const drift::Clip &placed = m_project.tracks().at(targetTrack).clips.at(targetClip);
+    QVariantMap out = report.toJson().toVariantMap();
+    out.insert(QStringLiteral("ok"), true);
+    out.insert(QStringLiteral("id"), placed.id);
+    out.insert(QStringLiteral("track"), targetTrack);
+    out.insert(QStringLiteral("index"), targetClip);
+    out.insert(QStringLiteral("version"), placed.vector.generated.current + 1);
+    out.insert(QStringLiteral("versions"), int(placed.vector.generated.versions.size()));
+    return out;
+}
+
+QVariantMap AppController::aiFillVersions(const QString &clipId) const
+{
+    const QVariantList loc = locateClip(clipId);
+    if (loc.size() != 2)
+        return {{QStringLiteral("ok"), false}};
+    const int t = loc.at(0).toInt();
+    const int c = loc.at(1).toInt();
+    const drift::Clip &clip = m_project.tracks().at(t).clips.at(c);
+    if (clip.type != drift::ClipType::Vector || clip.vector.generated.isEmpty())
+        return {{QStringLiteral("ok"), false}};
+    QVariantList versions;
+    for (const drift::GeneratedVersion &v : clip.vector.generated.versions)
+        versions.append(QVariantMap{{QStringLiteral("prompt"), v.prompt}, {QStringLiteral("created"), v.createdUtc}});
+    return {{QStringLiteral("ok"), true},
+            {QStringLiteral("id"), clip.id},
+            {QStringLiteral("track"), t},
+            {QStringLiteral("index"), c},
+            {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
+            {QStringLiteral("end"), drift::usToSeconds(clip.timelineStart + clip.timelineDuration)},
+            {QStringLiteral("current"), clip.vector.generated.current},
+            {QStringLiteral("versions"), versions}};
+}
+
+QString AppController::switchAiFillVersion(const QString &clipId, int index)
+{
+    const QVariantList loc = locateClip(clipId);
+    if (loc.size() != 2)
+        return QStringLiteral("the animation is gone");
+    const int t = loc.at(0).toInt();
+    const int c = loc.at(1).toInt();
+    const drift::Clip &current = m_project.tracks().at(t).clips.at(c);
+    const drift::GenerationHistory &history = current.vector.generated;
+    if (current.type != drift::ClipType::Vector || history.isEmpty())
+        return QStringLiteral("that clip was not made by AI Fill");
+    if (index < 0 || index >= history.versions.size())
+        return QStringLiteral("no such version");
+    if (index == history.current)
+        return {};
+    drift::VectorSource next = current.vector;
+    const drift::GeneratedVersion &version = history.versions.at(index);
+    next.kind = version.kind;
+    next.source = version.source;
+    next.path.clear();
+    next.slotValues.clear();
+    next.keyframes.clear();
+    QString error;
+    if (!drift::vec::probeVectorSource(next, &error))
+        return QStringLiteral("that version no longer parses: ") + error;
+    next.generated.current = index;
+
+    const drift::Project before = m_project;
+    drift::Clip &clip = m_project.tracks()[t].clips[c];
+    clip.vector = next;
+    clip.thumbnailPath = MediaThumbnail::generateVector(clip.vector);
+    clip.filmstripPath = clip.thumbnailPath;
+    const QString text = tr("AI Fill: version %1").arg(index + 1);
+    pushProjectEdit(before, text);
+    finishEdit(text);
+    return {};
+}
+
+QVariantList AppController::clipsInRange(double startSeconds, double endSeconds) const
+{
+    const drift::TimeUs start = drift::secondsToUs(startSeconds);
+    const drift::TimeUs end = drift::secondsToUs(endSeconds);
+    QVariantList out;
+    const QList<drift::Track> &tracks = m_project.tracks();
+    for (int t = 0; t < tracks.size() && out.size() < 40; ++t) {
+        const QList<drift::Clip> &clips = tracks.at(t).clips;
+        for (int c = 0; c < clips.size() && out.size() < 40; ++c) {
+            const drift::Clip &clip = clips.at(c);
+            if (clip.timelineStart >= end || clip.timelineStart + clip.timelineDuration <= start)
+                continue;
+            out.append(QVariantMap{{QStringLiteral("id"), clip.id},
+                                   {QStringLiteral("track"), t},
+                                   {QStringLiteral("index"), c},
+                                   {QStringLiteral("kind"), drift::clipTypeToString(clip.type)},
+                                   {QStringLiteral("name"), clip.name.left(60)},
+                                   {QStringLiteral("start"), drift::usToSeconds(clip.timelineStart)},
+                                   {QStringLiteral("end"), drift::usToSeconds(clip.timelineStart + clip.timelineDuration)}});
+        }
+    }
     return out;
 }
 

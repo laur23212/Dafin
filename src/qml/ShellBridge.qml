@@ -40,6 +40,8 @@ QtObject {
     property var motionPick: null
     // The button (or its shortcut) was pressed; the desktop shell's MotionTrackingFlow answers.
     signal motionTrackingRequested()
+    // Dafin AI Fill needs AI Assist set up; the header opens its settings.
+    signal aiAssistSetupRequested()
     // Where trackers live for the selection. An adjustment layer has none of its own, so it uses
     // the topmost video clip under the playhead and carries the layer's name as viaAdjustment.
     function trackerTarget() {

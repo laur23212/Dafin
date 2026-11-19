@@ -341,6 +341,33 @@ QString AssistantController::systemPrompt() const
 
 void AssistantController::addMessage(const QString &kind, const QString &text, const QVariantMap &extra)
 {
+    if (m_fill.active) {
+        // An AI Fill request is not part of the chat: its progress shows on the timeline card.
+        if (kind == QLatin1String("assistant")) {
+            m_fill.lastText = text.left(400);
+        } else if (kind == QLatin1String("error")) {
+            m_fill.lastError = text.left(400);
+        } else if (kind == QLatin1String("question")) {
+            updateFill({{QStringLiteral("status"), tr("Waiting for your answer…")}});
+        } else if (kind == QLatin1String("step")) {
+            const bool ok = extra.value(QStringLiteral("ok")).toBool();
+            QString status;
+            if (text == QLatin1String("fill_region"))
+                status = ok ? tr("Placed it. Checking how it looks…") : tr("Fixing a problem in the animation…");
+            else if (text == QLatin1String("check_fill"))
+                status = tr("Checking the animation…");
+            else if (text == QLatin1String("capture") || text == QLatin1String("frames"))
+                status = tr("Looking at the picture…");
+            else if (text == QLatin1String("inspect") || text == QLatin1String("catalog")
+                     || text == QLatin1String("search") || text == QLatin1String("toolbox")
+                     || text == QLatin1String("activity"))
+                status = tr("Looking at the project…");
+            else
+                status = tr("Editing the project…");
+            updateFill({{QStringLiteral("status"), status}});
+        }
+        return;
+    }
     QVariantMap m = extra;
     m.insert(QStringLiteral("kind"), kind);
     m.insert(QStringLiteral("text"), text);
@@ -384,7 +411,12 @@ void AssistantController::send(const QString &text)
     user.text = prompt;
     m_history.append(user);
     addMessage(QStringLiteral("user"), prompt);
+    beginTurn();
+    requestNext();
+}
 
+void AssistantController::beginTurn()
+{
     m_turnToolCalls = 0;
     m_turnFailedCalls = 0;
     m_turnRounds = 0;
@@ -392,7 +424,6 @@ void AssistantController::send(const QString &text)
     m_turnHashBefore = projectHash();
     m_turnTimer.start();
     setBusy(true);
-    requestNext();
 }
 
 void AssistantController::requestNext()
@@ -402,8 +433,8 @@ void AssistantController::requestNext()
     options.model = model();
     options.baseUrl = baseUrl();
     options.apiKey = apiKey();
-    options.system = systemPrompt();
-    const LlmRequest request = buildRequest(options, toolSpecs(), m_history);
+    options.system = m_fill.active ? fillSystemPrompt() : systemPrompt();
+    const LlmRequest request = buildRequest(options, m_fill.active ? fillToolSpecs() : toolSpecs(), m_history);
     ++m_turnRounds;
     const quint64 generation = m_generation;
     m_transport->post(request, [this, generation](int status, const QByteArray &body, const QString &netError) {
@@ -467,6 +498,14 @@ void AssistantController::processQueue()
         const ToolCall call = m_queue.takeFirst();
         if (m_turnToolCalls >= kMaxToolCallsPerTurn) {
             addToolResult(call, QStringLiteral("Tool call limit for one request reached."), true);
+            continue;
+        }
+        if (m_fill.active
+            && (call.name == QLatin1String("fill_region") || call.name == QLatin1String("check_fill"))) {
+            // AI Fill's own two tools; every other tool runs exactly as in the chat.
+            runFillTool(call);
+            if (generation != m_generation)
+                return;
             continue;
         }
         if (call.name == QLatin1String("ask_user")) {
@@ -635,6 +674,8 @@ void AssistantController::finishTurn(const QString &outcome)
                                usageField(m_turnUsage.cacheRead));
     emit usageChanged();
     writeUsageRow(outcome);
+    if (m_fill.active)
+        finishFill(outcome);
     setBusy(false);
     emit turnFinished(outcome);
 }
@@ -662,6 +703,324 @@ void AssistantController::writeUsageRow(const QString &outcome)
         << usageField(m_turnUsage.cacheRead) << ',' << usageField(m_turnUsage.cacheWrite) << ',' << m_turnRounds << ','
         << m_turnToolCalls << ',' << m_turnFailedCalls << ',' << m_turnTimer.elapsed() << ','
         << m_turnHashBefore.left(12) << ',' << projectHash().left(12) << ',' << outcome << '\n';
+}
+
+// ---- AI Fill ---------------------------------------------------------------------------------
+
+namespace {
+
+QJsonObject fillDocumentSchema(bool withTitle)
+{
+    QJsonObject props{
+        {QStringLiteral("json"),
+         QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                     {QStringLiteral("description"), QStringLiteral("Lottie (Bodymovin 5.x) JSON document text")}}},
+        {QStringLiteral("svg"),
+         QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                     {QStringLiteral("description"), QStringLiteral("SVG document text, for a still")}}},
+    };
+    if (withTitle)
+        props.insert(QStringLiteral("title"),
+                     QJsonObject{{QStringLiteral("type"), QStringLiteral("string")},
+                                 {QStringLiteral("description"), QStringLiteral("Short clip name, at most 40 characters")}});
+    return QJsonObject{{QStringLiteral("type"), QStringLiteral("object")}, {QStringLiteral("properties"), props}};
+}
+
+QString seconds2(double v)
+{
+    return QString::number(v, 'f', 2);
+}
+
+} // namespace
+
+QList<ToolSpec> AssistantController::fillToolSpecs() const
+{
+    // Everything the chat can do (the user may ask for more than the marked space), plus the two
+    // tools that put an animation exactly in the space and keep its versions.
+    QList<ToolSpec> out = toolSpecs();
+    out.append({QStringLiteral("check_fill"),
+                QStringLiteral("Parse a Lottie JSON or SVG document and report what this renderer draws and "
+                               "skips (durationSec, width, height, fps, layers, expressions, unsupported, "
+                               "hints) without placing it. Give json or svg."),
+                fillDocumentSchema(false)});
+    out.append({QStringLiteral("fill_region"),
+                QStringLiteral("Hand over the animation for the marked space. Dafin places it exactly there "
+                               "(or, for a change, replaces the animation that is there) and keeps every "
+                               "earlier version. Give json (Lottie text) or svg (SVG text), and a short title. "
+                               "Calling it again in this request replaces this request's version instead of "
+                               "adding another. Returns the inspect summary of what was placed."),
+                fillDocumentSchema(true)});
+    return out;
+}
+
+QString AssistantController::fillSystemPrompt() const
+{
+    // The chat's own instructions (rules, frames, the user's editing knowledge), then AI Fill's.
+    QString s = systemPrompt();
+    s += QStringLiteral(
+        "\nThis request comes from AI Fill on the timeline: the user marked a space and typed a request. Do "
+        "everything the request asks, with all your tools, including things outside the space (another clip, "
+        "the next video, cuts, captions, more animations). For the animation that belongs in the marked space, "
+        "use fill_region: it places the document exactly there, or for a change gives the AI Fill clip there a "
+        "new version, and Dafin keeps every earlier version. Other animations go where the user said, with the "
+        "motion toolbox (add_lottie, add_svg) as usual. If the request is only about other places, you do not "
+        "have to use fill_region.\n"
+        "Lottie rules for this renderer (Skottie):\n"
+        "- Top level: v \"5.7.4\", fr = the project fps, ip 0, op = the frames it should last, w/h = the canvas "
+        "size, ddd 0, assets [], layers [...].\n"
+        "- Shape layers (ty 4) with groups (ty gr) of rc/el/sh plus fl/st and a tr; text layers (ty 5) with a "
+        "top-level fonts list such as {\"list\":[{\"fName\":\"Arial-BoldMT\",\"fFamily\":\"Arial\",\"fStyle\":\"Bold\","
+        "\"ascent\":75}]}; Dafin draws them with the system fonts.\n"
+        "- No expressions (Skottie renders them static). Every layer has ind, ip, op, st and ks (o, r, p, a, s).\n"
+        "- Animate with eased keyframes (i/o tangents). Unless asked otherwise: an entrance in the first "
+        "0.3-0.6 s, a hold, and an exit in the last 0.3-0.5 s.\n"
+        "- Keep the background transparent so the footage shows through, stay inside 5% safe margins, and keep "
+        "text at least 4% of the canvas height and readable against busy footage (a shadow, outline or plate).\n"
+        "check_fill parses a document without placing it. After fill_region, if unsupported or expressions is not "
+        "empty, fix the document and call fill_region again (that replaces this request's version). The user sees "
+        "your last reply on a small card: finish with one or two short sentences saying what you did and where, "
+        "no markdown.\n");
+    return s;
+}
+
+QString AssistantController::fillUserMessage(const QVariantMap &request) const
+{
+    const auto *app = static_cast<const AppController *>(m_app);
+    const drift::Project *project = app->project();
+    const double start = request.value(QStringLiteral("start")).toDouble();
+    const double end = request.value(QStringLiteral("end")).toDouble();
+    const int fps = project->fps() > 0 ? project->fps() : 30;
+    const int frames = qMax(1, qRound((end - start) * fps));
+    QString m;
+    QTextStream out(&m);
+    out << "AI Fill request.\n";
+    out << "Marked space: " << seconds2(start) << " s to " << seconds2(end) << " s (" << seconds2(end - start)
+        << " s long, " << frames << " frames at " << fps << " fps), drawn over track row "
+        << request.value(QStringLiteral("track"), -1).toInt() << " (0 = top).\n";
+    out << "Canvas: " << project->width() << "x" << project->height() << ".\n";
+
+    const QVariantList under = app->clipsInRange(start, end);
+    if (under.isEmpty()) {
+        out << "Under the space: nothing.\n";
+    } else {
+        out << "Under the space:\n";
+        for (const QVariant &v : under) {
+            const QVariantMap c = v.toMap();
+            out << "- track " << c.value(QStringLiteral("track")).toInt() << ", " << c.value(QStringLiteral("kind")).toString()
+                << " \"" << c.value(QStringLiteral("name")).toString() << "\" " << seconds2(c.value(QStringLiteral("start")).toDouble())
+                << "-" << seconds2(c.value(QStringLiteral("end")).toDouble()) << " s\n";
+        }
+    }
+
+    const QString clipId = request.value(QStringLiteral("clipId")).toString();
+    if (!clipId.isEmpty()) {
+        const QVariantMap info = app->aiFillVersions(clipId);
+        const QVariantList versions = info.value(QStringLiteral("versions")).toList();
+        const int current = info.value(QStringLiteral("current")).toInt();
+        out << "There is already an AI Fill animation in this space (version " << current + 1 << " of "
+            << versions.size() << "). Earlier requests for it:\n";
+        for (int i = 0; i < versions.size(); ++i)
+            out << "- v" << i + 1 << ": \"" << versions.at(i).toMap().value(QStringLiteral("prompt")).toString().left(300) << "\"\n";
+        QString doc = app->vectorSourceText(info.value(QStringLiteral("track")).toInt(), info.value(QStringLiteral("index")).toInt());
+        if (doc.size() > kMaxFillDocumentChars)
+            doc = doc.left(kMaxFillDocumentChars) + QStringLiteral("\n…(cut off: the document is longer)");
+        if (request.value(QStringLiteral("retry")).toBool()) {
+            out << "The user wants a DIFFERENT take on the same request: new layout, motion and look, same message. "
+                   "The current document, for reference only:\n";
+        } else {
+            out << "The user wants a CHANGE to the version showing now. Start from its document and change only what "
+                   "they ask:\n";
+        }
+        out << doc << "\n";
+    }
+    out << "Request (it may also ask for things outside the space; do those too): \""
+        << request.value(QStringLiteral("prompt")).toString() << "\"\n";
+    return m;
+}
+
+bool AssistantController::generateFill(const QVariantMap &request)
+{
+    const QString prompt = request.value(QStringLiteral("prompt")).toString().trimmed().left(2000);
+    const double start = request.value(QStringLiteral("start")).toDouble();
+    const double end = request.value(QStringLiteral("end")).toDouble();
+    const QString clipId = request.value(QStringLiteral("clipId")).toString();
+    QVariantMap state{{QStringLiteral("state"), QStringLiteral("error")},
+                      {QStringLiteral("status"), QString()},
+                      {QStringLiteral("error"), QString()},
+                      {QStringLiteral("setup"), false},
+                      {QStringLiteral("clipId"), clipId},
+                      {QStringLiteral("text"), QString()},
+                      {QStringLiteral("prompt"), prompt},
+                      {QStringLiteral("start"), start},
+                      {QStringLiteral("end"), end},
+                      {QStringLiteral("track"), request.value(QStringLiteral("track"), -1).toInt()}};
+    auto refuse = [&](const QString &why, bool setup = false) {
+        state.insert(QStringLiteral("error"), why);
+        state.insert(QStringLiteral("setup"), setup);
+        m_fillState = state;
+        emit fillChanged();
+        return false;
+    };
+    if (m_busy || m_toolRunning)
+        return refuse(tr("AI Assist is busy with another request. Wait for it, or press Stop."));
+    if (!ready())
+        return refuse(tr("Set up AI Assist first: %1").arg(notReadyReason()), true);
+    if (prompt.isEmpty())
+        return refuse(tr("Describe what should go in the marked space."));
+    if (!(start >= 0.0) || !(end - start >= 0.1))
+        return refuse(tr("The marked space is too short. Draw it again."));
+    if (!m_app || !m_app->vectorSupportAvailable())
+        return refuse(tr("This build of Dafin cannot draw animations."));
+    if (!clipId.isEmpty() && !m_app->aiFillVersions(clipId).value(QStringLiteral("ok")).toBool())
+        return refuse(tr("The animation to change is gone. Mark the space again."));
+
+    QVariantMap job = request;
+    job.insert(QStringLiteral("prompt"), prompt);
+    m_fill = {};
+    m_fill.active = true;
+    m_fill.request = job;
+    m_fill.requestId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    // The chat waits aside; this request is a short conversation of its own.
+    m_chatAside = m_history;
+    m_history.clear();
+    ChatMessage user;
+    user.role = ChatMessage::Role::User;
+    user.text = fillUserMessage(job);
+    m_history.append(user);
+
+    state.insert(QStringLiteral("state"), QStringLiteral("working"));
+    state.insert(QStringLiteral("status"), tr("Designing the animation…"));
+    m_fillState = state;
+    emit fillChanged();
+    beginTurn();
+    requestNext();
+    return true;
+}
+
+void AssistantController::runFillTool(const ToolCall &call)
+{
+    ++m_turnToolCalls;
+    QString source;
+    QString kind = QStringLiteral("lottie");
+    const QJsonValue json = call.args.value(QStringLiteral("json"));
+    if (json.isObject())
+        source = QString::fromUtf8(QJsonDocument(json.toObject()).toJson(QJsonDocument::Compact));
+    else
+        source = json.toString();
+    if (source.trimmed().isEmpty()) {
+        source = call.args.value(QStringLiteral("svg")).toString();
+        kind = QStringLiteral("svg");
+    }
+    const QString trimmed = source.trimmed();
+    QString error;
+    if (trimmed.isEmpty())
+        error = QStringLiteral("json (Lottie text or a .json path) or svg (SVG text or a .svg path) required");
+
+    QVariantMap reply;
+    if (error.isEmpty()) {
+        if (call.name == QLatin1String("check_fill")) {
+            reply = m_app->inspectVector(trimmed, kind);
+        } else {
+            QVariantMap region = m_fill.request;
+            region.insert(QStringLiteral("requestId"), m_fill.requestId);
+            // A second hand-over in this request updates the clip the first one placed.
+            if (!m_fill.clipId.isEmpty())
+                region.insert(QStringLiteral("clipId"), m_fill.clipId);
+            region.insert(QStringLiteral("title"), call.args.value(QStringLiteral("title")).toString());
+            reply = m_app->commitAiFill(region, trimmed, kind);
+        }
+        if (!reply.value(QStringLiteral("ok")).toBool())
+            error = reply.value(QStringLiteral("error")).toString();
+    }
+    if (!error.isEmpty()) {
+        ++m_turnFailedCalls;
+        m_fill.lastError = error.left(400);
+        addToolResult(call, QString::fromUtf8(QJsonDocument(QJsonObject{{QStringLiteral("ok"), false},
+                                                                         {QStringLiteral("error"), error}})
+                                                  .toJson(QJsonDocument::Compact)),
+                      true);
+        addMessage(QStringLiteral("step"), call.name, {{QStringLiteral("ok"), false}, {QStringLiteral("detail"), error}});
+        return;
+    }
+    QString text = QString::fromUtf8(QJsonDocument(QJsonObject::fromVariantMap(reply)).toJson(QJsonDocument::Compact));
+    if (text.size() > kMaxToolResultChars)
+        text = text.left(kMaxToolResultChars) + QStringLiteral("…(truncated)");
+    if (call.name == QLatin1String("fill_region")) {
+        m_fill.clipId = reply.value(QStringLiteral("id")).toString();
+        m_fill.lastError.clear();
+        updateFill({{QStringLiteral("clipId"), m_fill.clipId},
+                    {QStringLiteral("version"), reply.value(QStringLiteral("version"))},
+                    {QStringLiteral("versions"), reply.value(QStringLiteral("versions"))}});
+        text += QStringLiteral("\nPlaced in the marked space as version %1. If unsupported or expressions is not "
+                               "empty, fix the document and call fill_region again (that replaces this version). "
+                               "Otherwise finish with one short sentence.")
+                    .arg(reply.value(QStringLiteral("version")).toInt());
+    }
+    addToolResult(call, text, false);
+    addMessage(QStringLiteral("step"), call.name, {{QStringLiteral("ok"), true}});
+}
+
+void AssistantController::updateFill(const QVariantMap &changes)
+{
+    for (auto it = changes.cbegin(); it != changes.cend(); ++it)
+        m_fillState.insert(it.key(), it.value());
+    emit fillChanged();
+}
+
+void AssistantController::finishFill(const QString &outcome)
+{
+    const FillJob job = m_fill;
+    m_fill = {};
+    m_history = m_chatAside;
+    m_chatAside.clear();
+
+    const bool changed = projectHash() != m_turnHashBefore;
+    const bool placed = !job.clipId.isEmpty() && m_app->aiFillVersions(job.clipId).value(QStringLiteral("ok")).toBool();
+    QVariantMap changes{{QStringLiteral("status"), QString()},
+                        {QStringLiteral("error"), QString()},
+                        {QStringLiteral("changed"), changed},
+                        {QStringLiteral("clipId"), placed ? job.clipId : QString()},
+                        {QStringLiteral("text"), job.lastText}};
+    if (placed) {
+        const QVariantMap info = m_app->aiFillVersions(job.clipId);
+        changes.insert(QStringLiteral("version"), info.value(QStringLiteral("current")).toInt() + 1);
+        changes.insert(QStringLiteral("versions"), info.value(QStringLiteral("versions")).toList().size());
+        changes.insert(QStringLiteral("start"), info.value(QStringLiteral("start")));
+        changes.insert(QStringLiteral("end"), info.value(QStringLiteral("end")));
+    }
+    if (outcome == QLatin1String("ok")) {
+        changes.insert(QStringLiteral("state"), QStringLiteral("done"));
+    } else if (outcome == QLatin1String("stopped")) {
+        // What was already done stays (and can be undone); say so rather than pretend nothing happened.
+        changes.insert(QStringLiteral("state"), changed ? QStringLiteral("done") : QStringLiteral("stopped"));
+        if (changed)
+            changes.insert(QStringLiteral("text"), tr("Stopped. What was done so far is on the timeline."));
+    } else if (changed && outcome == QLatin1String("limit")) {
+        changes.insert(QStringLiteral("state"), QStringLiteral("done"));
+        changes.insert(QStringLiteral("text"), tr("Stopped after %1 steps. What was done so far is on the timeline; "
+                                                  "ask again to continue.").arg(kMaxToolCallsPerTurn));
+    } else {
+        QString why;
+        if (!job.lastError.isEmpty())
+            why = tr("It didn't work: %1").arg(job.lastError);
+        else if (outcome == QLatin1String("limit"))
+            why = tr("The AI took too many steps without finishing. Try again, perhaps with a simpler description.");
+        else
+            why = tr("It didn't work. Try again.");
+        if (changed)
+            why += QLatin1Char(' ') + tr("Some changes were already made; Ctrl+Z undoes them.");
+        changes.insert(QStringLiteral("state"), QStringLiteral("error"));
+        changes.insert(QStringLiteral("error"), why);
+    }
+    updateFill(changes);
+}
+
+void AssistantController::dismissFill()
+{
+    if (m_fill.active)
+        return;
+    m_fillState.clear();
+    emit fillChanged();
 }
 
 } // namespace dafin::assistant

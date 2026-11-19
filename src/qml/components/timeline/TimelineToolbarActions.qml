@@ -14,6 +14,10 @@ QtObject {
                     tip: qsTr("Select — normal editing"), shortcut: "selectTool" },
         "cut": { glyph: Theme.icons.scissors, label: qsTr("Cut mode"),
                  tip: qsTr("Cut mode — click a clip to split it"), shortcut: "bladeTool" },
+        // Dafin: mark a space on the timeline and describe what the AI should put there.
+        "aiFill": { glyph: Theme.icons.sparkles, label: qsTr("AI Fill"),
+                    tip: qsTr("AI Fill — drag across the timeline to mark a space, then describe the animation to put there (a title, lower third, arrow, counter…). Every try is kept as a version you can go back to"),
+                    shortcut: "aiFillTool" },
         // Dafin: Filmora's keyframe button. Keys the selected clip at the playhead; its diamonds
         // then show on the clip, where they can be dragged or right-clicked.
         "keyframe": { glyph: Theme.icons.diamondPlus, label: qsTr("Add keyframe"),
@@ -102,7 +106,7 @@ QtObject {
     // Dafin: groups are Edit | History | Tools | Audio and links | Delete, with the destructive
     // Delete last and apart. Only the default: a stored (customised) layout is used as saved.
     readonly property var defaultToolbarItems: [
-        "select", "cut", "keyframe", "snap", "speedControl", "freezeFrame", "deleteLeft", "deleteRight",
+        "select", "cut", "aiFill", "keyframe", "snap", "speedControl", "freezeFrame", "deleteLeft", "deleteRight",
         "separator", "undo", "redo", "history",
         "separator", "chromaKey", "motionTrack", "syncAudio", "beatMarkers", "autoDuck", "separator",
         "separateAudio",
@@ -144,6 +148,14 @@ QtObject {
             if (at < 0)
                 at = toolbarItems.indexOf("select")
             toolbarItems.splice(at + 1, 0, "keyframe")
+        }
+        // ...and AI Fill, right after Cut mode (else Select), as the third tool.
+        if (!seen["aiFill"]) {
+            seen["aiFill"] = true
+            let at = toolbarItems.indexOf("cut")
+            if (at < 0)
+                at = toolbarItems.indexOf("select")
+            toolbarItems.splice(at + 1, 0, "aiFill")
         }
         // ...and so does the snapping magnet, after the keyframe button.
         if (!seen["snap"]) {

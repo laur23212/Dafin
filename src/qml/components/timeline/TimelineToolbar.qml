@@ -137,6 +137,7 @@ Item {
         switch (id) {
         case "select": panel.timelineTool = ""; break
         case "cut": panel.timelineTool = panel.timelineTool === "split" ? "" : "split"; break
+        case "aiFill": panel.timelineTool = panel.timelineTool === "aiFill" ? "" : "aiFill"; break
         case "keyframe": EditorState.toggleKeyframeAtPlayhead(); break
         case "snap": EditorState.snapEnabled = !EditorState.snapEnabled; break
         case "speedControl":
@@ -188,6 +189,7 @@ Item {
         switch (id) {
         case "speedControl": return toolbar.speedControlEligible
         case "freezeFrame": return toolbar.freezeFrameAvailable
+        case "aiFill": return EditorState.vectorSupportAvailable()
         case "separateAudio": return EditorState.separateAudioAvailable
         case "unlink": return EditorState.unlinkAvailable
         case "link": return EditorState.linkAvailable
@@ -207,6 +209,7 @@ Item {
         switch (id) {
         case "select": return panel.timelineTool === ""
         case "cut": return panel.timelineTool === "split"
+        case "aiFill": return panel.timelineTool === "aiFill"
         case "keyframe": return toolbar.keyframeAtPlayhead
         case "snap": return EditorState.snapEnabled
         case "speedControl": return toolbar.speedControlOn

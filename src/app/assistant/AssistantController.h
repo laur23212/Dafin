@@ -51,10 +51,16 @@ class AssistantController : public QObject
     Q_PROPERTY(QVariantMap question READ question NOTIFY questionChanged)
     Q_PROPERTY(QString lastUsage READ lastUsage NOTIFY usageChanged)
     Q_PROPERTY(QString usageLogPath READ usageLogPath CONSTANT)
+    // Dafin AI Fill: the request the timeline's AI Fill tool started, as the card shows it.
+    // {state: "" | working | done | error | stopped, status, error, setup, clipId (the AI Fill
+    //  clip in the space, "" when the request was about other places), version, versions, text,
+    //  changed (the project changed), start, end, track}
+    Q_PROPERTY(QVariantMap fill READ fill NOTIFY fillChanged)
 
 public:
     static constexpr int kMaxToolCallsPerTurn = 40;
     static constexpr int kMaxToolResultChars = 60000;
+    static constexpr int kMaxFillDocumentChars = 100000; // current document sent for "Change it"
 
     // `settingsFile` empty = the app's normal settings; tests pass a temporary INI file.
     explicit AssistantController(AppController *app, const QString &settingsFile = {},
@@ -91,6 +97,7 @@ public:
     QVariantMap question() const { return m_question; }
     QString lastUsage() const { return m_lastUsage; }
     QString usageLogPath() const { return m_usageLogPath; }
+    QVariantMap fill() const { return m_fillState; }
 
     Q_INVOKABLE void send(const QString &text);
     Q_INVOKABLE void stop();
@@ -101,6 +108,17 @@ public:
     // Only the panel's buttons call this: choice = option index, -1 = Skip, -2 = Not sure.
     // Ignored unless `questionId` is the one open question and the project is unchanged.
     Q_INVOKABLE void answerQuestion(const QString &questionId, int choice);
+
+    // Dafin AI Fill. `request`: prompt, start, end (seconds), track (top row drawn over, -1 any),
+    // clipId (an AI Fill clip to give a new version, "Change it" / "Try again"), retry (bool: a
+    // different take on the same prompt). Runs in a conversation of its own, so the chat is left
+    // as it was, with every tool the chat has (the request may reach beyond the space) plus
+    // fill_region / check_fill; protected ranges and the irreversible-action dialog apply as
+    // always, and an ask_user question shows on the AI Fill card. False when it could not start
+    // (the reason is in fill.error; fill.setup is true when AI Assist still needs setting up).
+    Q_INVOKABLE bool generateFill(const QVariantMap &request);
+    // Forget a finished fill (the card closed). Ignored while one is running; Stop ends that.
+    Q_INVOKABLE void dismissFill();
 
     // For tests and diagnostics.
     const QList<ChatMessage> &history() const { return m_history; }
@@ -114,6 +132,7 @@ signals:
     void questionChanged();
     void usageChanged();
     void turnFinished(const QString &outcome);
+    void fillChanged();
 
 private:
     std::unique_ptr<QSettings> settings() const;
@@ -133,6 +152,13 @@ private:
     void finishTurn(const QString &outcome);
     void writeUsageRow(const QString &outcome);
     QString projectHash() const;
+    QString fillSystemPrompt() const;
+    QList<ToolSpec> fillToolSpecs() const;
+    QString fillUserMessage(const QVariantMap &request) const;
+    void runFillTool(const ToolCall &call);
+    void updateFill(const QVariantMap &changes);
+    void finishFill(const QString &outcome);
+    void beginTurn();
 
     AppController *m_app = nullptr;
     QString m_settingsFile;
@@ -162,6 +188,20 @@ private:
     QString m_lastUsage;
     QString m_usageLogPath;
     int m_imageCallId = 0;
+
+    // AI Fill: the request in flight, and the chat put aside while it runs.
+    struct FillJob
+    {
+        bool active = false;
+        QVariantMap request;
+        QString requestId;
+        QString clipId;     // the clip this request placed or changed, once fill_region worked
+        QString lastText;   // the model's latest words, shown when it ends without an animation
+        QString lastError;  // the latest failure, for the card
+    };
+    FillJob m_fill;
+    QVariantMap m_fillState;
+    QList<ChatMessage> m_chatAside;
 };
 
 } // namespace dafin::assistant

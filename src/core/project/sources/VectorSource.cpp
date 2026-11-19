@@ -241,6 +241,9 @@ QJsonObject VectorSource::toJson() const
     // Only animated sources carry the key, so projects without one stay byte-identical.
     if (!keyframesJson.isEmpty())
         o.insert(QStringLiteral("keyframes"), keyframesJson);
+    // Likewise only AI Fill clips carry their versions.
+    if (!generated.isEmpty())
+        o.insert(QStringLiteral("generated"), generated.toJson());
     return o;
 }
 
@@ -267,7 +270,88 @@ VectorSource VectorSource::fromJson(const QJsonObject &o)
     const QJsonObject keyframesJson = o.value(QStringLiteral("keyframes")).toObject();
     for (auto it = keyframesJson.constBegin(); it != keyframesJson.constEnd(); ++it)
         v.keyframes.insert(it.key(), keyframesFromJson(it.value().toObject()));
+    v.generated = GenerationHistory::fromJson(o.value(QStringLiteral("generated")).toObject());
     return v;
+}
+
+QJsonObject GeneratedVersion::toJson() const
+{
+    return QJsonObject{
+        {QStringLiteral("prompt"), prompt},
+        {QStringLiteral("kind"), vectorKindToString(kind)},
+        {QStringLiteral("source"), source},
+        {QStringLiteral("created"), createdUtc},
+        {QStringLiteral("request"), requestId},
+    };
+}
+
+GeneratedVersion GeneratedVersion::fromJson(const QJsonObject &o)
+{
+    GeneratedVersion v;
+    v.prompt = o.value(QStringLiteral("prompt")).toString();
+    v.kind = vectorKindFromString(o.value(QStringLiteral("kind")).toString());
+    v.source = o.value(QStringLiteral("source")).toString();
+    v.createdUtc = o.value(QStringLiteral("created")).toString();
+    v.requestId = o.value(QStringLiteral("request")).toString();
+    return v;
+}
+
+bool GeneratedVersion::operator==(const GeneratedVersion &other) const
+{
+    return prompt == other.prompt && kind == other.kind && source == other.source
+           && createdUtc == other.createdUtc && requestId == other.requestId;
+}
+
+void GenerationHistory::record(const GeneratedVersion &v)
+{
+    if (!versions.isEmpty() && !v.requestId.isEmpty() && versions.last().requestId == v.requestId) {
+        versions.last() = v;
+        current = int(versions.size()) - 1;
+        return;
+    }
+    // The version showing before this one is kept past the cap: the user went back to it for a
+    // reason (a favourite they keep trying to beat).
+    int keep = current;
+    versions.append(v);
+    current = int(versions.size()) - 1;
+    while (versions.size() > kMaxVersions) {
+        int drop = 0;
+        if (drop == keep)
+            ++drop;
+        versions.removeAt(drop);
+        if (keep > drop)
+            --keep;
+        --current;
+    }
+}
+
+QJsonObject GenerationHistory::toJson() const
+{
+    QJsonArray list;
+    for (const GeneratedVersion &v : versions)
+        list.append(v.toJson());
+    return QJsonObject{{QStringLiteral("versions"), list}, {QStringLiteral("current"), current}};
+}
+
+GenerationHistory GenerationHistory::fromJson(const QJsonObject &o)
+{
+    GenerationHistory h;
+    for (const QJsonValue &v : o.value(QStringLiteral("versions")).toArray()) {
+        GeneratedVersion version = GeneratedVersion::fromJson(v.toObject());
+        if (!version.source.isEmpty())
+            h.versions.append(version);
+    }
+    while (h.versions.size() > kMaxVersions)
+        h.versions.removeFirst();
+    if (!h.versions.isEmpty())
+        h.current = qBound(0, o.value(QStringLiteral("current")).toInt(int(h.versions.size()) - 1),
+                           int(h.versions.size()) - 1);
+    return h;
+}
+
+bool GenerationHistory::operator==(const GenerationHistory &other) const
+{
+    return current == other.current && versions == other.versions;
 }
 
 bool VectorSource::isAnimated() const

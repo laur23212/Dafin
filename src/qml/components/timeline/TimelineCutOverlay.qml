@@ -6,8 +6,10 @@ Item {
     id: cutOverlay
 
     property var panel
-    visible: panel.timelineTool !== ""
-    enabled: panel.timelineTool !== ""
+    // Dafin: AI Fill is a tool mode too, with its own overlay (TimelineAiFillOverlay).
+    readonly property bool cutToolOn: panel.timelineTool !== "" && panel.timelineTool !== "aiFill"
+    visible: cutToolOn
+    enabled: cutToolOn
     x: 0
     y: Theme.timelineRulerHeight + Theme.timelineBookmarkRowHeight
     width: parent.width

@@ -188,6 +188,7 @@ private slots:
     void sourceLabRebaseMath();
     void shapeCatalogPathsFitBounds();
     void vectorSourceSerialization();
+    void aiFillHistoryKeepsVersions();
     void dotLottieUnpacks();
     void textStyleKeyframesSerialization();
     void vectorClipIsSyntheticOnGraphicTracks();
@@ -2415,6 +2416,66 @@ void CoreTest::legacyShapeStyleLoadsWithDefaults()
     QVERIFY(!hollow.layers[0].enabled);
     QCOMPARE(hollow.layers[0].paint.color, QColor(0, 255, 0));
     QVERIFY(!hollow.layers[1].enabled);
+}
+
+// Dafin AI Fill: versions are kept in order, the same request replaces its own, the oldest go
+// first past the cap (never the one showing), and only AI Fill clips write the key.
+void CoreTest::aiFillHistoryKeepsVersions()
+{
+    auto version = [](const QString &prompt, const QString &request) {
+        drift::GeneratedVersion v;
+        v.prompt = prompt;
+        v.source = QStringLiteral("{\"v\":\"5.7.4\",\"nm\":\"%1\"}").arg(prompt);
+        v.createdUtc = QStringLiteral("2026-11-19T00:00:00Z");
+        v.requestId = request;
+        return v;
+    };
+    drift::GenerationHistory h;
+    QVERIFY(h.isEmpty());
+    h.record(version(QStringLiteral("a"), QStringLiteral("r1")));
+    h.record(version(QStringLiteral("b"), QStringLiteral("r2")));
+    QCOMPARE(h.versions.size(), 2);
+    QCOMPARE(h.current, 1);
+    h.record(version(QStringLiteral("b2"), QStringLiteral("r2"))); // the AI fixing its own try
+    QCOMPARE(h.versions.size(), 2);
+    QCOMPARE(h.versions.last().prompt, QStringLiteral("b2"));
+
+    // Past the cap the oldest goes, except the one that was showing (here the first).
+    drift::GenerationHistory capped;
+    capped.record(version(QStringLiteral("first"), QStringLiteral("q0")));
+    for (int i = 1; i < drift::GenerationHistory::kMaxVersions; ++i)
+        capped.record(version(QStringLiteral("v%1").arg(i), QStringLiteral("q%1").arg(i)));
+    QCOMPARE(capped.versions.size(), drift::GenerationHistory::kMaxVersions);
+    capped.current = 0;
+    capped.record(version(QStringLiteral("newest"), QStringLiteral("qx")));
+    QCOMPARE(capped.versions.size(), drift::GenerationHistory::kMaxVersions);
+    QCOMPARE(capped.versions.first().prompt, QStringLiteral("first"));
+    QCOMPARE(capped.versions.at(1).prompt, QStringLiteral("v2"));
+    QCOMPARE(capped.versions.last().prompt, QStringLiteral("newest"));
+    QCOMPARE(capped.current, drift::GenerationHistory::kMaxVersions - 1);
+
+    // Round trip through the project file, with the current version kept.
+    drift::VectorSource source;
+    source.source = h.versions.first().source;
+    source.generated = h;
+    source.generated.current = 0;
+    const QJsonObject json = source.toJson();
+    QVERIFY(json.contains(QStringLiteral("generated")));
+    const drift::VectorSource loaded = drift::VectorSource::fromJson(json);
+    QVERIFY(loaded.generated == source.generated);
+    QCOMPARE(loaded.generated.current, 0);
+    QVERIFY(!drift::VectorSource{}.toJson().contains(QStringLiteral("generated")));
+    // A damaged entry is dropped and an out-of-range current is pulled back in.
+    QJsonObject broken = json;
+    QJsonObject gen = broken.value(QStringLiteral("generated")).toObject();
+    QJsonArray list = gen.value(QStringLiteral("versions")).toArray();
+    list.append(QJsonObject{{QStringLiteral("prompt"), QStringLiteral("empty")}});
+    gen.insert(QStringLiteral("versions"), list);
+    gen.insert(QStringLiteral("current"), 99);
+    broken.insert(QStringLiteral("generated"), gen);
+    const drift::VectorSource repaired = drift::VectorSource::fromJson(broken);
+    QCOMPARE(repaired.generated.versions.size(), 2);
+    QCOMPARE(repaired.generated.current, 1);
 }
 
 void CoreTest::vectorSourceSerialization()
