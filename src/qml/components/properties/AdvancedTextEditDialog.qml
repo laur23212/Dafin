@@ -244,7 +244,7 @@ ThemedDialog {
         property int decimals: 0
         signal edited(real value)
 
-        width: (wn.glyph.length > 0 ? 22 : 0) + 64
+        width: (wn.glyph.length > 0 ? 22 : 0) + 68
         height: Theme.controlHeightSm
 
         IconGlyph {
@@ -258,7 +258,7 @@ ThemedDialog {
         ThemedNumberField {
             id: wnField
             x: wn.glyph.length > 0 ? 22 : 0
-            width: 64
+            width: 68
             height: parent.height
             from: wn.from
             to: wn.to
@@ -363,7 +363,10 @@ ThemedDialog {
         }
         Text {
             id: vrValue
-            width: 46
+            width: 58
+            elide: Text.ElideRight
+            fontSizeMode: Text.HorizontalFit
+            minimumPixelSize: 8
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             horizontalAlignment: Text.AlignRight
@@ -479,6 +482,7 @@ ThemedDialog {
             width: 78
             anchors.verticalCenter: parent.verticalCenter
             text: cr.label
+            elide: Text.ElideRight
             color: Theme.mutedForeground
             font.family: Theme.fontFamily
             font.pixelSize: Theme.fontSizeXs
