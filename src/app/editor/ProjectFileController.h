@@ -150,6 +150,12 @@ public:
     Q_INVOKABLE void clearRecentProjects();
     // Removes one path from the recents list without deleting the file on disk.
     Q_INVOKABLE void removeRecentProject(const QString &path);
+    // Dafin: start screen. Moves the project file to the system trash (never a hard delete) and
+    // drops it from recents and the finder's list. False when the file could not be trashed.
+    Q_INVOKABLE bool deleteProjectFile(const QString &path);
+    // Dafin: a recent whose file was moved: points it at the new place, keeping its position,
+    // picture and length. False when the new file is not a usable local project file.
+    Q_INVOKABLE bool relocateRecentProject(const QString &oldPath, const QUrl &newLocation);
     Q_INVOKABLE void restoreAutosave();
     // Dafin: opens `backupPath` as the project `projectPath`: Save then replaces the damaged file.
     Q_INVOKABLE void openBackup(const QString &projectPath, const QString &backupPath);

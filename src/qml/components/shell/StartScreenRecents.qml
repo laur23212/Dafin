@@ -10,10 +10,14 @@ Item {
     property string view: "grid"
     property string emptyText: ""
     property string removeLabel: qsTr("Remove from list")
+    property bool deleteMode: false
+    property bool canRelocate: true
 
     signal openRecentRequested(string path)
     signal removeRequested(string path)
     signal revealRequested(string path)
+    signal relocateRequested(string path)
+    signal deleteRequested(string path)
 
     readonly property real gap: Theme.spacing2xl
     readonly property int columns: Math.max(1, Math.floor((width + gap) / (300 + gap)))
@@ -84,6 +88,10 @@ Item {
             onOpenRequested: (path) => recents.openRecentRequested(path)
             onRemoveRequested: (path) => recents.removeRequested(path)
             onRevealRequested: (path) => recents.revealRequested(path)
+            onRelocateRequested: (path) => recents.relocateRequested(path)
+            onDeleteRequested: (path) => recents.deleteRequested(path)
+            deleteMode: recents.deleteMode
+            canRelocate: recents.canRelocate
         }
     }
 
@@ -104,6 +112,10 @@ Item {
             onOpenRequested: (path) => recents.openRecentRequested(path)
             onRemoveRequested: (path) => recents.removeRequested(path)
             onRevealRequested: (path) => recents.revealRequested(path)
+            onRelocateRequested: (path) => recents.relocateRequested(path)
+            onDeleteRequested: (path) => recents.deleteRequested(path)
+            deleteMode: recents.deleteMode
+            canRelocate: recents.canRelocate
         }
     }
 }

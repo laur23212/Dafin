@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import Drift
 
 // Shown at startup in place of a fresh empty project whenever "Reopen last project
@@ -43,6 +44,32 @@ Item {
     readonly property string view: scanner ? scanner.startView : "grid"
     // Recents first when there are any; a first start lands on what was found on disk.
     property string tab: items.length > 0 ? "recent" : "found"
+    // Dafin: the trash button at the bottom right: while on, clicking a project deletes it.
+    property bool deleteMode: false
+    property string pendingPath: ""
+    property string pendingName: ""
+    property string errorText: ""
+
+    function askDelete(path) {
+        const all = root.items.concat(root.found)
+        let name = path
+        for (let i = 0; i < all.length; ++i) {
+            if (all[i].path === path) { name = all[i].name; break }
+        }
+        root.pendingPath = path
+        root.pendingName = name
+        root.errorText = ""
+        deleteDialog.open()
+    }
+
+    function locate(path) {
+        const url = FileDialogs.openFile(qsTr("Locate project"), [
+            qsTr("Dafin projects (*.drift)"), qsTr("All files (*)")])
+        if (url == "")
+            return
+        if (!EditorState.projectFile.relocateRecentProject(path, url))
+            root.errorText = qsTr("That file can't be used for this project.")
+    }
 
     Component.onCompleted: {
         if (root.scanner)
@@ -257,6 +284,10 @@ Item {
                                  : (root.scanner && !root.scanner.enabled)
                                    ? qsTr("Looking for projects on this computer is turned off.")
                                    : qsTr("No Dafin, Filmora or Premiere Pro projects found in your usual folders.")
+                    deleteMode: root.deleteMode
+                    canRelocate: root.tab === "recent"
+                    onDeleteRequested: (path) => root.askDelete(path)
+                    onRelocateRequested: (path) => root.locate(path)
                     onOpenRecentRequested: (path) => root.openRecentRequested(path)
                     onRevealRequested: (path) => { if (root.scanner) root.scanner.revealInFolder(path) }
                     onRemoveRequested: (path) => {
@@ -287,6 +318,69 @@ Item {
                         onClicked: root.projectFoldersRequested()
                     }
                 }
+            }
+        }
+    }
+
+    // Dafin: bottom-right trash button; turns on delete mode, where a click on a project asks to delete it.
+    Row {
+        z: 2
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Theme.spacingXl
+        spacing: Theme.spacingMd
+
+        ThemedLabel {
+            anchors.verticalCenter: parent.verticalCenter
+            visible: root.deleteMode || root.errorText.length > 0
+            size: "sm"
+            text: root.errorText.length > 0 ? root.errorText
+                                            : qsTr("Click a project to delete it. Click the bin again to stop.")
+        }
+
+        IconButton {
+            glyph: Theme.icons.trash
+            variant: "ghost"
+            active: root.deleteMode
+            tooltip: root.deleteMode ? qsTr("Stop deleting projects") : qsTr("Delete projects")
+            onClicked: { root.errorText = ""; root.deleteMode = !root.deleteMode }
+        }
+    }
+
+    ThemedDialog {
+        id: deleteDialog
+        title: qsTr("Delete this project?")
+        acceptText: qsTr("Move to trash")
+        rejectText: qsTr("Cancel")
+        acceptVariant: "destructive"
+        preferredWidth: 440
+
+        onAccepted: {
+            if (!EditorState.projectFile.deleteProjectFile(root.pendingPath))
+                root.errorText = qsTr("Couldn't move “%1” to the trash.").arg(root.pendingName)
+        }
+
+        // Only takes it off the lists; the file stays where it is.
+        footerExtra: ThemedButton {
+            variant: "secondary"
+            text: qsTr("Only remove from list")
+            onClicked: {
+                deleteDialog.close()
+                EditorState.projectFile.removeRecentProject(root.pendingPath)
+                if (root.scanner)
+                    root.scanner.hide(root.pendingPath)
+            }
+        }
+
+        contentItem: Column {
+            spacing: Theme.spacingXl
+            width: parent ? parent.width : 400
+
+            ThemedLabel {
+                width: parent.width
+                size: "sm"
+                wrapMode: Text.WordWrap
+                text: qsTr("“%1” will be moved to the trash, so you can still get it back from there. “Only remove from list” keeps the file and just hides it here.").arg(root.pendingName)
             }
         }
     }

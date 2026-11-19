@@ -2175,6 +2175,44 @@ void ProjectFileController::removeRecentProject(const QString &path)
     emit recentProjectsChanged();
 }
 
+bool ProjectFileController::deleteProjectFile(const QString &path)
+{
+    if (path.isEmpty() || path.startsWith(QLatin1String("content://"), Qt::CaseInsensitive))
+        return false;
+    // Already gone (a "missing" card): nothing to trash, just forget it.
+    if (QFileInfo::exists(path) && !QFile::moveToTrash(path))
+        return false;
+    removeRecentProject(path);
+    if (m_scanner)
+        m_scanner->hide(path);
+    return true;
+}
+
+bool ProjectFileController::relocateRecentProject(const QString &oldPath, const QUrl &newLocation)
+{
+    if (oldPath.isEmpty() || !newLocation.isLocalFile())
+        return false;
+    const QString newPath = newLocation.toLocalFile();
+    if (newPath.isEmpty() || newPath == oldPath || !QFileInfo(newPath).isFile())
+        return false;
+    QSettings settings;
+    QStringList paths = settings.value(QStringLiteral("recentProjects")).toStringList();
+    const int index = paths.indexOf(oldPath);
+    if (index < 0)
+        return false;
+    // The new place may already be in the list: keep one entry, at the old one's position.
+    paths.removeAll(newPath);
+    paths.replace(paths.indexOf(oldPath), newPath);
+    settings.setValue(QStringLiteral("recentProjects"), paths);
+    QVariantMap ids = settings.value(QStringLiteral("recentProjectIds")).toMap();
+    if (ids.contains(oldPath)) {
+        ids.insert(newPath, ids.take(oldPath));
+        settings.setValue(QStringLiteral("recentProjectIds"), ids);
+    }
+    emit recentProjectsChanged();
+    return true;
+}
+
 void ProjectFileController::setDirty(bool dirty)
 {
     if (dirty)

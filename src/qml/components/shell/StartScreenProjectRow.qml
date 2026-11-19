@@ -15,6 +15,11 @@ Rectangle {
     signal openRequested(string path)
     signal removeRequested(string path)
     signal revealRequested(string path)
+    signal relocateRequested(string path)
+    signal deleteRequested(string path)
+
+    property bool deleteMode: false
+    property bool canRelocate: true
 
     readonly property bool exists: modelData.exists !== false
     readonly property bool hovered: rowHover.hovered
@@ -37,10 +42,10 @@ Rectangle {
     width: ListView.view ? ListView.view.width : 0
     height: 64
     radius: Theme.c.startScreenProjectRow.radius
-    color: hovered && exists ? Theme.c.startScreenProjectRow.backgroundHover
+    color: hovered && (exists || deleteMode) ? Theme.c.startScreenProjectRow.backgroundHover
                              : Theme.c.startScreenProjectRow.background
     border.width: Theme.c.startScreenProjectRow.borderWidth
-    border.color: Theme.c.startScreenProjectRow.border
+    border.color: deleteMode && hovered ? Theme.c.themedButton.destructiveBackgroundHover : Theme.c.startScreenProjectRow.border
     opacity: exists ? 1 : 0.6
 
     Behavior on color {
@@ -126,9 +131,11 @@ Rectangle {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: rowButtons.left
-        cursorShape: projectRow.exists ? Qt.PointingHandCursor : Qt.ArrowCursor
+        cursorShape: projectRow.exists || projectRow.deleteMode ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: {
-            if (projectRow.exists)
+            if (projectRow.deleteMode)
+                projectRow.deleteRequested(projectRow.modelData.path)
+            else if (projectRow.exists)
                 projectRow.openRequested(projectRow.modelData.path)
         }
     }
@@ -139,10 +146,37 @@ Rectangle {
         anchors.rightMargin: Theme.spacingSm
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2
-        opacity: projectRow.hovered ? 1 : 0
+        opacity: projectRow.hovered || !projectRow.exists || projectRow.deleteMode ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
+        }
+
+        Item {
+            width: Theme.iconSizeMd + Theme.spacingSm * 2
+            height: width
+            visible: !projectRow.exists && projectRow.canRelocate
+
+            IconGlyph {
+                anchors.centerIn: parent
+                glyph: Theme.icons.folderInput
+                iconSize: Theme.iconSizeMd
+                iconColor: locateArea.containsMouse ? Theme.c.startScreenProjectRow.iconHover
+                                                    : Theme.c.startScreenProjectRow.icon
+            }
+
+            ThemedToolTip {
+                text: qsTr("Locate the file…")
+                visible: locateArea.containsMouse
+            }
+
+            MouseArea {
+                id: locateArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: projectRow.relocateRequested(projectRow.modelData.path)
+            }
         }
 
         Item {
@@ -195,6 +229,32 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: projectRow.removeRequested(projectRow.modelData.path)
+            }
+        }
+
+        Item {
+            width: Theme.iconSizeMd + Theme.spacingSm * 2
+            height: width
+
+            IconGlyph {
+                anchors.centerIn: parent
+                glyph: Theme.icons.trash
+                iconSize: Theme.iconSizeMd
+                iconColor: deleteArea.containsMouse || projectRow.deleteMode ? Theme.c.themedButton.destructiveBackgroundHover
+                                                                              : Theme.c.startScreenProjectRow.icon
+            }
+
+            ThemedToolTip {
+                text: qsTr("Delete project…")
+                visible: deleteArea.containsMouse
+            }
+
+            MouseArea {
+                id: deleteArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: projectRow.deleteRequested(projectRow.modelData.path)
             }
         }
     }

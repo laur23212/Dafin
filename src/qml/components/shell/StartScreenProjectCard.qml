@@ -17,10 +17,17 @@ Item {
     signal openRequested(string path)
     signal removeRequested(string path)
     signal revealRequested(string path)
+    // Dafin: a project whose file moved can be pointed at its new place; delete moves it to the trash.
+    signal relocateRequested(string path)
+    signal deleteRequested(string path)
+
+    // Dafin: the start screen's trash button turns this on: a click then deletes instead of opening.
+    property bool deleteMode: false
+    property bool canRelocate: true
 
     readonly property bool exists: modelData.exists !== false
     readonly property string kind: modelData.kind || "dafin"
-    readonly property bool hovered: cardHover.hovered && exists
+    readonly property bool hovered: cardHover.hovered && (exists || deleteMode)
     readonly property real pictureHeight: Math.round(width * 9 / 16)
     readonly property bool hasPicture: (modelData.thumbnail || "").length > 0
                                        && picture.status === Image.Ready
@@ -30,7 +37,7 @@ Item {
 
     HoverHandler {
         id: cardHover
-        cursorShape: card.exists ? Qt.PointingHandCursor : Qt.ArrowCursor
+        cursorShape: card.exists || card.deleteMode ? Qt.PointingHandCursor : Qt.ArrowCursor
     }
 
     Item {
@@ -114,8 +121,9 @@ Item {
             color: "transparent"
             border.width: card.hovered ? Theme.c.startScreenProjectCard.borderWidthHover
                                        : Theme.c.startScreenProjectCard.borderWidth
-            border.color: card.hovered ? Theme.c.startScreenProjectCard.borderHover
-                                       : Theme.c.startScreenProjectCard.border
+            border.color: card.deleteMode && card.hovered ? Theme.c.themedButton.destructiveBackgroundHover
+                          : card.hovered ? Theme.c.startScreenProjectCard.borderHover
+                                         : Theme.c.startScreenProjectCard.border
 
             Behavior on border.color {
                 ColorAnimation { duration: Theme.durationFast; easing.type: Theme.easing }
@@ -166,15 +174,80 @@ Item {
             }
         }
 
+        // Delete mode: a red trash badge says what a click will do.
+        Rectangle {
+            visible: card.deleteMode
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.margins: Theme.spacingMd
+            width: Theme.iconButtonSize
+            height: width
+            radius: width / 2
+            color: Theme.c.themedButton.destructiveBackgroundHover
+
+            IconGlyph {
+                anchors.centerIn: parent
+                glyph: Theme.icons.trash
+                iconSize: Theme.iconSizeMd
+                iconColor: "white"
+            }
+        }
+
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: (mouse) => {
                 if (mouse.button === Qt.RightButton)
                     menu.popup()
+                else if (card.deleteMode)
+                    card.deleteRequested(card.modelData.path)
                 else if (card.exists)
                     card.openRequested(card.modelData.path)
             }
+        }
+    }
+
+    // Dafin: a missing project's own small button: find the file again (above the picture's click area).
+    Rectangle {
+        id: locateButton
+        visible: !card.exists && !card.deleteMode && card.canRelocate
+        anchors.left: stage.left
+        anchors.bottom: stage.bottom
+        anchors.margins: Theme.spacingMd
+        width: locateRow.implicitWidth + Theme.spacingMd * 2
+        height: locateRow.implicitHeight + Theme.spacingXs * 2
+        radius: Theme.radiusMd
+        color: locateArea.containsMouse ? Theme.c.startScreenProjectCard.borderHover
+                                        : Theme.c.startScreenProjectCard.badgeBackground
+
+        Row {
+            id: locateRow
+            anchors.centerIn: parent
+            spacing: Theme.spacingXs
+
+            IconGlyph {
+                anchors.verticalCenter: parent.verticalCenter
+                glyph: Theme.icons.folderInput
+                iconSize: Theme.iconSizeSm
+                iconColor: Theme.c.startScreenProjectCard.badgeForeground
+            }
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Locate…")
+                color: Theme.c.startScreenProjectCard.badgeForeground
+                font.family: Theme.fontFamily
+                font.pixelSize: Theme.fontSizeSm
+                font.weight: Font.Medium
+            }
+        }
+
+        MouseArea {
+            id: locateArea
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: card.relocateRequested(card.modelData.path)
         }
     }
 
@@ -222,6 +295,8 @@ Item {
             onClicked: (mouse) => {
                 if (mouse.button === Qt.RightButton)
                     menu.popup()
+                else if (card.deleteMode)
+                    card.deleteRequested(card.modelData.path)
                 else if (card.exists)
                     card.openRequested(card.modelData.path)
             }
@@ -290,12 +365,26 @@ Item {
             onTriggered: card.revealRequested(card.modelData.path)
         }
 
+        ThemedMenuItem {
+            text: qsTr("Locate file…")
+            icon.name: Theme.icons.folderInput
+            visible: !card.exists && card.canRelocate
+            height: visible ? implicitHeight : 0
+            onTriggered: card.relocateRequested(card.modelData.path)
+        }
+
         ThemedMenuSeparator {}
 
         ThemedMenuItem {
             text: card.removeLabel
             icon.name: Theme.icons.x
             onTriggered: card.removeRequested(card.modelData.path)
+        }
+
+        ThemedMenuItem {
+            text: qsTr("Delete project…")
+            icon.name: Theme.icons.trash
+            onTriggered: card.deleteRequested(card.modelData.path)
         }
     }
 }
