@@ -701,7 +701,10 @@ QVariantMap AppController::commitAiFill(const QVariantMap &region, const QString
 {
     const double startSeconds = region.value(QStringLiteral("start")).toDouble();
     const double endSeconds = region.value(QStringLiteral("end")).toDouble();
-    if (!(startSeconds >= 0.0) || !(endSeconds > startSeconds))
+    // A new version of an existing AI Fill clip keeps that clip's place and length, so the marked
+    // space only has to make sense when a clip is being added.
+    if (region.value(QStringLiteral("clipId")).toString().isEmpty()
+        && (!(startSeconds >= 0.0) || !(endSeconds > startSeconds)))
         return aiFillFailure(QStringLiteral("the marked space has no length"));
     if (!vectorSupportAvailable())
         return aiFillFailure(QStringLiteral("this build has no vector renderer"));

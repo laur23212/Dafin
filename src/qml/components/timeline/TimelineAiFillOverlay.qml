@@ -428,10 +428,10 @@ Item {
             delegate: MouseArea {
                 id: edge
                 required property int index
-                readonly property bool left: index === 0
+                readonly property bool isLeft: index === 0
                 width: 10
                 height: regionRect.height
-                x: left ? -width / 2 : regionRect.width - width / 2
+                x: isLeft ? -width / 2 : regionRect.width - width / 2
                 cursorShape: Qt.SizeHorCursor
                 preventStealing: true
                 hoverEnabled: true
@@ -440,7 +440,7 @@ Item {
                         return
                     const px = mapToItem(fill, mouse.x, mouse.y).x
                     const at = fill.snapped(px)
-                    if (left)
+                    if (isLeft)
                         fill.regionStart = Math.max(0, Math.min(at, fill.regionEnd - fill.minLength))
                     else
                         fill.regionEnd = Math.max(at, fill.regionStart + fill.minLength)
