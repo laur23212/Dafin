@@ -31,7 +31,9 @@ namespace {
 // 5: title colours read as 0xRRGGBB (they were read as COLORREFs, red and blue swapped).
 // 6: animations matched by Filmora's preset id (letter-by-letter look-alikes), the clip's
 //    "animation" field read, letter-by-letter entrances fitted to Filmora's length.
-constexpr int kImporterVersion = 6;
+// 7: older titles (Data/data.xml with an NLETitleArray caption) are converted too; video titles
+//    (a colour video and its _L0 matte) say why they are not added yet.
+constexpr int kImporterVersion = 7;
 
 // Failsafe caps: a folder that is not what it seems (a whole drive, a damaged file) must not
 // stall or exhaust the import.
@@ -635,8 +637,13 @@ const QStringList kAudioSuffixes = {QStringLiteral("mp3"), QStringLiteral("wav")
 // scrambled library (a split screen beside a title and a transition, items in the wrong
 // folders, a resinfo.json lost) still sorts. TypeUnknown when nothing tells.
 // `dataDir` is where the item's shader files are when not in its own Data/ (a variant folder).
+QString videoTitleMatte(const QString &itemDir);
+
 int typeFromContent(const QString &itemDir, const QString &dataDir = {})
 {
+    // A video title (colour video + _L0 matte) is a title, not a sticker of its colour video.
+    if (!videoTitleMatte(itemDir).isEmpty())
+        return TypeTitle;
     const QDir item(itemDir);
     const QDir data(dataDir.isEmpty() ? item.filePath(QStringLiteral("Data")) : dataDir);
     const QByteArray filterXml = readSmall(data.filePath(QStringLiteral("filter.xml")));
@@ -657,6 +664,8 @@ int typeFromContent(const QString &itemDir, const QString &dataDir = {})
         return 106; // an AI template
     if (dataJson.contains("TlbTitleClip"))
         return TypeTitle;
+    if (dataJson.isEmpty() && readSmall(data.filePath(QStringLiteral("data.xml")), 4 * kMaxSettingsFile).contains("CaptionData"))
+        return TypeTitle; // an older title: its text lives in data.xml
     if (dataJson.contains("MotionAnimation") || dataJson.contains("effectChain"))
         return TypeTextAnimation;
     // Split screens come as one folder per aspect ratio (16_9, 9_16, ...).
@@ -679,6 +688,21 @@ int typeFromContent(const QString &itemDir, const QString &dataDir = {})
     if (!filesWithSuffix(data.absolutePath(), kAudioSuffixes, true).isEmpty())
         return TypeMusic;
     return TypeUnknown;
+}
+
+// The matte of a Filmora video title (<name>_L0.mp4 beside <name>.mp4, in the item or its Data
+// folder), or empty when the item is not one.
+QString videoTitleMatte(const QString &itemDir)
+{
+    for (const QString &sub : {QString(), QStringLiteral("Data")}) {
+        const QDir dir(sub.isEmpty() ? itemDir : QDir(itemDir).filePath(sub));
+        for (const QString &matte : dir.entryList({QStringLiteral("*_L0.mp4"), QStringLiteral("*_l0.mp4")}, QDir::Files)) {
+            const QString colour = matte.left(matte.size() - int(qstrlen("_L0.mp4"))) + QStringLiteral(".mp4");
+            if (dir.exists(colour))
+                return dir.filePath(matte);
+        }
+    }
+    return {};
 }
 
 // Types Dafin can turn into something.
@@ -1084,11 +1108,31 @@ private:
             r->name = name;
             r->skipReason = hasFonts ? reason + QStringLiteral(" (its fonts were added)") : reason;
         };
+        // A video title: a colour video and its matte (<name>.mp4 and <name>_L0.mp4).
+        if (!videoTitleMatte(itemDir).isEmpty()) {
+            fail(QStringLiteral("Filmora video title (a video with a separate matte): not supported yet"));
+            return;
+        }
         const QString dataPath = QDir(itemDir).filePath(QStringLiteral("Data/data.json"));
-        const QByteArray data = readSmall(dataPath, 4 * kMaxSettingsFile);
+        QByteArray data = readSmall(dataPath, 4 * kMaxSettingsFile);
+        if (data.isEmpty() && !QFileInfo::exists(dataPath)) {
+            // An older title keeps everything in Data/data.xml instead.
+            const QString xmlPath = QDir(itemDir).filePath(QStringLiteral("Data/data.xml"));
+            const QByteArray xml = readSmall(xmlPath, 4 * kMaxSettingsFile);
+            if (xml.isEmpty()) {
+                fail(QFileInfo::exists(xmlPath) ? QStringLiteral("Filmora title: its file is too large or unreadable")
+                                                : QStringLiteral("Filmora title: Data/data.json and Data/data.xml are missing"));
+                return;
+            }
+            QString why;
+            data = filmoraXmlTitleAsJson(xml, &why);
+            if (data.isEmpty()) {
+                fail(QStringLiteral("Filmora title: ") + why);
+                return;
+            }
+        }
         if (data.isEmpty()) {
-            fail(QFileInfo::exists(dataPath) ? QStringLiteral("Filmora title: its file is too large or unreadable")
-                                             : QStringLiteral("Filmora title: Data/data.json is missing"));
+            fail(QStringLiteral("Filmora title: its file is too large or unreadable"));
             return;
         }
 
@@ -1869,7 +1913,10 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
                     Record r = converter.convertItem(key, itemDir, info, type);
                     // Filed under the wrong type (a sticker labelled as a filter, say): what is
                     // inside decides.
-                    if (r.kind.isEmpty() && sniff() != type && isConvertibleType(sniff())) {
+                    // A video title stays a title: as a sticker its colour video would play
+                    // with no transparency.
+                    if (r.kind.isEmpty() && sniff() != type && isConvertibleType(sniff())
+                        && videoTitleMatte(itemDir).isEmpty()) {
                         Record byContent = converter.convertItem(key, itemDir, info, sniff());
                         if (!byContent.kind.isEmpty())
                             return byContent;

@@ -63,6 +63,16 @@ TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &t
                                     const QString &label, const QString &category,
                                     const TitleContext &context = {});
 
+// An older Filmora title (Data/data.xml: a <TimeLine> whose "Text.Section.CaptionData" property holds
+// an escaped <NLETitleArray>; text and font names as UTF-16BE hex) rewritten as the data.json shape
+// convertFilmoraTitle reads, so both kinds share one conversion. Empty, with `error` set, when the
+// file holds no caption text. Colours there are Windows COLORREFs (0x00BBGGRR) and are turned into
+// 0xRRGGBB here.
+QByteArray filmoraXmlTitleAsJson(const QByteArray &dataXml, QString *error = nullptr);
+
+// "0054006500780074" -> "Text"; anything that is not UTF-16BE hex comes back unchanged.
+QString decodeFilmoraHexText(const QString &value);
+
 // Filmora's colour integers are 0xRRGGBB (red in the high byte; -1 means "not set"): "#aarrggbb".
 QString filmoraColor(qint64 value, int alpha = 255);
 

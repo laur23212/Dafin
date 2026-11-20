@@ -591,6 +591,113 @@ private slots:
         QVERIFY(!QFileInfo::exists(QDir(out.path()).filePath(QStringLiteral("text-styles/fm-9100.json"))));
     }
 
+    // An older Filmora title keeps its text in Data/data.xml: a <TimeLine> whose
+    // Text.Section.CaptionData property is an escaped <NLETitleArray>, text and font names as
+    // UTF-16BE hex, colours as COLORREFs (0x00BBGGRR).
+    void filmoraXmlTitleBecomesADafinTitle()
+    {
+        auto hex = [](const QString &s) {
+            QString out;
+            for (const QChar c : s)
+                out += QStringLiteral("%1").arg(c.unicode(), 4, 16, QLatin1Char('0'));
+            return out.toUpper();
+        };
+        QCOMPARE(decodeFilmoraHexText(QStringLiteral("0054006500780074")), QStringLiteral("Text"));
+        QCOMPARE(decodeFilmoraHexText(QStringLiteral("Arial")), QStringLiteral("Arial"));
+        QCOMPARE(decodeFilmoraHexText(QStringLiteral("12345")), QStringLiteral("12345")); // not UTF-16 hex
+
+        const QString caption =
+            QStringLiteral("<NLETitleArray><NLETitle><TextData Align=\"1\" OffsetX=\"0\" OffsetY=\"0\">"
+                           "<CharData Title=\"%1\"/></TextData>"
+                           "<Font FontName=\"%2\" Size=\"120\" Bold=\"1\" Italic=\"0\"/>"
+                           "<Face Color1=\"%3\"/>"
+                           "<Border Enable=\"1\" Size=\"6\" Color1=\"%4\"/>"
+                           "<Shadow Enable=\"1\" Color=\"0\" Alpha=\"128\" BlurRadius=\"5\" Distance=\"2\" Direction=\"3\"/>"
+                           "<Gradient Enable=\"0\"/><Background_01 Enable=\"1\" Color1=\"%5\" Alpha=\"128\"/>"
+                           "</NLETitle></NLETitleArray>")
+                .arg(hex(QStringLiteral("ART TITLE")), hex(QStringLiteral("Lato Bold")))
+                .arg(0x302010)  // COLORREF of #102030
+                .arg(0x0000ff)  // COLORREF of red
+                .arg(0xff0000); // COLORREF of blue
+        QString escaped = caption.toHtmlEscaped();
+        const QByteArray xml =
+            QStringLiteral("<?xml version=\"1.0\"?><TimeLine>"
+                           "<Property Name=\"Render.Framerate\" Value=\"25/1\"/>"
+                           "<Property Name=\"Render.TotalFrameCount\" Value=\"125\"/>"
+                           "<Property Name=\"Transform.CenterPoint\" Value=\"0.5,0.85\"/>"
+                           "<Property Name=\"Text.Section.CaptionData\" Value=\"%1\"/>"
+                           "</TimeLine>")
+                .arg(escaped.replace(QLatin1Char('"'), QStringLiteral("&quot;")))
+                .toUtf8();
+
+        QTemporaryDir source;
+        QTemporaryDir out;
+        const QString title = QDir(source.path()).filePath(QStringLiteral("title/Art_Title_23"));
+        writeResinfo(title, 9200, 1, QStringLiteral("Art Title 23"), QStringLiteral("Art"));
+        writeFile(QDir(title).filePath(QStringLiteral("Data/data.xml")), xml);
+        copyFile(repoFont(QStringLiteral("lato/Lato-Bold.ttf")), QDir(title).filePath(QStringLiteral("Font/1_Lato Bold.ttf")));
+        // Filmora's "All/" copy of the same files is part of the item, not a second title.
+        writeFile(QDir(title).filePath(QStringLiteral("All/Data/data.xml")), xml);
+
+        const ImportReport report = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(report.titles, 1);
+        const QJsonObject t = readJson(QDir(out.path()).filePath(QStringLiteral("text-styles/fm-9200.json")));
+        QCOMPARE(t.value(QStringLiteral("label")).toString(), QStringLiteral("Art Title 23"));
+        QCOMPARE(t.value(QStringLiteral("sampleText")).toString(), QStringLiteral("ART TITLE"));
+        QCOMPARE(t.value(QStringLiteral("sourceDurationMs")).toDouble(), 5000.0); // 125 frames at 25 fps
+        const QJsonObject style = t.value(QStringLiteral("style")).toObject();
+        QCOMPARE(style.value(QStringLiteral("fontFamily")).toString(), QStringLiteral("Lato"));
+        QCOMPARE(style.value(QStringLiteral("fontWeight")).toInt(), 700);
+        QCOMPARE(style.value(QStringLiteral("pixelSize")).toDouble(), 120.0);
+        QCOMPARE(style.value(QStringLiteral("valign")).toString(), QStringLiteral("bottom"));
+        QCOMPARE(style.value(QStringLiteral("boxEnabled")).toBool(), true);
+        QCOMPARE(style.value(QStringLiteral("boxColor")).toString(), QStringLiteral("#800000ff"));
+        QHash<QString, QJsonObject> layers;
+        for (const QJsonValue &v : style.value(QStringLiteral("layers")).toArray())
+            layers.insert(v.toObject().value(QStringLiteral("id")).toString(), v.toObject());
+        const auto colorOf = [&](const QString &id) {
+            return layers.value(id).value(QStringLiteral("paint")).toObject().value(QStringLiteral("color")).toString();
+        };
+        QCOMPARE(colorOf(QStringLiteral("fill")), QStringLiteral("#ff102030"));
+        QCOMPARE(colorOf(QStringLiteral("outline")), QStringLiteral("#ffff0000"));
+        QCOMPARE(layers.value(QStringLiteral("outline")).value(QStringLiteral("width")).toDouble(), 6.0);
+        QVERIFY(layers.contains(QStringLiteral("shadow")));
+        QCOMPARE(layers.value(QStringLiteral("shadow")).value(QStringLiteral("opacity")).toDouble(), 128.0 / 255.0);
+
+        // The same caption as element text, the property as a child element.
+        const QByteArray xml2 =
+            QStringLiteral("<TimeLine><Render><Framerate>30/1</Framerate><TotalFrameCount>60</TotalFrameCount></Render>"
+                           "<Text.Section.CaptionData>%1</Text.Section.CaptionData></TimeLine>")
+                .arg(caption.toHtmlEscaped())
+                .toUtf8();
+        QString why;
+        const QJsonObject root = QJsonDocument::fromJson(filmoraXmlTitleAsJson(xml2, &why)).object();
+        QVERIFY2(!root.isEmpty(), qPrintable(why));
+        QCOMPARE(root.value(QStringLiteral("tlEnd")).toDouble(), 2.0 * 10'000'000.0);
+        QVERIFY(filmoraXmlTitleAsJson("<TimeLine/>", &why).isEmpty());
+        QVERIFY(!why.isEmpty());
+    }
+
+    // A video title (a colour video and its green-on-black matte) is named, not turned into an
+    // empty text title.
+    void filmoraVideoTitleSaysWhy()
+    {
+        QTemporaryDir source;
+        QTemporaryDir out;
+        const QString title = QDir(source.path()).filePath(QStringLiteral("title/Vlog_Title_02"));
+        writeResinfo(title, 9300, 1, QStringLiteral("Vlog Title 02"));
+        writeFile(QDir(title).filePath(QStringLiteral("Data/data.xml")), "<TimeLine/>");
+        writeFile(QDir(title).filePath(QStringLiteral("Data/Vlog.mp4")), "not really a video");
+        writeFile(QDir(title).filePath(QStringLiteral("Data/Vlog_L0.mp4")), "not really a video");
+        const ImportReport report = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(report.titles, 0);
+        QCOMPARE(report.stickers, 0); // not its colour video with a black background
+        bool named = false;
+        for (const ImportedItem &item : report.items)
+            named = named || item.skipReason.contains(QStringLiteral("video title"));
+        QVERIFY(named);
+    }
+
     void filmoraTitleNamesMapToDafin()
     {
         QCOMPARE(filmoraColor(0x102030), QStringLiteral("#ff102030"));

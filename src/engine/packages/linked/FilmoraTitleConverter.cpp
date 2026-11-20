@@ -6,6 +6,7 @@
 #include <QHash>
 #include <QSet>
 #include <QtMath>
+#include <QXmlStreamReader>
 
 #include <algorithm>
 #include <cmath>
@@ -828,6 +829,357 @@ TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &t
     out.templateJson = t;
     out.ok = true;
     return out;
+}
+
+// ── Older titles: Data/data.xml ──────────────────────────────────────────────────────────────
+
+QString decodeFilmoraHexText(const QString &value)
+{
+    static const QRegularExpression kHex(QStringLiteral("^[0-9A-Fa-f]+$"));
+    const QString s = value.trimmed();
+    if (s.size() < 4 || s.size() % 4 != 0 || !kHex.match(s).hasMatch())
+        return value;
+    QString out;
+    for (int i = 0; i < s.size(); i += 4) {
+        const ushort code = ushort(s.mid(i, 4).toUInt(nullptr, 16));
+        if (code == 0)
+            break; // a terminating NUL
+        if (code < 0x20 && code != '\n' && code != '\r' && code != '\t')
+            return value; // not text: a plain value that happens to look like hex
+        out.append(QChar(code));
+    }
+    return out.isEmpty() ? value : out;
+}
+
+namespace {
+
+// Attributes of one element, looked up without regard to case.
+struct XmlAttrs
+{
+    QHash<QString, QString> values; // lower-case name -> value
+
+    bool has(const QString &name) const { return values.contains(name.toLower()); }
+    QString str(const QString &name, const QString &fallback = QString()) const
+    {
+        return values.value(name.toLower(), fallback);
+    }
+    double number(std::initializer_list<const char *> names, double fallback = 0.0) const
+    {
+        for (const char *n : names) {
+            bool ok = false;
+            const double d = values.value(QString::fromLatin1(n).toLower()).toDouble(&ok);
+            if (ok)
+                return d;
+            const QString v = values.value(QString::fromLatin1(n).toLower()).trimmed().toLower();
+            if (v == QLatin1String("true"))
+                return 1.0;
+            if (v == QLatin1String("false"))
+                return 0.0;
+        }
+        return fallback;
+    }
+};
+
+XmlAttrs attrsOf(const QXmlStreamAttributes &attributes)
+{
+    XmlAttrs a;
+    for (const QXmlStreamAttribute &attr : attributes)
+        a.values.insert(attr.name().toString().toLower(), attr.value().toString());
+    return a;
+}
+
+// A COLORREF (0x00BBGGRR) as Filmora's JSON colour order (0xRRGGBB, what filmoraColor reads).
+qint64 rgbFromColorref(double value)
+{
+    const quint32 v = quint32(qint64(value)) & 0xffffffu;
+    return qint64(((v & 0xffu) << 16) | (v & 0xff00u) | ((v >> 16) & 0xffu));
+}
+
+// An alpha that may be written as 0–1 or 0–255.
+double alpha255(double a)
+{
+    return a > 0.0 && a <= 1.0 ? a * 255.0 : a;
+}
+
+QList<double> numbersIn(const QString &s)
+{
+    static const QRegularExpression kNum(QStringLiteral("-?\\d+(?:\\.\\d+)?"));
+    QList<double> out;
+    for (auto it = kNum.globalMatch(s); it.hasNext();)
+        out.append(it.next().captured(0).toDouble());
+    return out;
+}
+
+QString unescapeXmlText(QString s)
+{
+    for (int pass = 0; pass < 2 && s.contains(QLatin1String("&lt;")); ++pass) {
+        s.replace(QLatin1String("&lt;"), QLatin1String("<"))
+            .replace(QLatin1String("&gt;"), QLatin1String(">"))
+            .replace(QLatin1String("&quot;"), QLatin1String("\""))
+            .replace(QLatin1String("&apos;"), QLatin1String("'"))
+            .replace(QLatin1String("&amp;"), QLatin1String("&"));
+    }
+    return s;
+}
+
+// The outer <TimeLine> as flat "key -> value" pairs, whichever way Filmora wrote a property:
+// <Property Name="Render.Framerate" Value="25/1"/>, <Render Framerate="25/1"/> or
+// <Render><Framerate>25/1</Framerate></Render>.
+QHash<QString, QString> flattenTimeline(const QByteArray &xml, QString *error)
+{
+    QHash<QString, QString> flat;
+    QXmlStreamReader r(xml);
+    QStringList path;
+    while (!r.atEnd()) {
+        r.readNext();
+        if (r.isStartElement()) {
+            path.append(r.name().toString());
+            const XmlAttrs a = attrsOf(r.attributes());
+            const QString key = a.str(QStringLiteral("name"), a.str(QStringLiteral("key")));
+            const bool hasValue = a.has(QStringLiteral("value"));
+            if (!key.isEmpty() && hasValue)
+                flat.insert(key.toLower(), a.str(QStringLiteral("value")));
+            for (auto it = a.values.cbegin(); it != a.values.cend(); ++it)
+                flat.insert((path.last() + QLatin1Char('.') + it.key()).toLower(), it.value());
+            static const QSet<QString> kPropertyElements{QStringLiteral("property"), QStringLiteral("prop"),
+                                                         QStringLiteral("param"), QStringLiteral("parameter"),
+                                                         QStringLiteral("item"), QStringLiteral("attribute")};
+            if (!key.isEmpty() && !hasValue && kPropertyElements.contains(path.last().toLower())) {
+                const QString text = r.readElementText(QXmlStreamReader::IncludeChildElements);
+                flat.insert(key.toLower(), text);
+                path.removeLast();
+            }
+        } else if (r.isCharacters() && !r.isWhitespace() && !path.isEmpty()) {
+            flat[path.mid(std::max(0, int(path.size()) - 2)).join(QLatin1Char('.')).toLower()] += r.text().toString();
+        } else if (r.isEndElement() && !path.isEmpty()) {
+            path.removeLast();
+        }
+    }
+    if (r.hasError() && flat.isEmpty() && error)
+        *error = QStringLiteral("Its title file is damaged or could not be read");
+    return flat;
+}
+
+// The value whose key is `name` or ends in ".name".
+QString lookup(const QHash<QString, QString> &flat, const QString &name)
+{
+    const QString n = name.toLower();
+    if (flat.contains(n))
+        return flat.value(n);
+    for (auto it = flat.cbegin(); it != flat.cend(); ++it) {
+        if (it.key().endsWith(QLatin1Char('.') + n))
+            return it.value();
+    }
+    return {};
+}
+
+} // namespace
+
+QByteArray filmoraXmlTitleAsJson(const QByteArray &dataXml, QString *error)
+{
+    auto fail = [&](const QString &why) {
+        if (error)
+            *error = why;
+        return QByteArray();
+    };
+    QString parseError;
+    const QHash<QString, QString> flat = flattenTimeline(dataXml, &parseError);
+    if (!parseError.isEmpty())
+        return fail(parseError);
+    const QString caption = unescapeXmlText(lookup(flat, QStringLiteral("CaptionData")));
+    if (caption.trimmed().isEmpty())
+        return fail(QStringLiteral("No text in this title (its data.xml has no caption)"));
+
+    // The caption: one group of elements per title in the array (<NLETitleArray><NLETitle>…),
+    // or one group for a caption that is a single title.
+    QList<QHash<QString, XmlAttrs>> groups;
+    {
+        QXmlStreamReader r(caption);
+        int depth = 0;
+        bool isArray = false;
+        while (!r.atEnd()) {
+            r.readNext();
+            if (r.isStartElement()) {
+                ++depth;
+                const QString name = r.name().toString().toLower();
+                if (depth == 1) {
+                    isArray = name.endsWith(QLatin1String("array"));
+                    groups.append(QHash<QString, XmlAttrs>());
+                    continue;
+                }
+                if (isArray && depth == 2 && !groups.last().isEmpty())
+                    groups.append(QHash<QString, XmlAttrs>());
+                if (!groups.last().contains(name))
+                    groups.last().insert(name, attrsOf(r.attributes()));
+                if (name == QLatin1String("chardata") && !groups.last().value(name).has(QStringLiteral("title"))) {
+                    // Text written as the element's content instead of a Title attribute.
+                    const QString text = r.readElementText(QXmlStreamReader::IncludeChildElements);
+                    groups.last()[name].values.insert(QStringLiteral("title"), text);
+                    --depth;
+                }
+            } else if (r.isEndElement()) {
+                --depth;
+            }
+        }
+        if (r.hasError() && groups.isEmpty())
+            return fail(QStringLiteral("Its title text could not be read"));
+    }
+
+    // Frame size, length, placement and scale of the whole title, from the timeline.
+    double viewW = 1920.0;
+    double viewH = 1080.0;
+    for (const QString &k : {QStringLiteral("Render.Width"), QStringLiteral("Width")}) {
+        if (const double w = lookup(flat, k).toDouble(); w > 0) {
+            viewW = w;
+            break;
+        }
+    }
+    for (const QString &k : {QStringLiteral("Render.Height"), QStringLiteral("Height")}) {
+        if (const double h = lookup(flat, k).toDouble(); h > 0) {
+            viewH = h;
+            break;
+        }
+    }
+    double fps = 25.0;
+    if (const QList<double> f = numbersIn(lookup(flat, QStringLiteral("Framerate"))); !f.isEmpty() && f.at(0) > 0)
+        fps = f.size() >= 2 && f.at(1) > 0 ? f.at(0) / f.at(1) : f.at(0);
+    const double frames = lookup(flat, QStringLiteral("TotalFrameCount")).toDouble();
+    const double seconds = frames > 0 ? frames / fps : 0.0;
+
+    double posX = 0.5;
+    double posY = 0.5;
+    if (const QList<double> c = numbersIn(lookup(flat, QStringLiteral("CenterPoint"))); c.size() >= 2) {
+        double x = c.at(0);
+        double y = c.at(1);
+        if (std::abs(x) > 1.5 || std::abs(y) > 1.5) {
+            x /= viewW; // pixels
+            y /= viewH;
+        } else if (x < 0.0 || y < 0.0) {
+            x += 0.5; // centred on 0
+            y += 0.5;
+        }
+        posX = qBound(0.0, x, 1.0);
+        posY = qBound(0.0, y, 1.0);
+    }
+    double scale = 1.0;
+    if (const QList<double> s = numbersIn(lookup(flat, QStringLiteral("ResizeScale"))); !s.isEmpty() && s.at(0) > 0.05 && s.at(0) < 20.0)
+        scale = s.at(0);
+
+    auto param = [](const QString &name, double v) {
+        return QJsonObject{{QStringLiteral("name"), name}, {QStringLiteral("fxParam"), QJsonObject{{QStringLiteral("unValue"), v}}}};
+    };
+    const QJsonArray chain{QJsonObject{
+        {QStringLiteral("effectList"),
+         QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("video/effect/transform")},
+                                {QStringLiteral("paramList"),
+                                 QJsonArray{param(QStringLiteral("Position_x"), posX),
+                                            param(QStringLiteral("Position_y"), posY)}}}}}}};
+    const double end = seconds * kFilmoraTicksPerSecond;
+
+    QJsonArray clipList;
+    for (const auto &g : std::as_const(groups)) {
+        const QString text = decodeFilmoraHexText(g.value(QStringLiteral("chardata")).str(QStringLiteral("title")))
+                                 .remove(QLatin1Char('\r'));
+        if (text.trimmed().isEmpty())
+            continue;
+        const XmlAttrs font = g.value(QStringLiteral("font"));
+        const XmlAttrs face = g.value(QStringLiteral("face"));
+        const XmlAttrs border = g.value(QStringLiteral("border"));
+        const XmlAttrs shadow = g.value(QStringLiteral("shadow"));
+        const XmlAttrs textData = g.value(QStringLiteral("textdata"));
+
+        QJsonObject basic{
+            {QStringLiteral("FontName"), decodeFilmoraHexText(font.str(QStringLiteral("FontName")))},
+            {QStringLiteral("FontSize"), font.number({"Size", "FontSize"}, 64.0) * scale},
+            {QStringLiteral("FontBold"), font.number({"Bold"})},
+            {QStringLiteral("FontItalic"), font.number({"Italic"})},
+            {QStringLiteral("TextColor"),
+             QJsonArray{QJsonObject{{QStringLiteral("Color"), rgbFromColorref(face.number({"Color1", "Color"}, 0xffffff))}}}},
+        };
+        if (face.has(QStringLiteral("Alpha")))
+            basic.insert(QStringLiteral("TextAlpha"), alpha255(face.number({"Alpha"}, 255)));
+
+        QJsonObject td{{QStringLiteral("CharData"), text}, {QStringLiteral("Basic"), basic}};
+        if (!border.values.isEmpty()) {
+            QJsonObject b{{QStringLiteral("Enable"), border.number({"Enable"})},
+                          {QStringLiteral("Size"), border.number({"Size", "Width"}) * scale},
+                          {QStringLiteral("Color"), rgbFromColorref(border.number({"Color1", "Color"}))}};
+            if (border.has(QStringLiteral("Alpha")))
+                b.insert(QStringLiteral("Alpha"), alpha255(border.number({"Alpha"}, 255)));
+            if (border.has(QStringLiteral("BlurRadius")))
+                b.insert(QStringLiteral("BlurRadius"), border.number({"BlurRadius"}));
+            td.insert(QStringLiteral("Border"), b);
+        }
+        if (!shadow.values.isEmpty()) {
+            double direction = shadow.number({"Direction"}, 3.0);
+            if (direction > 7.0)
+                direction = (direction + 90.0) / 45.0; // degrees, not one of eight steps
+            td.insert(QStringLiteral("Shadow"),
+                      QJsonObject{{QStringLiteral("Enable"), shadow.number({"Enable"})},
+                                  {QStringLiteral("Color"), rgbFromColorref(shadow.number({"Color", "Color1"}))},
+                                  {QStringLiteral("Alpha"), alpha255(shadow.number({"Alpha"}, 255))},
+                                  {QStringLiteral("BlurRadius"), shadow.number({"BlurRadius"})},
+                                  {QStringLiteral("Distance"), shadow.number({"Distance"}, 1.0)},
+                                  {QStringLiteral("Direction"), direction}});
+        }
+        if (textData.has(QStringLiteral("CharSpace")))
+            td.insert(QStringLiteral("CharSpace"), textData.number({"CharSpace"}));
+        if (textData.has(QStringLiteral("LineSpace")))
+            td.insert(QStringLiteral("LineSpace"), textData.number({"LineSpace"}));
+
+        QJsonObject script{{QStringLiteral("Text"), text},
+                           {QStringLiteral("ViewSize"), QStringLiteral("%1:%2").arg(viewW).arg(viewH)},
+                           {QStringLiteral("TextData"), QJsonArray{td}}};
+
+        // Fill gradient: Color1, Color2 (… Color4) spread evenly, at Angle.
+        const XmlAttrs gradient = g.value(QStringLiteral("gradient"));
+        if (gradient.number({"Enable"}) > 0.5) {
+            QJsonArray stops;
+            QList<qint64> colors;
+            for (const char *k : {"Color1", "Color2", "Color3", "Color4"}) {
+                if (gradient.has(QString::fromLatin1(k)))
+                    colors.append(rgbFromColorref(gradient.number({k})));
+            }
+            for (int i = 0; i < colors.size(); ++i)
+                stops.append(QJsonObject{{QStringLiteral("Color"), colors.at(i)},
+                                         {QStringLiteral("Pos"), colors.size() > 1 ? 100.0 * i / (colors.size() - 1) : 0.0}});
+            script.insert(QStringLiteral("Gradient"),
+                          QJsonObject{{QStringLiteral("Enable"), 1},
+                                      {QStringLiteral("Angle"), gradient.number({"Angle"}, 90.0)},
+                                      {QStringLiteral("GradType"), gradient.number({"GradType", "Type"})},
+                                      {QStringLiteral("ColorPos"), stops}});
+        }
+        if (g.value(QStringLiteral("texture")).number({"Enable"}) > 0.5)
+            script.insert(QStringLiteral("Texture"), QJsonObject{{QStringLiteral("Enable"), 1}});
+        XmlAttrs box = g.value(QStringLiteral("background_01"));
+        if (box.values.isEmpty())
+            box = g.value(QStringLiteral("background"));
+        if (box.number({"Enable"}) > 0.5) {
+            QJsonObject b{{QStringLiteral("Enable"), 1},
+                          {QStringLiteral("Color"), rgbFromColorref(box.number({"Color1", "Color"}))},
+                          {QStringLiteral("Radian"), box.number({"Radian", "Radius"})}};
+            if (box.has(QStringLiteral("Alpha")))
+                b.insert(QStringLiteral("Alpha"), alpha255(box.number({"Alpha"}, 255)));
+            script.insert(QStringLiteral("Background"), b);
+        }
+
+        QJsonObject clip{{QStringLiteral("scriptBuf"), script}, {QStringLiteral("effectChainList"), chain}};
+        if (end > 0) {
+            clip.insert(QStringLiteral("tlBegin"), 0);
+            clip.insert(QStringLiteral("tlEnd"), end);
+        }
+        clipList.append(clip);
+    }
+    if (clipList.isEmpty())
+        return fail(QStringLiteral("No text in this title"));
+
+    QJsonObject root{{QStringLiteral("subTimeline"),
+                      QJsonObject{{QStringLiteral("timelineInfos"),
+                                   QJsonArray{QJsonObject{{QStringLiteral("trackInfos"),
+                                                           QJsonArray{QJsonObject{{QStringLiteral("clipList"), clipList}}}}}}}}}};
+    if (end > 0)
+        root.insert(QStringLiteral("tlEnd"), end);
+    return QJsonDocument(root).toJson(QJsonDocument::Compact);
 }
 
 } // namespace dafin::linked
