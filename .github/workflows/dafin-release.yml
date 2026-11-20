@@ -1,8 +1,9 @@
 name: Dafin release
 
-# Publishes a Dafin release on this repository: builds the Windows installer and portable zip at the
-# version given (the same package job the Build workflow runs, with the app reporting that version)
-# and creates release v<version> with both files and SHA256SUMS.
+# Publishes a Dafin release on this repository: builds the Windows installer, the portable zip and
+# the Linux AppImage at the version given (the same package jobs the Build workflow runs, with the
+# app reporting that version) and creates release v<version> with the three files and SHA256SUMS.
+# dafin-release-linux.yml adds the AppImage to a release published before Linux was part of this.
 #
 # Installed copies of Dafin read this repository's newest release once a day (or from Settings >
 # About > Check now), offer it, then download its installer, check the SHA-256 and run it. The
@@ -65,10 +66,23 @@ jobs:
       platforms: windows
     secrets: inherit
 
+  package-linux:
+    name: Package (Linux)
+    needs: verify
+    permissions:
+      contents: read
+      actions: write
+    uses: ./.github/workflows/package.yml
+    with:
+      version: ${{ needs.verify.outputs.version }}
+      app_version: ${{ needs.verify.outputs.version }}
+      platforms: linux
+    secrets: inherit
+
   release:
     name: Publish GitHub release
     runs-on: ubuntu-latest
-    needs: [verify, package]
+    needs: [verify, package, package-linux]
     permissions:
       contents: write
     steps:
@@ -77,12 +91,30 @@ jobs:
           path: dist
           pattern: windows-*
 
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: linux-appimage-*
+
+      # package.yml names it Drift-<version>-x86_64.AppImage; the release uses Dafin's name, which
+      # the in-app updater accepts (UpdateAsset.cpp). The .zsync is not published: it names the
+      # Drift file and Dafin's updater does not use it.
+      - name: Name the AppImage
+        shell: bash
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          src="$(ls dist/linux-appimage-x86_64/*-x86_64.AppImage | head -n 1)"
+          test -f "${src}"
+          mv "${src}" "dist/Dafin-${VERSION}-x86_64.AppImage"
+          chmod +x "dist/Dafin-${VERSION}-x86_64.AppImage"
+
       # The in-app updater uses the asset digest GitHub reports, and this file when there is none;
       # it never installs a file it has no hash for.
       - name: Write SHA256SUMS
         shell: bash
         run: |
-          sha256sum dist/windows-installer-*/*.exe dist/windows-portable-*/*.zip \
+          sha256sum dist/windows-installer-*/*.exe dist/windows-portable-*/*.zip dist/Dafin-*-x86_64.AppImage \
             | sed -E 's#  .*/#  #' > SHA256SUMS
           cat SHA256SUMS
 
@@ -101,6 +133,7 @@ jobs:
             echo
             echo "- **Windows installer**: run \`Dafin-Setup-${VERSION}-x64.exe\`. An installed Dafin finds newer releases on its own and offers to install them."
             echo "- **Windows portable**: extract \`Dafin-Portable-${VERSION}-x64.zip\` anywhere and run \`dafin.exe\` from the \`Dafin\` folder inside it. The portable copy does not update itself."
+            echo "- **Linux AppImage** (any distro): \`chmod +x Dafin-${VERSION}-x86_64.AppImage && ./Dafin-${VERSION}-x86_64.AppImage\`"
           } > notes.md
           gh release create "v${VERSION}" \
             --repo "${GITHUB_REPOSITORY}" \
@@ -109,4 +142,5 @@ jobs:
             --notes-file notes.md \
             dist/windows-installer-*/*.exe \
             dist/windows-portable-*/*.zip \
+            "dist/Dafin-${VERSION}-x86_64.AppImage" \
             SHA256SUMS

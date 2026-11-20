@@ -35,6 +35,11 @@ on:
         required: false
         default: ""
         type: string
+      ref:
+        description: "Dafin: tag or commit the Linux AppImage is built from; empty = the calling run's commit"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -233,6 +238,9 @@ jobs:
           #   libdir: /usr/lib/aarch64-linux-gnu
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Dafin: dafin-release-linux.yml builds an existing release's tag here.
+          ref: ${{ inputs.ref }}
 
       # fonts/, emoji-fonts/ and the addon effect catalogue are gitignored addon content; the tests
       # need them. Same sparse checkout as tests.yml.

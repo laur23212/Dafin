@@ -142,8 +142,11 @@ each `dafin.exe` frame as function, file and line. It takes about a minute and n
 1. On GitHub: **Actions** → **Dafin release** → **Run workflow** on `dafin-edition`, with a version
    newer than the last release (e.g. `1.0.1`) and, optionally, what's new (Markdown). That text is
    the release notes the update dialog shows, and the **What's new** pop-up after the update.
-2. It builds the Windows installer and portable zip at that version and publishes release `v1.0.1`
-   with both files and `SHA256SUMS`.
+2. It builds the Windows installer, the portable zip and the Linux AppImage at that version and
+   publishes release `v1.0.1` with the three files (`Dafin-<version>-x86_64.AppImage` for Linux)
+   and `SHA256SUMS`. For a release published with only the Windows files (v3.2.0 and earlier),
+   **Actions** → **Dafin release (add Linux)** → **Run workflow** with its version builds the
+   AppImage from that release's tag and adds it, its checksum and an install line.
 3. Installed copies find it at their next check (once a day unless Settings > Updates says otherwise,
    or at once with **Check for updates** there or in the gear menu) and offer to install it. Portable copies do not update; copies installed before the updater existed need the
    first release installed by hand.
