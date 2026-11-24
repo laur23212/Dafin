@@ -1,0 +1,418 @@
+{
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.anchor.measure",
+  "label": "Anchor Measure",
+  "category": "Anchors",
+  "source": {
+    "asset": "12_B_Anchor_Measure",
+    "sha256": "96052fae7b801a3a292159bd13ab23f5b0283c2de018d516f34ea7b2d1ecb631",
+    "script": "Dafin_TitleDesign_Part6_Stage12_AnchorFamily_Delta_v6.0.2 :: source/render_stage12_anchor_family.py candidate_b",
+    "status": "ART_APPROVED_NATIVE_PENDING"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "timing": {
+    "duration": 6.0,
+    "fps": 25,
+    "cadence": "match"
+  },
+  "render": {
+    "profile": "sprite2x",
+    "mixColor": "BG"
+  },
+  "preview": {
+    "background": {
+      "kind": "solid",
+      "color": "BG"
+    },
+    "encode": {
+      "preset": "veryfast",
+      "crf": 18
+    }
+  },
+  "palette": {
+    "BG": [
+      6,
+      7,
+      11
+    ],
+    "WHITE": [
+      239,
+      242,
+      246
+    ],
+    "TEXT": [
+      247,
+      248,
+      250
+    ],
+    "FG": [
+      238,
+      242,
+      248
+    ],
+    "MUTED": [
+      176,
+      185,
+      196
+    ]
+  },
+  "fonts": {
+    "semi": {
+      "family": "Noto Sans Display",
+      "weight": 600,
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "package": "fonts-noto-extra 20201225-2",
+      "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+    },
+    "regular": {
+      "family": "Noto Sans Display",
+      "weight": 400,
+      "file": "NotoSansDisplay-Regular.ttf",
+      "package": "fonts-noto-core 20201225-2",
+      "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+    }
+  },
+  "params": [
+    {
+      "id": "pointAX",
+      "type": "number",
+      "default": 640,
+      "label": "Point A X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "pointAY",
+      "type": "number",
+      "default": 580,
+      "label": "Point A Y (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "pointBX",
+      "type": "number",
+      "default": 1280,
+      "label": "Point B X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "pointBY",
+      "type": "number",
+      "default": 580,
+      "label": "Point B Y (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "value",
+      "type": "text",
+      "default": "640 PX",
+      "label": "Measurement"
+    },
+    {
+      "id": "valueX",
+      "type": "number",
+      "default": 843,
+      "label": "Measurement X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "valueY",
+      "type": "number",
+      "default": 497,
+      "label": "Measurement baseline Y (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "caption",
+      "type": "text",
+      "default": "DISTANȚĂ",
+      "label": "Caption (empty for none)"
+    },
+    {
+      "id": "captionX",
+      "type": "number",
+      "default": 891,
+      "label": "Caption X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "captionY",
+      "type": "number",
+      "default": 545,
+      "label": "Caption baseline Y (px)",
+      "min": 0,
+      "max": 1080
+    }
+  ],
+  "actors": [
+    {
+      "id": "pinA",
+      "role": "pin",
+      "type": "circle",
+      "center": [
+        {
+          "expr": "pointAX"
+        },
+        {
+          "expr": "pointAY"
+        }
+      ],
+      "radius": 4,
+      "fill": true,
+      "color": "FG",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 0.16,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.38,
+        "dur": 0.3,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "pinB",
+      "role": "pin",
+      "type": "circle",
+      "center": [
+        {
+          "expr": "pointBX"
+        },
+        {
+          "expr": "pointBY"
+        }
+      ],
+      "radius": 4,
+      "fill": true,
+      "color": "FG",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 0.16,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.38,
+        "dur": 0.3,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "measure",
+      "role": "measure",
+      "type": "line",
+      "from": [
+        {
+          "expr": "pointAX"
+        },
+        {
+          "expr": "pointAY"
+        }
+      ],
+      "to": [
+        {
+          "expr": "pointBX"
+        },
+        {
+          "expr": "pointBY"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.6,
+        "dur": 0.86,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.78,
+        "dur": 0.57,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "tickA",
+      "role": "tick",
+      "type": "line",
+      "from": [
+        {
+          "expr": "pointAX"
+        },
+        {
+          "expr": "pointAY - 20"
+        }
+      ],
+      "to": [
+        {
+          "expr": "pointAX"
+        },
+        {
+          "expr": "pointAY + 20"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.92,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.72,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "tickB",
+      "role": "tick",
+      "type": "line",
+      "from": [
+        {
+          "expr": "pointBX"
+        },
+        {
+          "expr": "pointBY - 20"
+        }
+      ],
+      "to": [
+        {
+          "expr": "pointBX"
+        },
+        {
+          "expr": "pointBY + 20"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.92,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.72,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "value",
+      "role": "value",
+      "type": "text",
+      "text": "{value}",
+      "font": "semi",
+      "size": 60,
+      "color": "FG",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "valueX"
+          },
+          {
+            "expr": "valueY"
+          }
+        ]
+      },
+      "in": {
+        "start": 1.28,
+        "dur": 0.45,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.47,
+        "dur": 0.34,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "caption",
+      "role": "caption",
+      "type": "text",
+      "text": "{caption}",
+      "font": "regular",
+      "size": 26,
+      "color": "MUTED",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "captionX"
+          },
+          {
+            "expr": "captionY"
+          }
+        ]
+      },
+      "in": {
+        "start": 1.44,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.32,
+        "dur": 0.3,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "caption != \"\""
+      }
+    }
+  ]
+}

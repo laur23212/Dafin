@@ -438,3 +438,39 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   - the rounded shapes, which no port uses yet. They are drawn as Skia vectors, not measured
     against PIL;
   - other aspect ratios, which are fitted by height and centred.
+
+## Progress, menu path and anchors (C10)
+
+Seven scenes are params over the same engine. Each reproduces its approved static reference
+exactly at the default values (150 of 150 frames identical to the Part6 scripts,
+`tools/scene-ref/test_parity.py --stage12 --stage12b --anchor-v4 --stage14 --stage15`).
+
+| Scene | What the params mean |
+|---|---|
+| `15_B_Definition_Card` | `entryIndex` (clamped to `1..totalEntries`) and `totalEntries` drive the eyebrow `GLOSSARY  /  04` and the gold accent: `accentTrack` (178 px) × index / total, so 4/8 is 89 px and the accent never grows into a bar. |
+| `14_A_Menu_Path` | `itemCount` (2 to 5) and `item1..item5`. Each card is as wide as its label (`fitBox`: text width + 60 px, with a per-card minimum); the next card and the chevron follow the right edge of the previous one (`after`). The last card is the target card. |
+| `14_B_Setting_Change` | `currentValue`, `newValue`, `currentLabel`, `newLabel`, `unit`. The unit follows the right edge of its value (`after`, gaps 71 and 73 px as in the approved frame). |
+| `11_AnchorNote_v4` | `pointX/Y`, `label`, `labelX/Y`. The point is a `circle` drawn once and static after its entry. |
+| `12_A_Anchor_Bracket` | `left/top/right/bottom` of the region, `label`, `labelX/Y`. |
+| `12_B_Anchor_Measure` | `pointAX/AY`, `pointBX/BY`, `value`, optional `caption`. |
+| `12B_C_Anchor_Index_Manual` | `point1X/Y`, `point2X/Y`, `badge1`, `badge2`, `label1`, `label2`. Badge letters are independent; an empty badge disables its text and leaves a plain ring, so there is no separate "blank" preset. |
+
+The user places the points; binding them to motion tracking is not part of this.
+
+Engine additions (reference renderer, `tools/scene-ref/render.py`):
+
+- text `ss`: `1` or `2` (sprite supersampling; the anchor family draws its text at 1×);
+  flattened `group` `ss`: `2` or `3`;
+- actor `circle` (`center`, `radius`, `fill` or ring `width`, `mix: "trunc"`);
+- `preview.background.kind: "solid"` with a colour;
+- `fillGroup` (insets of a shape inside a flattened group), `fitBox` (a group is as wide as the
+  text of one of its children, plus `padX`, with a `min`) and `after` (a group or text starts at the
+  right edge of another actor, plus `gap`).
+
+Not designed, so not done: text wrapping, more than two anchor items, and the bar layout of
+`15_A_Step_Focus` for `totalSteps ≠ 5` (creator decision, see Native notes).
+
+**Native status.** The C++ loader and `ScenePainter` do not know these additions yet:
+`ss`, `circle`, `solid` background, `fillGroup`, `fitBox`, `after`. Until they do, these scenes are
+**IMPLEMENTED in the reference, native NOT_RUN**; `loadScene` refuses them with "unknown type" or
+ignores the new fields. See `HANDOFF.md`.

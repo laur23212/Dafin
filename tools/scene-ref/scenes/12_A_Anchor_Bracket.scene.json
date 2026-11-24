@@ -1,0 +1,527 @@
+{
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.anchor.bracket",
+  "label": "Anchor Bracket",
+  "category": "Anchors",
+  "source": {
+    "asset": "12_A_Anchor_Bracket",
+    "sha256": "e7d9eeaa86bfa181772a040cf9294cebbf2d7cedc88ad20c739a23f885cf688b",
+    "script": "Dafin_TitleDesign_Part6_Stage12_AnchorFamily_Delta_v6.0.2 :: source/render_stage12_anchor_family.py candidate_a",
+    "status": "ART_APPROVED_NATIVE_PENDING"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "timing": {
+    "duration": 6.0,
+    "fps": 25,
+    "cadence": "match"
+  },
+  "render": {
+    "profile": "sprite2x",
+    "mixColor": "BG"
+  },
+  "preview": {
+    "background": {
+      "kind": "solid",
+      "color": "BG"
+    },
+    "encode": {
+      "preset": "veryfast",
+      "crf": 18
+    }
+  },
+  "palette": {
+    "BG": [
+      6,
+      7,
+      11
+    ],
+    "WHITE": [
+      239,
+      242,
+      246
+    ],
+    "TEXT": [
+      247,
+      248,
+      250
+    ],
+    "FG": [
+      238,
+      242,
+      248
+    ],
+    "MUTED": [
+      176,
+      185,
+      196
+    ]
+  },
+  "fonts": {
+    "semi": {
+      "family": "Noto Sans Display",
+      "weight": 600,
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "package": "fonts-noto-extra 20201225-2",
+      "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+    }
+  },
+  "params": [
+    {
+      "id": "left",
+      "type": "number",
+      "default": 1000,
+      "label": "Region left (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "top",
+      "type": "number",
+      "default": 435,
+      "label": "Region top (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "right",
+      "type": "number",
+      "default": 1390,
+      "label": "Region right (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "bottom",
+      "type": "number",
+      "default": 670,
+      "label": "Region bottom (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "label",
+      "type": "text",
+      "default": "ZONĂ DE INTERES",
+      "label": "Label"
+    },
+    {
+      "id": "labelX",
+      "type": "number",
+      "default": 552,
+      "label": "Label X (design px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "labelY",
+      "type": "number",
+      "default": 382,
+      "label": "Label baseline Y (design px)",
+      "min": 0,
+      "max": 1080
+    }
+  ],
+  "actors": [
+    {
+      "id": "bracketTLH",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "left"
+        },
+        {
+          "expr": "top"
+        }
+      ],
+      "to": [
+        {
+          "expr": "left + 1*40"
+        },
+        {
+          "expr": "top"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketTLV",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "left"
+        },
+        {
+          "expr": "top"
+        }
+      ],
+      "to": [
+        {
+          "expr": "left"
+        },
+        {
+          "expr": "top + 1*40"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketTRH",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "right"
+        },
+        {
+          "expr": "top"
+        }
+      ],
+      "to": [
+        {
+          "expr": "right + -1*40"
+        },
+        {
+          "expr": "top"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketTRV",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "right"
+        },
+        {
+          "expr": "top"
+        }
+      ],
+      "to": [
+        {
+          "expr": "right"
+        },
+        {
+          "expr": "top + 1*40"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketBLH",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "left"
+        },
+        {
+          "expr": "bottom"
+        }
+      ],
+      "to": [
+        {
+          "expr": "left + 1*40"
+        },
+        {
+          "expr": "bottom"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketBLV",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "left"
+        },
+        {
+          "expr": "bottom"
+        }
+      ],
+      "to": [
+        {
+          "expr": "left"
+        },
+        {
+          "expr": "bottom + -1*40"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketBRH",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "right"
+        },
+        {
+          "expr": "bottom"
+        }
+      ],
+      "to": [
+        {
+          "expr": "right + -1*40"
+        },
+        {
+          "expr": "bottom"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "bracketBRV",
+      "role": "bracketArm",
+      "type": "line",
+      "from": [
+        {
+          "expr": "right"
+        },
+        {
+          "expr": "bottom"
+        }
+      ],
+      "to": [
+        {
+          "expr": "right"
+        },
+        {
+          "expr": "bottom + -1*40"
+        }
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.2,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 5.1,
+        "dur": 0.42,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "leader",
+      "role": "leader",
+      "type": "route",
+      "points": [
+        [
+          {
+            "expr": "left"
+          },
+          {
+            "expr": "top"
+          }
+        ],
+        [
+          {
+            "expr": "left - 60"
+          },
+          {
+            "expr": "labelY + 22"
+          }
+        ],
+        [
+          {
+            "expr": "labelX - 4"
+          },
+          {
+            "expr": "labelY + 22"
+          }
+        ]
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.78,
+        "dur": 0.78,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.63,
+        "dur": 0.5,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "label",
+      "role": "label",
+      "type": "text",
+      "text": "{label}",
+      "font": "semi",
+      "size": 50,
+      "color": "FG",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "labelX"
+          },
+          {
+            "expr": "labelY"
+          }
+        ]
+      },
+      "in": {
+        "start": 1.24,
+        "dur": 0.46,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.45,
+        "dur": 0.36,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    }
+  ]
+}

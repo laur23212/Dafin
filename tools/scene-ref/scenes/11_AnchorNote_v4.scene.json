@@ -1,0 +1,233 @@
+{
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.anchor.note-v4",
+  "label": "Anchor Note",
+  "category": "Anchors",
+  "source": {
+    "asset": "11_AnchorNote_v4",
+    "sha256": "6f2c18f85ab8e7f9ca625366539b87ed1f53f1d37743fd7f26c0d18b8f3daf76",
+    "script": "Dafin_TitleDesign_Part6_FULL_HANDOFF_2026-11-22 :: Anchor_Note_v4_Static_Point/source/render_anchor_note_static_v4.py",
+    "status": "ART_APPROVED_NATIVE_PENDING"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "timing": {
+    "duration": 6.0,
+    "fps": 25,
+    "cadence": "match"
+  },
+  "render": {
+    "profile": "sprite2x",
+    "mixColor": "BG"
+  },
+  "preview": {
+    "background": {
+      "kind": "solid",
+      "color": "BG"
+    },
+    "encode": {
+      "preset": "veryfast",
+      "crf": 18
+    }
+  },
+  "palette": {
+    "BG": [
+      6,
+      7,
+      11
+    ],
+    "WHITE": [
+      239,
+      242,
+      246
+    ],
+    "TEXT": [
+      247,
+      248,
+      250
+    ],
+    "FG": [
+      238,
+      242,
+      248
+    ],
+    "MUTED": [
+      176,
+      185,
+      196
+    ]
+  },
+  "fonts": {
+    "semi": {
+      "family": "Noto Sans Display",
+      "weight": 600,
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "package": "fonts-noto-extra 20201225-2",
+      "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+    }
+  },
+  "params": [
+    {
+      "id": "pointX",
+      "type": "number",
+      "default": 1290,
+      "label": "Point X (design px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "pointY",
+      "type": "number",
+      "default": 590,
+      "label": "Point Y (design px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "label",
+      "type": "text",
+      "default": "PUNCT DE INTERES",
+      "label": "Label"
+    },
+    {
+      "id": "labelX",
+      "type": "number",
+      "default": 724,
+      "label": "Label X (design px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "labelY",
+      "type": "number",
+      "default": 400,
+      "label": "Label baseline Y (design px)",
+      "min": 0,
+      "max": 1080
+    }
+  ],
+  "actors": [
+    {
+      "id": "leader",
+      "role": "leader",
+      "type": "route",
+      "points": [
+        [
+          {
+            "expr": "pointX"
+          },
+          {
+            "expr": "pointY"
+          }
+        ],
+        [
+          {
+            "expr": "labelX + 306"
+          },
+          {
+            "expr": "labelY + 26"
+          }
+        ],
+        [
+          {
+            "expr": "labelX"
+          },
+          {
+            "expr": "labelY + 26"
+          }
+        ]
+      ],
+      "width": 2,
+      "color": "WHITE",
+      "in": {
+        "start": 0.62,
+        "dur": 0.9,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.7,
+        "dur": 0.66,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "point",
+      "role": "pin",
+      "type": "circle",
+      "center": [
+        {
+          "expr": "pointX"
+        },
+        {
+          "expr": "pointY"
+        }
+      ],
+      "radius": 6,
+      "fill": true,
+      "color": "WHITE",
+      "mix": "trunc",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 0.14,
+        "dur": 0.36,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.4,
+        "dur": 0.34,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "label",
+      "role": "label",
+      "type": "text",
+      "text": "{label}",
+      "font": "semi",
+      "size": 52,
+      "color": "TEXT",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "labelX"
+          },
+          {
+            "expr": "labelY"
+          }
+        ]
+      },
+      "in": {
+        "start": 1.18,
+        "dur": 0.46,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.52,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    }
+  ]
+}

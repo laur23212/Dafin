@@ -341,6 +341,24 @@ jobs:
   #
   # Not on every branch push: macOS runner minutes bill at a multiple of Linux, and a PR plus
   # main is where a regression actually needs catching.
+  # Headless Python reference of the Scene Titles: its own tests and the C10 semantic tests
+  # (progress, menu path, anchors). Parity against the Part6 archives is test_parity.py, run by hand.
+  scene-ref:
+    name: Scene Title reference (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Python packages and the proofs' system fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-extra fonts-inter libraqm0
+          python3 -m pip install --break-system-packages pillow numpy opencv-python-headless
+      - name: Reference tests
+        run: |
+          python3 -I tools/scene-ref/test_scene_ref.py
+          python3 -I tools/scene-ref/test_smart_utilities.py
+
   macos:
     name: CTest (macOS)
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'

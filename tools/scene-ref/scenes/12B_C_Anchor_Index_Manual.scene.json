@@ -1,0 +1,498 @@
+{
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.anchor.index",
+  "label": "Anchor Index",
+  "category": "Anchors",
+  "source": {
+    "asset": "12B_C_Anchor_Index_Manual",
+    "sha256": "fd8d090f74a547668902bb50431f583f475a1023e2a53aa8756a4bc3187dfce1",
+    "script": "Dafin_TitleDesign_Part6_Stage12B_AnchorIndexFlexible_Delta_v6.0.3 :: source/render_stage12B_anchor_index_flexible.py (mode manual) over Stage12 candidate_c",
+    "status": "ART_APPROVED_CONDITIONAL_EDITABLE_BADGES"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "timing": {
+    "duration": 6.0,
+    "fps": 25,
+    "cadence": "match"
+  },
+  "render": {
+    "profile": "sprite2x",
+    "mixColor": "BG"
+  },
+  "preview": {
+    "background": {
+      "kind": "solid",
+      "color": "BG"
+    },
+    "encode": {
+      "preset": "veryfast",
+      "crf": 18
+    }
+  },
+  "palette": {
+    "BG": [
+      6,
+      7,
+      11
+    ],
+    "WHITE": [
+      239,
+      242,
+      246
+    ],
+    "TEXT": [
+      247,
+      248,
+      250
+    ],
+    "FG": [
+      238,
+      242,
+      248
+    ],
+    "MUTED": [
+      176,
+      185,
+      196
+    ]
+  },
+  "fonts": {
+    "semi": {
+      "family": "Noto Sans Display",
+      "weight": 600,
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "package": "fonts-noto-extra 20201225-2",
+      "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+    }
+  },
+  "params": [
+    {
+      "id": "point1X",
+      "type": "number",
+      "default": 1310,
+      "label": "Point 1 X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "point1Y",
+      "type": "number",
+      "default": 380,
+      "label": "Point 1 Y (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "badge1",
+      "type": "text",
+      "default": "A",
+      "label": "Badge 1 text (empty for a plain ring)"
+    },
+    {
+      "id": "label1",
+      "type": "text",
+      "default": "PRIMUL DETALIU",
+      "label": "Label 1"
+    },
+    {
+      "id": "label1X",
+      "type": "number",
+      "default": 623,
+      "label": "Label 1 X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "label1Y",
+      "type": "number",
+      "default": 326,
+      "label": "Label 1 baseline Y (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "point2X",
+      "type": "number",
+      "default": 1240,
+      "label": "Point 2 X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "point2Y",
+      "type": "number",
+      "default": 710,
+      "label": "Point 2 Y (px)",
+      "min": 0,
+      "max": 1080
+    },
+    {
+      "id": "badge2",
+      "type": "text",
+      "default": "B",
+      "label": "Badge 2 text (empty for a plain ring)"
+    },
+    {
+      "id": "label2",
+      "type": "text",
+      "default": "AL DOILEA DETALIU",
+      "label": "Label 2"
+    },
+    {
+      "id": "label2X",
+      "type": "number",
+      "default": 685,
+      "label": "Label 2 X (px)",
+      "min": 0,
+      "max": 1920
+    },
+    {
+      "id": "label2Y",
+      "type": "number",
+      "default": 709,
+      "label": "Label 2 baseline Y (px)",
+      "min": 0,
+      "max": 1080
+    }
+  ],
+  "actors": [
+    {
+      "id": "badge1",
+      "role": "badgeRing",
+      "type": "circle",
+      "center": [
+        {
+          "expr": "point1X"
+        },
+        {
+          "expr": "point1Y"
+        }
+      ],
+      "radius": 22,
+      "fill": false,
+      "width": 2,
+      "color": "FG",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 0.18,
+        "dur": 0.38,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.38,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "badge1Text",
+      "role": "badgeText",
+      "type": "text",
+      "text": "{badge1}",
+      "font": "semi",
+      "size": 27,
+      "color": "FG",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "point1X - 9"
+          },
+          {
+            "expr": "point1Y + 11"
+          }
+        ]
+      },
+      "in": {
+        "start": 0.18,
+        "dur": 0.38,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.38,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "badge1 != \"\""
+      }
+    },
+    {
+      "id": "leader1",
+      "role": "leader",
+      "type": "route",
+      "points": [
+        [
+          {
+            "expr": "point1X - 24"
+          },
+          {
+            "expr": "point1Y"
+          }
+        ],
+        [
+          {
+            "expr": "point1X - 140"
+          },
+          {
+            "expr": "point1Y"
+          }
+        ],
+        [
+          {
+            "expr": "point1X - 230"
+          },
+          {
+            "expr": "label1Y + 26"
+          }
+        ],
+        [
+          {
+            "expr": "label1X - 3"
+          },
+          {
+            "expr": "label1Y + 26"
+          }
+        ]
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 0.65,
+        "dur": 0.72,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.75,
+        "dur": 0.48,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "label1",
+      "role": "label",
+      "type": "text",
+      "text": "{label1}",
+      "font": "semi",
+      "size": 44,
+      "color": "FG",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "label1X"
+          },
+          {
+            "expr": "label1Y"
+          }
+        ]
+      },
+      "in": {
+        "start": 1.1,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.48,
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "badge2",
+      "role": "badgeRing",
+      "type": "circle",
+      "center": [
+        {
+          "expr": "point2X"
+        },
+        {
+          "expr": "point2Y"
+        }
+      ],
+      "radius": 22,
+      "fill": false,
+      "width": 2,
+      "color": "FG",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 1.46,
+        "dur": 0.34,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.32,
+        "dur": 0.34,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "badge2Text",
+      "role": "badgeText",
+      "type": "text",
+      "text": "{badge2}",
+      "font": "semi",
+      "size": 27,
+      "color": "FG",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "point2X - 9"
+          },
+          {
+            "expr": "point2Y + 11"
+          }
+        ]
+      },
+      "in": {
+        "start": 1.46,
+        "dur": 0.34,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 5.32,
+        "dur": 0.34,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "badge2 != \"\""
+      }
+    },
+    {
+      "id": "leader2",
+      "role": "leader",
+      "type": "route",
+      "points": [
+        [
+          {
+            "expr": "point2X - 24"
+          },
+          {
+            "expr": "point2Y"
+          }
+        ],
+        [
+          {
+            "expr": "point2X - 135"
+          },
+          {
+            "expr": "point2Y"
+          }
+        ],
+        [
+          {
+            "expr": "point2X - 226"
+          },
+          {
+            "expr": "label2Y + 26"
+          }
+        ],
+        [
+          {
+            "expr": "label2X - 3"
+          },
+          {
+            "expr": "label2Y + 26"
+          }
+        ]
+      ],
+      "width": 2,
+      "color": "FG",
+      "in": {
+        "start": 1.83,
+        "dur": 0.73,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.82,
+        "dur": 0.44,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "label2",
+      "role": "label",
+      "type": "text",
+      "text": "{label2}",
+      "font": "semi",
+      "size": 44,
+      "color": "FG",
+      "ss": 1,
+      "at": {
+        "baseline": [
+          {
+            "expr": "label2X"
+          },
+          {
+            "expr": "label2Y"
+          }
+        ]
+      },
+      "in": {
+        "start": 2.2,
+        "dur": 0.47,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.49,
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    }
+  ]
+}

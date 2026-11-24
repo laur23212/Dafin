@@ -17,7 +17,7 @@ from typing import Any
 
 FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
-ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat', 'keycaps'}
+ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'circle', 'group', 'repeat', 'keycaps'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
 PROFILES = {'sprite2x', 'mask1x'}
 

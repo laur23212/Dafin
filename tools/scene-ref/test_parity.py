@@ -3,6 +3,7 @@
 any encoding. Needs the scripts from the design archive (not in the repo):
 
   python3 -I test_parity.py --stage15 <.../Stage15_InstructionalTitles_Delta_v6.1.6/source> \
+                            --stage14 <.../Stage14_TutorialUtility_Delta_v6.1.2/source> \
                             --stage03b <.../Stage03b_Alternative_LowerThird_Families_v1/source>
 
                             [--stage13 <folder with frozen_stage13_approved_renderer_reference.py>]
@@ -50,6 +51,41 @@ def check_direct(name, draw, frames):
         if mx:
             bad.append({'frame': i, 'max': mx, 'pixels': n})
     return {'example': name, 'frames': len(frames), 'mismatched': bad}
+
+
+def _compare(example, frame_fn, frames, params=None):
+    sc = core.load_scene(HERE / 'scenes' / f'{example}.scene.json', params)
+    job = render.Job(sc)
+    bad = []
+    for i in frames:
+        mx, n = diff(frame_fn(i), job.direct_frame(i))
+        if mx:
+            bad.append({'frame': i, 'max': mx, 'pixels': n})
+    return {'example': example + (f' {params}' if params else ''), 'frames': len(frames), 'mismatched': bad}
+
+
+def check_anchors(src12: Path, src12b: Path, v4: Path, frames):
+    """11_AnchorNote_v4, 12_A, 12_B (Stage12 source), 12B_C manual and blank (Stage12B source)."""
+    res = []
+    if v4:
+        import tempfile
+        text = v4.read_text(encoding='utf-8')
+        text = text.replace("Path('/mnt/data/Dafin_Part6_Transfer_2026-11-22/Anchor_Note_v4_Static_Point')",
+                            f"Path({tempfile.mkdtemp()!r})")
+        ns = {'__name__': 'anchor_v4_original'}
+        exec(compile(text, str(v4), 'exec'), ns)
+        res.append(_compare('11_AnchorNote_v4', ns['render'], frames))
+    if src12:
+        m = load_module(src12 / 'render_stage12_anchor_family.py', 'stage12_original')
+        res.append(_compare('12_A_Anchor_Bracket', lambda i: m.render(m.candidate_a, i), frames))
+        res.append(_compare('12_B_Anchor_Measure', lambda i: m.render(m.candidate_b, i), frames))
+    if src12b:
+        m = load_module(src12b / 'render_stage12B_anchor_index_flexible.py', 'stage12b_original')
+        manual = m.scene_for('manual', {'1': 'A', '2': 'B'})
+        res.append(_compare('12B_C_Anchor_Index_Manual', lambda i: m.base.render(manual, i), frames))
+        blank = m.scene_for('blank', {})  # the archived "blank" mode is the same scene with empty badges
+        res.append(_compare('12B_C_Anchor_Index_Manual', lambda i: m.base.render(blank, i), frames, {'badge1': '', 'badge2': ''}))
+    return res
 
 
 def check_stage15(src: Path, frames):
@@ -291,6 +327,10 @@ def check_keycaps13d(src: Path, frames, font_dir: Path, symbols: Path | None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--stage15', type=Path)
+    ap.add_argument('--stage14', type=Path)
+    ap.add_argument('--stage12', type=Path, help='Stage12_AnchorFamily source folder')
+    ap.add_argument('--stage12b', type=Path, help='Stage12B_AnchorIndexFlexible source folder')
+    ap.add_argument('--anchor-v4', type=Path, help='render_anchor_note_static_v4.py')
     ap.add_argument('--stage03b', type=Path)
     ap.add_argument('--stage13', type=Path, help='folder with frozen_stage13_approved_renderer_reference.py')
     ap.add_argument('--stage03b-crev', type=Path, help='folder with C_25fps_refined_source.py')
@@ -315,6 +355,8 @@ def main():
         res.extend(check_stage14(o.stage14, frames))
     if o.stage13c:
         res.extend(check_stage13c(o.stage13c, frames))
+    if o.stage12 or o.stage12b or o.anchor_v4:
+        res.extend(check_anchors(o.stage12, o.stage12b, o.anchor_v4, frames))
     if o.stage03b:
         res.extend(check_stage03b(o.stage03b, fps_frames))
     if o.stage03b_crev:

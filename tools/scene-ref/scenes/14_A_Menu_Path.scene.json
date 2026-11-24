@@ -1,568 +1,976 @@
 {
- "format": "dafin.scene-title",
- "version": 1,
- "id": "dafin.instructional.menu-path",
- "label": "Menu Path",
- "category": "Instructional Titles",
- "source": {
-  "asset": "14_A_Menu_Path",
-  "sha256": "8ed3a29b971f421acadd3cbc9b0e55b1303973426b39af8b1ce9106eff70c914",
-  "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/render_stage14.py scene_a",
-  "status": "ART_APPROVED_NATIVE_PENDING"
- },
- "canvas": {
-  "width": 1920,
-  "height": 1080
- },
- "timing": {
-  "duration": 6.0,
-  "fps": 25,
-  "cadence": "match"
- },
- "render": {
-  "profile": "sprite2x",
-  "mixColor": "DARK"
- },
- "preview": {
-  "background": {
-   "kind": "base"
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.tutorial.menu-path",
+  "label": "Menu Path",
+  "category": "Tutorial Titles",
+  "source": {
+    "asset": "14_A_Menu_Path",
+    "sha256": "8ed3a29b971f421acadd3cbc9b0e55b1303973426b39af8b1ce9106eff70c914",
+    "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/render_stage14.py scene_a",
+    "status": "ART_APPROVED_NATIVE_PENDING"
   },
-  "encode": {
-   "preset": "veryfast",
-   "crf": 18
-  }
- },
- "fonts": {
-  "regular": {
-   "family": "Noto Sans Display",
-   "weight": 400,
-   "file": "NotoSansDisplay-Regular.ttf",
-   "package": "fonts-noto-core 20201225-2",
-   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  "canvas": {
+    "width": 1920,
+    "height": 1080
   },
-  "semi": {
-   "family": "Noto Sans Display",
-   "weight": 600,
-   "file": "NotoSansDisplay-SemiBold.ttf",
-   "package": "fonts-noto-extra 20201225-2",
-   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
-  }
- },
- "palette": {
-  "DARK": [
-   9,
-   12,
-   17
-  ],
-  "OFF": [
-   242,
-   243,
-   240
-  ],
-  "SOFT": [
-   165,
-   177,
-   187
-  ],
-  "AQUA": [
-   123,
-   209,
-   192
-  ],
-  "SAND": [
-   207,
-   181,
-   145
-  ],
-  "NEUTRAL": [
-   132,
-   149,
-   159
-  ],
-  "PANEL": [
-   25,
-   33,
-   42
-  ],
-  "STEEL": [
-   77,
-   90,
-   102
-  ]
- },
- "params": [
-  {
-   "id": "caption",
-   "type": "text",
-   "default": "MENU PATH",
-   "label": "Caption"
+  "timing": {
+    "duration": 6.0,
+    "fps": 25,
+    "cadence": "match"
   },
-  {
-   "id": "title",
-   "type": "text",
-   "default": "Export your video",
-   "label": "Title"
+  "render": {
+    "profile": "sprite2x",
+    "mixColor": "DARK"
   },
-  {
-   "id": "step1",
-   "type": "text",
-   "default": "File",
-   "label": "Menu 1"
-  },
-  {
-   "id": "step2",
-   "type": "text",
-   "default": "Export",
-   "label": "Menu 2"
-  },
-  {
-   "id": "step3",
-   "type": "text",
-   "default": "Video",
-   "label": "Menu 3 (highlighted)"
-  }
- ],
- "actors": [
-  {
-   "id": "caption",
-   "role": "eyebrow",
-   "type": "text",
-   "text": "{caption}",
-   "font": "semi",
-   "size": 25,
-   "color": "SAND",
-   "at": {
-    "baseline": [
-     352.0,
-     335.0
-    ]
-   },
-   "optional": true,
-   "in": {
-    "start": 0.2,
-    "dur": 0.36,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 9
+  "preview": {
+    "background": {
+      "kind": "base"
+    },
+    "encode": {
+      "preset": "veryfast",
+      "crf": 18
     }
-   },
-   "out": {
-    "start": 4.8,
-    "dur": 0.32,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
   },
-  {
-   "id": "title",
-   "role": "title",
-   "type": "text",
-   "text": "{title}",
-   "font": "semi",
-   "size": 70,
-   "color": "OFF",
-   "at": {
-    "baseline": [
-     343.0,
-     439.5
-    ]
-   },
-   "in": {
-    "start": 0.34,
-    "dur": 0.49,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 12
-    }
-   },
-   "out": {
-    "start": 4.8,
-    "dur": 0.32,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "rule",
-   "role": "divider",
-   "type": "line",
-   "from": [
-    346,
-    505
-   ],
-   "to": [
-    1555,
-    505
-   ],
-   "width": 1,
-   "color": [
-    98,
-    111,
-    120
-   ],
-   "in": {
-    "start": 0.64,
-    "dur": 0.57,
-    "ease": "smoothstep",
-    "from": {
-     "progress": 0
-    }
-   },
-   "out": {
-    "start": 4.91,
-    "dur": 0.37,
-    "ease": "smoothstep",
-    "to": {
-     "progress": 0
-    }
-   }
-  },
-  {
-   "id": "item1",
-   "role": "menuItem",
-   "type": "group",
-   "flatten": true,
-   "supersample": 3,
-   "at": [
-    341,
-    585
-   ],
-   "size": [
-    208,
-    115
-   ],
-   "in": {
-    "start": 0.92,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
-   },
-   "out": {
-    "start": 4.71,
-    "dur": 0.31,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "children": [
-    {
-     "id": "item1Plate",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      205,
-      112
-     ],
-     "radius": 14,
-     "fill": [
+  "palette": {
+    "DARK": [
+      9,
+      12,
+      17
+    ],
+    "OFF": [
+      242,
+      243,
+      240
+    ],
+    "SOFT": [
+      165,
+      177,
+      187
+    ],
+    "AQUA": [
+      123,
+      209,
+      192
+    ],
+    "SAND": [
+      207,
+      181,
+      145
+    ],
+    "NEUTRAL": [
+      132,
+      149,
+      159
+    ],
+    "PANEL_FILL": [
       25,
       33,
       42,
       247
-     ],
-     "strokeColor": [
-      77,
-      90,
-      102,
-      255
-     ],
-     "stroke": 2
-    },
-    {
-     "id": "item1Label",
-     "type": "text",
-     "text": "{step1}",
-     "font": "semi",
-     "size": 42,
-     "color": "OFF",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
-  },
-  {
-   "id": "chevron1a",
-   "role": "separator",
-   "type": "line",
-   "width": 2,
-   "color": "SOFT",
-   "opacityMode": "mixWith",
-   "in": {
-    "start": 1.17,
-    "dur": 0.27,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.83,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "from": [
-    589,
-    631
-   ],
-   "to": [
-    601,
-    642
-   ]
-  },
-  {
-   "id": "chevron1b",
-   "role": "separator",
-   "type": "line",
-   "width": 2,
-   "color": "SOFT",
-   "opacityMode": "mixWith",
-   "in": {
-    "start": 1.17,
-    "dur": 0.27,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.83,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "from": [
-    601,
-    642
-   ],
-   "to": [
-    589,
-    653
-   ]
-  },
-  {
-   "id": "item2",
-   "role": "menuItem",
-   "type": "group",
-   "flatten": true,
-   "supersample": 3,
-   "at": [
-    643,
-    585
-   ],
-   "size": [
-    274,
-    115
-   ],
-   "in": {
-    "start": 1.21,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
-   },
-   "out": {
-    "start": 4.67,
-    "dur": 0.31,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "children": [
-    {
-     "id": "item2Plate",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      271,
-      112
-     ],
-     "radius": 14,
-     "fill": [
-      25,
-      33,
-      42,
-      247
-     ],
-     "strokeColor": [
-      77,
-      90,
-      102,
-      255
-     ],
-     "stroke": 2
-    },
-    {
-     "id": "item2Label",
-     "type": "text",
-     "text": "{step2}",
-     "font": "semi",
-     "size": 42,
-     "color": "OFF",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
-  },
-  {
-   "id": "chevron2a",
-   "role": "separator",
-   "type": "line",
-   "width": 2,
-   "color": "SOFT",
-   "opacityMode": "mixWith",
-   "in": {
-    "start": 1.46,
-    "dur": 0.27,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.83,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "from": [
-    957,
-    631
-   ],
-   "to": [
-    969,
-    642
-   ]
-  },
-  {
-   "id": "chevron2b",
-   "role": "separator",
-   "type": "line",
-   "width": 2,
-   "color": "SOFT",
-   "opacityMode": "mixWith",
-   "in": {
-    "start": 1.46,
-    "dur": 0.27,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.83,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "from": [
-    969,
-    642
-   ],
-   "to": [
-    957,
-    653
-   ]
-  },
-  {
-   "id": "item3",
-   "role": "menuItem",
-   "type": "group",
-   "flatten": true,
-   "supersample": 3,
-   "at": [
-    1035,
-    585
-   ],
-   "size": [
-    244,
-    115
-   ],
-   "in": {
-    "start": 1.5,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
-   },
-   "out": {
-    "start": 4.63,
-    "dur": 0.31,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "children": [
-    {
-     "id": "item3Plate",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      241,
-      112
-     ],
-     "radius": 14,
-     "fill": [
+    ],
+    "TARGET_FILL": [
       42,
       40,
       35,
       247
-     ],
-     "strokeColor": [
+    ],
+    "STEEL_LINE": [
+      77,
+      90,
+      102,
+      255
+    ],
+    "SAND_LINE": [
       207,
       181,
       145,
       255
-     ],
-     "stroke": 2
+    ],
+    "RULE_A": [
+      98,
+      111,
+      120
+    ],
+    "RULE_B": [
+      104,
+      116,
+      122
+    ],
+    "ARROW": [
+      146,
+      158,
+      165
+    ]
+  },
+  "fonts": {
+    "semi": {
+      "family": "Noto Sans Display",
+      "weight": 600,
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "package": "fonts-noto-extra 20201225-2",
+      "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+    }
+  },
+  "params": [
+    {
+      "id": "itemCount",
+      "type": "int",
+      "default": 3,
+      "min": 2,
+      "max": 5,
+      "label": "Number of menu items"
     },
     {
-     "id": "item3Label",
-     "type": "text",
-     "text": "{step3}",
-     "font": "semi",
-     "size": 42,
-     "color": "OFF",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
+      "id": "caption",
+      "type": "text",
+      "default": "MENU PATH",
+      "label": "Caption"
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "default": "Export your video",
+      "label": "Title"
+    },
+    {
+      "id": "item1",
+      "type": "text",
+      "default": "File",
+      "label": "Menu item 1"
+    },
+    {
+      "id": "item2",
+      "type": "text",
+      "default": "Export",
+      "label": "Menu item 2"
+    },
+    {
+      "id": "item3",
+      "type": "text",
+      "default": "Video",
+      "label": "Menu item 3 (the destination when last)"
+    },
+    {
+      "id": "item4",
+      "type": "text",
+      "default": "Item 4",
+      "label": "Menu item 4"
+    },
+    {
+      "id": "item5",
+      "type": "text",
+      "default": "Item 5",
+      "label": "Menu item 5"
     }
-   ]
-  }
- ]
+  ],
+  "actors": [
+    {
+      "id": "caption",
+      "role": "caption",
+      "type": "text",
+      "text": "{caption}",
+      "font": "semi",
+      "size": 25,
+      "color": "SAND",
+      "at": {
+        "baseline": [
+          352.0,
+          335.0
+        ]
+      },
+      "in": {
+        "start": 0.2,
+        "dur": 0.36,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 9
+        }
+      },
+      "out": {
+        "start": 4.8,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "title",
+      "role": "title",
+      "type": "text",
+      "text": "{title}",
+      "font": "semi",
+      "size": 70,
+      "color": "OFF",
+      "at": {
+        "baseline": [
+          343.0,
+          439.5
+        ]
+      },
+      "in": {
+        "start": 0.34,
+        "dur": 0.49,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 12
+        }
+      },
+      "out": {
+        "start": 4.8,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "rule",
+      "role": "divider",
+      "type": "line",
+      "from": [
+        346,
+        505
+      ],
+      "to": [
+        1555,
+        505
+      ],
+      "width": 1,
+      "color": "RULE_A",
+      "in": {
+        "start": 0.64,
+        "dur": 0.57,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.91,
+        "dur": 0.37,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "card1",
+      "role": "pathItem",
+      "type": "group",
+      "flatten": true,
+      "ss": 3,
+      "at": [
+        341,
+        585
+      ],
+      "size": [
+        208,
+        115
+      ],
+      "fitBox": {
+        "actor": "card1Label",
+        "padX": 60,
+        "min": 208
+      },
+      "in": {
+        "start": {
+          "expr": "0.92 + 0*0.29"
+        },
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 14
+        }
+      },
+      "out": {
+        "start": {
+          "expr": "4.71 - 0*0.04"
+        },
+        "dur": 0.31,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "children": [
+        {
+          "id": "card1Plate",
+          "role": "plate",
+          "type": "roundRect",
+          "box": [
+            2,
+            2,
+            205,
+            112
+          ],
+          "fillGroup": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "radius": 14,
+          "fill": {
+            "expr": "TARGET_FILL if itemCount == 1 else PANEL_FILL"
+          },
+          "strokeColor": {
+            "expr": "SAND_LINE if itemCount == 1 else STEEL_LINE"
+          },
+          "stroke": 2
+        },
+        {
+          "id": "card1Label",
+          "role": "pathLabel",
+          "type": "text",
+          "text": "{item1}",
+          "font": "semi",
+          "size": 42,
+          "color": "OFF",
+          "at": {
+            "baseline": [
+              0,
+              0
+            ]
+          },
+          "align": {
+            "h": "center",
+            "v": "center",
+            "dy": -2
+          }
+        }
+      ]
+    },
+    {
+      "id": "chev1",
+      "role": "pathSeparator",
+      "type": "group",
+      "at": [
+        589,
+        642
+      ],
+      "in": {
+        "start": {
+          "expr": "0.92 + 0*0.29 + 0.25"
+        },
+        "dur": 0.27,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.83,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "after": {
+        "actor": "card1",
+        "gap": 40
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount > 1"
+      },
+      "children": [
+        {
+          "id": "chev1Mark",
+          "role": "chevron",
+          "type": "route",
+          "points": [
+            [
+              0,
+              -11
+            ],
+            [
+              12,
+              0
+            ],
+            [
+              0,
+              11
+            ]
+          ],
+          "width": 2,
+          "color": "SOFT",
+          "opacityMode": "mixWith"
+        }
+      ]
+    },
+    {
+      "id": "card2",
+      "role": "pathItem",
+      "type": "group",
+      "flatten": true,
+      "ss": 3,
+      "at": [
+        643,
+        585
+      ],
+      "size": [
+        274,
+        115
+      ],
+      "fitBox": {
+        "actor": "card2Label",
+        "padX": 60,
+        "min": 274
+      },
+      "in": {
+        "start": {
+          "expr": "0.92 + 1*0.29"
+        },
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 14
+        }
+      },
+      "out": {
+        "start": {
+          "expr": "4.71 - 1*0.04"
+        },
+        "dur": 0.31,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "children": [
+        {
+          "id": "card2Plate",
+          "role": "plate",
+          "type": "roundRect",
+          "box": [
+            2,
+            2,
+            271,
+            112
+          ],
+          "fillGroup": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "radius": 14,
+          "fill": {
+            "expr": "TARGET_FILL if itemCount == 2 else PANEL_FILL"
+          },
+          "strokeColor": {
+            "expr": "SAND_LINE if itemCount == 2 else STEEL_LINE"
+          },
+          "stroke": 2
+        },
+        {
+          "id": "card2Label",
+          "role": "pathLabel",
+          "type": "text",
+          "text": "{item2}",
+          "font": "semi",
+          "size": 42,
+          "color": "OFF",
+          "at": {
+            "baseline": [
+              0,
+              0
+            ]
+          },
+          "align": {
+            "h": "center",
+            "v": "center",
+            "dy": -2
+          }
+        }
+      ],
+      "after": {
+        "actor": "card1",
+        "gap": {
+          "expr": "94 + (24 if itemCount == 2 else 0)"
+        }
+      }
+    },
+    {
+      "id": "chev2",
+      "role": "pathSeparator",
+      "type": "group",
+      "at": [
+        957,
+        642
+      ],
+      "in": {
+        "start": {
+          "expr": "0.92 + 1*0.29 + 0.25"
+        },
+        "dur": 0.27,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.83,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "after": {
+        "actor": "card2",
+        "gap": 40
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount > 2"
+      },
+      "children": [
+        {
+          "id": "chev2Mark",
+          "role": "chevron",
+          "type": "route",
+          "points": [
+            [
+              0,
+              -11
+            ],
+            [
+              12,
+              0
+            ],
+            [
+              0,
+              11
+            ]
+          ],
+          "width": 2,
+          "color": "SOFT",
+          "opacityMode": "mixWith"
+        }
+      ]
+    },
+    {
+      "id": "card3",
+      "role": "pathItem",
+      "type": "group",
+      "flatten": true,
+      "ss": 3,
+      "at": [
+        1035,
+        585
+      ],
+      "size": [
+        244,
+        115
+      ],
+      "fitBox": {
+        "actor": "card3Label",
+        "padX": 60,
+        "min": 244
+      },
+      "in": {
+        "start": {
+          "expr": "0.92 + 2*0.29"
+        },
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 14
+        }
+      },
+      "out": {
+        "start": {
+          "expr": "4.71 - 2*0.04"
+        },
+        "dur": 0.31,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount >= 3"
+      },
+      "children": [
+        {
+          "id": "card3Plate",
+          "role": "plate",
+          "type": "roundRect",
+          "box": [
+            2,
+            2,
+            241,
+            112
+          ],
+          "fillGroup": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "radius": 14,
+          "fill": {
+            "expr": "TARGET_FILL if itemCount == 3 else PANEL_FILL"
+          },
+          "strokeColor": {
+            "expr": "SAND_LINE if itemCount == 3 else STEEL_LINE"
+          },
+          "stroke": 2
+        },
+        {
+          "id": "card3Label",
+          "role": "pathLabel",
+          "type": "text",
+          "text": "{item3}",
+          "font": "semi",
+          "size": 42,
+          "color": "OFF",
+          "at": {
+            "baseline": [
+              0,
+              0
+            ]
+          },
+          "align": {
+            "h": "center",
+            "v": "center",
+            "dy": -2
+          }
+        }
+      ],
+      "after": {
+        "actor": "card2",
+        "gap": {
+          "expr": "94 + (24 if itemCount == 3 else 0)"
+        }
+      }
+    },
+    {
+      "id": "chev3",
+      "role": "pathSeparator",
+      "type": "group",
+      "at": [
+        1300,
+        642
+      ],
+      "in": {
+        "start": {
+          "expr": "0.92 + 2*0.29 + 0.25"
+        },
+        "dur": 0.27,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.83,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "after": {
+        "actor": "card3",
+        "gap": 40
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount > 3"
+      },
+      "children": [
+        {
+          "id": "chev3Mark",
+          "role": "chevron",
+          "type": "route",
+          "points": [
+            [
+              0,
+              -11
+            ],
+            [
+              12,
+              0
+            ],
+            [
+              0,
+              11
+            ]
+          ],
+          "width": 2,
+          "color": "SOFT",
+          "opacityMode": "mixWith"
+        }
+      ]
+    },
+    {
+      "id": "card4",
+      "role": "pathItem",
+      "type": "group",
+      "flatten": true,
+      "ss": 3,
+      "at": [
+        1335,
+        585
+      ],
+      "size": [
+        208,
+        115
+      ],
+      "fitBox": {
+        "actor": "card4Label",
+        "padX": 60,
+        "min": 208
+      },
+      "in": {
+        "start": {
+          "expr": "0.92 + 3*0.29"
+        },
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 14
+        }
+      },
+      "out": {
+        "start": {
+          "expr": "4.71 - 3*0.04"
+        },
+        "dur": 0.31,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount >= 4"
+      },
+      "children": [
+        {
+          "id": "card4Plate",
+          "role": "plate",
+          "type": "roundRect",
+          "box": [
+            2,
+            2,
+            205,
+            112
+          ],
+          "fillGroup": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "radius": 14,
+          "fill": {
+            "expr": "TARGET_FILL if itemCount == 4 else PANEL_FILL"
+          },
+          "strokeColor": {
+            "expr": "SAND_LINE if itemCount == 4 else STEEL_LINE"
+          },
+          "stroke": 2
+        },
+        {
+          "id": "card4Label",
+          "role": "pathLabel",
+          "type": "text",
+          "text": "{item4}",
+          "font": "semi",
+          "size": 42,
+          "color": "OFF",
+          "at": {
+            "baseline": [
+              0,
+              0
+            ]
+          },
+          "align": {
+            "h": "center",
+            "v": "center",
+            "dy": -2
+          }
+        }
+      ],
+      "after": {
+        "actor": "card3",
+        "gap": {
+          "expr": "94 + (24 if itemCount == 4 else 0)"
+        }
+      }
+    },
+    {
+      "id": "chev4",
+      "role": "pathSeparator",
+      "type": "group",
+      "at": [
+        1300,
+        642
+      ],
+      "in": {
+        "start": {
+          "expr": "0.92 + 3*0.29 + 0.25"
+        },
+        "dur": 0.27,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.83,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "after": {
+        "actor": "card4",
+        "gap": 40
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount > 4"
+      },
+      "children": [
+        {
+          "id": "chev4Mark",
+          "role": "chevron",
+          "type": "route",
+          "points": [
+            [
+              0,
+              -11
+            ],
+            [
+              12,
+              0
+            ],
+            [
+              0,
+              11
+            ]
+          ],
+          "width": 2,
+          "color": "SOFT",
+          "opacityMode": "mixWith"
+        }
+      ]
+    },
+    {
+      "id": "card5",
+      "role": "pathItem",
+      "type": "group",
+      "flatten": true,
+      "ss": 3,
+      "at": [
+        1635,
+        585
+      ],
+      "size": [
+        208,
+        115
+      ],
+      "fitBox": {
+        "actor": "card5Label",
+        "padX": 60,
+        "min": 208
+      },
+      "in": {
+        "start": {
+          "expr": "0.92 + 4*0.29"
+        },
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 14
+        }
+      },
+      "out": {
+        "start": {
+          "expr": "4.71 - 4*0.04"
+        },
+        "dur": 0.31,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "itemCount >= 5"
+      },
+      "children": [
+        {
+          "id": "card5Plate",
+          "role": "plate",
+          "type": "roundRect",
+          "box": [
+            2,
+            2,
+            205,
+            112
+          ],
+          "fillGroup": [
+            2,
+            2,
+            3,
+            3
+          ],
+          "radius": 14,
+          "fill": {
+            "expr": "TARGET_FILL if itemCount == 5 else PANEL_FILL"
+          },
+          "strokeColor": {
+            "expr": "SAND_LINE if itemCount == 5 else STEEL_LINE"
+          },
+          "stroke": 2
+        },
+        {
+          "id": "card5Label",
+          "role": "pathLabel",
+          "type": "text",
+          "text": "{item5}",
+          "font": "semi",
+          "size": 42,
+          "color": "OFF",
+          "at": {
+            "baseline": [
+              0,
+              0
+            ]
+          },
+          "align": {
+            "h": "center",
+            "v": "center",
+            "dy": -2
+          }
+        }
+      ],
+      "after": {
+        "actor": "card4",
+        "gap": {
+          "expr": "94 + (24 if itemCount == 5 else 0)"
+        }
+      }
+    }
+  ]
 }

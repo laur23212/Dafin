@@ -112,6 +112,16 @@ def base_matte(w=1920, h=1080, dark=(9, 12, 17)):
     return out
 
 
+def matte_for(sc, mix_color):
+    """The preview matte of a scene: the BASE gradient, or a flat colour ({"kind": "solid", "color": [r,g,b]})."""
+    bg = sc.raw.get('preview', {}).get('background', {'kind': 'base'})
+    if bg.get('kind') == 'solid':
+        out = np.empty((sc.height, sc.width, 3), np.uint8)
+        out[:] = core.parse_color(bg['color'], sc.palette)[:3]
+        return out
+    return base_matte(sc.width, sc.height, mix_color)
+
+
 # ----------------------------------------------------------------------------------------------
 # sprite2x profile: Stage13/14/15 maths. Text and rounded shapes are drawn at 2x in PIL, reduced
 # with Lanczos, and laid on the frame with an opacity, an integer offset and a horizontal wipe.
@@ -174,6 +184,63 @@ class Sprite2x:
         if sc.keycap_blocks:
             import keycaps
             keycaps.layout(sc, self.ink)
+        self.layout()  # C10: fitBox / after, once the fonts are known
+
+    # -- measured layout ----------------------------------------------------------------------
+    # "fitBox" (flattened group): width = max(min, ceil(width of the target child's text + 2*padX)).
+    # "after"  (group or text): x = right edge of the target + gap. The right edge of a text is its
+    # pen x plus its advance, rounded to whole px; of a group, its x plus its (fitted) width.
+    # Both are resolved once, here, in dependency order, because they need the fonts.
+
+    def advance(self, a):
+        ss = int(a.get('ss', SS))
+        return legacy_round(self.font(a['font'], a['size'], ss).getlength(a['text']) / ss)
+
+    def layout(self):
+        by_id = {a['id']: a for a in self.sc.actors}
+        done, busy = set(), set()
+
+        def right_edge(t):
+            if t['type'] == 'text':
+                return t['at']['baseline'][0] + self.advance(t)
+            if t['type'] == 'group' and 'size' in t:
+                return t['at'][0] + t['size'][0]
+            raise SceneError(f'{t["id"]}: has no width to place something after')
+
+        def visit(a):
+            if a['id'] in done:
+                return
+            if a['id'] in busy:
+                raise SceneError(f'{a["id"]}: fitBox/after cycle')
+            busy.add(a['id'])
+            fb = a.get('fitBox')
+            if fb:
+                if a['type'] != 'group' or not a.get('flatten'):
+                    raise SceneError(f'{a["id"]}: fitBox belongs on a flattened group')
+                kid = by_id.get(fb['actor'])
+                if kid is None or kid.get('_parent') != a['id'] or kid['type'] != 'text':
+                    raise SceneError(f'{a["id"]}: fitBox must name a text child of the group')
+                ss = group_ss(a)
+                bb = ImageDraw.Draw(Image.new('RGBA', (1, 1))).textbbox((0, 0), kid['text'], font=self.font(kid['font'], kid['size'], ss))
+                w = math.ceil((bb[2] - bb[0]) / ss + 2 * fb.get('padX', 0))
+                a['size'] = [max(int(fb.get('min', 0)), w), a['size'][1]]
+            af = a.get('after')
+            if af:
+                tgt = by_id.get(af['actor'])
+                if tgt is None:
+                    raise SceneError(f'{a["id"]}: after unknown actor {af["actor"]!r}')
+                visit(tgt)
+                x = right_edge(tgt) + af.get('gap', 0)
+                if a['type'] == 'group':
+                    a['at'] = [x, a['at'][1]]
+                elif a['type'] == 'text':
+                    a['at'] = {'baseline': [x, a['at']['baseline'][1]]}
+                else:
+                    raise SceneError(f'{a["id"]}: after is for groups and texts')
+            busy.discard(a['id']); done.add(a['id'])
+
+        for a in self.sc.actors:
+            visit(a)
 
     # -- text ---------------------------------------------------------------------------------
     def font(self, key, size, ss=SS):
@@ -183,12 +250,24 @@ class Sprite2x:
         """Ink box of `text` at exactly `px` pixels, relative to the baseline origin (PIL getbbox, anchor ls)."""
         return _truetype(font_path(self.sc, font_key, self.font_dirs), int(px), False).getbbox(text, anchor='ls')
 
+    TEXT_PAD_1X = 4  # sprite1x: the pen sits this many px inside the sprite (as the Stage12 Label did)
+
     def text_sprite(self, a):
-        key = ('text', a['text'], a['font'], a['size'], tuple(self.color(a)))
+        ss = int(a.get('ss', SS))
+        if ss not in (1, 2):
+            raise SceneError(f'{a["id"]}: text "ss" must be 1 or 2')
+        key = ('text', a['text'], a['font'], a['size'], tuple(self.color(a)), ss)
         if key not in self.cache:
-            f = self.font(a['font'], a['size'])
+            f = self.font(a['font'], a['size'], ss)
             value = a['text']
             box = f.getbbox(value)
+            if ss == 1:
+                # sprite1x (Stage11/12): drawn once at 1x with PIL's "la" anchor, no reduction.
+                pad = self.TEXT_PAD_1X
+                cv = Image.new('RGBA', (max(1, box[2] + 2 * pad), max(1, box[3] + 2)))
+                ImageDraw.Draw(cv).text((pad, 0), value, font=f, fill=(*self.color(a)[:3], 255))
+                self.cache[key] = (Sprite(cv), box, f.getmetrics()[0])
+                return self.cache[key]
             width = max(1, box[2] - box[0] + 14 * SS)
             height = max(1, box[3] - box[1] + 16 * SS)
             cv = Image.new('RGBA', (width, height))
@@ -206,6 +285,8 @@ class Sprite2x:
             return tuple(at['sprite'])
         if 'baseline' in at:
             bx, by = at['baseline']
+            if int(a.get('ss', SS)) == 1:
+                return (bx - self.TEXT_PAD_1X, by - asc)
             return (bx - (14 - box[0]) / SS, by - (16 - box[1] + asc) / SS)
         raise SceneError(f'{a["id"]}: text needs at.baseline or at.sprite')
 
@@ -252,10 +333,11 @@ class Sprite2x:
             raise SceneError(f'{a["id"]}: {t} cannot be drawn inside a flattened group')
 
     def group_sprite(self, g, children):
-        key = ('group', g['id'], group_ss(g), tuple(g['size']), json.dumps([{k: v for k, v in c.items() if not k.startswith('_')} for c in children], sort_keys=True, default=str))
+        f = group_ss(g)  # "ss" (Smart Keycaps, C10) or "supersample" (the Stage13C/14 ports): 3x keys and tags
+        key = ('group', g['id'], f, tuple(g['size']),
+               json.dumps([{k: v for k, v in c.items() if not k.startswith('_')} for c in children], sort_keys=True, default=str))
         if key not in self.cache:
-            f = group_ss(g)  # "ss" (Smart Keycaps) or "supersample" (the Stage13C/14 ports): 3x keys and tags
-            gw, gh = g['size']
+            gw, gh = int(g['size'][0]), int(g['size'][1])
             im = Image.new('RGBA', (gw * f, gh * f))
             d = ImageDraw.Draw(im)
             for c in children:
@@ -281,7 +363,11 @@ class Sprite2x:
                     (ax, ay), (bx, by) = c['from'], c['to']
                     self._pil_shape(d, c, (ax * f, ay * f, bx * f, by * f), f)
                 else:
-                    x0, y0, x1, y1 = c['box']
+                    if 'fillGroup' in c:  # box = the group's size minus insets [left, top, right, bottom]
+                        l, t_, r_, b_ = c['fillGroup']
+                        x0, y0, x1, y1 = l, t_, gw - r_, gh - b_
+                    else:
+                        x0, y0, x1, y1 = c['box']
                     self._pil_shape(d, c, (x0 * f, y0 * f, x1 * f, y1 * f), f)
             self.cache[key] = Sprite(im.resize((gw, gh), Image.Resampling.LANCZOS))
         return self.cache[key]
@@ -370,6 +456,9 @@ class Sprite2x:
             else:
                 spr.draw_premul(acc, xy, ch['opacity'], dx, dy, ch['wipe'])
             return
+        if t == 'circle':
+            self._draw_circle(a, ch, dx, dy, canvas, acc)
+            return
         if t in ('line', 'route'):
             op, prog = ch['opacity'], ch['progress']
             if op <= 0 or prog <= 0:
@@ -393,6 +482,30 @@ class Sprite2x:
             return
         raise SceneError(f'{a["id"]}: {t} is not drawn by the sprite2x profile')
 
+    def _draw_circle(self, a, ch, dx, dy, canvas, acc):
+        """cv2.circle(..., LINE_AA): "fill": true is a disc (thickness -1), else a ring of "width" px.
+        Opacity on an opaque frame mixes the colour with mixColor, like a line ("mix": "trunc" truncates
+        the mixed channels instead of rounding: the Stage11 dot did)."""
+        op = ch['opacity']
+        if op <= 0:
+            return
+        cx, cy = int(a['center'][0]) + dx, int(a['center'][1]) + dy
+        r = int(a['radius'])
+        thick = -1 if a.get('fill', True) else int(a.get('width', 1))
+        color = self.color(a)
+        if canvas is not None:
+            if op < 1 or a.get('opacityMode') == 'mixWith':
+                m = min(1, op)
+                mixed = [self.mix_color[i] * (1 - m) + color[i] * m for i in range(3)]
+                color = tuple(int(v) if a.get('mix') == 'trunc' else int(round(v)) for v in mixed)
+            cv2.circle(canvas, (cx, cy), r, color[:3], thick, cv2.LINE_AA)
+        else:
+            m = np.zeros(acc.shape[:2], np.uint8)
+            cv2.circle(m, (cx, cy), r, 255, thick, cv2.LINE_AA)
+            al = (m.astype(np.float32) / 255. * min(1, op))[:, :, None]
+            src = np.concatenate([np.array(color[:3], np.float32) / 255. * al, al], axis=2)
+            acc[:] = src + acc * (1 - al)
+
     # -- geometry for compare.py --------------------------------------------------------------
     def rest_boxes(self, t):
         boxes = {}
@@ -408,6 +521,9 @@ class Sprite2x:
                 boxes[a['id']] = (min(xs) - w, min(ys) - w, max(xs) + w + 1, max(ys) + w + 1)
             elif tp == 'group':
                 gx, gy = a['at']; boxes[a['id']] = (gx, gy, gx + a['size'][0], gy + a['size'][1])
+            elif tp == 'circle':
+                (cx, cy), r = a['center'], a['radius'] + 2
+                boxes[a['id']] = (cx - r, cy - r, cx + r + 1, cy + r + 1)
             else:
                 spr, (x, y) = self.shape_sprite(a)
                 boxes[a['id']] = (x, y, x + spr.w, y + spr.h)
@@ -583,7 +699,7 @@ class Job:
 
     def direct_frame(self, i) -> np.ndarray:
         """sprite2x over BASE, drawn as the proof drew it."""
-        bg = base_matte(self.sc.width, self.sc.height, self.r.mix_color)
+        bg = matte_for(self.sc, self.r.mix_color)
         self.r.draw_direct(bg, self.design_t(i))
         return bg
 
@@ -602,7 +718,7 @@ class Job:
                 '-pix_fmt', 'yuv420p']
         W, H, fps = self.sc.width, self.sc.height, self.fps
         fr = str(int(fps)) if float(fps).is_integer() else str(fps)
-        if bg.get('kind') == 'base' and isinstance(self.r, Sprite2x):
+        if bg.get('kind') in ('base', 'solid') and isinstance(self.r, Sprite2x):
             cmd = ['ffmpeg', '-hide_banner', '-loglevel', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
                    '-s', f'{W}x{H}', '-r', fr, '-i', '-', '-an', *x264, '-movflags', '+faststart', str(dst)]
             p = subprocess.Popen(cmd, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -631,7 +747,7 @@ class Job:
             if bg.get('kind') == 'video':
                 inputs += ['-i', str(self.find_asset(bg['file']))]
             else:
-                Image.fromarray(base_matte(W, H)).save(tmp / 'base.png')
+                Image.fromarray(matte_for(self.sc, (9, 12, 17))).save(tmp / 'base.png')
                 inputs += ['-loop', '1', '-framerate', fr, '-i', str(tmp / 'base.png')]
             n = 1
             last = '[0:v]'

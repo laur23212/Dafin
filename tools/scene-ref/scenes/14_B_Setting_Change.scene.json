@@ -1,534 +1,562 @@
 {
- "format": "dafin.scene-title",
- "version": 1,
- "id": "dafin.instructional.setting-change",
- "label": "Setting Change",
- "category": "Instructional Titles",
- "source": {
-  "asset": "14_B_Setting_Change",
-  "sha256": "017d1e3516e85976917a405ee0fc9655f5cbcad72cccd2e328f29a3d72edaabe",
-  "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/render_stage14.py scene_b",
-  "status": "ART_APPROVED_NATIVE_PENDING"
- },
- "canvas": {
-  "width": 1920,
-  "height": 1080
- },
- "timing": {
-  "duration": 6.0,
-  "fps": 25,
-  "cadence": "match"
- },
- "render": {
-  "profile": "sprite2x",
-  "mixColor": "DARK"
- },
- "preview": {
-  "background": {
-   "kind": "base"
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.tutorial.setting-change",
+  "label": "Setting Change",
+  "category": "Tutorial Titles",
+  "source": {
+    "asset": "14_B_Setting_Change",
+    "sha256": "017d1e3516e85976917a405ee0fc9655f5cbcad72cccd2e328f29a3d72edaabe",
+    "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/render_stage14.py scene_b",
+    "status": "ART_APPROVED_NATIVE_PENDING"
   },
-  "encode": {
-   "preset": "veryfast",
-   "crf": 18
-  }
- },
- "fonts": {
-  "regular": {
-   "family": "Noto Sans Display",
-   "weight": 400,
-   "file": "NotoSansDisplay-Regular.ttf",
-   "package": "fonts-noto-core 20201225-2",
-   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  "canvas": {
+    "width": 1920,
+    "height": 1080
   },
-  "semi": {
-   "family": "Noto Sans Display",
-   "weight": 600,
-   "file": "NotoSansDisplay-SemiBold.ttf",
-   "package": "fonts-noto-extra 20201225-2",
-   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
-  }
- },
- "palette": {
-  "DARK": [
-   9,
-   12,
-   17
+  "timing": {
+    "duration": 6.0,
+    "fps": 25,
+    "cadence": "match"
+  },
+  "render": {
+    "profile": "sprite2x",
+    "mixColor": "DARK"
+  },
+  "preview": {
+    "background": {
+      "kind": "base"
+    },
+    "encode": {
+      "preset": "veryfast",
+      "crf": 18
+    }
+  },
+  "palette": {
+    "DARK": [
+      9,
+      12,
+      17
+    ],
+    "OFF": [
+      242,
+      243,
+      240
+    ],
+    "SOFT": [
+      165,
+      177,
+      187
+    ],
+    "AQUA": [
+      123,
+      209,
+      192
+    ],
+    "SAND": [
+      207,
+      181,
+      145
+    ],
+    "NEUTRAL": [
+      132,
+      149,
+      159
+    ],
+    "PANEL_FILL": [
+      25,
+      33,
+      42,
+      247
+    ],
+    "TARGET_FILL": [
+      42,
+      40,
+      35,
+      247
+    ],
+    "STEEL_LINE": [
+      77,
+      90,
+      102,
+      255
+    ],
+    "SAND_LINE": [
+      207,
+      181,
+      145,
+      255
+    ],
+    "RULE_A": [
+      98,
+      111,
+      120
+    ],
+    "RULE_B": [
+      104,
+      116,
+      122
+    ],
+    "ARROW": [
+      146,
+      158,
+      165
+    ]
+  },
+  "fonts": {
+    "semi": {
+      "family": "Noto Sans Display",
+      "weight": 600,
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "package": "fonts-noto-extra 20201225-2",
+      "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+    },
+    "regular": {
+      "family": "Noto Sans Display",
+      "weight": 400,
+      "file": "NotoSansDisplay-Regular.ttf",
+      "package": "fonts-noto-core 20201225-2",
+      "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+    }
+  },
+  "params": [
+    {
+      "id": "caption",
+      "type": "text",
+      "default": "SETTING CHANGE",
+      "label": "Caption"
+    },
+    {
+      "id": "title",
+      "type": "text",
+      "default": "Frame rate",
+      "label": "Setting name"
+    },
+    {
+      "id": "currentLabel",
+      "type": "text",
+      "default": "CURRENT",
+      "label": "Current label"
+    },
+    {
+      "id": "currentValue",
+      "type": "text",
+      "default": "30",
+      "label": "Current value"
+    },
+    {
+      "id": "newLabel",
+      "type": "text",
+      "default": "NEW",
+      "label": "New label"
+    },
+    {
+      "id": "newValue",
+      "type": "text",
+      "default": "60",
+      "label": "New value"
+    },
+    {
+      "id": "unit",
+      "type": "text",
+      "default": "FPS",
+      "label": "Unit (empty for none)"
+    }
   ],
-  "OFF": [
-   242,
-   243,
-   240
-  ],
-  "SOFT": [
-   165,
-   177,
-   187
-  ],
-  "AQUA": [
-   123,
-   209,
-   192
-  ],
-  "SAND": [
-   207,
-   181,
-   145
-  ],
-  "NEUTRAL": [
-   132,
-   149,
-   159
-  ],
-  "PANEL": [
-   25,
-   33,
-   42
-  ],
-  "STEEL": [
-   77,
-   90,
-   102
+  "actors": [
+    {
+      "id": "caption",
+      "role": "caption",
+      "type": "text",
+      "text": "{caption}",
+      "font": "semi",
+      "size": 25,
+      "color": "AQUA",
+      "at": {
+        "baseline": [
+          351.0,
+          323.5
+        ]
+      },
+      "in": {
+        "start": 0.18,
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 8
+        }
+      },
+      "out": {
+        "start": 4.8,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "title",
+      "role": "title",
+      "type": "text",
+      "text": "{title}",
+      "font": "semi",
+      "size": 75,
+      "color": "OFF",
+      "at": {
+        "baseline": [
+          345.0,
+          429.5
+        ]
+      },
+      "in": {
+        "start": 0.36,
+        "dur": 0.48,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 12
+        }
+      },
+      "out": {
+        "start": 4.8,
+        "dur": 0.32,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "rule",
+      "role": "divider",
+      "type": "line",
+      "from": [
+        345,
+        494
+      ],
+      "to": [
+        1548,
+        494
+      ],
+      "width": 1,
+      "color": "RULE_B",
+      "in": {
+        "start": 0.52,
+        "dur": 0.57,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.88,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "currentLabel",
+      "role": "valueLabel",
+      "type": "text",
+      "text": "{currentLabel}",
+      "font": "semi",
+      "size": 25,
+      "color": "NEUTRAL",
+      "at": {
+        "baseline": [
+          362.0,
+          597.5
+        ]
+      },
+      "in": {
+        "start": 0.8,
+        "dur": 0.39,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.73,
+        "dur": 0.31,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "currentValue",
+      "role": "value",
+      "type": "text",
+      "text": "{currentValue}",
+      "font": "semi",
+      "size": 116,
+      "color": "SOFT",
+      "at": {
+        "baseline": [
+          347.0,
+          719.5
+        ]
+      },
+      "in": {
+        "start": 0.96,
+        "dur": 0.45,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 13
+        }
+      },
+      "out": {
+        "start": 4.72,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "currentUnit",
+      "role": "unit",
+      "type": "text",
+      "text": "{unit}",
+      "font": "regular",
+      "size": 43,
+      "color": "NEUTRAL",
+      "at": {
+        "baseline": [
+          544.0,
+          747.0
+        ]
+      },
+      "in": {
+        "start": 1.0,
+        "dur": 0.39,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.72,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "unit != \"\""
+      },
+      "after": {
+        "actor": "currentValue",
+        "gap": 71
+      }
+    },
+    {
+      "id": "arrowShaft",
+      "role": "transition",
+      "type": "line",
+      "from": [
+        765,
+        700
+      ],
+      "to": [
+        915,
+        700
+      ],
+      "width": 2,
+      "color": "ARROW",
+      "in": {
+        "start": 1.26,
+        "dur": 0.66,
+        "ease": "smoothstep",
+        "from": {
+          "progress": 0
+        }
+      },
+      "out": {
+        "start": 4.89,
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "to": {
+          "progress": 0
+        }
+      }
+    },
+    {
+      "id": "arrowHeadUp",
+      "role": "transition",
+      "type": "line",
+      "from": [
+        902,
+        690
+      ],
+      "to": [
+        915,
+        700
+      ],
+      "width": 2,
+      "color": "SOFT",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 1.26,
+        "dur": 0.66,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.89,
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "arrowHeadDown",
+      "role": "transition",
+      "type": "line",
+      "from": [
+        902,
+        710
+      ],
+      "to": [
+        915,
+        700
+      ],
+      "width": 2,
+      "color": "SOFT",
+      "opacityMode": "mixWith",
+      "in": {
+        "start": 1.26,
+        "dur": 0.66,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.89,
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "newLabel",
+      "role": "valueLabel",
+      "type": "text",
+      "text": "{newLabel}",
+      "font": "semi",
+      "size": 25,
+      "color": "AQUA",
+      "at": {
+        "baseline": [
+          1046.0,
+          597.0
+        ]
+      },
+      "in": {
+        "start": 1.53,
+        "dur": 0.36,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.64,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "newValue",
+      "role": "value",
+      "type": "text",
+      "text": "{newValue}",
+      "font": "semi",
+      "size": 116,
+      "color": "OFF",
+      "at": {
+        "baseline": [
+          1034.0,
+          719.5
+        ]
+      },
+      "in": {
+        "start": 1.65,
+        "dur": 0.45,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0,
+          "dy": 12
+        }
+      },
+      "out": {
+        "start": 4.63,
+        "dur": 0.3,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      }
+    },
+    {
+      "id": "newUnit",
+      "role": "unit",
+      "type": "text",
+      "text": "{unit}",
+      "font": "regular",
+      "size": 43,
+      "color": "AQUA",
+      "at": {
+        "baseline": [
+          1233.0,
+          747.0
+        ]
+      },
+      "in": {
+        "start": 1.77,
+        "dur": 0.4,
+        "ease": "smoothstep",
+        "from": {
+          "opacity": 0
+        }
+      },
+      "out": {
+        "start": 4.63,
+        "dur": 0.29,
+        "ease": "smoothstep",
+        "to": {
+          "opacity": 0
+        }
+      },
+      "optional": true,
+      "enabled": {
+        "expr": "unit != \"\""
+      },
+      "after": {
+        "actor": "newValue",
+        "gap": 73
+      }
+    }
   ]
- },
- "params": [
-  {
-   "id": "caption",
-   "type": "text",
-   "default": "SETTING CHANGE",
-   "label": "Caption"
-  },
-  {
-   "id": "title",
-   "type": "text",
-   "default": "Frame rate",
-   "label": "Setting"
-  },
-  {
-   "id": "fromLabel",
-   "type": "text",
-   "default": "CURRENT",
-   "label": "Before label"
-  },
-  {
-   "id": "fromValue",
-   "type": "text",
-   "default": "30",
-   "label": "Before value"
-  },
-  {
-   "id": "fromUnit",
-   "type": "text",
-   "default": "FPS",
-   "label": "Before unit"
-  },
-  {
-   "id": "toLabel",
-   "type": "text",
-   "default": "NEW",
-   "label": "After label"
-  },
-  {
-   "id": "toValue",
-   "type": "text",
-   "default": "60",
-   "label": "After value"
-  },
-  {
-   "id": "toUnit",
-   "type": "text",
-   "default": "FPS",
-   "label": "After unit"
-  }
- ],
- "actors": [
-  {
-   "id": "caption",
-   "role": "eyebrow",
-   "type": "text",
-   "text": "{caption}",
-   "font": "semi",
-   "size": 25,
-   "color": "AQUA",
-   "at": {
-    "baseline": [
-     351.0,
-     323.5
-    ]
-   },
-   "optional": true,
-   "in": {
-    "start": 0.18,
-    "dur": 0.33,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 8
-    }
-   },
-   "out": {
-    "start": 4.8,
-    "dur": 0.32,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "title",
-   "role": "title",
-   "type": "text",
-   "text": "{title}",
-   "font": "semi",
-   "size": 75,
-   "color": "OFF",
-   "at": {
-    "baseline": [
-     345.0,
-     429.5
-    ]
-   },
-   "in": {
-    "start": 0.36,
-    "dur": 0.48,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 12
-    }
-   },
-   "out": {
-    "start": 4.8,
-    "dur": 0.32,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "rule",
-   "role": "divider",
-   "type": "line",
-   "from": [
-    345,
-    494
-   ],
-   "to": [
-    1548,
-    494
-   ],
-   "width": 1,
-   "color": [
-    104,
-    116,
-    122
-   ],
-   "in": {
-    "start": 0.52,
-    "dur": 0.57,
-    "ease": "smoothstep",
-    "from": {
-     "progress": 0
-    }
-   },
-   "out": {
-    "start": 4.88,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "to": {
-     "progress": 0
-    }
-   }
-  },
-  {
-   "id": "fromLabel",
-   "role": "beforeLabel",
-   "type": "text",
-   "text": "{fromLabel}",
-   "font": "semi",
-   "size": 25,
-   "color": "NEUTRAL",
-   "at": {
-    "baseline": [
-     362.0,
-     597.5
-    ]
-   },
-   "in": {
-    "start": 0.8,
-    "dur": 0.39,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.73,
-    "dur": 0.31,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "fromValue",
-   "role": "beforeValue",
-   "type": "text",
-   "text": "{fromValue}",
-   "font": "semi",
-   "size": 116,
-   "color": "SOFT",
-   "at": {
-    "baseline": [
-     347.0,
-     719.5
-    ]
-   },
-   "in": {
-    "start": 0.96,
-    "dur": 0.45,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 13
-    }
-   },
-   "out": {
-    "start": 4.72,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "fromUnit",
-   "role": "beforeUnit",
-   "type": "text",
-   "text": "{fromUnit}",
-   "font": "regular",
-   "size": 43,
-   "color": "NEUTRAL",
-   "at": {
-    "baseline": [
-     544.0,
-     747.0
-    ]
-   },
-   "optional": true,
-   "in": {
-    "start": 1.0,
-    "dur": 0.39,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.72,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "arrowShaft",
-   "role": "arrow",
-   "type": "line",
-   "from": [
-    765,
-    700
-   ],
-   "to": [
-    915,
-    700
-   ],
-   "width": 2,
-   "color": [
-    146,
-    158,
-    165
-   ],
-   "in": {
-    "start": 1.26,
-    "dur": 0.66,
-    "ease": "smoothstep",
-    "from": {
-     "progress": 0
-    }
-   },
-   "out": {
-    "start": 4.89,
-    "dur": 0.33,
-    "ease": "smoothstep",
-    "to": {
-     "progress": 0
-    }
-   }
-  },
-  {
-   "id": "arrowHeadTop",
-   "role": "arrow",
-   "type": "line",
-   "width": 2,
-   "color": "SOFT",
-   "opacityMode": "mixWith",
-   "in": {
-    "start": 1.26,
-    "dur": 0.66,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.89,
-    "dur": 0.33,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "from": [
-    902,
-    690
-   ],
-   "to": [
-    915,
-    700
-   ]
-  },
-  {
-   "id": "arrowHeadBottom",
-   "role": "arrow",
-   "type": "line",
-   "width": 2,
-   "color": "SOFT",
-   "opacityMode": "mixWith",
-   "in": {
-    "start": 1.26,
-    "dur": 0.66,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.89,
-    "dur": 0.33,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "from": [
-    902,
-    710
-   ],
-   "to": [
-    915,
-    700
-   ]
-  },
-  {
-   "id": "toLabel",
-   "role": "afterLabel",
-   "type": "text",
-   "text": "{toLabel}",
-   "font": "semi",
-   "size": 25,
-   "color": "AQUA",
-   "at": {
-    "baseline": [
-     1046.0,
-     597.0
-    ]
-   },
-   "in": {
-    "start": 1.53,
-    "dur": 0.36,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.64,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "toValue",
-   "role": "afterValue",
-   "type": "text",
-   "text": "{toValue}",
-   "font": "semi",
-   "size": 116,
-   "color": "OFF",
-   "at": {
-    "baseline": [
-     1034.0,
-     719.5
-    ]
-   },
-   "in": {
-    "start": 1.65,
-    "dur": 0.45,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 12
-    }
-   },
-   "out": {
-    "start": 4.63,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "toUnit",
-   "role": "afterUnit",
-   "type": "text",
-   "text": "{toUnit}",
-   "font": "regular",
-   "size": 43,
-   "color": "AQUA",
-   "at": {
-    "baseline": [
-     1233.0,
-     747.0
-    ]
-   },
-   "optional": true,
-   "in": {
-    "start": 1.77,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.63,
-    "dur": 0.29,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  }
- ]
 }

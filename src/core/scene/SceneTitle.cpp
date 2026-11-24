@@ -904,6 +904,12 @@ struct Loader
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
             a.dependsOn << d.toString();
         const QString &t = a.type;
+        // Reference-renderer additions (docs/scene-titles.md, "Progress, menu path and anchors"): the
+        // native painter does not draw them yet, so say so instead of drawing a wrong frame.
+        for (const char *field : {"ss", "fitBox", "after", "fillGroup"})
+            if (r.contains(QLatin1String(field)))
+                fail(QStringLiteral("%1: '%2' is not drawn by the native renderer yet (reference renderer only)")
+                         .arg(a.id, QLatin1String(field)));
         const QJsonObject eff = r.value(QStringLiteral("effect")).toObject();
         const QString effType = eff.value(QStringLiteral("type")).toString();
         if (effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
