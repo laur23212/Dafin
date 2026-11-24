@@ -287,6 +287,19 @@ add_test(NAME Engine COMMAND tst_engine)
 drift_copy_effects(tst_engine)
 drift_copy_transitions(tst_engine)
 
+# Dafin: alpha-correct GPU compositing (blend over transparent, crossfade, fallback, Skia edges).
+qt_add_executable(tst_alphacomposite tst_alphacomposite.cpp)
+target_include_directories(tst_alphacomposite PRIVATE ../src)
+target_link_libraries(tst_alphacomposite PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine driftcore)
+target_compile_definitions(tst_alphacomposite PRIVATE
+    DRIFT_TEST_TRANSITIONS_DIR="${CMAKE_SOURCE_DIR}/transitions")
+if(DRIFT_WITH_SKIA)
+    target_link_libraries(tst_alphacomposite PRIVATE Skia::Skia)
+    target_compile_definitions(tst_alphacomposite PRIVATE DRIFT_WITH_SKIA)
+endif()
+add_test(NAME AlphaComposite COMMAND tst_alphacomposite)
+drift_copy_transitions(tst_alphacomposite)
+
 if(DRIFT_WITH_SKIA)
     qt_add_executable(tst_skia tst_skia.cpp)
     target_include_directories(tst_skia PRIVATE ../src)
