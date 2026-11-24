@@ -17,7 +17,7 @@ from typing import Any
 
 FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
-ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat'}
+ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat', 'keycaps'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
 PROFILES = {'sprite2x', 'mask1x'}
 
@@ -196,6 +196,7 @@ class Scene:
     params: dict
     palette: dict
     actors: list = field(default_factory=list)  # resolved, flat, draw order
+    keycap_blocks: list = field(default_factory=list)  # Smart Keycaps blocks, see keycaps.py
 
     @property
     def width(self): return int(self.raw['canvas']['width'])
@@ -259,7 +260,7 @@ def resolve_params(raw: dict, overrides: dict | None) -> dict:
     return values
 
 
-def load_scene(path_or_dict, overrides: dict | None = None) -> Scene:
+def load_scene(path_or_dict, overrides: dict | None = None, measure=None) -> Scene:
     if isinstance(path_or_dict, dict):
         raw, path = copy.deepcopy(path_or_dict), None
     else:
@@ -293,6 +294,9 @@ def load_scene(path_or_dict, overrides: dict | None = None) -> Scene:
     dup = {i for i in ids if ids.count(i) > 1}
     if dup:
         raise SceneError(f'duplicate actor ids {sorted(dup)}')
+    if measure is not None and sc.keycap_blocks:
+        import keycaps  # phase B of the Smart Keycaps generator needs text metrics
+        keycaps.layout(sc, measure)
     for a in sc.actors:
         for d in a.get('dependsOn', []):
             if d not in ids:
@@ -339,6 +343,15 @@ def expand_actors(actors, sc: Scene, env=None, parent=None, out=None):
         r = _subst({k: v for k, v in a.items()}, env)
         r['_env'] = env
         r['_parent'] = parent
+        if r['type'] == 'keycaps':
+            import keycaps  # phase A of the Smart Keycaps generator (docs/scene-keycaps.md)
+            if parent is not None:
+                raise SceneError(f'{r["id"]}: a keycaps block cannot sit inside a group')
+            r['shortcut'] = format_text(r.get('shortcut', ''), env)
+            if r.get('label'):
+                r['label']['text'] = format_text(r['label'].get('text', ''), env)
+            out.extend(keycaps.expand_block(r, sc, env))
+            continue
         if r['type'] == 'text':
             r['text'] = format_text(r.get('text', ''), env)
         if 'effect' in r and r['effect'].get('type') in RESERVED_EFFECTS:
