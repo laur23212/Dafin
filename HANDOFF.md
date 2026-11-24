@@ -20,8 +20,7 @@ branch has to land after day9 (or together with it).
    - Tests: `core_values.py` dump of expanded actors + `tests/tst_scenetitle.cpp` for 13_A and 13C_U1; then the SSIM ≥ 0.97 / 0.5 px gate.
    Until then `SceneCatalog` silently skips every keycap scene (it drops scenes whose `loadScene` fails), so nothing breaks.
 2. **QML category "Keyboard Shortcuts"** in `TextAssetsTab.qml` (needs the native load first).
-3. **Real-font parity of the Mac keys**: run `test_parity.py --keycaps13c … --symbols <proof NotoSansSymbols2-Regular.ttf>`;
-   add that file and its sha256 to `scene-fonts/` and the scenes' `fonts.symbols`.
+3. (done) Real-font parity of the Mac keys: font recovered from the Debian package, in `scene-fonts/`, pinned in the scenes; 0 differences.
 4. **Creator approval** of the 18 template visuals and of a native export.
 
 ## Things to know

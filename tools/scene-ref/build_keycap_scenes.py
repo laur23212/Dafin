@@ -32,7 +32,8 @@ FONTS = {
              'package': 'fonts-noto-extra 20201225-2',
              'sha256': '9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd'},
     'symbols': {'family': 'Noto Sans Symbols 2', 'weight': 400, 'file': 'NotoSansSymbols2-Regular.ttf',
-                'package': 'fonts-noto-core 20201225-2'},  # sha256 to be added with the file (see scene-fonts/README.md)
+                'package': 'fonts-noto-core 20201225-2',
+                'sha256': '876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688'},
 }
 PALETTE = {'DARK': [9, 12, 17], 'WHITE': [242, 243, 240], 'SOFT': [165, 177, 187], 'AQUA': [123, 209, 192],
            'SILVER': [184, 194, 200], 'FAINT': [58, 69, 74]}

@@ -8,7 +8,7 @@ reproduces the approved frames, and any difference is an engine bug.
 | Part | Status |
 |---|---|
 | Key dictionary, grammar, profiles, widths, layout (`tools/scene-ref/keycaps.py`, `keycaps/key-dictionary.json`) | IMPLEMENTED, tested headless (`test_keycaps.py`, 26 tests) |
-| Parity with the approved scripts, 150 frames each | 13_A: identical bit for bit. 13C U1/U2/U3: identical with a stand-in symbol font (mechanics only). **Real-font run of the Mac keys: NOT_RUN** until `NotoSansSymbols2-Regular.ttf` is supplied (`test_parity.py --symbols`) |
+| Parity with the approved scripts, 150 frames each | 13_A and 13C U1/U2/U3: identical bit for bit, with the real `NotoSansSymbols2-Regular.ttf` (`test_parity.py --keycaps13c … --symbols scene-fonts/NotoSansSymbols2-Regular.ttf`). The hold frame of U1/U2/U3 also equals the approved `…_SOURCE_HOLD.png` of the Stage13C package, 0 differing pixels. Not compared: the encoded MP4s (lossy) |
 | 18 templates T01–T18 (`scenes/T*.scene.json`) | generated and rendered; **the creator has not approved their visuals** |
 | Native C++ mirror | NOT_RUN (see "Native" at the end) |
 
@@ -135,9 +135,8 @@ python3 -I tools/scene-ref/test_parity.py --keycaps13 <Stage13 source> --keycaps
 python3 -I tools/scene-ref/build_keycap_scenes.py --receipts <84_EXACT_MEDIA_RECEIPTS.json>
 ```
 
-`NotoSansSymbols2-Regular.ttf` comes with `fonts-noto-core` (`/usr/share/fonts/truetype/noto/`),
-which the Linux CI image installs. Its sha256 is not recorded yet: take it from the proof package and
-add it to `scene-fonts/README.md` before any scene pins it.
+`NotoSansSymbols2-Regular.ttf` (sha256 876598db…1688, `fonts-noto-core 20201225-2`) is in `scene-fonts/` and
+pinned by the Mac scenes.
 
 ## Native (not done)
 
