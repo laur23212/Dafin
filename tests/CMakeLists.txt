@@ -338,6 +338,7 @@ qt_add_executable(tst_mcp
     ../src/app/editor/appcontroller/AppControllerProject.cpp
     ../src/app/editor/appcontroller/AppControllerTextLayers.cpp
     ../src/app/editor/appcontroller/AppControllerDafin.cpp
+    ../src/app/editor/appcontroller/AppControllerScene.cpp
     ../src/app/editor/appcontroller/AppControllerSplitScreen.cpp
     ../src/app/editor/appcontroller/AppControllerSpeed.cpp
     ../src/app/editor/appcontroller/AppControllerBeatsDucking.cpp
