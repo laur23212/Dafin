@@ -24,3 +24,8 @@ All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open
 
 Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
 reserved effects, which v1 refuses.
+
+NotoSansSymbols2-Regular.ttf (fonts-noto-core) draws the Mac key glyphs `⌘ ⌥ ⇧ ⌃` of the Smart Keycaps
+(`docs/scene-keycaps.md`). It is **not here yet**: the proof's file and its sha256 have to be added
+before a scene pins it. Until then the reference renderer looks for it in the system font folders and stops with an error
+if it is missing; the tests use DejaVu Sans as a stand-in, so glyph parity is NOT_RUN.
