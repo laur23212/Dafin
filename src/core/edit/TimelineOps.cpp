@@ -260,6 +260,7 @@ TrackType trackTypeForClipType(ClipType type)
     case ClipType::Vector:
     case ClipType::Model3d:
     case ClipType::Pdf:
+    case ClipType::Scene:
         return TrackType::Shape;
     case ClipType::Adjustment:
         return TrackType::Adjustment;
@@ -1369,7 +1370,7 @@ TimeUs sourceDurationForClip(const Project &project, const Clip &clip)
 
     if (clip.type == ClipType::Image || clip.type == ClipType::Shape || clip.type == ClipType::Vector
         || clip.type == ClipType::Model3d || clip.type == ClipType::Pdf
-        || clip.type == ClipType::Adjustment)
+        || clip.type == ClipType::Scene || clip.type == ClipType::Adjustment)
         return imageClipDurationUs();
 
     return qMax(clip.srcOut, clip.timelineDuration);

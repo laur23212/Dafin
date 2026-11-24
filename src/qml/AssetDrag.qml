@@ -31,7 +31,9 @@ QtObject {
         // Dafin: a .mogrt from the Titles grid; the payload is the template file's path.
         "mogrt": "application/x-dafin-mogrt",
         // Dafin: a split screen card from Templates; the payload is the layout id.
-        "splitScreen": "application/x-dafin-split-screen"
+        "splitScreen": "application/x-dafin-split-screen",
+        // Dafin: a Scene Title from Titles › Scenes; the payload is the scene id.
+        "sceneTitle": "application/x-dafin-scene-title"
     })
     readonly property string labelKey: "application/x-drift-asset-label"
     // Dafin: an online card not downloaded yet (stock video, music, a sound effect). The mime data
@@ -65,7 +67,7 @@ QtObject {
 
     // Keys of the kinds that create a clip rather than act on one.
     function placeableKeys() {
-        return ["shape", "sticker", "emoji", "textStyle", "adjustment", "mogrt", "splitScreen"].map(k => mimeKeys[k])
+        return ["shape", "sticker", "emoji", "textStyle", "adjustment", "mogrt", "splitScreen", "sceneTitle"].map(k => mimeKeys[k])
     }
 
     function kindFromKeys(keys) {

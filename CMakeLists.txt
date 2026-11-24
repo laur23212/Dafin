@@ -802,6 +802,11 @@ add_library(driftcore STATIC
     src/core/project/sources/MogrtSource.cpp
     src/core/project/sources/PdfSource.h
     src/core/project/sources/PdfSource.cpp
+    src/core/project/sources/SceneSource.h
+    src/core/scene/SceneTitle.h
+    src/core/scene/SceneTitle.cpp
+    src/core/scene/SceneCatalog.h
+    src/core/scene/SceneCatalog.cpp
     src/core/base/ZipArchive.h
     src/core/base/ZipArchive.cpp
     src/core/project/sources/DotLottie.h
@@ -868,6 +873,14 @@ qt_add_resources(driftcore "drift_text_styles"
     PREFIX "/text-styles"
     BASE "${CMAKE_SOURCE_DIR}/presets/text-styles"
     FILES ${DAFIN_TEXT_STYLE_FILES}
+)
+
+# Dafin: the built-in Scene Titles (docs/scene-titles.md), the ports tools/scene-ref renders too.
+file(GLOB DAFIN_SCENE_TITLE_FILES CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/tools/scene-ref/scenes/*.scene.json")
+qt_add_resources(driftcore "dafin_scene_titles"
+    PREFIX "/scene-titles"
+    BASE "${CMAKE_SOURCE_DIR}/tools/scene-ref/scenes"
+    FILES ${DAFIN_SCENE_TITLE_FILES}
 )
 
 # Dafin: the built-in editing skill for AI Assist (Taste Engine + opt-in Creator Style, text only, no frames).
@@ -1229,6 +1242,8 @@ if(WIN32)
     target_link_libraries(driftengine PRIVATE d3d11 dxgi d3dcompiler opengl32)
 endif()
 target_compile_definitions(driftengine PRIVATE DRIFT_VERSION="${DRIFT_VERSION_STRING}")
+# Dafin: Scene Titles find their proofs' exact font files in the source tree too (dev and tests).
+target_compile_definitions(driftengine PRIVATE DAFIN_SCENE_FONTS_SOURCE_DIR="${CMAKE_SOURCE_DIR}/scene-fonts")
 
 if(WITH_BGREMOVAL)
     target_include_directories(driftengine PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -1247,6 +1262,8 @@ if(DRIFT_WITH_SKIA)
         src/engine/render2d/skia/SkiaShading.cpp
         src/engine/render2d/shapes/SkiaShapePainter.h
         src/engine/render2d/shapes/SkiaShapePainter.cpp
+        src/engine/render2d/scene/ScenePainter.h
+        src/engine/render2d/scene/ScenePainter.cpp
         src/engine/render2d/text/fonts/SkiaFonts.h
         src/engine/render2d/text/fonts/SkiaFonts.cpp
         src/engine/render2d/text/fonts/SkiaFontCollection.h
@@ -1329,6 +1346,8 @@ qt_add_executable(drift
     src/ui/imageproviders/clippreview/ClipPreviewImageProvider.cpp
     src/ui/imageproviders/TextStylePreviewImageProvider.h
     src/ui/imageproviders/TextStylePreviewImageProvider.cpp
+    src/ui/imageproviders/SceneTitlePreviewImageProvider.h
+    src/ui/imageproviders/SceneTitlePreviewImageProvider.cpp
     src/ui/imageproviders/ShapePreviewImageProvider.h
     src/ui/imageproviders/ShapePreviewImageProvider.cpp
     src/ui/imageproviders/LottieFramePreviewImageProvider.h
@@ -1515,6 +1534,7 @@ target_sources(driftapp PRIVATE
     src/app/editor/appcontroller/AppControllerTextLayers.cpp
     src/app/editor/appcontroller/AppControllerDafin.cpp
     src/app/editor/appcontroller/AppControllerSplitScreen.cpp
+    src/app/editor/appcontroller/AppControllerScene.cpp
     src/app/editor/appcontroller/AppControllerSpeed.cpp
     src/app/editor/appcontroller/AppControllerBeatsDucking.cpp
     src/app/editor/appcontroller/AppControllerPresetPreview.cpp
@@ -1706,6 +1726,8 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         src/app/HeadlessApp.h
         src/app/HeadlessApp.cpp
         src/app/TemplateTool.cpp
+        src/app/SceneTool.h
+        src/app/SceneTool.cpp
         src/app/workers/ExportWorker.h
         src/app/workers/ExportWorker.cpp
     )
@@ -2445,6 +2467,7 @@ qt_add_qml_module(drift
         src/qml/components/assets/TransitionPresetCard.qml
         src/qml/components/assets/TextStyleUserCard.qml
         src/qml/components/assets/TextStylePackCard.qml
+        src/qml/components/assets/SceneTitleCard.qml
         src/qml/components/assets/StockAudioRow.qml
         src/qml/components/assets/StickerPresetCard.qml
         src/qml/components/assets/ShapePresetCard.qml
@@ -3628,6 +3651,16 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
     add_custom_command(TARGET drift POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/title-fonts" "${_dafin_fonts_dest}"
         COMMENT "Copy the title-template fonts next to Dafin")
+    # Dafin: the Scene Titles' exact proof fonts (scene-fonts/README.md), apart from title-fonts so
+    # FontCatalog does not list a second Noto Serif. ScenePainter looks in <appDir>/scene-fonts.
+    if(APPLE)
+        set(_dafin_scene_fonts_dest "$<TARGET_BUNDLE_CONTENT_DIR:drift>/Resources/scene-fonts")
+    else()
+        set(_dafin_scene_fonts_dest "$<TARGET_FILE_DIR:drift>/scene-fonts")
+    endif()
+    add_custom_command(TARGET drift POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/scene-fonts" "${_dafin_scene_fonts_dest}"
+        COMMENT "Copy the Scene Title fonts next to Dafin")
 endif()
 
 # Desktop packaging, the headless CLI tools and the QTest binaries. None of it applies to an
@@ -3671,6 +3704,8 @@ else()
     # supersede the bundled copies.
     install(DIRECTORY ${CMAKE_SOURCE_DIR}/title-fonts/
             DESTINATION ${CMAKE_INSTALL_BINDIR}/fonts COMPONENT drift)
+    install(DIRECTORY ${CMAKE_SOURCE_DIR}/scene-fonts/
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/scene-fonts COMPONENT drift)
     foreach(_assetdir effects transitions effect-templates audio-effects looks)
         if(DRIFT_BUNDLE_CORE_PACKAGES_ONLY)
             string(TOUPPER "${_assetdir}" _upper)

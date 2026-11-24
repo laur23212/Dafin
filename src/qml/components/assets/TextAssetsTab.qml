@@ -25,6 +25,9 @@ Item {
     }
     readonly property var builtinPresets: presets.filter(p => p.origin !== "installed" && p.origin !== "linked")
     readonly property var installedPresets: presets.filter(p => p.origin === "installed")
+    // Dafin: Scene Titles (docs/scene-titles.md), built-in ports and installed files.
+    property int scenesTick: 0
+    readonly property var scenes: scenesTick >= 0 ? EditorState.sceneTitles() : []
     // Dafin: Filmora titles converted from linked folders (Settings › Asset Providers).
     readonly property var linkedPresets: presets.filter(p => p.origin === "linked")
 
@@ -82,6 +85,7 @@ Item {
         function onUserTextPresetsChanged() { root.userPresetsTick++ }
         function onTextTemplatesChanged() { root.templatesTick++ }
         function onTemplateCategoriesChanged() { root.categoriesTick++ }
+        function onSceneTitlesChanged() { root.scenesTick++ }
     }
 
     // Titles from linked folders arrive after a scan, without the editor being told.
@@ -114,6 +118,19 @@ Item {
         if (result.ok === true)
             root.section = "installed"
         if (result.ok !== true || (result.issues || []).length > 0)
+            reportDialog.openWith(result)
+    }
+
+    // Dafin: a Scene Title file (format "dafin.scene-title"), checked with its fonts first.
+    readonly property string sceneFileFilter: qsTr("Dafin scene title (*.json)")
+    function installScene() {
+        const url = FileDialogs.openFile(qsTr("Install a scene title"), [root.sceneFileFilter])
+        if (url.toString().length === 0)
+            return
+        const result = EditorState.installSceneTitle(url)
+        if (result.ok === true)
+            root.section = "scenes"
+        else
             reportDialog.openWith(result)
     }
 
@@ -163,6 +180,15 @@ Item {
 
             ThemedChip {
                 anchors.verticalCenter: parent.verticalCenter
+                visible: root.scenes.length > 0
+                text: qsTr("Scenes · %1").arg(root.scenes.length)
+                variant: "outline"
+                selected: root.section === "scenes"
+                onClicked: root.section = "scenes"
+            }
+
+            ThemedChip {
+                anchors.verticalCenter: parent.verticalCenter
                 text: root.allUserPresets.length > 0 ? qsTr("My templates · %1").arg(root.allUserPresets.length)
                                                      : qsTr("My templates")
                 variant: "outline"
@@ -188,6 +214,11 @@ Item {
                 text: qsTr("Install a title template (.json)…")
                 icon.name: Theme.icons.folderInput
                 onTriggered: root.installTemplate()
+            }
+            ThemedMenuItem {
+                text: qsTr("Install a scene title (.json)…")
+                icon.name: Theme.icons.folderInput
+                onTriggered: root.installScene()
             }
             ThemedMenuItem {
                 text: qsTr("Import a saved template (.drifttextstyle)…")
@@ -392,6 +423,34 @@ Item {
             installed: true
             onAdded: root.added()
             onDeleteRequested: (preset) => EditorState.uninstallTextTemplate(preset.id)
+        }
+    }
+
+    // Dafin: Titles › Scenes. One card per Scene Title; each lands as one clip.
+    GridView {
+        id: sceneGrid
+        readonly property int columnCount: 2
+        readonly property real cardSize: Math.floor(width / columnCount) - Theme.assetCardGap
+        x: Theme.pagePadding
+        y: root.topArea + Theme.spacingSm
+        width: parent.width - Theme.pagePadding * 2 + Theme.assetCardGap
+        height: parent.height - y
+        bottomMargin: Theme.spacing3xl
+        clip: true
+        reuseItems: true
+        boundsBehavior: Flickable.StopAtBounds
+        acceptedButtons: Theme.touchUi ? Qt.LeftButton : Qt.NoButton
+        ScrollBar.vertical: AppScrollBar { }
+        cellWidth: Math.floor(width / columnCount)
+        cellHeight: Math.round(cardSize * 0.5625) + Theme.spacingSm
+                    + Math.ceil(labelMetrics.height) + Theme.assetCardGap
+        visible: root.section === "scenes" && !root.searching
+        model: root.scenes
+
+        delegate: SceneTitleCard {
+            cardSize: sceneGrid.cardSize
+            onAdded: root.added()
+            onDeleteRequested: (scene) => EditorState.uninstallSceneTitle(scene.id)
         }
     }
 

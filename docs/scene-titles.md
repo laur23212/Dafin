@@ -7,14 +7,16 @@ read that file:
 - `tools/scene-ref/render.py` is the **reference renderer** (Python: PIL + numpy + OpenCV). ChatGPT
   writes and checks titles with it, and it is the source of truth for every pixel of a ported
   design.
-- the **native renderer** in Dafin, planned for a later chat. Its job is to produce the same
-  frames on native alpha layers.
+- the **native renderer** in Dafin (`src/engine/render2d/scene/ScenePainter.cpp`, loader
+  `src/core/scene/SceneTitle.cpp`). It produces the same frames on native alpha layers, in one Skia
+  pass per frame.
 
 | Part | Status |
 |---|---|
 | Format v1 (this document) | written |
 | Reference renderer | IMPLEMENTED, checked against the approved scripts: identical bit for bit, every frame of the two ports (see Validation) |
-| Native renderer | NOT_RUN (not written yet) |
+| Native renderer | NATIVE_TESTED headless: both ports pass the gate against their approved MP4s (see Native renderer) |
+| Dafin editor integration (clip type, library, drop, CLI) | IMPLEMENTED_UNTESTED (built and run only in CI) |
 | Creator approval of any native export | none yet |
 
 The approved design is frozen. When the native output differs from the reference at default
@@ -381,5 +383,44 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
     frame.
   - The bar layout for `totalSteps ≠ 5` was never designed. The port keeps the 154 px pitch, so the
     row grows or shrinks. **Creator decision needed** before this is called done.
-- Statuses: both ports are IMPLEMENTED_UNTESTED natively (the native renderer is NOT_RUN). They
-  count as approved only after the creator reviews a native export.
+- Statuses: both ports are NATIVE_TESTED headless (below). They count as approved only after the
+  creator reviews a native export from Dafin.
+
+## Native renderer
+
+- **Clip.** A Scene Title is one clip, `ClipType::Scene`, on a Graphic track. The clip embeds the
+  scene file and the changed param values (`SceneSource`), so a project opens anywhere and never
+  changes when the library's copy is updated. Project format 24.
+- **Drawing.** One `VectorPainter` per frame. It draws on a premultiplied, transparent layer, so
+  there is no opaque rectangle, and it works the same on the GPU and on the CPU raster (the
+  low-spec path; no shader). Fonts, text sprites and masks, and fitted widths are built once per
+  document + params. A frame keeps the same cache key as long as no channel moves, so the hold is
+  drawn once.
+- **Text, both profiles.** HarfBuzz shaping with the font's unhinted (fractional) advances, each
+  glyph on a whole pixel, the outline hinted, as PIL does. sprite2x has kerning on and ligatures
+  off (PIL's basic layout reads GPOS pair kerning through FreeType). mask1x has HarfBuzz's default
+  features (RAQM). sprite2x draws at 2× and reduces with Pillow's exact Lanczos (premultiplied,
+  fixed point), so the 2× grid sits where the proof's did.
+- **Lines.** cv2's `LINE_AA` is emulated as measured. A width t ≥ 2 covers 2·⌈t/2⌉+1 whole pixels
+  plus a 0.22 px ramp on each side; t = 1 covers 1.35 px. Ends are round, and about 0.25 px shorter
+  on vertical lines.
+- **Fonts.** The exact files ship in `scene-fonts/` (OFL), apart from `title-fonts/`.
+- **Timing.** `scene::designTime` maps clip time to design time: cadence first, then stretch.
+- **Measured** with `dafin --render-scene <scene> --frames all --out n/` and
+  `tools/scene-ref/native_compare.py --native n/ --ref <approved mp4>`:
+
+  | Port | min actor SSIM | max position error |
+  |---|---|---|
+  | 15_A_Step_Focus | 0.9787 | 0.458 px |
+  | 03b_LT_B_25 | 0.9913 | 0.111 px |
+
+- **CI.** `tests/tst_scenetitle.cpp` checks three things:
+  - the loader against `scene_core.py`, value for value (`tools/scene-ref/core_values.py`);
+  - the native frames against the reference frames in `tests/data/scene-titles/`, at the gate;
+  - fitTo, cadence, saving, and the loader's refusals.
+- **Still open:**
+  - the inspector panel for the params (C6). The API is ready: `sceneParams`, `setSceneParam`, one
+    undo step each;
+  - the rounded shapes, which no port uses yet. They are drawn as Skia vectors, not measured
+    against PIL;
+  - other aspect ratios, which are fitted by height and centred.

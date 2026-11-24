@@ -302,6 +302,14 @@ if(DRIFT_WITH_SKIA)
     target_link_libraries(tst_vector PRIVATE Qt6::Test Qt6::Gui Qt6::OpenGL driftengine driftcore)
     target_compile_definitions(tst_vector PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
     add_test(NAME Vector COMMAND tst_vector)
+
+    # Dafin: Scene Titles, loader and native renderer against tools/scene-ref (headless, CPU raster).
+    qt_add_executable(tst_scenetitle tst_scenetitle.cpp)
+    target_include_directories(tst_scenetitle PRIVATE ../src)
+    target_link_libraries(tst_scenetitle PRIVATE Qt6::Test Qt6::Gui driftengine driftcore)
+    target_compile_definitions(tst_scenetitle PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+        DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+    add_test(NAME SceneTitle COMMAND tst_scenetitle)
 endif()
 
 qt_add_executable(tst_mcp

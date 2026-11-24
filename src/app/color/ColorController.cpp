@@ -42,6 +42,7 @@ bool isVisualClip(const drift::Clip &clip)
     case drift::ClipType::Model3d:
     case drift::ClipType::Pdf:
     case drift::ClipType::Composite:
+    case drift::ClipType::Scene:
         return true;
     default:
         return false;

@@ -331,6 +331,8 @@ QJsonObject clipToJson(const Clip &clip)
         json.insert(QStringLiteral("model3d"), clip.model3d.toJson());
     if (clip.type == ClipType::Pdf)
         json.insert(QStringLiteral("pdf"), clip.pdf.toJson());
+    if (clip.type == ClipType::Scene)
+        json.insert(QStringLiteral("scene"), clip.scene.toJson());
     if (!clip.mogrt.isEmpty())
         json.insert(QStringLiteral("mogrt"), clip.mogrt.toJson());
     if (!clip.duckWindows.isEmpty()) {
@@ -441,6 +443,7 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.vector = VectorSource::fromJson(object.value(QStringLiteral("vector")).toObject());
     clip.model3d = Model3dSource::fromJson(object.value(QStringLiteral("model3d")).toObject());
     clip.pdf = PdfSource::fromJson(object.value(QStringLiteral("pdf")).toObject());
+    clip.scene = SceneSource::fromJson(object.value(QStringLiteral("scene")).toObject());
     clip.mogrt = MogrtSource::fromJson(object.value(QStringLiteral("mogrt")).toObject());
     {
         const QJsonObject duck = object.value(QStringLiteral("dafinDuck")).toObject();
@@ -1500,6 +1503,9 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
     // Version 22 moved the 3D world to After Effects' convention (migrateWorldTo22 above).
     // Version 23 (Dafin) made titles readable fast on short clips: In + Out fit in half the clip.
     // Text from older files keeps its authored timing (keepAuthoredTextTiming above).
+    // Version 24 (Dafin) added ClipType::Scene, the Scene Title clip (docs/scene-titles.md). Nothing to
+    // migrate; the bump is a gate, as for versions 6 and 9. An older build would load those clips as
+    // videos with no path.
     // Version 20 added stabilize tracker targets. Nothing to migrate; the bump is a gate, as for
     // versions 6 and 9. An older build would drop the targets and leave the clip unlocked.
 

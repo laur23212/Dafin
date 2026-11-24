@@ -32,6 +32,7 @@
 #include "core/edit/TimelineOps.h"
 #include "core/project/Transition.h"
 #ifdef DRIFT_WITH_SKIA
+#include "engine/render2d/scene/ScenePainter.h"
 #include "engine/render2d/shapes/SkiaShapePainter.h"
 #include "engine/render2d/text/SkiaTextPainter.h"
 #endif
@@ -1365,6 +1366,29 @@ GpuLayer buildGpuLayer(const drift::Project &project, const drift::Clip &clip,
         // start offset and folds by the loop mode.
         request.animUs = clip.timelineToSourceUs(timelineUs) - clip.srcIn;
         layer.vector = drift::vec::makePainter(request);
+        layer.effects = resolvedClipEffects(clip, clipTimeUs);
+    } else if (clip.type == drift::ClipType::Scene) {
+#ifdef DRIFT_WITH_SKIA
+        // Dafin: a Scene Title is one Skia pass per frame (engine/render2d/scene). Entrances keep to
+        // the clip start and exits to its end; the hold stretches (scene::timeMap), and a scene that
+        // steps at 25/30 fps samples its motion at that rate inside a faster project.
+        const drift::skia::SceneBuild build = drift::skia::sceneRenderer(clip.scene.document, clip.scene.params);
+        if (build.renderer) {
+            const drift::scene::Scene &sc = drift::skia::sceneOf(*build.renderer);
+            const double designT = drift::scene::designTime(
+                sc, drift::usToSeconds(clip.timelineDuration), projectFps,
+                drift::usToSeconds(qMax<drift::TimeUs>(0, clipTimeUs)));
+            layer.vector = drift::skia::makeScenePainter(build.renderer, designT, QSize(layoutW, layoutH));
+        } else {
+            static QMutex warnedMutex;
+            static QSet<QString> warned;
+            const QMutexLocker lock(&warnedMutex);
+            if (!warned.contains(build.error)) {
+                warned.insert(build.error);
+                qWarning("scene title %s: %s", qPrintable(clip.scene.sceneId()), qPrintable(build.error));
+            }
+        }
+#endif
         layer.effects = resolvedClipEffects(clip, clipTimeUs);
     } else if (clip.type == drift::ClipType::Pdf) {
         layer.source = drift::renderPdfViewport(

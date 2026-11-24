@@ -169,6 +169,11 @@ QStringList inspectorCaps(const drift::Clip &clip, drift::TrackType trackType)
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
              << QStringLiteral("pdf");
         break;
+    case ClipType::Scene:
+        // Dafin: a Scene Title; "scene" is its Template tab (the scene's params).
+        caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("animatable")
+             << QStringLiteral("scene");
+        break;
     case ClipType::Model3d:
         caps << QStringLiteral("transformable") << QStringLiteral("blendable") << QStringLiteral("model3d");
         break;
@@ -329,6 +334,7 @@ bool clipAcceptsPreviewTransform(const drift::Clip &clip)
 {
     return clip.type == drift::ClipType::Shape || clip.type == drift::ClipType::Image
            || clip.type == drift::ClipType::Vector || clip.type == drift::ClipType::Model3d
+           || clip.type == drift::ClipType::Scene
            || clip.type == drift::ClipType::Pdf
            || clip.type == drift::ClipType::Text || clip.type == drift::ClipType::Subtitle
            || clip.type == drift::ClipType::Video || clip.type == drift::ClipType::Composite

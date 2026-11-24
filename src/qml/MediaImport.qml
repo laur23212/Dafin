@@ -55,6 +55,17 @@ QtObject {
                     Toasts.error(qsTr("That title template can't be installed yet. Use Titles › Install a title template… to see the report.")
                                  + (report.length > 0 ? "\n" + report[0] : ""))
                 }
+            } else if (kind === "scene") {
+                // Dafin: a Scene Title joins Titles › Scenes.
+                const result = EditorState.installSceneTitle(urls[i])
+                if (result.ok === true) {
+                    Toasts.success(qsTr("“%1” is in Titles › Scenes.").arg(result.label || ""))
+                    landed = "scenes"
+                } else {
+                    const report = String(result.report || "").split("\n").filter(l => l.trim().length > 1)
+                    Toasts.error(qsTr("That scene title can't be installed yet. Use Titles › Install a scene title… to see the report.")
+                                 + (report.length > 1 ? "\n" + report[1] : ""))
+                }
             } else if (kind === "style") {
                 if (EditorState.importUserTextPreset(urls[i])) {
                     if (landed !== "installed")

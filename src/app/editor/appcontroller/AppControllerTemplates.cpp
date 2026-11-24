@@ -591,6 +591,9 @@ QString AppController::titleFileKind(const QUrl &fileUrl) const
     const QJsonObject o = QJsonDocument::fromJson(file.readAll()).object();
     if (o.isEmpty() || o.contains(QStringLiteral("layers")))
         return {};
+    // Dafin: a Scene Title (docs/scene-titles.md) goes to Titles › Scenes, not the template checker.
+    if (o.value(QStringLiteral("format")).toString() == QLatin1String("dafin.scene-title"))
+        return QStringLiteral("scene");
     if (o.contains(QStringLiteral("format")) && o.value(QStringLiteral("id")).isString()
         && !o.value(QStringLiteral("id")).toString().startsWith(QLatin1String("user:")))
         return QStringLiteral("template");

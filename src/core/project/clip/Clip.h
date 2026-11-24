@@ -16,6 +16,7 @@
 #include "core/project/sources/Model3dSource.h"
 #include "core/project/sources/MogrtSource.h"
 #include "core/project/sources/PdfSource.h"
+#include "core/project/sources/SceneSource.h"
 #include "core/project/sources/VectorSource.h"
 
 #include <QList>
@@ -28,7 +29,8 @@ namespace drift {
 // Vector is a Lottie animation or SVG document, Model3d a glTF binary and Pdf a PDF; like Image and Shape
 // they have no media file behind their source range, so they are synthetic and unbounded.
 // Composite plays a nested timeline (Project::sequenceTracks(sequenceId)) as its source.
-enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Pdf, Composite };
+// Scene (Dafin) is a Scene Title: one clip with several actors (docs/scene-titles.md), synthetic too.
+enum class ClipType { Video, Audio, Image, Text, Subtitle, Shape, Adjustment, Vector, Model3d, Pdf, Composite, Scene };
 
 QString clipTypeToString(ClipType type);
 ClipType clipTypeFromString(const QString &type);
@@ -111,6 +113,7 @@ struct Clip
     VectorSource vector;   // only meaningful when type == Vector
     Model3dSource model3d; // only meaningful when type == Model3d
     PdfSource pdf;         // only meaningful when type == Pdf
+    SceneSource scene;     // Dafin: only meaningful when type == Scene
     // Dafin: set on a video clip that plays a rendered Motion Graphics Template; the template and
     // its editable values. Empty on every other clip.
     MogrtSource mogrt;

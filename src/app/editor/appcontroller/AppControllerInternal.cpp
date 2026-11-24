@@ -856,7 +856,7 @@ bool isSyntheticTimelineClip(drift::ClipType type)
     return type == drift::ClipType::Text || type == drift::ClipType::Subtitle
            || type == drift::ClipType::Shape || type == drift::ClipType::Image
            || type == drift::ClipType::Vector || type == drift::ClipType::Model3d
-           || type == drift::ClipType::Pdf
+           || type == drift::ClipType::Pdf || type == drift::ClipType::Scene
            || type == drift::ClipType::Adjustment;
 }
 

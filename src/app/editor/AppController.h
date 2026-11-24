@@ -1108,6 +1108,15 @@ public:
     // ChatGPT writes them: "format" + "id"), "style" (a text style exported from My templates:
     // "style" without "format"), or "" (anything else, a Lottie included).
     Q_INVOKABLE QString titleFileKind(const QUrl &fileUrl) const;
+    // Dafin: Scene Titles (docs/scene-titles.md; AppControllerScene.cpp).
+    Q_INVOKABLE QVariantList sceneTitles() const;
+    Q_INVOKABLE QVariantMap checkSceneTitleFile(const QUrl &fileUrl) const;
+    Q_INVOKABLE QVariantMap installSceneTitle(const QUrl &fileUrl);
+    Q_INVOKABLE bool uninstallSceneTitle(const QString &sceneId);
+    Q_INVOKABLE QVariantMap addSceneTitleClip(const QString &sceneId, double atSeconds = -1.0, int trackIndex = -1);
+    Q_INVOKABLE QVariantList sceneParams(int trackIndex, int clipIndex) const;
+    Q_INVOKABLE QVariantMap setSceneParam(int trackIndex, int clipIndex, const QString &paramId, const QVariant &value);
+    Q_INVOKABLE bool resetSceneParams(int trackIndex, int clipIndex);
     Q_INVOKABLE bool uninstallTextTemplate(const QString &templateId);
     Q_INVOKABLE void copyPlainTextToClipboard(const QString &text) const;
     Q_INVOKABLE bool renameUserTextPreset(const QString &presetId, const QString &label);
@@ -2060,6 +2069,7 @@ signals:
     void assetGroupsChanged();
     void userTextPresetsChanged();
     void textTemplatesChanged();
+    void sceneTitlesChanged();
     void templateCategoriesChanged();
     void userFontsChanged();
     void userEffectPresetsChanged();

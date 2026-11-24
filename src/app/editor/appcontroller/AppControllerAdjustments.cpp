@@ -1,3 +1,4 @@
+#include "core/scene/SceneCatalog.h"
 #include "app/editor/appcontroller/AppControllerInternal.h"
 #include "app/editor/sessions/MogrtTitleController.h"
 #include "engine/packages/effects/EffectCatalog.h"
@@ -949,6 +950,9 @@ std::optional<drift::ClipType> placeableClipType(const QString &kind)
     // Dafin: a split screen template becomes a composite of its cells (AppControllerSplitScreen.cpp).
     if (kind == QLatin1String("splitScreen"))
         return drift::ClipType::Composite;
+    // Dafin: a Scene Title from Titles › Scenes; the payload is the scene id.
+    if (kind == QLatin1String("sceneTitle"))
+        return drift::ClipType::Scene;
     return std::nullopt;
 }
 
@@ -1062,8 +1066,12 @@ QVariantMap AppController::planAssetDrop(const QString &kind, const QString &pay
     }
 
     if (const std::optional<drift::ClipType> type = placeableClipType(kind)) {
+        const std::optional<drift::scene::SceneEntry> sceneEntry =
+            kind == QLatin1String("sceneTitle") ? drift::scene::SceneCatalog::instance().find(payload) : std::nullopt;
         const double duration = kind == QLatin1String("mogrt")
                                     ? m_mogrt->templateDurationSeconds(payload)
+                                : sceneEntry ? sceneEntry->document.value(QStringLiteral("timing")).toObject()
+                                                   .value(QStringLiteral("duration")).toDouble(6.0)
                                     : drift::usToSeconds(*type == drift::ClipType::Text
                                                              ? drift::kTextClipDurationUs
                                                              : drift::imageClipDurationUs());
@@ -1184,6 +1192,8 @@ QVariantMap AppController::dropAsset(const QString &kind, const QString &payload
             m_mogrt->addTemplate(payload, at, target, label);
         else if (kind == QLatin1String("splitScreen"))
             insertSplitScreen(payload, target, at);
+        else if (kind == QLatin1String("sceneTitle"))
+            addSceneTitleClip(payload, at, target);
         if (newTrack)
             m_mcpController->endBatch(tr("Add to new track"), true);
         return plan;

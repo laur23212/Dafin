@@ -8,6 +8,8 @@ the short guide for title authors is `docs/scene-titles-chatgpt.md`.
 | `scene_core.py` | Loading, params, expressions, easing, timing and stretching, constraints (no pixels) |
 | `render.py` | `render` (alpha PNG + MP4 preview), `validate`, `anchor` (script position → baseline) |
 | `compare.py` | Reference MP4 vs render: per-actor SSIM / PSNR / max difference / position, CSV + contact sheet |
+| `native_compare.py` | Dafin's native frames (`dafin --render-scene … --frames all`) over the same background and encode, then compare.py against the approved MP4 |
+| `core_values.py` | Value dump of the loader, for the native test's `tests/data/scene-titles/core_*.txt` |
 | `calibrate.py` | Runs compare on the faithful render and on deliberate errors, to set the thresholds |
 | `test_scene_ref.py` | Headless self-tests; pixel tests skip when the proofs' fonts are missing |
 | `test_parity.py` | Bit-exact check of the ports against the original scripts (needs the design archive) |

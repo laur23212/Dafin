@@ -21,6 +21,7 @@
 #if !defined(Q_OS_ANDROID) && !defined(Q_OS_WASM)
 #include "app/HeadlessApp.h"
 #include "app/TemplateTool.h"
+#include "app/SceneTool.h"
 #include "app/workers/ExportWorker.h"
 #include "app/mcp/transport/McpStdio.h"
 #endif
@@ -72,6 +73,7 @@
 #include "app/diagnostics/DiagnosticsController.h"
 #include "app/online/library/ThumbnailCache.h"
 #include "ui/imageproviders/TextStylePreviewImageProvider.h"
+#include "ui/imageproviders/SceneTitlePreviewImageProvider.h"
 #include "playback/stats/PerfLog.h"
 #include "ui/color/ColorWheelPad.h"
 #include "ui/color/CurvePlot.h"
@@ -640,6 +642,8 @@ int main(int argc, char *argv[])
         if (qstrcmp(argv[i], "--validate-template") == 0 || qstrcmp(argv[i], "--template-guide") == 0
             || qstrcmp(argv[i], "--template-preview") == 0 || qstrcmp(argv[i], "--check-template") == 0)
             return drift::runTemplateTool(argc, argv);
+        if (qstrcmp(argv[i], "--render-scene") == 0)
+            return drift::runSceneTool(argc, argv);
     }
     // --headless is checked first: it also accepts --mcp-stdio, as the transport to serve
     // rather than as a request to attach to an editor running elsewhere.
@@ -1039,6 +1043,7 @@ int main(int argc, char *argv[])
     engine.addImageProvider(QStringLiteral("clippreview"), new ClipPreviewImageProvider());
     engine.addImageProvider(QStringLiteral("multicam"), new MulticamImageProvider());
     engine.addImageProvider(QStringLiteral("textstyle"), new TextStylePreviewImageProvider());
+    engine.addImageProvider(QStringLiteral("scenetitle"), new SceneTitlePreviewImageProvider());
     engine.addImageProvider(QStringLiteral("shape"), new ShapePreviewImageProvider());
     engine.addImageProvider(QStringLiteral("lottieframe"), new LottieFramePreviewImageProvider());
     engine.addImageProvider(QStringLiteral("assetthumb"),
