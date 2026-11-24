@@ -1,0 +1,43 @@
+{
+  "format": 1,
+  "id": "string-blur-block",
+  "label": "String Blur (whole block)",
+  "category": "basic",
+  "sampleText": "STRING BLUR",
+  "slots": [
+    "in",
+    "out"
+  ],
+  "order": 411,
+  "defaults": {
+    "unit": "block",
+    "order": "forward",
+    "stagger": 0.0,
+    "duration": 0.8,
+    "ease": "linear"
+  },
+  "params": [
+    {
+      "id": "blur",
+      "type": "scalar",
+      "label": "Blur strength",
+      "unit": "px",
+      "min": 0,
+      "max": 48,
+      "step": 1,
+      "default": 24
+    }
+  ],
+  "animators": [
+    {
+      "name": "Synchronized alpha + soft focus",
+      "selectors": [
+        "stagger"
+      ],
+      "props": {
+        "opacity": 0,
+        "blur": "{blur}"
+      }
+    }
+  ]
+}

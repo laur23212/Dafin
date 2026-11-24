@@ -173,6 +173,7 @@ private slots:
     void textStyleMigratesFromV6();
     void textStyleV7RoundTrip();
     void textAnimationPresetsAreWellFormed();
+    void textStringBlurIsSynchronisedAndSymmetric();
     void textScatterGivesEachFragmentItsOwnOffset();
     void legacyTextAnimationParity();
     void textKeyframeKeysAreDynamic();
@@ -7702,6 +7703,90 @@ void CoreTest::textAnimationPresetsAreWellFormed()
     QCOMPARE(flicker.animators[0].props.opacity.at(0.0), 0.0);
     QCOMPARE(flicker.animators[0].props.opacity.at(0.19), 0.0);
     QCOMPARE(flicker.animators[0].props.opacity.at(1.0), 100.0);
+}
+
+// String Blur (Dafin): In and Out as separate slots, no implicit stagger, blur and opacity driven
+// by the same coverage (so they cannot drift apart), Out the exact time-reverse of In, nothing
+// else in the pose touched, and the fitted timing leaves the text readable on short clips.
+void CoreTest::textStringBlurIsSynchronisedAndSymmetric()
+{
+    using namespace drift;
+    using namespace drift::textanim;
+    Domains domains;
+    const QList<FragmentInfo> frags = lineFragments(&domains);
+    constexpr TimeUs window = 3'000'000;
+    constexpr double blurPx = 24.0; // the presets' default Blur strength
+
+    for (const char *rawId : {"string-blur-characters", "string-blur-block"}) {
+        const QString id = QLatin1String(rawId);
+        const auto preset = TextAnimationPresetCatalog::instance().presetForId(id);
+        QVERIFY2(preset, rawId);
+        QVERIFY(preset->builtIn);
+        QVERIFY(preset->supportsSlot(TextAnimSlotKind::In));
+        QVERIFY(preset->supportsSlot(TextAnimSlotKind::Out));
+        QCOMPARE(preset->param(QStringLiteral("stagger"))->defaultValue.scalar, 0.0);
+        QCOMPARE(preset->param(QStringLiteral("duration"))->defaultValue.scalar, 0.8);
+        QCOMPARE(preset->param(QStringLiteral("blur"))->defaultValue.scalar, blurPx);
+
+        TextAnimationSet authored;
+        authored.in.presetId = id;
+        authored.out.presetId = id;
+        authored.timing.fitToWindow = false; // exact authored 0.8 s here; fitting is checked below
+        const ResolvedTextAnimation anim = resolveTextAnimation(authored);
+        const bool block = id.endsWith(QLatin1String("block"));
+
+        const auto eval = [&](TimeUs t) { return evaluateTextAnimation(anim.set, anim.resolved, frags, domains, windowAt(t, window, 30)); };
+        // Opacity and blur as drawn, plus a check that no fragment differs from the first (no stagger).
+        const auto read = [&](const Frame &f, double *opacity, double *blur) {
+            *opacity = block ? f.block.opacity : f.props[0].opacity;
+            *blur = block ? f.block.blurPx : f.props[0].blurPx;
+            if (!block)
+                for (const FragmentProps &p : f.props) {
+                    QVERIFY2(std::abs(p.opacity - f.props[0].opacity) < 1e-9, rawId);
+                    QVERIFY2(std::abs(p.blurPx - f.props[0].blurPx) < 1e-9, rawId);
+                }
+        };
+
+        for (TimeUs t = 0; t <= 800'000; t += 50'000) {
+            double opacity = 0, blur = 0, mirrorOpacity = 0, mirrorBlur = 0;
+            read(eval(t), &opacity, &blur);
+            QVERIFY2(std::abs(opacity - double(t) / 800'000.0) < 1e-6, rawId);                   // linear 0 -> 1
+            QVERIFY2(std::abs(opacity + blur / blurPx - 1.0) < 1e-6, rawId);                      // synchronised
+            // Out is the In played backwards from the end of the window.
+            const Frame mirrored = eval(window - t);
+            read(mirrored, &mirrorOpacity, &mirrorBlur);
+            QVERIFY2(std::abs(mirrorOpacity - opacity) < 1e-6, rawId);
+            QVERIFY2(std::abs(mirrorBlur - blur) < 1e-6, rawId);
+            // Everything else stays at rest: no motion, scale, tracking or colour change.
+            for (const Frame &f : {eval(t), mirrored}) {
+                QVERIFY2(std::abs(f.block.dx) + std::abs(f.block.dy) < 1e-9 && std::abs(f.block.scale - 1.0) < 1e-9, rawId);
+                for (const FragmentProps &p : f.props)
+                    QVERIFY2(std::abs(p.dx) + std::abs(p.dy) + std::abs(p.tracking) + std::abs(p.rotation) < 1e-9
+                                 && std::abs(p.scaleX - 1.0) < 1e-9 && std::abs(p.scaleY - 1.0) < 1e-9
+                                 && !p.fillColor && !p.strokeColor,
+                             rawId);
+            }
+        }
+        QVERIFY2(allAtRest(eval(1'500'000)), rawId);
+
+        // Fitted timing: both slots together never take more than half the clip and the text is at
+        // rest at the end of the In, at every common frame rate.
+        TextAnimationSet fitted;
+        fitted.in.presetId = id;
+        fitted.out.presetId = id;
+        const ResolvedTextAnimation fitAnim = resolveTextAnimation(fitted);
+        for (TimeUs w : {TimeUs(400'000), TimeUs(1'000'000), TimeUs(3'000'000)}) {
+            for (int fps : {24, 25, 30, 60}) {
+                const FittedTiming fit = fittedTiming(fitAnim.set, fitAnim.resolved, domains, w, fps);
+                const QString label = QStringLiteral("%1 window %2 fps %3").arg(id).arg(w).arg(fps);
+                QVERIFY2(fit.inUs > 0 && fit.outUs > 0, qPrintable(label)); // never dropped to an instant cut
+                QVERIFY2(fit.inUs + fit.outUs <= w / 2, qPrintable(label));
+                QString why;
+                QVERIFY2(allAtRest(evaluateTextAnimation(fitAnim.set, fitAnim.resolved, frags, domains, windowAt(fit.readableAtUs, w, fps)), &why),
+                         qPrintable(label + QLatin1String(": ") + why));
+            }
+        }
+    }
 }
 
 // Scatter (Dafin): every fragment gets its own offset, angle and size, the same on every frame,
