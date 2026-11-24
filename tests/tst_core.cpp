@@ -6719,7 +6719,7 @@ void CoreTest::textTimingOlderProjectsKeepAuthoredTiming()
     project.tracks()[0].clips.append(capped);
 
     QJsonObject json = project.toJson();
-    QCOMPARE(json.value(QStringLiteral("version")).toInt(), 23);
+    QCOMPARE(json.value(QStringLiteral("version")).toInt(), Project::kCurrentVersion);
     const auto timingOf = [](const Project &p, int i) { return p.tracks().at(0).clips.at(i).textStyle.animation.timing; };
 
     // Saved by this version: the rules apply as written.
