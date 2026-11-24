@@ -21,6 +21,11 @@ All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open
 | NotoSerif-Regular.ttf | 9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f | fonts-noto-core 20201225-2 |
 | InterDisplay-SemiBold.otf | 12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f | fonts-inter 4.0+ds-1 |
 | Inter-Regular.otf | be6d709dcb730ddaf050cbdae6fe89bd56d5d14dc66885639bbf6f06bd03521b | fonts-inter 4.0+ds-1 |
+| NotoSerif-SemiBoldItalic.ttf | fbf7c52746a6d0308cc137938d6a7c44fd40ee2db6bbf54d3df59851598d68fc | fonts-noto-extra 20201225-2 |
+| InterDisplay-Regular.otf | 42263268dce7a1217d590dd44675fa624438cc767b3c37e9a149f2a40c406ca0 | fonts-inter 4.0+ds-1 |
+
+The last two are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),
+whose original script and font are lost (`FONT_UNKNOWN`); they are the closest installed files, not the original.
 
 Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
 reserved effects, which v1 refuses.
