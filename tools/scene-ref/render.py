@@ -43,7 +43,7 @@ SS = 2  # sprite2x supersampling factor
 # name in title-fonts/ can be a different cut (NotoSerif-Regular.ttf is). A "sha256" in the
 # scene's font entry picks the exact file.
 FONT_DIRS = [Path('/usr/share/fonts'), Path('/usr/local/share/fonts'), Path.home() / '.fonts',
-             Path.home() / '.local/share/fonts', REPO / 'title-fonts']
+             Path.home() / '.local/share/fonts', REPO / 'title-fonts', REPO / 'scene-fonts']
 
 
 @lru_cache(maxsize=None)

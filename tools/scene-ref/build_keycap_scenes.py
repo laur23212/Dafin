@@ -200,12 +200,121 @@ def receipt(asset_id):
     return {}
 
 
+# ----------------------------------------------------------------------------------------------
+# Stage13F: the 18 Keyboard Shortcuts templates (Smart template proofs), all on the same generator.
+# Layout numbers are the ones of render_smart_template_proofs.py `Scene.build`; the proofs drew their
+# text as 3x sprites with 9 px of padding, the engine's text is the 2x sprite with 7/8 px, so every
+# sprite position is moved by (+2, +1) to put the ink in the same place.
+
+T_DX, T_DY = 2, 1
+CATALOG = HERE / 'keycaps' / 'template-catalog.json'
+
+
+def t_text(aid, role, default, slot, font, size, color, xy, start, move, **kw):
+    return text(aid, role, default, font, size, color, (xy[0] + T_DX, xy[1] + T_DY), start=start, dur=.38, end=4.86,
+                exit_dur=.34, dy=move or None, slot=slot, **kw)
+
+
+def t_block(bid, v, slot, x, y, maxw, start, *, portrait):
+    """One platform block: its label, its optional instruction, and the keycaps (or the no-equivalent note)."""
+    mac = v['platform'] == 'macos'
+    label = 'macOS  /  PC KEYBOARD' if v['keyboardProfile'] == 'pc-on-mac-custom' else ('macOS' if mac else 'WINDOWS')
+    out = []
+    out.append(t_text(f'{bid}Label', 'platformLabel', label, None, 'semi', 25, 'SILVER' if mac else 'AQUA', (x, y), start - .28, 7))
+    if v.get('instruction') and not portrait:
+        out.append(t_text(f'{bid}Instruction', 'instruction', v['instruction'], f'{slot}Note', 'regular', 22, 'SOFT',
+                          (x + 345, y + 1), start - .22, 5))
+    if not v['applicable']:
+        out.append(t_text(f'{bid}None', 'notApplicable', 'NO DIRECT EQUIVALENT', None, 'semi', 30, 'SILVER', (x, y + 81), start + .1, 7))
+        return out
+    kc = {'id': bid, 'role': 'shortcut', 'type': 'keycaps', 'platform': v['platform'],
+          'skin': 'smart-mac' if mac else 'smart-pc', 'labelPolicy': v['labelPolicy'] if not mac else '{macLegends}',
+          'at': [x, y + 82 + 0], 'shortcut': '{%s}' % slot,
+          'flow': {'gap': 48, 'plusDx': 19, 'plusDy': 32, 'maxWidth': maxw, 'rowPitch': 160, 'chordPitch': 164,
+                   'orPitch': 74, 'thenPitch': 72, 'joinerDx': 8 + T_DX, 'orDy': -7 + T_DY, 'thenDy': -4 + T_DY},
+          'timing': {
+              'key': {'start': start + .18, 'keyStep': .12, 'altStep': .28, 'chordStep': .4,
+                      'in': {'dur': .38, 'dy': 14}, 'out': {'start': 4.86, 'dur': .34}},
+              'sep': {'rel': 'right', 'off': -.04, 'in': {'dur': .38}, 'out': {'start': 4.86, 'dur': .34}},
+              'joiner': {'orStart': start + .62, 'orStep': .32, 'thenStart': start + .68, 'thenStep': .38,
+                         'dur': .38, 'dy': 7, 'outStart': 4.86, 'outDur': .34}}}
+    if v.get('legends'):
+        kc['legends'] = v['legends']
+    out.append(kc)
+    return out
+
+
+def scene_template(c):
+    por = c['aspect'] == '9:16'
+    cw, ch = (1080, 1920) if por else (1920, 1080)
+    xx = 100 if por else 302
+    maxw = (1080 - 200) if por else (1920 - 2 * 302)
+    title_size = 65 if por else 73
+    if len(c['title']) > 25:
+        title_size = 48 if por else 53
+    line_y = 480 if por else 461
+    actors = [
+        t_text('eyebrow', 'eyebrow', c['eyebrow'], 'eyebrow', 'semi', 23 if por else 25, 'AQUA', (xx + 7, 280 if por else 250), .17, 8),
+        t_text('title', 'title', c['title'], 'title', 'semi', title_size, 'WHITE', (xx, 354 if por else 323), .34, 12),
+        {'id': 'rule', 'role': 'rule', 'type': 'line', 'from': [xx + 8, line_y], 'to': [cw - xx - 8, line_y], 'width': 1,
+         'color': 'SOFT', 'in': {'start': .52, 'dur': .62, 'ease': 'smoothstep', 'from': {'progress': 0}},
+         'out': {'start': 4.88, 'dur': .40, 'ease': 'smoothstep', 'to': {'progress': 0}}},
+    ]
+    params = [('eyebrow', c['eyebrow'], 'Eyebrow'), ('title', c['title'], 'Title')]
+    vs = c['variants']
+    slots = {'windows': 'shortcutWindows', 'macos': 'shortcutMac'}
+    if len(vs) == 1:
+        slots = {vs[0]['platform']: 'shortcut'}
+    special = ' THEN ' in vs[0]['shortcut'] or ' OR ' in vs[0]['shortcut']
+    if not por and len(vs) >= 2 and c['layout'] == 'horizontal':
+        spots = [(xx + 10 + i * 678, 538, 594, .94 + i * .16) for i in range(len(vs))]
+        actors.append({'id': 'divider', 'role': 'divider', 'type': 'line', 'from': [xx + 658, 542], 'to': [xx + 658, 832],
+                       'width': 1, 'color': 'SOFT', 'in': {'start': .85, 'dur': .5, 'ease': 'smoothstep', 'from': {'progress': 0}},
+                       'out': {'start': 4.88, 'dur': .40, 'ease': 'smoothstep', 'to': {'progress': 0}}})
+    elif len(vs) >= 2:
+        spots = [((xx + 10), 705 + i * 410, 870, 1.04 + i * .22) if por else (xx + 10, 480 + i * 241, maxw, 1.02 + i * .24)
+                 for i in range(len(vs))]
+    else:
+        spots = [(xx + 10, 670 if por else (467 if special else 547), maxw, 1.05)]
+    mac_params = False
+    for i, v in enumerate(vs):
+        slot = slots[v['platform']]
+        x, y, mw, st = spots[i]
+        actors += t_block(f'keys{v["platform"].capitalize()}', v, slot, x, y, mw, st, portrait=por)
+        if v['applicable']:
+            params.append((slot, v['shortcut'], 'Windows / Linux shortcut' if v['platform'] == 'windows' else 'macOS shortcut'))
+        if v.get('instruction') and not por:
+            params.append((f'{slot}Note', v['instruction'], 'Windows note' if v['platform'] == 'windows' else 'macOS note'))
+        mac_params |= v['platform'] == 'macos' and v['applicable']
+    if c.get('footer'):
+        note = c['footer']
+        cap = 54 if por else 102
+        if len(note) > cap:
+            note = note[:cap - 1] + '…'
+        actors.append(t_text('footer', 'footer', note, 'footer', 'regular', 25 if por else 26, 'SOFT', (xx + 10, 1580 if por else 981), 2.13, 0))
+        params.append(('footer', note, 'Footer note'))
+    plist = [{'id': i, 'type': 'text', 'default': v, 'label': lb} for i, v, lb in params]
+    if mac_params:
+        mv = next(v for v in vs if v['platform'] == 'macos' and v['applicable'])
+        plist.append({'id': 'macLegends', 'type': 'enum', 'default': mv['labelPolicy'], 'label': 'macOS key legends',
+                      'options': ['glyph', 'glyphPlusNames', 'names', 'physical']})
+    uses_symbols = mac_params
+    fonts = ['semi', 'regular'] + (['symbols'] if uses_symbols else [])
+    sid = 'dafin.keyboard-shortcuts.' + c['file'].lower().replace('_', '-')
+    d = scene(sid, c['name'], f'13F_{c["id"]}', None,
+              f'Dafin_TitleDesign_Part6_Stage13F_ShortcutTemplateLibrary_Delta_v6.0.9 :: source/render_smart_template_proofs.py Scene ({c["id"]})',
+              fonts, actors, plist, status='PENDING_CREATOR_VERDICT', canvas=(cw, ch))
+    d['tags'] = c['tags']
+    return d
+
+
 def write(d):
     r = receipt(d['source']['asset'])
     if r:
         d['source']['sha256'] = r['sha256']
         d['source']['status'] = r['original_status']
-    path = SCENES / (d['source']['asset'] + '.scene.json')
+    name = d['source']['asset'] if not d['source']['asset'].startswith('13F_') else d['id'].split('.')[-1].upper()[:3] + '_' + d['id'].split('.')[-1][4:]
+    path = SCENES / (name + '.scene.json')
     path.write_text(json.dumps(d, ensure_ascii=False, indent=1) + '\n', encoding='utf-8')
     return path
 
@@ -224,6 +333,10 @@ def main():
     for k in ('U1', 'U2', 'U3'):
         if not only or k in only:
             out.append(write(scene_13c(k)))
+    cat = json.loads(CATALOG.read_text(encoding='utf-8'))['templates']
+    for c in cat:
+        if not only or c['id'] in only:
+            out.append(write(scene_template(c)))
     for p in out:
         print('wrote', p.relative_to(REPO))
 

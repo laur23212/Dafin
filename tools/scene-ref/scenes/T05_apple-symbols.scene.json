@@ -1,0 +1,355 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.keyboard-shortcuts.t05-apple-symbols",
+ "label": "macOS — Apple Symbols",
+ "category": "Keyboard Shortcuts",
+ "source": {
+  "asset": "13F_T05",
+  "sha256": "1ae42e4c2e1f61f173f6afe177b8e592df2028991ea6fccb8a1061ca2c55176e",
+  "script": "Dafin_TitleDesign_Part6_Stage13F_ShortcutTemplateLibrary_Delta_v6.0.9 :: source/render_smart_template_proofs.py Scene (T05)",
+  "status": "ART_EXPERIMENT_PENDING_CREATOR_VERDICT"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "WHITE": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SILVER": [
+   184,
+   194,
+   200
+  ],
+  "FAINT": [
+   58,
+   69,
+   74
+  ]
+ },
+ "fonts": {
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "symbols": {
+   "family": "Noto Sans Symbols 2",
+   "weight": 400,
+   "file": "NotoSansSymbols2-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "KEYBOARD SHORTCUT",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Copy",
+   "label": "Title"
+  },
+  {
+   "id": "shortcut",
+   "type": "text",
+   "default": "Command+C",
+   "label": "macOS shortcut"
+  },
+  {
+   "id": "footer",
+   "type": "text",
+   "default": "Command is distinct from Option.",
+   "label": "Footer note"
+  },
+  {
+   "id": "macLegends",
+   "type": "enum",
+   "default": "glyph",
+   "label": "macOS key legends",
+   "options": [
+    "glyph",
+    "glyphPlusNames",
+    "names",
+    "physical"
+   ]
+  }
+ ],
+ "actors": [
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     318.0,
+     277.5
+    ]
+   },
+   "in": {
+    "start": 0.17,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 8
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 73,
+   "color": "WHITE",
+   "at": {
+    "baseline": [
+     311.0,
+     385.0
+    ]
+   },
+   "in": {
+    "start": 0.34,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 12
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "rule",
+   "type": "line",
+   "from": [
+    310,
+    461
+   ],
+   "to": [
+    1610,
+    461
+   ],
+   "width": 1,
+   "color": "SOFT",
+   "in": {
+    "start": 0.52,
+    "dur": 0.62,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.88,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "keysMacosLabel",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "macOS",
+   "font": "semi",
+   "size": 25,
+   "color": "SILVER",
+   "at": {
+    "baseline": [
+     321.0,
+     574.5
+    ]
+   },
+   "in": {
+    "start": 0.77,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 7
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "keysMacos",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "macos",
+   "skin": "smart-mac",
+   "labelPolicy": "{macLegends}",
+   "at": [
+    312,
+    629
+   ],
+   "shortcut": "{shortcut}",
+   "flow": {
+    "gap": 48,
+    "plusDx": 19,
+    "plusDy": 32,
+    "maxWidth": 1316,
+    "rowPitch": 160,
+    "chordPitch": 164,
+    "orPitch": 74,
+    "thenPitch": 72,
+    "joinerDx": 10,
+    "orDy": -6,
+    "thenDy": -3
+   },
+   "timing": {
+    "key": {
+     "start": 1.23,
+     "keyStep": 0.12,
+     "altStep": 0.28,
+     "chordStep": 0.4,
+     "in": {
+      "dur": 0.38,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.86,
+      "dur": 0.34
+     }
+    },
+    "sep": {
+     "rel": "right",
+     "off": -0.04,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.86,
+      "dur": 0.34
+     }
+    },
+    "joiner": {
+     "orStart": 1.67,
+     "orStep": 0.32,
+     "thenStart": 1.73,
+     "thenStep": 0.38,
+     "dur": 0.38,
+     "dy": 7,
+     "outStart": 4.86,
+     "outDur": 0.34
+    }
+   }
+  },
+  {
+   "id": "footer",
+   "role": "footer",
+   "type": "text",
+   "text": "{footer}",
+   "font": "regular",
+   "size": 26,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     321.0,
+     1010.5
+    ]
+   },
+   "in": {
+    "start": 2.13,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  }
+ ],
+ "tags": [
+  "macos",
+  "macos_only",
+  "16:9"
+ ]
+}

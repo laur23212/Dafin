@@ -347,7 +347,9 @@ def expand_actors(actors, sc: Scene, env=None, parent=None, out=None):
             import keycaps  # phase A of the Smart Keycaps generator (docs/scene-keycaps.md)
             if parent is not None:
                 raise SceneError(f'{r["id"]}: a keycaps block cannot sit inside a group')
-            r['shortcut'] = format_text(r.get('shortcut', ''), env)
+            for k in ('shortcut', 'labelPolicy', 'orWord', 'thenWord'):  # text slots: params bind here
+                if isinstance(r.get(k), str):
+                    r[k] = format_text(r[k], env)
             if r.get('label'):
                 r['label']['text'] = format_text(r['label'].get('text', ''), env)
             out.extend(keycaps.expand_block(r, sc, env))

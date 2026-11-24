@@ -1,0 +1,532 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.keyboard-shortcuts.t18-independent-custom-sequences",
+ "label": "Universal — Custom Sequences",
+ "category": "Keyboard Shortcuts",
+ "source": {
+  "asset": "13F_T18",
+  "sha256": "c035ca62b230dda575664ad46f2b7c3f96a4b59dfa26ca2f2fc4511920985b89",
+  "script": "Dafin_TitleDesign_Part6_Stage13F_ShortcutTemplateLibrary_Delta_v6.0.9 :: source/render_smart_template_proofs.py Scene (T18)",
+  "status": "ART_EXPERIMENT_PENDING_CREATOR_VERDICT"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "WHITE": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SILVER": [
+   184,
+   194,
+   200
+  ],
+  "FAINT": [
+   58,
+   69,
+   74
+  ]
+ },
+ "fonts": {
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "symbols": {
+   "family": "Noto Sans Symbols 2",
+   "weight": 400,
+   "file": "NotoSansSymbols2-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "UNIVERSAL SHORTCUT",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Application Shortcut",
+   "label": "Title"
+  },
+  {
+   "id": "shortcutWindows",
+   "type": "text",
+   "default": "Ctrl+Alt+K",
+   "label": "Windows / Linux shortcut"
+  },
+  {
+   "id": "shortcutWindowsNote",
+   "type": "text",
+   "default": "Configure the Windows shortcut in the app",
+   "label": "Windows note"
+  },
+  {
+   "id": "shortcutMac",
+   "type": "text",
+   "default": "Option+Command+Shift+K",
+   "label": "macOS shortcut"
+  },
+  {
+   "id": "shortcutMacNote",
+   "type": "text",
+   "default": "Configure the macOS shortcut independently",
+   "label": "macOS note"
+  },
+  {
+   "id": "footer",
+   "type": "text",
+   "default": "Illustrative only; no automatic app mapping asserted.",
+   "label": "Footer note"
+  },
+  {
+   "id": "macLegends",
+   "type": "enum",
+   "default": "glyphPlusNames",
+   "label": "macOS key legends",
+   "options": [
+    "glyph",
+    "glyphPlusNames",
+    "names",
+    "physical"
+   ]
+  }
+ ],
+ "actors": [
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     318.0,
+     277.5
+    ]
+   },
+   "in": {
+    "start": 0.17,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 8
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 73,
+   "color": "WHITE",
+   "at": {
+    "baseline": [
+     311.0,
+     387.5
+    ]
+   },
+   "in": {
+    "start": 0.34,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 12
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "rule",
+   "type": "line",
+   "from": [
+    310,
+    461
+   ],
+   "to": [
+    1610,
+    461
+   ],
+   "width": 1,
+   "color": "SOFT",
+   "in": {
+    "start": 0.52,
+    "dur": 0.62,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.88,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "keysWindowsLabel",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "WINDOWS",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     321.0,
+     507.5
+    ]
+   },
+   "in": {
+    "start": 0.74,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 7
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "keysWindowsInstruction",
+   "role": "instruction",
+   "type": "text",
+   "text": "{shortcutWindowsNote}",
+   "font": "regular",
+   "size": 22,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     666.0,
+     507.0
+    ]
+   },
+   "in": {
+    "start": 0.8,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 5
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "keysWindows",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "windows",
+   "skin": "smart-pc",
+   "labelPolicy": "names",
+   "at": [
+    312,
+    562
+   ],
+   "shortcut": "{shortcutWindows}",
+   "flow": {
+    "gap": 48,
+    "plusDx": 19,
+    "plusDy": 32,
+    "maxWidth": 1316,
+    "rowPitch": 160,
+    "chordPitch": 164,
+    "orPitch": 74,
+    "thenPitch": 72,
+    "joinerDx": 10,
+    "orDy": -6,
+    "thenDy": -3
+   },
+   "timing": {
+    "key": {
+     "start": 1.2,
+     "keyStep": 0.12,
+     "altStep": 0.28,
+     "chordStep": 0.4,
+     "in": {
+      "dur": 0.38,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.86,
+      "dur": 0.34
+     }
+    },
+    "sep": {
+     "rel": "right",
+     "off": -0.04,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.86,
+      "dur": 0.34
+     }
+    },
+    "joiner": {
+     "orStart": 1.6400000000000001,
+     "orStep": 0.32,
+     "thenStart": 1.7000000000000002,
+     "thenStep": 0.38,
+     "dur": 0.38,
+     "dy": 7,
+     "outStart": 4.86,
+     "outDur": 0.34
+    }
+   }
+  },
+  {
+   "id": "keysMacosLabel",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "macOS",
+   "font": "semi",
+   "size": 25,
+   "color": "SILVER",
+   "at": {
+    "baseline": [
+     321.0,
+     748.5
+    ]
+   },
+   "in": {
+    "start": 0.98,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 7
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "keysMacosInstruction",
+   "role": "instruction",
+   "type": "text",
+   "text": "{shortcutMacNote}",
+   "font": "regular",
+   "size": 22,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     666.0,
+     748.0
+    ]
+   },
+   "in": {
+    "start": 1.04,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 5
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "keysMacos",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "macos",
+   "skin": "smart-mac",
+   "labelPolicy": "{macLegends}",
+   "at": [
+    312,
+    803
+   ],
+   "shortcut": "{shortcutMac}",
+   "flow": {
+    "gap": 48,
+    "plusDx": 19,
+    "plusDy": 32,
+    "maxWidth": 1316,
+    "rowPitch": 160,
+    "chordPitch": 164,
+    "orPitch": 74,
+    "thenPitch": 72,
+    "joinerDx": 10,
+    "orDy": -6,
+    "thenDy": -3
+   },
+   "timing": {
+    "key": {
+     "start": 1.44,
+     "keyStep": 0.12,
+     "altStep": 0.28,
+     "chordStep": 0.4,
+     "in": {
+      "dur": 0.38,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.86,
+      "dur": 0.34
+     }
+    },
+    "sep": {
+     "rel": "right",
+     "off": -0.04,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.86,
+      "dur": 0.34
+     }
+    },
+    "joiner": {
+     "orStart": 1.88,
+     "orStep": 0.32,
+     "thenStart": 1.94,
+     "thenStep": 0.38,
+     "dur": 0.38,
+     "dy": 7,
+     "outStart": 4.86,
+     "outDur": 0.34
+    }
+   }
+  },
+  {
+   "id": "footer",
+   "role": "footer",
+   "type": "text",
+   "text": "{footer}",
+   "font": "regular",
+   "size": 26,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     321.0,
+     1010.0
+    ]
+   },
+   "in": {
+    "start": 2.13,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.86,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  }
+ ],
+ "tags": [
+  "advanced",
+  "universal",
+  "16:9"
+ ]
+}
