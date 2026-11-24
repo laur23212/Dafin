@@ -720,6 +720,15 @@ target_include_directories(tst_linkedlibraries PRIVATE ../src)
 target_compile_definitions(tst_linkedlibraries PRIVATE DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(tst_linkedlibraries PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME LinkedLibraries COMMAND tst_linkedlibraries)
+# Dafin: the strict .wfp reader and the Filmora importer's compatibility report — size, CRC,
+# deflate-end, duplicate-name, ZIP64 and path checks on archives built in the test and on the 14
+# synthetic fixtures of the Stage 21 Pass 4 research (carried as bytes in WfpFixtures.h; the six
+# malformed ones are read only here, never by the application). No GUI, no GL, no media.
+qt_add_executable(tst_wfpsafe tst_wfpsafe.cpp)
+target_include_directories(tst_wfpsafe PRIVATE ../src)
+target_link_libraries(tst_wfpsafe PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore ZLIB::ZLIB)
+add_test(NAME WfpSafe COMMAND tst_wfpsafe)
+set_tests_properties(WfpSafe PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
 # Dafin: tutorial content — tutorial.json is valid, feature ids are unique, and every tour target
 # is an element in the QML sources or on tests/tutorial/known_missing.txt. Plain Python, no Qt.
 find_package(Python3 QUIET COMPONENTS Interpreter)

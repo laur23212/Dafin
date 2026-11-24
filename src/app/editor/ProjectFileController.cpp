@@ -1102,9 +1102,12 @@ void ProjectFileController::loadOtherEditorProject(const QUrl &url, const QStrin
     setDirty(true);
     deleteRecoveryFile();
     m_app->setProjectLayoutChosen(true);
+    // "success" only when nothing was left out, rounded or missing: an import that kept the media
+    // but dropped its effects, or rounded its frame rate, is a warning (the summary says what).
     m_app->setLastMessage(drift::interchange::summary(*timeline, built, appName),
-                          built.missingMedia.isEmpty() && timeline->skippedClips == 0 ? QStringLiteral("success")
-                                                                                      : QStringLiteral("warning"));
+                          built.missingMedia.isEmpty() && timeline->skippedClips == 0 && !timeline->report.hasLoss()
+                              ? QStringLiteral("success")
+                              : QStringLiteral("warning"));
 }
 
 void ProjectFileController::loadFilmoraProject(const QUrl &url)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/interchange/CompatibilityReport.h"
 #include "core/interchange/ImportedTimeline.h"
 #include "core/project/Project.h"
 
@@ -15,6 +16,10 @@ struct ProjectBuildResult
     // file under the same name). Their clips are kept and show as missing until relinked.
     QStringList missingMedia;
     int clipCount = 0;
+    // What building the project found out that reading the file could not: each clip whose media
+    // is not on this computer (missing_dependency). The reader's own entries stay on the
+    // ImportedTimeline; summary() reads both.
+    CompatibilityReport report;
 };
 
 // The Dafin project for an imported timeline. `projectFile` is the .prproj / .wfp it came from:

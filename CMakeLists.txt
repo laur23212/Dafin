@@ -820,10 +820,13 @@ add_library(driftcore STATIC
     src/core/project/RenderSnapshot.cpp
     src/core/project/ProjectWorkspaces.cpp
     src/core/interchange/ImportedTimeline.h
+    src/core/interchange/CompatibilityReport.h
     src/core/interchange/ImportedTimelineProject.h
     src/core/interchange/ImportedTimelineProject.cpp
     src/core/interchange/premiere/PremiereProjectParser.h
     src/core/interchange/premiere/PremiereProjectParser.cpp
+    src/core/interchange/filmora/WfpArchive.h
+    src/core/interchange/filmora/WfpArchive.cpp
     src/core/interchange/filmora/FilmoraProjectParser.h
     src/core/interchange/filmora/FilmoraProjectParser.cpp
     src/core/interchange/premiere/PrprojReader.h

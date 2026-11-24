@@ -1,6 +1,6 @@
 #include "core/interchange/filmora/FilmoraProjectParser.h"
 
-#include "core/base/ZipArchive.h"
+#include "core/interchange/filmora/WfpArchive.h"
 
 #include <QCoreApplication>
 #include <QFile>
@@ -12,6 +12,7 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <cmath>
 
 namespace drift::interchange::filmora {
 
@@ -24,9 +25,17 @@ QString tr(const char *text, const char *disambiguation = nullptr, int n = -1)
     return QCoreApplication::translate("FilmoraImport", text, disambiguation, n);
 }
 
-int64_t ticksToUs(const QJsonValue &v)
+// Filmora's times are 100 ns ticks written as JSON numbers; a damaged or hostile file can hold
+// anything, and casting a NaN or a huge double to an integer is undefined. False for such a value
+// (an absent one reads as 0, as it always has).
+bool ticksToUs(const QJsonValue &v, int64_t *us)
 {
-    return int64_t(v.toDouble() / kTicksPerUs);
+    const double ticks = v.toDouble();
+    // 1e16 ticks is a hundred days short of 32 years: far beyond any edit.
+    if (!std::isfinite(ticks) || std::fabs(ticks) > 1e16)
+        return false;
+    *us = int64_t(ticks / kTicksPerUs);
+    return true;
 }
 
 bool isStillSuffix(const QString &path)
@@ -38,20 +47,23 @@ bool isStillSuffix(const QString &path)
     return stills.contains(QFileInfo(path).suffix().toLower());
 }
 
-QJsonObject readJson(QFile &file, const QList<drift::zip::Entry> &entries, const QString &path)
+// A JSON member of the archive. False only when the zip itself is not to be trusted (`fatal`
+// says why); a member that is not there, or whose JSON does not read, comes back as an empty
+// object, which is how the parser has always treated it.
+bool readJson(WfpArchive &archive, const QString &path, QJsonObject *out, WfpStatus *fatal)
 {
-    for (const drift::zip::Entry &e : entries) {
-        if (e.isDir || e.path.compare(path, Qt::CaseInsensitive) != 0)
-            continue;
-        QByteArray data;
-        if (!drift::zip::extractEntry(file, e, data))
-            return {};
-        // Some writers put a byte-order mark first.
-        if (data.startsWith("\xEF\xBB\xBF"))
-            data.remove(0, 3);
-        return QJsonDocument::fromJson(data).object();
-    }
-    return {};
+    *out = {};
+    const WfpArchive::Member *member = archive.find(path);
+    if (!member)
+        return true;
+    WfpStatus status;
+    if (archive.readJsonObject(*member, out, &status))
+        return true;
+    *out = {};
+    if (!status.isIntegrityFailure())
+        return true;
+    *fatal = status;
+    return false;
 }
 
 // A speed curve with every key at the same value is a constant speed; Filmora writes one for
@@ -75,6 +87,81 @@ double constantSpeedOf(const QJsonValue &speedParam)
             return 0;
     }
     return first > 0 ? first : 1.0;
+}
+
+// Range of the values on a speed curve, for the report: how many keys it has and the slowest and
+// fastest of them.
+struct CurveSummary
+{
+    int keys = 0;
+    double min = 0;
+    double max = 0;
+};
+
+CurveSummary summarizeCurve(const QJsonValue &speedParam)
+{
+    QJsonObject curve;
+    if (speedParam.isObject())
+        curve = speedParam.toObject();
+    else if (speedParam.isString())
+        curve = QJsonDocument::fromJson(speedParam.toString().toUtf8()).object();
+    CurveSummary out;
+    for (const QJsonValue &k : curve.value(QStringLiteral("keyframeSets")).toArray()) {
+        const double v = k.toObject().value(QStringLiteral("_value")).toDouble(-1);
+        if (v <= 0)
+            continue;
+        out.min = out.keys == 0 ? v : std::min(out.min, v);
+        out.max = out.keys == 0 ? v : std::max(out.max, v);
+        ++out.keys;
+    }
+    return out;
+}
+
+// What a clip's `effectChainList` holds. Only the shape is read, never what an effect would do:
+// effects are not imported, so all the report needs is how many there were and what they were
+// called. `unrecognized` counts chains whose structure is not the one seen in saved projects
+// (effectChainList[].effectList[]).
+struct AttachedEffects
+{
+    int count = 0;
+    int unrecognized = 0;
+    QStringList ids; // at most kMaxIds, each cut short, for the report
+    static constexpr int kMaxIds = 8;
+};
+
+AttachedEffects attachedEffectsOf(const QJsonValue &chains)
+{
+    AttachedEffects out;
+    if (chains.isArray()) {
+        for (const QJsonValue &chain : chains.toArray()) {
+            const QJsonObject chainObj = chain.toObject();
+            if (!chain.isObject() || chainObj.isEmpty()) {
+                if (!chain.isObject() && !chain.isNull() && !chain.isUndefined())
+                    ++out.unrecognized;
+                continue;
+            }
+            if (!chainObj.contains(QStringLiteral("effectList"))) {
+                ++out.unrecognized;
+                continue;
+            }
+            for (const QJsonValue &effect : chainObj.value(QStringLiteral("effectList")).toArray()) {
+                ++out.count;
+                const QString id = effect.toObject().value(QStringLiteral("id")).toString().left(64);
+                if (!id.isEmpty() && out.ids.size() < AttachedEffects::kMaxIds)
+                    out.ids.append(id);
+            }
+        }
+    } else if (chains.isObject() ? !chains.toObject().isEmpty()
+                                 : (chains.isString() && !chains.toString().isEmpty())) {
+        ++out.unrecognized;
+    }
+    return out;
+}
+
+QString rateText(const QJsonObject &rate)
+{
+    return QStringLiteral("%1/%2").arg(rate.value(QStringLiteral("num")).toDouble(), 0, 'f', 0)
+        .arg(rate.value(QStringLiteral("den")).toDouble(1), 0, 'f', 0);
 }
 
 } // namespace
@@ -101,31 +188,52 @@ QString localPathFromFilmora(const QString &uriOrPath)
 
 std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
 {
-    QFile file(wfpPath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        if (error)
-            *error = tr("Can't open %1.").arg(QFileInfo(wfpPath).fileName());
+    const QString fileName = QFileInfo(wfpPath).fileName();
+    WfpArchive archive(wfpPath);
+    WfpStatus zipStatus;
+    if (!archive.open(&zipStatus)) {
+        if (error) {
+            if (zipStatus.code == WfpError::CannotOpen)
+                *error = tr("Can't open %1.").arg(fileName);
+            else if (zipStatus.code == WfpError::NotZip)
+                *error = tr("%1 is not a Filmora project Dafin can read.").arg(fileName);
+            else
+                *error = tr("%1 was not opened: %2").arg(fileName, zipStatus.message());
+        }
         return std::nullopt;
     }
-    QString zipError;
-    const QList<drift::zip::Entry> entries = drift::zip::readEntries(file, &zipError);
-    if (entries.isEmpty()) {
+    if (archive.members().isEmpty()) {
         if (error)
-            *error = tr("%1 is not a Filmora project Dafin can read.").arg(QFileInfo(wfpPath).fileName());
+            *error = tr("%1 is not a Filmora project Dafin can read.").arg(fileName);
         return std::nullopt;
     }
 
-    const QJsonObject info = readJson(file, entries, QStringLiteral("ProjectFolder/project_info.json"));
+    // Everything below reads members through `archive`, which hands out only bytes it has checked
+    // (size, deflate end, CRC, budget). A member that is damaged ends the import; a member that is
+    // simply absent or not JSON is skipped, as before.
+    WfpStatus fatal;
+    const auto failWith = [&]() -> std::optional<ImportedTimeline> {
+        if (error)
+            *error = tr("%1 was not opened: %2").arg(fileName, fatal.message());
+        return std::nullopt;
+    };
+
+    QJsonObject info;
+    if (!readJson(archive, QStringLiteral("ProjectFolder/project_info.json"), &info, &fatal))
+        return failWith();
     QString timelinePath;
     const QString mediaId = info.value(QStringLiteral("timeline_mediaId")).toString();
     if (!mediaId.isEmpty())
         timelinePath = QStringLiteral("ProjectFolder/Medias/%1/timeline.wesproj").arg(mediaId);
-    QJsonObject root = timelinePath.isEmpty() ? QJsonObject() : readJson(file, entries, timelinePath);
+    QJsonObject root;
+    if (!timelinePath.isEmpty() && !readJson(archive, timelinePath, &root, &fatal))
+        return failWith();
     if (root.isEmpty()) {
         // Any timeline the archive carries.
-        for (const drift::zip::Entry &e : entries) {
-            if (!e.isDir && e.path.endsWith(QLatin1String(".wesproj"), Qt::CaseInsensitive)) {
-                root = readJson(file, entries, e.path);
+        for (const WfpArchive::Member &e : archive.members()) {
+            if (!e.isDir && e.canonicalName.endsWith(QLatin1String(".wesproj"))) {
+                if (!readJson(archive, e.name, &root, &fatal))
+                    return failWith();
                 if (!root.value(QStringLiteral("timelineInfos")).toArray().isEmpty())
                     break;
             }
@@ -139,25 +247,96 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
         return std::nullopt;
     }
     // The main timeline is the one project_info names, else the first.
-    QJsonObject timelineObj = timelines.first().toObject();
+    int chosen = 0;
     const int currentId = root.value(QStringLiteral("currentTimelineId")).toInt(-1);
-    for (const QJsonValue &v : timelines) {
-        if (v.toObject().value(QStringLiteral("timelineId")).toInt(-2) == currentId)
-            timelineObj = v.toObject();
+    bool currentFound = false;
+    for (int i = 0; i < timelines.size(); ++i) {
+        if (timelines.at(i).toObject().value(QStringLiteral("timelineId")).toInt(-2) == currentId) {
+            chosen = i;
+            currentFound = true;
+        }
     }
+    const QJsonObject timelineObj = timelines.at(chosen).toObject();
+    const QString timelineKey = timelineObj.contains(QStringLiteral("timelineId"))
+        ? QString::number(timelineObj.value(QStringLiteral("timelineId")).toInt())
+        : QStringLiteral("none");
 
     ImportedTimeline timeline;
+    CompatibilityReport &report = timeline.report;
+
+    if (timelines.size() > 1 && !currentFound) {
+        CompatEntry e;
+        e.status = CompatStatus::Approximated;
+        e.construct = QStringLiteral("timeline_choice");
+        e.sourceId = QStringLiteral("timeline:%1").arg(timelineKey);
+        e.where = tr("Choice of timeline");
+        e.reason = tr("The project holds %n timeline(s) and does not say which one is current.", nullptr,
+                      int(timelines.size()));
+        e.applied = tr("The first timeline was imported.");
+        e.hint = tr("If it is the wrong one, set the one you want as current in Filmora and save again.");
+        report.add(e);
+    }
+    for (int i = 0; i < timelines.size(); ++i) {
+        if (i == chosen)
+            continue;
+        const QJsonObject other = timelines.at(i).toObject();
+        CompatEntry e;
+        e.status = CompatStatus::Omitted;
+        e.construct = QStringLiteral("other_timeline");
+        e.sourceId = QStringLiteral("timeline:%1").arg(
+            other.contains(QStringLiteral("timelineId")) ? QString::number(other.value(QStringLiteral("timelineId")).toInt())
+                                                         : QStringLiteral("index%1").arg(i));
+        e.where = tr("Another timeline in the project");
+        e.reason = tr("Only one timeline is imported; this one is not the current one.");
+        e.applied = tr("Left out, with everything on it.");
+        e.hint = tr("Open it in Filmora, make it the current timeline and save, to import it.");
+        report.add(e);
+    }
+
     timeline.name = info.value(QStringLiteral("project_file_name")).toString(QFileInfo(wfpPath).completeBaseName());
+    bool rateStated = false;
     const QJsonObject rate = timelineObj.value(QStringLiteral("frameRate")).toObject();
     const double num = rate.value(QStringLiteral("num")).toDouble();
     const double den = rate.value(QStringLiteral("den")).toDouble(1);
-    if (num > 0 && den > 0)
+    QString rateAsWritten;
+    if (num > 0 && den > 0) {
         timeline.fps = num / den;
-    else {
+        rateStated = true;
+        rateAsWritten = rateText(rate);
+        if (num == std::floor(num) && den == std::floor(den) && num < 1e9 && den < 1e9) {
+            timeline.fpsNum = int(num);
+            timeline.fpsDen = int(den);
+        }
+    } else {
         const QJsonArray r = info.value(QStringLiteral("project_timeline_framerate")).toArray();
-        if (r.size() == 2 && r.at(0).toDouble() > 0 && r.at(1).toDouble() > 0)
+        if (r.size() == 2 && r.at(0).toDouble() > 0 && r.at(1).toDouble() > 0) {
             timeline.fps = r.at(0).toDouble() / r.at(1).toDouble();
+            rateStated = true;
+            rateAsWritten = QStringLiteral("%1/%2").arg(r.at(0).toDouble(), 0, 'f', 0).arg(r.at(1).toDouble(), 0, 'f', 0);
+        }
     }
+    {
+        CompatEntry e;
+        e.construct = QStringLiteral("frame_rate");
+        e.sourceId = QStringLiteral("timeline:%1").arg(timelineKey);
+        e.where = tr("Frame rate");
+        const int projectFps = projectFpsFor(timeline.fps);
+        if (!rateStated) {
+            e.status = CompatStatus::Unknown;
+            e.reason = tr("The project does not state a frame rate.");
+            e.applied = tr("%1 fps was assumed.").arg(projectFps);
+            e.hint = tr("Check the frame rate in Project settings.");
+        } else if (qAbs(timeline.fps - projectFps) < 1e-6) {
+            e.status = CompatStatus::Preserved;
+        } else {
+            e.status = CompatStatus::Approximated;
+            e.reason = tr("The frame rate is %1 (%2 fps).").arg(rateAsWritten, QString::number(timeline.fps, 'f', 5));
+            e.applied = tr("Dafin projects use whole frame rates, so this one runs at %1 fps.").arg(projectFps);
+            e.hint = tr("Check frame-accurate cuts after importing.");
+        }
+        report.add(e);
+    }
+
     const int w = timelineObj.value(QStringLiteral("resolutionWidth")).toInt();
     const int h = timelineObj.value(QStringLiteral("resolutionHeight")).toInt();
     if (w > 0 && h > 0) {
@@ -188,29 +367,68 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
         const int type = track.value(QStringLiteral("trackType")).toInt();
         const bool isAudio = type == 2;
         const bool isVideo = type == 1;
+        const QString kind = isAudio ? QStringLiteral("audio")
+                                     : isVideo ? QStringLiteral("video") : QStringLiteral("type%1").arg(type);
+        const int trackLabel = track.value(QStringLiteral("trackTag")).toInt(t + 1);
         ImportedTrack out;
         out.audio = isAudio;
         out.muted = track.value(QStringLiteral("mute")).toBool() || track.value(QStringLiteral("hide")).toBool()
                     || track.value(QStringLiteral("isMute")).toBool() || track.value(QStringLiteral("isHide")).toBool();
         out.locked = track.value(QStringLiteral("lock")).toBool() || track.value(QStringLiteral("isLock")).toBool();
-        for (const QJsonValue &cv : track.value(QStringLiteral("clipList")).toArray()) {
-            const QJsonObject clip = cv.toObject();
+        const QJsonArray clipList = track.value(QStringLiteral("clipList")).toArray();
+        for (int ci = 0; ci < clipList.size(); ++ci) {
+            const QJsonObject clip = clipList.at(ci).toObject();
+            const QString sourceId = QStringLiteral("%1:%2:%3:%4").arg(timelineKey, kind).arg(t).arg(ci);
+            const QString where = isAudio ? tr("Audio track %1, clip %2").arg(trackLabel).arg(ci + 1)
+                                  : isVideo ? tr("Video track %1, clip %2").arg(trackLabel).arg(ci + 1)
+                                            : tr("Track %1 (type %2), clip %3").arg(trackLabel).arg(type).arg(ci + 1);
+            int64_t begin = 0;
+            int64_t end = 0;
+            int64_t inPoint = 0;
+            int64_t outPoint = 0;
+            const bool timesValid = ticksToUs(clip.value(QStringLiteral("tlBegin")), &begin)
+                && ticksToUs(clip.value(QStringLiteral("tlEnd")), &end)
+                && ticksToUs(clip.value(QStringLiteral("inPoint")), &inPoint)
+                && ticksToUs(clip.value(QStringLiteral("outPoint")), &outPoint);
+
             const QString filename = clip.value(QStringLiteral("filename")).toString();
             if (filename.isEmpty() || (!isAudio && !isVideo)) {
                 skipped[tr("titles, effects and stickers")] += 1;
+                CompatEntry e;
+                e.status = CompatStatus::Unsupported;
+                e.construct = QStringLiteral("non_media_clip");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = timesValid && begin >= 0 ? begin : -1;
+                e.reason = filename.isEmpty()
+                    ? tr("The clip names no media file: a title, effect, sticker or another kind of clip Dafin cannot read.")
+                    : tr("The clip is on a track that is neither video nor audio (type %1).").arg(type);
+                e.applied = tr("Left out.");
+                e.hint = tr("Add the title, effect or sticker again in Dafin.");
+                report.add(e);
                 continue;
             }
-            const int64_t begin = ticksToUs(clip.value(QStringLiteral("tlBegin")));
-            const int64_t end = ticksToUs(clip.value(QStringLiteral("tlEnd")));
-            if (end <= begin)
+            if (!timesValid || end <= begin) {
+                CompatEntry e;
+                e.status = CompatStatus::Omitted;
+                e.construct = QStringLiteral("empty_clip");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = timesValid && begin >= 0 ? begin : -1;
+                e.reason = timesValid ? tr("The clip's end is not after its start.")
+                                      : tr("The clip's times are not valid numbers.");
+                e.applied = tr("Left out.");
+                report.add(e);
                 continue;
+            }
             ImportedClip c;
+            c.sourceId = sourceId;
             c.path = localPathFromFilmora(filename);
             c.name = QFileInfo(c.path).fileName();
             c.startUs = begin;
             c.durationUs = end - begin;
-            c.srcInUs = ticksToUs(clip.value(QStringLiteral("inPoint")));
-            const int64_t srcOut = ticksToUs(clip.value(QStringLiteral("outPoint")));
+            c.srcInUs = inPoint;
+            const int64_t srcOut = outPoint;
             const QJsonObject speed = clip.value(QStringLiteral("speed")).toObject();
             c.reverse = speed.value(QStringLiteral("reverse")).toBool();
             c.still = isVideo && isStillSuffix(c.path);
@@ -218,18 +436,89 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
             // constant speed and is only read to spot a ramp.
             double rateValue = srcOut > c.srcInUs ? double(srcOut - c.srcInUs) / double(c.durationUs) : 0.0;
             const double curve = constantSpeedOf(speed.value(QStringLiteral("speedParam")));
-            if (curve <= 0) {
+            const bool ramps = curve <= 0;
+            if (ramps) {
                 if (!timeline.notes.contains(tr("Speed ramps became constant speeds.")))
                     timeline.notes.append(tr("Speed ramps became constant speeds."));
             } else if (rateValue <= 0) {
                 rateValue = curve;
             }
-            c.speed = c.still ? 1.0 : (rateValue > 0.01 && rateValue < 100.0 ? rateValue : 1.0);
+            const bool speedUsable = rateValue > 0.01 && rateValue < 100.0;
+            c.speed = c.still ? 1.0 : (speedUsable ? rateValue : 1.0);
             if (qAbs(c.speed - 1.0) < 1e-3)
                 c.speed = 1.0;
             if (c.still) {
                 c.srcInUs = 0;
                 c.reverse = false;
+            }
+
+            bool clean = true;
+            if (ramps && !c.still) {
+                const CurveSummary curveInfo = summarizeCurve(speed.value(QStringLiteral("speedParam")));
+                CompatEntry e;
+                e.status = CompatStatus::Approximated;
+                e.construct = QStringLiteral("speed_curve");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = begin;
+                e.reason = tr("The speed changes along the clip (a ramp of %n key(s), %1× to %2×).", nullptr, curveInfo.keys)
+                               .arg(QString::number(curveInfo.min, 'g', 4), QString::number(curveInfo.max, 'g', 4));
+                e.applied = tr("The ramp became one constant speed of %1×: the source span over the timeline span.")
+                                .arg(QString::number(c.speed, 'g', 5));
+                e.hint = tr("Set the ramp again in the clip's Speed tools.");
+                report.add(e);
+                clean = false;
+            } else if (!ramps && !c.still && !speedUsable) {
+                CompatEntry e;
+                e.status = CompatStatus::Approximated;
+                e.construct = QStringLiteral("speed");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = begin;
+                e.reason = tr("The clip's speed could not be read, or lies outside 0.01× to 100×.");
+                e.applied = tr("The clip plays at normal speed.");
+                e.hint = tr("Set the speed again in the clip's Speed tools.");
+                report.add(e);
+                clean = false;
+            }
+            const AttachedEffects effects = attachedEffectsOf(clip.value(QStringLiteral("effectChainList")));
+            if (effects.count > 0) {
+                CompatEntry e;
+                e.status = CompatStatus::Omitted;
+                e.construct = QStringLiteral("attached_effect");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = begin;
+                e.reason = tr("%n effect(s) attached to the clip in Filmora are not imported.", nullptr, effects.count);
+                if (!effects.ids.isEmpty())
+                    e.reason += QStringLiteral(" (%1)").arg(effects.ids.join(QStringLiteral(", ")));
+                e.applied = tr("The media was imported as it is, without the effect(s).");
+                e.hint = tr("Add the effect(s) again in Dafin's Effects tab.");
+                report.add(e);
+                clean = false;
+            }
+            if (effects.unrecognized > 0) {
+                CompatEntry e;
+                e.status = CompatStatus::Unknown;
+                e.construct = QStringLiteral("attached_effect_unrecognized");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = begin;
+                e.reason = tr("The clip has %n effect entry(ies) in a layout Dafin does not recognise.", nullptr,
+                              effects.unrecognized);
+                e.applied = tr("Left out; the media was imported as it is.");
+                e.hint = tr("Check the clip against the original in Filmora.");
+                report.add(e);
+                clean = false;
+            }
+            if (clean) {
+                CompatEntry e;
+                e.status = CompatStatus::Preserved;
+                e.construct = isAudio ? QStringLiteral("audio_clip") : QStringLiteral("media_clip");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = begin;
+                report.add(e);
             }
             out.clips.append(c);
         }
@@ -237,7 +526,7 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
             continue; // title, effect and sticker tracks: their clips were counted above
         std::stable_sort(out.clips.begin(), out.clips.end(),
                          [](const ImportedClip &a, const ImportedClip &b) { return a.startUs < b.startUs; });
-        const int number = track.value(QStringLiteral("trackTag")).toInt(t + 1);
+        const int number = trackLabel;
         (isAudio ? audio : video).append({number, t, out});
     }
 

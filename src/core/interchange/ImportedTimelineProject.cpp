@@ -125,7 +125,7 @@ ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &pr
     project.setId(newId());
     project.setName(timeline.name.isEmpty() ? QFileInfo(projectFile).completeBaseName() : timeline.name);
     project.setResolution(qMax(16, timeline.width), qMax(16, timeline.height));
-    project.setFps(qBound(1, int(std::lround(timeline.fps)), 240));
+    project.setFps(projectFpsFor(timeline.fps));
     if (timeline.sampleRate >= 8000)
         project.setSampleRate(timeline.sampleRate);
     project.tracks().clear();
@@ -136,8 +136,19 @@ ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &pr
     const auto assetFor = [&](const ImportedClip &c, bool audioTrack, QString *path) {
         bool found = false;
         *path = finder.find(c.path, c.relativePath, &found);
-        if (!found)
+        if (!found) {
             missing.insert(QDir::toNativeSeparators(*path));
+            CompatEntry entry;
+            entry.status = CompatStatus::MissingDependency;
+            entry.construct = QStringLiteral("media_file");
+            entry.sourceId = c.sourceId.isEmpty() ? QStringLiteral("clip:%1").arg(c.name) : c.sourceId;
+            entry.where = c.name.isEmpty() ? QFileInfo(*path).fileName() : c.name;
+            entry.sourceTimeUs = c.startUs >= 0 ? c.startUs : -1;
+            entry.reason = tr("The media file is not on this computer, nor beside the project file.");
+            entry.applied = tr("The clip was kept and shows as missing.");
+            entry.hint = tr("Relink the clip, or put the file back where the project expects it.");
+            result.report.add(entry);
+        }
         const auto it = assetForPath.constFind(*path);
         if (it != assetForPath.constEnd())
             return *it;
@@ -253,6 +264,33 @@ QString summary(const ImportedTimeline &timeline, const ProjectBuildResult &resu
     if (!result.missingMedia.isEmpty())
         parts.append(tr("%n media file(s) were not found and show as missing.", nullptr,
                         int(result.missingMedia.size())));
+    // What the reader says it did not bring across faithfully (the Filmora reader fills this in).
+    int effectClips = 0;
+    int otherTimelines = 0;
+    int emptyClips = 0;
+    int unrecognized = 0;
+    QStringList rateNotes;
+    for (const CompatEntry &e : timeline.report.entries) {
+        if (e.construct == QLatin1String("attached_effect"))
+            ++effectClips;
+        else if (e.construct == QLatin1String("other_timeline"))
+            ++otherTimelines;
+        else if (e.construct == QLatin1String("empty_clip"))
+            ++emptyClips;
+        else if (e.status == CompatStatus::Unknown && e.construct != QLatin1String("frame_rate"))
+            ++unrecognized;
+        else if (e.construct == QLatin1String("frame_rate") && e.status != CompatStatus::Preserved)
+            rateNotes.append(e.applied);
+    }
+    if (effectClips > 0)
+        parts.append(tr("%n clip(s) came without the effects attached to them in the original.", nullptr, effectClips));
+    if (otherTimelines > 0)
+        parts.append(tr("%n other timeline(s) in the project were not imported.", nullptr, otherTimelines));
+    if (emptyClips > 0)
+        parts.append(tr("%n clip(s) with no length or invalid times were left out.", nullptr, emptyClips));
+    if (unrecognized > 0)
+        parts.append(tr("%n item(s) were in a layout Dafin does not recognise.", nullptr, unrecognized));
+    parts.append(rateNotes);
     parts.append(tr("Effects, transitions, titles and keyframes stay behind."));
     for (const QString &note : timeline.notes)
         parts.append(note);
