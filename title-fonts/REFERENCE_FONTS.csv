@@ -1,0 +1,44 @@
+package,file,weight,styleName,italic,sha256,nameID5,bytes
+ref-inter,Inter-Regular.otf,400,Regular,0,d4f2b9e148059a15f014cb0f0b8fea8cd11bfa447dd483bedf1b0adc0e2ba799,Version 4.001;git-9221beed3,609600
+ref-inter,Inter-Medium.otf,500,Medium,0,6c222ed2c3660524dd0c14fb745e00fee65c5361ab28f60fba6730bf4e648763,Version 4.001;git-9221beed3,627988
+ref-inter,Inter-SemiBold.otf,600,SemiBold,0,0a4d30778fa2dc239368d90fd854b88b27e7ede737450da72686a90eca66f02c,Version 4.001;git-9221beed3,629912
+ref-inter,Inter-Bold.otf,700,Bold,0,9fc6261e817d0b1b2bf1953d8799bb1c837d11aeebbf83ae352e7b4d6de6425d,Version 4.001;git-9221beed3,631880
+ref-inter-display,InterDisplay-Regular.otf,400,Regular,0,35c1f7437dd6d63f4e60a49144df4b4e4edc190e13ffc1e54b86083747fe3acf,Version 4.001;git-9221beed3,608160
+ref-inter-display,InterDisplay-Medium.otf,500,Medium,0,9a17712bbd6da13b7ce9beb056d19fe15648799a11d5c35f8086a1270a0d13b2,Version 4.001;git-9221beed3,623380
+ref-inter-display,InterDisplay-SemiBold.otf,600,SemiBold,0,991234562ac06b47aefa2ca4d4ff74360a164a5653ec05357816fc4ffe3ca8a2,Version 4.001;git-9221beed3,625296
+ref-inter-display,InterDisplay-Bold.otf,700,Bold,0,d7a7394984bbb3bc3c3e507a6618d34e006c94f27c7105d0ef4376667aeaf4ee,Version 4.001;git-9221beed3,629020
+ref-inter-display,InterDisplay-Black.otf,900,Black,0,84ca5a51b3303c01b48cdd271637d3d20c263e09d00ec0ff2a945f122492a4d0,Version 4.001;git-9221beed3,623980
+ref-roboto-slab,RobotoSlab-Bold.otf,700,Bold,0,f860d0a2b4323863d94f76d579d4ddb54048c87d07f3bff936f40c22d7cb49dd,"Version 1.100263; 2013; ttfautohint (v0.94.20-1c74) -l 8 -r 12 -G 200 -x 14 -w """" -W",91008
+ref-clear-sans,ClearSans-Bold.ttf,700,Bold,0,e95b1274e575a12d4f9ed0293c359f92a2a1b73bda862b2432ecc567b330bfeb,Version 1.00,269792
+ref-dejavu-sans,DejaVuSans.ttf,400,Book,0,57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e,Version 2.37,759720
+ref-dejavu-sans-mono,DejaVuSansMono.ttf,400,Book,0,54bf827eb99404e8f430c330ad30f063334f637eba0109b6a18d4f566a8e9dd8,Version 2.37,343140
+ref-eb-garamond-08,EBGaramond08-Regular.ttf,400,08 Regular,0,8d0080d39bb51ca4bc89e86943e348ccf6ad6ce057085628e09a8df9871d7237,Version 0.016 ; ttfautohint (v1.8.3),303908
+ref-eb-garamond-08,EBGaramond08-Italic.ttf,400,08 Italic,1,9fcd21f03f8f6983cc8b0416439f79b092df68d3a965a3565c3497c7aaedb539,Version 0.016 ; ttfautohint (v1.8.3),199364
+ref-eb-garamond-12,EBGaramond12-Regular.ttf,400,12 Regular,0,8f607e942034fde0b0fcca2061266523c100c46362ee646bde68d04408c14045,Version 0.016 ; ttfautohint (v1.8.3),514288
+ref-eb-garamond-12,EBGaramond12-Bold.ttf,700,12 Bold,0,84e30a4f8a26cc1812c8072b01481a1e32cab8a57b5f67bf413f59d60dc86b24,Version 0.016 ; ttfautohint (v1.8.3),58416
+ref-freeserif,FreeSerif.ttf,400,Regular,0,c1dd2270ff624d66a7f1cd23075b5ce05a662f560be06a70a9599065ce008355,Version 0412.4273,3686360
+ref-freeserif,FreeSerifBold.ttf,700,Bold,0,d0015b983458707f5c768e44d5c58c7985b9be331994a80b436419199d32d15f,Version 0412.4271,2076128
+ref-lato,Lato-Heavy.ttf,800,Heavy,0,4ce7ec20cd9c391b271b4149ad8cf5a71301d98965403f14fc5530d017146dbb,Version 2.015; 2015-08-06; http://www.latofonts.com/,665420
+ref-noto-sans-display,NotoSansDisplay-Light.ttf,300,Light,0,b2938eecdbdacbbcc9fab3641268d02afb0c0896335ab12331793195de019197,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",496492
+ref-noto-sans-display,NotoSansDisplay-Regular.ttf,400,Regular,0,3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",508388
+ref-noto-sans-display,NotoSansDisplay-Medium.ttf,500,Medium,0,0d7de6c6a264dfa9b0e93efc1338414bff20f79aaf9ff85e3a9fc901bdf9dbea,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",505504
+ref-noto-sans-display,NotoSansDisplay-SemiBold.ttf,600,SemiBold,0,9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",511828
+ref-noto-sans-display,NotoSansDisplay-Bold.ttf,700,Bold,0,1640ba8acb852d9e00406e166d1fc0cedd62a4c20342fd92f1f6dbc7baa61de2,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",513000
+ref-noto-sans-display,NotoSansDisplay-ExtraBold.ttf,800,ExtraBold,0,21d09d821e94c676ce07e0fa6d6b9884946e8e3c0e3b9800721d58a643a83336,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",516168
+ref-noto-sans-display,NotoSansDisplay-Black.ttf,900,Black,0,4bf498b3b6a4b3fe311b8771c001cef5077a339f329649542d237cc284d3b13d,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",529848
+ref-noto-sans-display-condensed,NotoSansDisplay-CondensedSemiBold.ttf,600,Condensed SemiBold,0,f910575c2f0dc5729486a277e18e22455e8966e48a6441b286c0f59dfb01730c,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",506464
+ref-noto-sans-display-condensed,NotoSansDisplay-CondensedBold.ttf,700,Condensed Bold,0,1f07421ff2325605e4b2e50fe0735bc74db03595a4bc3acafa2ee89e598510ab,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",510436
+ref-noto-sans-display-semicondensed,NotoSansDisplay-SemiCondensedBold.ttf,700,SemiCondensed Bold,0,7b2e466a506a2f6ce6ee807dd97fc157acc11d5c7c88dcb4c7af5729ae427906,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",513760
+ref-noto-sans-display-semicondensed,NotoSansDisplay-SemiCondensedExtraBold.ttf,800,SemiCondensed ExtraBold,0,b224e7ec937a28e4b7f4925acf5be35ac480489fac28f598185f3e1af91473a4,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",513752
+ref-noto-sans-symbols2,NotoSansSymbols2-Regular.ttf,400,Regular,0,876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688,Version 2.003,656852
+ref-noto-serif,NotoSerif-Regular.ttf,400,Regular,0,9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f,"Version 2.004; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",588876
+ref-noto-serif-display,NotoSerifDisplay-Light.ttf,300,Light,0,3fa2add1cc11485f57e27f3a25929bfb0e613ad74b420298c331c99bf4c72336,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",568156
+ref-noto-serif-display,NotoSerifDisplay-Regular.ttf,400,Regular,0,bcdc596729c24044e28c54815ecbe6004f83b10169a49a51160b22f59116249f,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",559120
+ref-noto-serif-display,NotoSerifDisplay-Medium.ttf,500,Medium,0,ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",567344
+ref-noto-serif-display,NotoSerifDisplay-SemiBold.ttf,600,SemiBold,0,74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40,"Version 2.003; ttfautohint (v1.8.3) -l 8 -r 50 -G 200 -x 14 -D latn -f none -a qsq -X """"",567044
+ref-pt-sans,PTS75F.ttf,700,Bold,0,576b59732fff967895eba1eed0fc5f8cdb069ea31fde878c0cdc36aa2d4615ef,Version 2.005,457448
+ref-pt-sans-caption,PTC55F.ttf,400,Regular,0,17831d9f44e62fb9b80c91827af8eafa51cb0f61529a7176c9c5135555384e70,Version 2.005,355468
+ref-pt-sans-caption,PTC75F.ttf,700,Bold,0,9a1a5425abb2f16d85cd8a677879b59b595c5c55014b0fc60233f810aedd7292,Version 2.005,377508
+ref-pt-sans-narrow,PTN77F.ttf,700,Bold,0,fc310ffbaf08063e924fe760ad2038c18e1bc94c94f532d284dc22f07babbd44,Version 2.005,487796
+ref-pt-serif,PTF55F.ttf,400,Regular,0,d074251529defb38523f3d89cfadfc2491515b32c22f154a8fc6b4c184415a69,Version 1.002,327120
+ref-pt-serif,PTF75F.ttf,700,Bold,0,71a57caa616bec6f7266bddb176defd481f4edfca357123d4d3d8bb942b10f26,Version 1.002,301536

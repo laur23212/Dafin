@@ -31,3 +31,20 @@ those letters.
 
 Rebuild: `python3 tools/asset-audit/build_title_fonts.py <google-fonts download> title-fonts`,
 then trim to the used faces (see `docs/asset-audit/README.md`).
+
+## Reference fonts (`ref-*`)
+
+The 43 faces the approved titles were rendered with: byte-identical to the audit set (Debian
+packages fonts-inter 4.1+ds-1, fonts-noto-core 20201225-2, fonts-ebgaramond-extra, fonts-lato,
+fonts-roboto-slab, fonts-paratype, fonts-clear-sans, fonts-freefont-ttf, fonts-dejavu). Nothing is
+cut or converted: `REFERENCE_FONTS.csv` lists the SHA-256 of every file and `tst_referencefonts`
+checks it. A font is the same file or it is not used (a different version moves the text metrics).
+
+- Each package is a separate family named `<Family> Ref` (Inter Ref, Lato Ref, ...), so it never
+  shadows the family of the same name above or in Fonts Essentials. Category order 100.
+- Faces with the same weight but another width (Noto Sans Display Condensed / SemiCondensed) are
+  separate packages, so a weight always picks one file.
+- Licence text beside every package: `OFL.txt` (OFL families), else `LICENSE.txt` (Apache-2.0,
+  Bitstream Vera, ParaType Free Font License, FreeSerif GPL-3+ with font exception).
+- EB Garamond 12 Bold and Noto Sans Symbols2 have no Romanian letters; every other face has
+  ă â î ș ț Ș Ț (comma below).

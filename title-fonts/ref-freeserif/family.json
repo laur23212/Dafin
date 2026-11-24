@@ -1,0 +1,19 @@
+{
+  "id": "ref-freeserif",
+  "family": "FreeSerif Ref",
+  "category": "editorial",
+  "license": "GPL-3.0-or-later WITH Font-exception",
+  "order": 100,
+  "faces": [
+    {
+      "file": "FreeSerif.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "FreeSerifBold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

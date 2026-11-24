@@ -1,0 +1,14 @@
+{
+  "id": "ref-pt-sans",
+  "family": "PT Sans Ref",
+  "category": "clean",
+  "license": "ParaType-Free-Font-License",
+  "order": 100,
+  "faces": [
+    {
+      "file": "PTS75F.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

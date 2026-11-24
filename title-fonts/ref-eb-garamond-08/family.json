@@ -1,0 +1,20 @@
+{
+  "id": "ref-eb-garamond-08",
+  "family": "EB Garamond 08 Ref",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "EBGaramond08-Regular.ttf",
+      "weight": 400,
+      "styleName": "08 Regular"
+    },
+    {
+      "file": "EBGaramond08-Italic.ttf",
+      "weight": 400,
+      "styleName": "08 Italic",
+      "italic": true
+    }
+  ]
+}

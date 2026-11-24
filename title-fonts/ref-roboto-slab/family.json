@@ -1,0 +1,14 @@
+{
+  "id": "ref-roboto-slab",
+  "family": "Roboto Slab Ref",
+  "category": "editorial",
+  "license": "Apache-2.0",
+  "order": 100,
+  "faces": [
+    {
+      "file": "RobotoSlab-Bold.otf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

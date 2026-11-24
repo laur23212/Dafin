@@ -1,0 +1,29 @@
+{
+  "id": "ref-noto-serif-display",
+  "family": "Noto Serif Display Ref",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "NotoSerifDisplay-Light.ttf",
+      "weight": 300,
+      "styleName": "Light"
+    },
+    {
+      "file": "NotoSerifDisplay-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "NotoSerifDisplay-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    },
+    {
+      "file": "NotoSerifDisplay-SemiBold.ttf",
+      "weight": 600,
+      "styleName": "SemiBold"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "ref-pt-serif",
+  "family": "PT Serif Ref",
+  "category": "editorial",
+  "license": "ParaType-Free-Font-License",
+  "order": 100,
+  "faces": [
+    {
+      "file": "PTF55F.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "PTF75F.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

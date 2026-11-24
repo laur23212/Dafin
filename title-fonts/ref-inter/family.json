@@ -1,0 +1,29 @@
+{
+  "id": "ref-inter",
+  "family": "Inter Ref",
+  "category": "clean",
+  "license": "OFL-1.1 AND Apache-2.0",
+  "order": 100,
+  "faces": [
+    {
+      "file": "Inter-Regular.otf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "Inter-Medium.otf",
+      "weight": 500,
+      "styleName": "Medium"
+    },
+    {
+      "file": "Inter-SemiBold.otf",
+      "weight": 600,
+      "styleName": "SemiBold"
+    },
+    {
+      "file": "Inter-Bold.otf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

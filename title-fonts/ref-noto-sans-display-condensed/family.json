@@ -1,0 +1,19 @@
+{
+  "id": "ref-noto-sans-display-condensed",
+  "family": "Noto Sans Display Condensed Ref",
+  "category": "impact",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "NotoSansDisplay-CondensedSemiBold.ttf",
+      "weight": 600,
+      "styleName": "Condensed SemiBold"
+    },
+    {
+      "file": "NotoSansDisplay-CondensedBold.ttf",
+      "weight": 700,
+      "styleName": "Condensed Bold"
+    }
+  ]
+}

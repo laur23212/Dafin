@@ -1,0 +1,19 @@
+{
+  "id": "ref-eb-garamond-12",
+  "family": "EB Garamond 12 Ref",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "EBGaramond12-Regular.ttf",
+      "weight": 400,
+      "styleName": "12 Regular"
+    },
+    {
+      "file": "EBGaramond12-Bold.ttf",
+      "weight": 700,
+      "styleName": "12 Bold"
+    }
+  ]
+}

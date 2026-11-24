@@ -167,6 +167,15 @@ target_compile_definitions(tst_addonpackage PRIVATE
     DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME AddonPackage COMMAND tst_addonpackage)
 
+# Dafin: the 43 exact reference fonts (title-fonts/ref-*): hashes, weights, Romanian letters.
+qt_add_executable(tst_referencefonts tst_referencefonts.cpp)
+target_include_directories(tst_referencefonts PRIVATE ../src)
+target_link_libraries(tst_referencefonts PRIVATE Qt6::Test Qt6::Gui driftengine)
+target_compile_definitions(tst_referencefonts PRIVATE
+    DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
+add_test(NAME ReferenceFonts COMMAND tst_referencefonts)
+set_tests_properties(ReferenceFonts PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 qt_add_executable(tst_addoncatalog
     tst_addoncatalog.cpp
     ../src/app/online/addons/AddonCatalog.cpp

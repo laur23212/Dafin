@@ -1,0 +1,14 @@
+{
+  "id": "ref-noto-serif",
+  "family": "Noto Serif Ref",
+  "category": "editorial",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "NotoSerif-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

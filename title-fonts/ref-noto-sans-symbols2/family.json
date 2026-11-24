@@ -1,0 +1,14 @@
+{
+  "id": "ref-noto-sans-symbols2",
+  "family": "Noto Sans Symbols2 Ref",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "NotoSansSymbols2-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    }
+  ]
+}

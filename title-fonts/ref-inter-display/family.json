@@ -1,0 +1,34 @@
+{
+  "id": "ref-inter-display",
+  "family": "Inter Display Ref",
+  "category": "impact",
+  "license": "OFL-1.1 AND Apache-2.0",
+  "order": 100,
+  "faces": [
+    {
+      "file": "InterDisplay-Regular.otf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "InterDisplay-Medium.otf",
+      "weight": 500,
+      "styleName": "Medium"
+    },
+    {
+      "file": "InterDisplay-SemiBold.otf",
+      "weight": 600,
+      "styleName": "SemiBold"
+    },
+    {
+      "file": "InterDisplay-Bold.otf",
+      "weight": 700,
+      "styleName": "Bold"
+    },
+    {
+      "file": "InterDisplay-Black.otf",
+      "weight": 900,
+      "styleName": "Black"
+    }
+  ]
+}

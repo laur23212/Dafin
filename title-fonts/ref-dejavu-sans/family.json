@@ -1,0 +1,14 @@
+{
+  "id": "ref-dejavu-sans",
+  "family": "DejaVu Sans Ref",
+  "category": "clean",
+  "license": "Bitstream-Vera",
+  "order": 100,
+  "faces": [
+    {
+      "file": "DejaVuSans.ttf",
+      "weight": 400,
+      "styleName": "Book"
+    }
+  ]
+}

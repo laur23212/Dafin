@@ -1,0 +1,14 @@
+{
+  "id": "ref-clear-sans",
+  "family": "Clear Sans Ref",
+  "category": "clean",
+  "license": "Apache-2.0",
+  "order": 100,
+  "faces": [
+    {
+      "file": "ClearSans-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    }
+  ]
+}

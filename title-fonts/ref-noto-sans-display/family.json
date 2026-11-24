@@ -1,0 +1,44 @@
+{
+  "id": "ref-noto-sans-display",
+  "family": "Noto Sans Display Ref",
+  "category": "clean",
+  "license": "OFL-1.1",
+  "order": 100,
+  "faces": [
+    {
+      "file": "NotoSansDisplay-Light.ttf",
+      "weight": 300,
+      "styleName": "Light"
+    },
+    {
+      "file": "NotoSansDisplay-Regular.ttf",
+      "weight": 400,
+      "styleName": "Regular"
+    },
+    {
+      "file": "NotoSansDisplay-Medium.ttf",
+      "weight": 500,
+      "styleName": "Medium"
+    },
+    {
+      "file": "NotoSansDisplay-SemiBold.ttf",
+      "weight": 600,
+      "styleName": "SemiBold"
+    },
+    {
+      "file": "NotoSansDisplay-Bold.ttf",
+      "weight": 700,
+      "styleName": "Bold"
+    },
+    {
+      "file": "NotoSansDisplay-ExtraBold.ttf",
+      "weight": 800,
+      "styleName": "ExtraBold"
+    },
+    {
+      "file": "NotoSansDisplay-Black.ttf",
+      "weight": 900,
+      "styleName": "Black"
+    }
+  ]
+}
