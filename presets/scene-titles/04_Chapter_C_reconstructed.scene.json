@@ -1,0 +1,240 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.chapter.cinematic-reconstructed",
+ "label": "Chapter C Cinematic (reconstructed)",
+ "category": "Chapter Titles",
+ "source": {
+  "asset": "04_Chapter_C",
+  "sha256": "b344a56246edf037a3780b0a2a680d48e0cecba192225b1d088bc7c3daded46f",
+  "script": "SOURCE_MISSING: original renderer not found (ChatGPT, 2026-11-24: NU_MAI_EXISTA). Reconstructed from the approved MP4 by Claude; font FONT_UNKNOWN, closest installed file used.",
+  "status": "RECONSTRUCTED_APPROX_SOURCE_MISSING_FONT_UNKNOWN"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "mask1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "video",
+   "file": "04_Chapter_C_plate_estimate.mp4"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "palette": {
+  "LABEL": [
+   238,
+   238,
+   238,
+   237
+  ],
+  "RULE": [
+   232,
+   232,
+   232,
+   97
+  ],
+  "INK": [
+   246,
+   244,
+   240,
+   230
+  ],
+  "SUB": [
+   236,
+   238,
+   238,
+   227
+  ]
+ },
+ "fonts": {
+  "serif": {
+   "family": "Noto Serif",
+   "weight": 600,
+   "file": "NotoSerif-SemiBoldItalic.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "fbf7c52746a6d0308cc137938d6a7c44fd40ee2db6bbf54d3df59851598d68fc"
+  },
+  "sans": {
+   "family": "Inter Display",
+   "weight": 400,
+   "file": "InterDisplay-Regular.otf",
+   "package": "fonts-inter 4.0+ds-1",
+   "sha256": "42263268dce7a1217d590dd44675fa624438cc767b3c37e9a149f2a40c406ca0"
+  }
+ },
+ "params": [
+  {
+   "id": "label",
+   "type": "text",
+   "default": "CAPITOLUL 03",
+   "label": "Chapter label"
+  },
+  {
+   "id": "title1",
+   "type": "text",
+   "default": "ÎN CĂUTAREA",
+   "label": "Title, line 1"
+  },
+  {
+   "id": "title2",
+   "type": "text",
+   "default": "LUMINII",
+   "label": "Title, line 2"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Un oraș în lumină și tăcere",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "label",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{label}",
+   "font": "sans",
+   "size": 30,
+   "color": "LABEL",
+   "at": {
+    "baseline": [
+     856.3,
+     393
+    ]
+   },
+   "letterSpacing": 0.2,
+   "in": {
+    "start": 0.0,
+    "dur": 0.5,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0.3
+    }
+   },
+   "out": {
+    "start": 5.2,
+    "dur": 0.5,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0.3
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "accent",
+   "type": "rect",
+   "color": "RULE",
+   "in": {
+    "start": 0.1,
+    "dur": 0.25,
+    "ease": "easeOutCubic"
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.4,
+    "ease": "smoothstep"
+   },
+   "box": [
+    780,
+    407,
+    1139,
+    408
+   ]
+  },
+  {
+   "id": "title1",
+   "role": "title",
+   "type": "text",
+   "text": "{title1}",
+   "font": "serif",
+   "size": 96,
+   "color": "INK",
+   "at": {
+    "baseline": [
+     627,
+     556
+    ]
+   },
+   "in": {
+    "start": 0.3,
+    "dur": 0.85,
+    "ease": "cubic-bezier(0.5,0,0.5,1)",
+    "from": {
+     "opacity": 0,
+     "dy": 16
+    }
+   },
+   "out": {
+    "start": 5.18,
+    "dur": 0.75,
+    "ease": "cubic-bezier(0.25,0.1,0.25,1)",
+    "to": {
+     "opacity": 0,
+     "dy": 16
+    }
+   }
+  },
+  {
+   "id": "title2",
+   "role": "title",
+   "type": "text",
+   "text": "{title2}",
+   "font": "serif",
+   "size": 96,
+   "color": "INK",
+   "at": {
+    "baseline": [
+     753,
+     657
+    ]
+   },
+   "letterSpacing": -0.2,
+   "sync": "title1"
+  },
+  {
+   "id": "subtitle",
+   "role": "subtitle",
+   "type": "text",
+   "text": "{subtitle}",
+   "font": "sans",
+   "size": 24.5,
+   "color": "SUB",
+   "at": {
+    "baseline": [
+     822.6,
+     688
+    ]
+   },
+   "in": {
+    "start": 0.6,
+    "dur": 0.35,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 5.12,
+    "dur": 0.55,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  }
+ ]
+}
