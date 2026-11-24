@@ -1,0 +1,61 @@
+{
+  "format": "dafin.scene-title",
+  "version": 1,
+  "id": "dafin.instructional.step-focus",
+  "label": "Step Focus",
+  "category": "Instructional Titles",
+  "source": {
+    "asset": "15_A_Step_Focus",
+    "sha256": "93f895a609cadab5dab95987043cc8f251d97e2c24d796e35a255caa6cdb1e1e",
+    "script": "Dafin_TitleDesign_Part6_Stage15_InstructionalTitles_Delta_v6.1.6 :: source/render_stage15.py scene_a",
+    "status": "VISUAL_APPROVED_CONDITIONAL_BACKEND"
+  },
+  "canvas": {"width": 1920, "height": 1080},
+  "timing": {"duration": 6.0, "fps": 25, "cadence": "match"},
+  "render": {"profile": "sprite2x", "mixColor": "DARK"},
+  "preview": {"background": {"kind": "base"}, "encode": {"preset": "veryfast", "crf": 18}},
+  "palette": {
+    "DARK": [9, 12, 17], "WHITE": [242, 243, 240], "SOFT": [165, 177, 187],
+    "AQUA": [123, 209, 192], "FAINT2": [62, 78, 88]
+  },
+  "fonts": {
+    "regular": {"family": "Noto Sans Display", "weight": 400, "file": "NotoSansDisplay-Regular.ttf", "package": "fonts-noto-core 20201225-2", "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"},
+    "semi": {"family": "Noto Sans Display", "weight": 600, "file": "NotoSansDisplay-SemiBold.ttf", "package": "fonts-noto-extra 20201225-2", "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"},
+    "serif": {"family": "Noto Serif", "weight": 400, "file": "NotoSerif-Regular.ttf", "package": "fonts-noto-core 20201225-2", "sha256": "9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f"}
+  },
+  "params": [
+    {"id": "totalSteps", "type": "int", "default": 5, "min": 1, "max": 32, "label": "Total steps"},
+    {"id": "currentStep", "type": "int", "default": 2, "min": 1, "max": "totalSteps", "clamp": true, "label": "Current step"},
+    {"id": "title", "type": "text", "default": "Adjust the exposure", "label": "Title"},
+    {"id": "description", "type": "text", "default": "Balance highlights before export", "label": "Description"}
+  ],
+  "actors": [
+    {"id": "eyebrow", "role": "stepLabel", "type": "text", "text": "STEP {currentStep:02}  /  {totalSteps:02}",
+     "font": "semi", "size": 26, "color": "AQUA", "at": {"baseline": [359.0, 318.5]},
+     "in": {"start": 0.18, "dur": 0.35, "ease": "smoothstep", "from": {"opacity": 0, "dy": 9}},
+     "out": {"start": 4.68, "dur": 0.33, "ease": "smoothstep", "to": {"opacity": 0}}},
+    {"id": "stepNumber", "role": "stepNumber", "type": "text", "text": "{currentStep:02}",
+     "font": "serif", "size": 142, "color": "WHITE", "at": {"baseline": [350.0, 527.0]},
+     "in": {"start": 0.53, "dur": 0.55, "ease": "smoothstep", "from": {"opacity": 0, "dy": 16}},
+     "out": {"start": 4.68, "dur": 0.33, "ease": "smoothstep", "to": {"opacity": 0}}},
+    {"id": "divider", "role": "divider", "type": "line", "from": [540, 428], "to": [540, 635], "width": 2,
+     "color": "FAINT2", "opacityMode": "mixWith",
+     "in": {"start": 0.53, "dur": 0.48, "ease": "smoothstep", "from": {"opacity": 0}},
+     "out": {"start": 4.93, "dur": 0.34, "ease": "smoothstep", "to": {"opacity": 0}}},
+    {"id": "title", "role": "title", "type": "text", "text": "{title}",
+     "font": "semi", "size": 71, "color": "WHITE", "at": {"baseline": [596.0, 509.0]},
+     "in": {"start": 0.72, "dur": 0.5, "ease": "smoothstep", "from": {"opacity": 0, "dy": 12}},
+     "out": {"start": 4.68, "dur": 0.33, "ease": "smoothstep", "to": {"opacity": 0}}},
+    {"id": "description", "role": "description", "type": "text", "text": "{description}", "optional": true,
+     "font": "regular", "size": 32, "color": "SOFT", "at": {"baseline": [599.0, 587.5]},
+     "in": {"start": 1.09, "dur": 0.45, "ease": "smoothstep", "from": {"opacity": 0, "dy": 8}},
+     "out": {"start": 4.64, "dur": 0.35, "ease": "smoothstep", "to": {"opacity": 0}}},
+    {"id": "progress", "role": "progressSegments", "type": "repeat", "count": {"expr": "totalSteps"}, "as": "i",
+     "actor": {"id": "segment{i}", "role": "progressSegment", "type": "line",
+       "from": [{"expr": "590 + i*154"}, 676], "to": [{"expr": "590 + i*154 + 137"}, 676],
+       "color": {"expr": "AQUA if i < currentStep else FAINT2"},
+       "width": {"expr": "4 if i < currentStep else 3"},
+       "in": {"start": {"expr": "1.38 + i*0.085"}, "dur": 0.46, "ease": "smoothstep", "from": {"progress": 0}},
+       "out": {"start": 4.83, "dur": 0.38, "ease": "smoothstep", "to": {"progress": 0}}}}
+  ]
+}
