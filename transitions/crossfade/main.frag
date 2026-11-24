@@ -62,5 +62,11 @@ float aspectRatio() { return u_resolution.x / max(u_resolution.y, 1.0); }
 void main() {
     vec4 a = texture(u_fromTexture, v_texCoord);
     vec4 b = texture(u_toTexture, v_texCoord);
-    fragColor = mix(a, b, u_progress);
+    // Both sides are straight alpha. Mixing straight RGBA lets a see-through side drag the colour
+    // toward its (black) RGB: red fading to clear read .25 red instead of .5. Mix premultiplied,
+    // then hand the compositor straight alpha again. The endpoints stay exact: at progress 0 and
+    // 1 the mix is the side itself.
+    float outA = mix(a.a, b.a, u_progress);
+    vec3 premul = mix(a.rgb * a.a, b.rgb * b.a, u_progress);
+    fragColor = outA > 0.0001 ? vec4(premul / outA, outA) : vec4(0.0);
 }

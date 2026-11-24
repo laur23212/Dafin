@@ -270,42 +270,42 @@ void AlphaCompositeTest::normalOverTransparentIsIdentity()
         for (int x = 2; x < kSide; x += 8) {
             const QColor g = out.pixelColor(x, y);
             const QColor w = board.pixelColor(x, y);
-            QCOMPARE_LE(qAbs(g.alpha() - w.alpha()), 1);
+            QVERIFY((qAbs(g.alpha() - w.alpha())) <= (1));
             if (w.alpha() == 255) {
-                QCOMPARE_LE(qAbs(g.red() - w.red()), 1);
+                QVERIFY((qAbs(g.red() - w.red())) <= (1));
             } else {
                 // Half-alpha tile: white stays white, black stays black (straight readback).
-                QCOMPARE_LE(qAbs(g.red() - w.red()), 3);
+                QVERIFY((qAbs(g.red() - w.red())) <= (3);
             }
         }
 }
 
 void AlphaCompositeTest::multiplyOverClearKeepsSource()
 {
-    NEED_GL();
+    NEED_GL());
     // Opaque red, Multiply, over a fully transparent canvas: nothing to multiply with, so the
     // source is what is left. The shader as found returns black here.
     GpuScene scene = transparentScene();
     scene.items.append(plainItem(solid({1, 0, 0, 1}), drift::BlendMode::Multiply));
     const QImage out = renderScene(scene);
     const QColor c = out.pixelColor(32, 32);
-    QCOMPARE_LE(qAbs(c.red() - 255), 1);
-    QCOMPARE_LE(c.green(), 1);
-    QCOMPARE_LE(c.blue(), 1);
-    QCOMPARE_LE(qAbs(c.alpha() - 255), 1);
+    QVERIFY((qAbs(c.red() - 255)) <= (1));
+    QVERIFY((c.green()) <= (1));
+    QVERIFY((c.blue()) <= (1));
+    QVERIFY((qAbs(c.alpha() - 255)) <= (1);
 
     // Half-alpha source over clear keeps both its colour and its alpha.
-    GpuScene half = transparentScene();
+    GpuScene half = transparentScene());
     half.items.append(plainItem(solid({1, 0, 0, 0.5}), drift::BlendMode::Multiply));
     const QColor h = renderScene(half).pixelColor(32, 32);
-    QCOMPARE_LE(qAbs(h.alpha() - 128), 1);
-    QCOMPARE_LE(qAbs(h.red() - 255), 4);
-    QCOMPARE_LE(h.green(), 3);
+    QVERIFY((qAbs(h.alpha() - 128)) <= (1));
+    QVERIFY((qAbs(h.red() - 255)) <= (4));
+    QVERIFY((h.green()) <= (3);
 }
 
 void AlphaCompositeTest::alphaRampThroughBlendKeepsRamp()
 {
-    NEED_GL();
+    NEED_GL());
     // Left-to-right alpha ramp of one colour: through any blend over clear, each column must come
     // out with the ramp's own alpha and colour.
     QImage ramp(kSide, kSide, QImage::Format_RGBA8888);
@@ -388,20 +388,20 @@ void AlphaCompositeTest::crossfadeRedToClearIsPremultiplied()
     scene.items.append(
         transitionItem(solid({1, 0, 0, 1}), solid({0, 0, 0, 0}), 0.5, false));
     const QColor c = renderScene(scene).pixelColor(32, 32);
-    QCOMPARE_LE(qAbs(c.alpha() - 128), 1);
-    QCOMPARE_LE(qAbs(c.red() - 255), 3);
-    QCOMPARE_LE(c.green(), 2);
-    QCOMPARE_LE(c.blue(), 2);
+    QVERIFY((qAbs(c.alpha() - 128)) <= (1));
+    QVERIFY((qAbs(c.red() - 255)) <= (3));
+    QVERIFY((c.green()) <= (2));
+    QVERIFY((c.blue()) <= (2);
 }
 
 void AlphaCompositeTest::crossfadeMatchesReferenceAtEveryProgress_data()
 {
     QTest::addColumn<double>("progress");
     QTest::addColumn<double>("fromAlpha");
-    QTest::addColumn<double>("toAlpha");
+    QTest::addColumn<double>("toAlpha"));
     for (const double p : {0.0, 0.25, 0.5, 0.75, 1.0})
-        for (const auto &alphas : {std::array<double, 2>{1.0, 1.0}, {1.0, 0.0}, {0.0, 1.0},
-                                   {0.5, 1.0}, {1.0, 0.5}, {0.25, 0.75}})
+        for (const auto &alphas : std::array<std::array<double, 2>, 6>{{
+                 {1.0, 1.0}, {1.0, 0.0}, {0.0, 1.0}, {0.5, 1.0}, {1.0, 0.5}, {0.25, 0.75}}})
             QTest::addRow("p%.2f_a%.2f_to_a%.2f", p, alphas[0], alphas[1]) << p << alphas[0] << alphas[1];
 }
 
@@ -434,7 +434,8 @@ void AlphaCompositeTest::brokenShaderFallbackIsTheCanonicalCrossfade_data()
     QTest::addColumn<double>("fromAlpha");
     QTest::addColumn<double>("toAlpha");
     for (const double p : {0.0, 0.25, 0.5, 0.75, 1.0})
-        for (const auto &alphas : {std::array<double, 2>{1.0, 1.0}, {1.0, 0.0}, {0.5, 1.0}})
+        for (const auto &alphas :
+             std::array<std::array<double, 2>, 3>{{{1.0, 1.0}, {1.0, 0.0}, {0.5, 1.0}}})
             QTest::addRow("p%.2f_a%.2f_to_a%.2f", p, alphas[0], alphas[1]) << p << alphas[0] << alphas[1];
 }
 

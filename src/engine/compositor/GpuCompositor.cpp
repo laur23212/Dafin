@@ -207,11 +207,13 @@ void main() {
     vec4 dst = texture(u_dst, gl_FragCoord.xy / u_canvasSize); // premultiplied
     vec3 dstRgb = dst.a > 0.0001 ? dst.rgb / dst.a : vec3(0.0);
 
-    // Qt's blend modes operate on the straight-alpha colours, then composite the
-    // result over the destination with source-over.
+    // Separable blend composited source-over (W3C Compositing 1): where the backdrop is
+    // see-through the source shows as itself, where it is solid the blend shows, and the
+    // backdrop keeps what the source leaves uncovered. Without the source-only term a clear
+    // backdrop turned Multiply into black.
     vec3 blended = clamp(blendRgb(dstRgb, srcRgb), 0.0, 1.0);
     float outA = sa + dst.a * (1.0 - sa);
-    vec3 outRgb = blended * sa + dstRgb * dst.a * (1.0 - sa);
+    vec3 outRgb = (1.0 - dst.a) * sa * srcRgb + dst.a * sa * blended + (1.0 - sa) * dst.rgb;
     fragColor = vec4(outRgb, outA);
 }
 )";
@@ -1511,6 +1513,41 @@ GlTarget maskCanvasTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLay
     return out;
 }
 
+// The crossfade a transition falls back to when its shader is unavailable or failed to build. It
+// must be the same picture the canonical crossfade shader makes: a premultiplied linear mix, so
+// both sides are summed into a cleared target at weights (1 - p) and p. Two source-over draws are
+// not a crossfade — opaque red over opaque blue at .5 would leave alpha .75, not 1 — and the sum
+// of the two weights is 1, so the alpha of the mix is the mix of the alphas. Returns straight
+// alpha, like a transition shader's output, or an invalid target when no target could be had.
+GlTarget crossfadeFallback(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GlTarget &from,
+                           const GlTarget &to, double progress, const QSize &canvasSize)
+{
+    GlTarget sum = rt.acquireTarget(canvasSize.width(), canvasSize.height());
+    if (!sum.isValid())
+        return {};
+    sum.fbo->bind();
+    gl->glViewport(0, 0, sum.width, sum.height);
+    gl->glDisable(GL_BLEND);
+    gl->glClearColor(0.f, 0.f, 0.f, 0.f);
+    gl->glClear(GL_COLOR_BUFFER_BIT);
+    sum.fbo->release();
+
+    const double p = qBound(0.0, progress, 1.0);
+    GpuLayer side;
+    side.valid = true;
+    side.rect = QRectF(0, 0, canvasSize.width(), canvasSize.height());
+    side.opacity = 1.0 - p;
+    drawLayerOnCanvas(rt, gl, sum, from, side, drift::BlendMode::Normal, canvasSize, nullptr,
+                      CanvasWrite::Add);
+    side.opacity = p;
+    drawLayerOnCanvas(rt, gl, sum, to, side, drift::BlendMode::Normal, canvasSize, nullptr,
+                      CanvasWrite::Add);
+
+    GlTarget straight = unpremultipliedCopy(rt, gl, sum);
+    rt.releaseTarget(std::move(sum));
+    return straight;
+}
+
 // With `canvasMask`, the transition reading this side consumes its masks: the layer is drawn
 // whole and its mask stack comes back laid out on the canvas instead.
 GlTarget renderIsolatedLayer(GlRuntime &rt, QOpenGLExtraFunctions *gl, const GpuLayer &layer,
@@ -1937,6 +1974,10 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
         if (fromMask.isValid())
             rt.releaseTarget(std::move(fromMask));
 
+        // Grace mode: no usable shader, so the canonical crossfade on the GPU.
+        if (!mixed.isValid())
+            mixed = crossfadeFallback(rt, gl, fromTarget, toTarget, item.progress, canvasSize);
+
         if (mixed.isValid()) {
             // The mixed result already carries both sides' transforms and alpha.
             GpuLayer full;
@@ -1945,7 +1986,7 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
             drawLayerOnCanvas(rt, gl, canvas, mixed, full, drift::BlendMode::Normal, canvasSize);
             rt.releaseTarget(std::move(mixed));
         } else {
-            // Grace mode: a plain crossfade, still on the GPU.
+            // No target to mix in (out of memory): two plain draws beat losing both clips.
             const double p = qBound(0.0, item.progress, 1.0);
             GpuLayer a;
             a.valid = true;
