@@ -204,6 +204,9 @@ bool supports(const ExportSettings &settings, const QString &outputPath)
 #else
     if (settings.gifExport || settings.audioOnly || outputPath.isEmpty())
         return false;
+    // Dafin: HDR exports are verified as one pass only; joining HDR segments is not tested yet.
+    if (!settings.colorProfile.isEmpty() && settings.colorProfile != QLatin1String("sdr"))
+        return false;
     // A URL scheme ("content:", "file:") is not a path the job can write segments beside. A
     // Windows drive letter ("C:") is one character long, so it never matches.
     const QUrl url(outputPath);

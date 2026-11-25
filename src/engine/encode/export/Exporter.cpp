@@ -2,6 +2,7 @@
 #include "core/base/CacheRoot.h"
 #include "engine/EngineTuning.h"
 #include "engine/encode/export/EncoderProbe.h"
+#include "engine/encode/export/HdrExport.h"
 #include "engine/encode/export/HwEncodeFallback.h"
 #include "engine/encode/export/Nv12ExportQueue.h"
 #include "engine/diagnostics/BenchPhases.h"
@@ -634,6 +635,7 @@ QVariantMap videoDefToMap(const VideoCodecDef &def)
     m.insert(QStringLiteral("defaultCrf"), def.defaultCrf);
     m.insert(QStringLiteral("container"), QString::fromUtf8(def.preferredContainer));
     m.insert(QStringLiteral("hasAlpha"), def.hasAlpha);
+    m.insert(QStringLiteral("supportsHdr"), drift::hdrexport::codecSupportsHdr(def.id));
     return m;
 }
 
@@ -2193,6 +2195,8 @@ ExportSettings Exporter::settingsFromMap(const QVariantMap &map)
         s.videoBitrateKbps = map.value(QStringLiteral("videoBitrateKbps")).toInt();
     if (map.contains(QStringLiteral("videoPreset")))
         s.videoPreset = map.value(QStringLiteral("videoPreset")).toString();
+    if (map.contains(QStringLiteral("colorProfile")))
+        s.colorProfile = map.value(QStringLiteral("colorProfile")).toString();
     if (map.contains(QStringLiteral("audioCodecId")))
         s.audioCodecId = map.value(QStringLiteral("audioCodecId")).toString();
     if (map.contains(QStringLiteral("audioBitrateKbps")))
@@ -2394,6 +2398,18 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
         return false;
     }
 
+    // Dafin: opt-in HDR10 (PQ) / HLG profile. Only for the software 10/12-bit encoders that carry
+    // the tags; anything else is refused rather than exported as SDR with a false label.
+    const drift::hdr::Transfer colorTransfer =
+        drift::hdrexport::transferFromProfileId(settings.colorProfile.toLatin1().constData());
+    const bool hdrExport = colorTransfer != drift::hdr::Transfer::Sdr709;
+    if (hdrExport && !drift::hdrexport::codecSupportsHdr(vdef->id)) {
+        if (errorOut)
+            *errorOut = QStringLiteral("HDR export needs a 10-bit software codec: H.265 10/12-bit (x265), "
+                                       "AV1 10-bit (SVT), VP9 10-bit, ProRes or DNxHR 10-bit.");
+        return false;
+    }
+
     int outW = 0;
     int outH = 0;
     scaleSize(projW, projH, settings.targetHeight, outW, outH);
@@ -2543,7 +2559,17 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
             else if (std::strncmp(vdef->id, "h265", 4) == 0)
                 vctx->profile = AV_PROFILE_HEVC_MAIN;
         }
-        applySdrBt709Tags(vctx);
+        if (hdrExport) {
+            if (!drift::hdrexport::pixelFormatSupportsHdr(vctx->pix_fmt)) {
+                error = QStringLiteral("HDR export: the encoder chose %1, which is not a 10/12-bit "
+                                       "Y'CbCr format")
+                            .arg(QString::fromUtf8(av_get_pix_fmt_name(vctx->pix_fmt)));
+                goto cleanup;
+            }
+            drift::hdrexport::applyColorTags(vctx, colorTransfer);
+        } else {
+            applySdrBt709Tags(vctx);
+        }
         if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
             vctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
@@ -2593,6 +2619,10 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
         if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
             actx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
+        if (hdrExport && !drift::hdrexport::applyEncoderHdrOptions(vctx, colorTransfer)) {
+            error = QStringLiteral("HDR export: the encoder refused the HDR10 metadata options");
+            goto cleanup;
+        }
         if (const int rc = avcodec_open2(vctx, vcodec, nullptr); rc < 0) {
             const QString details = QStringLiteral("%1: %2 (%3x%4, %5, %6 fps)")
                                         .arg(QString::fromUtf8(vcodec->name), avErrorText(rc))
@@ -2627,6 +2657,10 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
 
         avcodec_parameters_from_context(vstream->codecpar, vctx);
         avcodec_parameters_from_context(astream->codecpar, actx);
+        if (hdrExport && !drift::hdrexport::attachStreamHdrMetadata(vstream, colorTransfer)) {
+            error = QStringLiteral("HDR export: could not attach the mastering metadata");
+            goto cleanup;
+        }
         vstream->time_base = vctx->time_base;
         astream->time_base = actx->time_base;
 
@@ -2651,11 +2685,11 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
 
         const bool forceCpuSws = qEnvironmentVariableIsSet("DRIFT_EXPORT_SWSCALE")
                                  && qgetenv("DRIFT_EXPORT_SWSCALE") != "0";
-        const bool useGpuNv12 = !forceCpuSws && GpuCompositor::isAvailable()
+        const bool useGpuNv12 = !hdrExport && !forceCpuSws && GpuCompositor::isAvailable()
             && (swPixFmt == AV_PIX_FMT_NV12 || swPixFmt == AV_PIX_FMT_YUV420P) && (outW % 2 == 0)
             && (outH % 2 == 0);
 
-        if (!useGpuNv12) {
+        if (!useGpuNv12 && !hdrExport) {
             // Lanczos when down/upscaling; bicubic is enough for a pure format convert.
             const int swsFlags = (canvasW != outW || canvasH != outH) ? SWS_LANCZOS : SWS_BICUBIC;
             sws = sws_getContext(canvasW, canvasH, AV_PIX_FMT_RGBA, outW, outH, swPixFmt, swsFlags,
@@ -2750,7 +2784,10 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
             const drift::bench::Scope benchSend(drift::bench::Phase::ExportSend);
             AVFrame *encodeFrame = ready;
             if (!encodeFrame) {
-                applySdrBt709Tags(vframe);
+                if (hdrExport)
+                    drift::hdrexport::applyColorTags(vframe, colorTransfer);
+                else
+                    applySdrBt709Tags(vframe);
                 vframe->pts = pts;
                 encodeFrame = vframe;
                 if (hwUpload) {
@@ -2975,7 +3012,18 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
                 error = QStringLiteral("Video frame not writable");
                 goto cleanup;
             }
-            {
+            if (hdrExport) {
+                const QImage frameImg = (img.width() == outW && img.height() == outH)
+                    ? img
+                    : img.scaled(outW, outH, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                          .convertToFormat(QImage::Format_RGBA8888);
+                if (!drift::hdrexport::convertRgba8ToHdr(frameImg.constBits(),
+                                                         int(frameImg.bytesPerLine()), outW, outH,
+                                                         colorTransfer, vframe)) {
+                    error = QStringLiteral("HDR export: could not convert the frame");
+                    goto cleanup;
+                }
+            } else {
                 const uint8_t *srcData[4] = {img.constBits(), nullptr, nullptr, nullptr};
                 const int srcStride[4] = {static_cast<int>(img.bytesPerLine()), 0, 0, 0};
                 sws_scale(sws, srcData, srcStride, 0, canvasH, vframe->data, vframe->linesize);

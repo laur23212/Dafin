@@ -7,6 +7,7 @@
 #include <QHash>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QtCore/qfloat16.h>
 
 #include <algorithm>
 #include <cmath>
@@ -320,6 +321,46 @@ QByteArray bakeTiledRgba8(const CubeLut &lut)
         }
     }
     return out;
+}
+
+QByteArray bakeTiledRgba16F(const CubeLut &lut)
+{
+    if (!lut.isValid())
+        return {};
+    const size_t n = size_t(lut.size);
+    QByteArray out(int(n * n * n * 4 * sizeof(qfloat16)), Qt::Uninitialized);
+    auto *texels = reinterpret_cast<qfloat16 *>(out.data());
+    for (size_t g = 0; g < n; ++g) {
+        for (size_t b = 0; b < n; ++b) {
+            for (size_t r = 0; r < n; ++r) {
+                const size_t src = ((b * n + g) * n + r) * 3;
+                const size_t dst = (g * n * n + b * n + r) * 4;
+                for (size_t c = 0; c < 3; ++c)
+                    texels[dst + c] = qfloat16(lut.rgb[src + c]);
+                texels[dst + 3] = qfloat16(1.0f);
+            }
+        }
+    }
+    return out;
+}
+
+bool lutHasOutOfRangeValues(const CubeLut &lut)
+{
+    return std::any_of(lut.rgb.begin(), lut.rgb.end(), [](float v) { return v < 0.0f || v > 1.0f; });
+}
+
+void applyLutF(const CubeLut &lut, const float in[3], float amount, float out[3])
+{
+    if (!lut.isValid()) {
+        for (int c = 0; c < 3; ++c)
+            out[c] = in[c];
+        return;
+    }
+    float mapped[3];
+    sampleTrilinear(lut, in, mapped);
+    const float t = std::clamp(amount, 0.0f, 1.0f);
+    for (int c = 0; c < 3; ++c)
+        out[c] = in[c] * (1.0f - t) + mapped[c] * t;
 }
 
 QRgb applyLut(const CubeLut &lut, QRgb px, float amount)
