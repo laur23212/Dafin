@@ -242,6 +242,9 @@ private slots:
     // Stage 36: a semi-transparent background colour is cleared premultiplied.
     void semiTransparentBackgroundIsPremultiplied_data();
     void semiTransparentBackgroundIsPremultiplied();
+    // Stage 36 over C12-A: separable blends over a see-through background colour.
+    void blendsOverSeeThroughBackgroundColour_data();
+    void blendsOverSeeThroughBackgroundColour();
 };
 
 void AlphaCompositeTest::initTestCase()
@@ -594,6 +597,56 @@ void AlphaCompositeTest::semiTransparentBackgroundIsPremultiplied()
                          && qAbs(fromPreview.blue() - fromExport.blue()) <= 1)),
              qPrintable(QStringLiteral("preview %1, export %2")
                             .arg(fromPreview.name(QColor::HexArgb), fromExport.name(QColor::HexArgb))));
+}
+
+void AlphaCompositeTest::blendsOverSeeThroughBackgroundColour_data()
+{
+    QTest::addColumn<int>("mode");
+    QTest::addColumn<double>("backdropAlpha");
+    QTest::addColumn<double>("sourceAlpha");
+    const drift::BlendMode modes[] = {drift::BlendMode::Multiply, drift::BlendMode::Overlay,
+                                      drift::BlendMode::Darken};
+    for (const auto mode : modes)
+        for (const double ab : {0.0, 0.5})
+            for (const double as : {0.65, 1.0})
+                QTest::addRow("%s_ab%.2f_as%.2f", qPrintable(name(mode)), ab, as)
+                    << int(mode) << ab << as;
+}
+
+// Stage 36's case: the backdrop of a Multiply/Overlay/Darken layer is the project's background
+// colour itself, see-through and not black, rather than a layer drawn over a clear canvas (which
+// separableBlendsMatchReferenceOverEveryBackdropAlpha covers). Checks that C12-A's source-only term
+// holds here too; at alpha 0 the colour's hidden RGB must not leak in.
+void AlphaCompositeTest::blendsOverSeeThroughBackgroundColour()
+{
+    NEED_GL();
+    QFETCH(int, mode);
+    QFETCH(double, backdropAlpha);
+    QFETCH(double, sourceAlpha);
+    const auto blend = drift::BlendMode(mode);
+
+    const Rgba backdrop{0.8, 0.2, 0.1, backdropAlpha};
+    const Rgba source{0.4, 0.7, 0.2, sourceAlpha};
+
+    GpuScene scene;
+    scene.canvasSize = kCanvas;
+    scene.backgroundColor = QColor::fromRgbF(float(backdrop.r), float(backdrop.g), float(backdrop.b),
+                                             float(backdrop.a));
+    scene.items.append(plainItem(solid(source), blend));
+    const QImage out = renderScene(scene);
+    QVERIFY(!out.isNull());
+
+    // The canvas stores the background premultiplied in 8 bits; the blend reads that back.
+    Rgba stored{0, 0, 0, std::lround(backdrop.a * 255.0) / 255.0};
+    if (stored.a > 0.0) {
+        stored.r = std::lround(backdrop.r * backdrop.a * 255.0) / 255.0 / stored.a;
+        stored.g = std::lround(backdrop.g * backdrop.a * 255.0) / 255.0 / stored.a;
+        stored.b = std::lround(backdrop.b * backdrop.a * 255.0) / 255.0 / stored.a;
+    }
+    const Rgba want = referenceBlend(blend, stored, source);
+
+    QString why;
+    QVERIFY2(close(out.pixelColor(32, 32), want, 3, &why), qPrintable(why));
 }
 
 QTEST_MAIN(AlphaCompositeTest)
