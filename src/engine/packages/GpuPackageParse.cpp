@@ -3,6 +3,7 @@
 #include "core/base/ConfinedPath.h"
 
 #include <QColor>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -462,8 +463,39 @@ void parseFixedParams(const QJsonObject &obj, QMap<QString, QVariant> *out)
         out->insert(it.key(), jsonToVariant(it.value()));
 }
 
+QList<PassAlias> findAliasedPasses(const drift::GpuEffectDefinition &definition)
+{
+    QList<PassAlias> found;
+    for (int i = 0; i < definition.passes.size(); ++i) {
+        const drift::GpuEffectPass &pass = definition.passes[i];
+        if (pass.output.type != drift::GpuEffectPassOutput::Type::Buffer)
+            continue; // the canvas is not an input type, so a pass cannot sample what it draws
+        for (int j = 0; j < pass.inputs.size(); ++j) {
+            const drift::GpuEffectPassInput &in = pass.inputs[j];
+            if (in.type == drift::GpuEffectPassInput::Type::Buffer
+                && in.bufferId == pass.output.bufferId) {
+                PassAlias alias;
+                alias.passIndex = i;
+                alias.inputIndex = j;
+                alias.bufferId = in.bufferId;
+                found.append(alias);
+            }
+        }
+    }
+    return found;
+}
+
+QString describeAlias(const PassAlias &alias)
+{
+    return QStringLiteral("pass %1 reads buffer '%2' (input %3) while drawing into the same buffer; "
+                          "draw into a second buffer instead (ping-pong)")
+        .arg(alias.passIndex)
+        .arg(alias.bufferId)
+        .arg(alias.inputIndex);
+}
+
 bool loadGpuPipeline(const QJsonObject &root, const QString &packageDir, int maxSourceIndex,
-                     drift::GpuEffectDefinition *out, QString *errorOut)
+                     drift::GpuEffectDefinition *out, QString *errorOut, AliasPolicy aliasPolicy)
 {
     const QJsonObject pipeline = root.value(QStringLiteral("pipeline")).toObject();
 
@@ -629,6 +661,17 @@ bool loadGpuPipeline(const QJsonObject &root, const QString &packageDir, int max
                                        [](const drift::GpuEffectPass &pass) {
                                            return kGlobalAudioUniform.match(pass.fragmentShaderSource).hasMatch();
                                        });
+
+    const QList<PassAlias> aliases = findAliasedPasses(*out);
+    for (const PassAlias &alias : aliases) {
+        const QString text = describeAlias(alias);
+        if (aliasPolicy == AliasPolicy::Reject) {
+            fail(errorOut, text);
+            return false;
+        }
+        out->warnings.append(text);
+        qWarning("GpuPackageParse: %s: %s", qUtf8Printable(packageDir), qUtf8Printable(text));
+    }
 
     out->valid = true;
     return true;

@@ -1,5 +1,7 @@
 #include "engine/diagnostics/DebugReport.h"
 #include "engine/diagnostics/RouteStats.h"
+#include "engine/gpu/CudaGlInterop.h"
+#include "engine/gpu/GpuFenceGate.h"
 
 #include "engine/decode/readers/ClipReader.h"
 #include "engine/encode/export/Exporter.h"
@@ -556,6 +558,26 @@ void appendRouteRows(QVariantList &system, const QList<drift::gpu::Adapter> &gpu
     system.append(systemRow(trReport("Route fallbacks"),
                             countsLabel<drift::routes::kFallbacks, drift::routes::Fallback>(
                                 stats.fallbacks)));
+
+    // Refused CUDA interop calls and GL fence waits that ran out or failed: all zero on a healthy
+    // run, so "none" is the usual answer, and a name here says which call to look at.
+    const drift::cudagl::CounterSnapshot interop = drift::cudagl::counters();
+    const drift::fence::CounterSnapshot fences = drift::fence::counters();
+    QStringList errors;
+    for (int i = 0; i < drift::cudagl::kCalls; ++i) {
+        if (interop.failures[i])
+            errors << QStringLiteral("%1 %2")
+                          .arg(QLatin1String(drift::cudagl::callName(drift::cudagl::Call(i))))
+                          .arg(interop.failures[i]);
+    }
+    if (interop.leftMapped)
+        errors << QStringLiteral("left mapped %1").arg(interop.leftMapped);
+    if (fences.timeouts)
+        errors << QStringLiteral("fence timeouts %1").arg(fences.timeouts);
+    if (fences.waitFailures)
+        errors << QStringLiteral("fence wait failures %1").arg(fences.waitFailures);
+    system.append(systemRow(trReport("GPU interop errors"),
+                            errors.isEmpty() ? trReport("none") : errors.join(QStringLiteral(", "))));
 }
 
 QString supportLabel(bool ok)

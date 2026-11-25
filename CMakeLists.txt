@@ -1100,6 +1100,9 @@ add_library(driftengine STATIC
     src/engine/compositor/GpuCompositor.cpp
     src/engine/EngineTuning.h
     src/engine/gpu/GlRuntime.h
+    src/engine/gpu/CudaGlInterop.h
+    src/engine/gpu/CudaGlInterop.cpp
+    src/engine/gpu/GpuFenceGate.h
     src/engine/gpu/GlRuntime.cpp
     src/engine/gpu/PresentClaims.h
     src/engine/gpu/PresentClaims.cpp

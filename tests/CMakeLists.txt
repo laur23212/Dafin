@@ -96,6 +96,29 @@ qt_add_executable(tst_benchstats
 target_include_directories(tst_benchstats PRIVATE ../src)
 target_link_libraries(tst_benchstats PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME BenchStats COMMAND tst_benchstats)
+# Dafin: CUDA <-> GL interop error handling with a simulated driver (no GPU).
+qt_add_executable(tst_cudaglinterop
+    tst_cudaglinterop.cpp
+    ../src/engine/gpu/CudaGlInterop.cpp)
+target_include_directories(tst_cudaglinterop PRIVATE ../src)
+target_link_libraries(tst_cudaglinterop PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME CudaGlInterop COMMAND tst_cudaglinterop)
+
+# Dafin: what a GL fence answer means for slot reuse (scripted waits, no GL).
+qt_add_executable(tst_gpufencegate tst_gpufencegate.cpp)
+target_include_directories(tst_gpufencegate PRIVATE ../src)
+target_link_libraries(tst_gpufencegate PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME GpuFenceGate COMMAND tst_gpufencegate)
+
+# Dafin: a package pass must not sample the buffer it draws into, plus the inventory of every
+# shipped package that gates turning the warning into an error.
+qt_add_executable(tst_gpupackagealias
+    tst_gpupackagealias.cpp
+    ../src/engine/packages/GpuPackageParse.cpp)
+target_include_directories(tst_gpupackagealias PRIVATE ../src)
+target_compile_definitions(tst_gpupackagealias PRIVATE DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_link_libraries(tst_gpupackagealias PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
+add_test(NAME GpuPackageAlias COMMAND tst_gpupackagealias)
 
 qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
 target_include_directories(tst_trackeroverlay PRIVATE ../src)

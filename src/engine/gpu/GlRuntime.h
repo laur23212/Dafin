@@ -499,6 +499,9 @@ private:
         AVBufferRef *cudaDevice = nullptr;
         int cudaW = 0;
         int cudaH = 0;
+        // An unmap was refused twice: the driver may still hold these textures mapped, so they
+        // are left alone (never deleted, never unregistered) and interop is switched off.
+        bool cudaStuck = false;
         quint64 lastUse = 0;
     };
     std::vector<VideoUploadSlot> m_uploadSlots;
@@ -583,6 +586,9 @@ private:
         void *cudaY = nullptr;
         void *cudaUv = nullptr;
         AVBufferRef *cudaDevice = nullptr;
+        // An unmap was refused twice: the textures may still be mapped by CUDA, so they are
+        // neither unregistered nor deleted (see unregisterExportCudaResources).
+        bool cudaStuck = false;
         // True only between a pack that read the planes back into `pbo` and the map that
         // consumed them. A CUDA-route pack never writes the buffer, so mapping it then would
         // return whatever an earlier frame left there as if it were this one.

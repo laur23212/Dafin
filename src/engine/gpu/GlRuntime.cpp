@@ -1,6 +1,8 @@
 #include "engine/gpu/GlRuntime.h"
 #include "engine/diagnostics/BenchPhases.h"
 #include "engine/diagnostics/RouteStats.h"
+#include "engine/gpu/CudaGlInterop.h"
+#include "engine/gpu/GpuFenceGate.h"
 #include "engine/gpu/PresentClaims.h"
 #include "engine/EngineTuning.h"
 #include "engine/gpu/effects/LookupTextures.h"
@@ -39,6 +41,7 @@
 #include <QVector3D>
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -549,65 +552,30 @@ bool isHwPixelFormat(AVPixelFormat fmt)
 }
 
 #if !defined(Q_OS_MACOS)
-using CUresult = int;
-using CUdeviceptr = void *;
-using CUarray = void *;
-using CUcontext = void *;
-using CUstream = void *;
-using CUgraphicsResource = void *;
+namespace cg = drift::cudagl;
+using cg::CUarray;
+using cg::CUcontext;
+using cg::CUdeviceptr;
+using cg::CUgraphicsResource;
+using cg::CUresult;
+using cg::CUstream;
+using CudaGlApi = cg::DriverApi;
 
-enum {
-    kCuSuccess = 0,
-    kCuMemoryDevice = 2,
-    kCuMemoryArray = 3,
-    kCuRegisterReadOnly = 0x01,
-    kCuRegisterWriteDiscard = 0x02,
-};
+constexpr int kCuSuccess = cg::kSuccess;
+constexpr int kCuRegisterReadOnly = cg::kRegisterReadOnly;
+constexpr int kCuRegisterWriteDiscard = cg::kRegisterWriteDiscard;
 
-// CUDA_MEMCPY2D as the *_v2 entry points expect it. The unversioned cuMemcpy2D symbol that
-// libcuda still exports is the v1 ABI, whose equivalent fields are unsigned int rather than
-// size_t — a completely different layout on 64-bit. cuda.h hides this behind
-// `#define cuMemcpy2D cuMemcpy2D_v2`, so source that includes it gets v2 automatically and
-// only a dlsym of the bare name lands on v1. Load the _v2 names below to match this struct.
-struct CudaMemcpy2D
+// Set when CUDA refused to unmap GL textures twice in a row: they may still be mapped, so no
+// further interop is attempted this session (the preview falls back to the transfer path and the
+// export to the pixel-buffer route).
+std::atomic<bool> g_cudaInteropAbandoned{false};
+
+QString describeInterop(const cg::Failure &f)
 {
-    size_t srcXInBytes = 0;
-    size_t srcY = 0;
-    int srcMemoryType = 0;
-    int srcPad = 0;
-    const void *srcHost = nullptr;
-    CUdeviceptr srcDevice = nullptr;
-    CUarray srcArray = nullptr;
-    size_t srcPitch = 0;
-    size_t dstXInBytes = 0;
-    size_t dstY = 0;
-    int dstMemoryType = 0;
-    int dstPad = 0;
-    void *dstHost = nullptr;
-    CUdeviceptr dstDevice = nullptr;
-    CUarray dstArray = nullptr;
-    size_t dstPitch = 0;
-    size_t WidthInBytes = 0;
-    size_t Height = 0;
-};
-
-struct CudaGlApi
-{
-    void *lib = nullptr;
-    CUresult (*cuInit)(unsigned int) = nullptr;
-    CUresult (*cuCtxPushCurrent)(CUcontext) = nullptr;
-    CUresult (*cuCtxPopCurrent)(CUcontext *) = nullptr;
-    CUresult (*cuGraphicsGLRegisterImage)(CUgraphicsResource *, unsigned int, unsigned int,
-                                          unsigned int) = nullptr;
-    CUresult (*cuGraphicsUnregisterResource)(CUgraphicsResource) = nullptr;
-    CUresult (*cuGraphicsMapResources)(unsigned int, CUgraphicsResource *, CUstream) = nullptr;
-    CUresult (*cuGraphicsUnmapResources)(unsigned int, CUgraphicsResource *, CUstream) = nullptr;
-    CUresult (*cuGraphicsSubResourceGetMappedArray)(CUarray *, CUgraphicsResource, unsigned int,
-                                                    unsigned int) = nullptr;
-    CUresult (*cuMemcpy2DAsync)(const CudaMemcpy2D *, CUstream) = nullptr;
-    CUresult (*cuStreamSynchronize)(CUstream) = nullptr;
-    bool ok = false;
-};
+    return QStringLiteral("%1 returned CUDA error %2")
+        .arg(QLatin1String(cg::callName(f.call)))
+        .arg(f.rc);
+}
 
 CudaGlApi &cudaGlApi()
 {
@@ -674,105 +642,31 @@ bool cudaSwFormatIsNv12(const AVFrame *frame)
     return fc && fc->sw_format == AV_PIX_FMT_NV12;
 }
 
-CUresult queueCudaPlaneCopy(CudaGlApi &api, CUstream stream, CUarray dst, CUdeviceptr src,
-                            size_t srcPitch, size_t widthBytes, size_t height)
-{
-    CudaMemcpy2D op{};
-    op.srcMemoryType = kCuMemoryDevice;
-    op.srcDevice = src;
-    op.srcPitch = srcPitch;
-    op.dstMemoryType = kCuMemoryArray;
-    op.dstArray = dst;
-    op.WidthInBytes = widthBytes;
-    op.Height = height;
-    // On the frame's own stream, not the null stream. FFmpeg creates its decoder stream with
-    // CU_STREAM_NON_BLOCKING, which by definition does not synchronise against the legacy
-    // null stream — so a copy issued there was unordered with respect to the map and unmap
-    // around it, and GL could sample the WRITE_DISCARD textures before the pixels arrived.
-    return api.cuMemcpy2DAsync(&op, stream);
-}
-
-// The export direction: a mapped GL texture out to the encoder's device memory.
-CUresult queueCudaPlaneReadback(CudaGlApi &api, CUstream stream, CUdeviceptr dst, size_t dstPitch,
-                                CUarray src, size_t widthBytes, size_t height)
-{
-    CudaMemcpy2D op{};
-    op.srcMemoryType = kCuMemoryArray;
-    op.srcArray = src;
-    op.dstMemoryType = kCuMemoryDevice;
-    op.dstDevice = dst;
-    op.dstPitch = dstPitch;
-    op.WidthInBytes = widthBytes;
-    op.Height = height;
-    return api.cuMemcpy2DAsync(&op, stream);
-}
-
-// Both NV12 planes in one map/unmap pair and one stream wait, rather than a pair each: the
-// two copies are independent, and the only thing that has to be true before GL samples is
-// that both have landed.
-// On failure `why` names the CUDA call that refused and its error code: "failed" alone told a
-// Windows bug report nothing about which of the five steps to look at.
-bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource yRes,
-                            CUgraphicsResource uvRes, const AVFrame *frame, int width, int height,
-                            QString *why)
-{
-    const auto fail = [why](const char *call, CUresult rc) {
-        *why = QStringLiteral("%1 returned CUDA error %2").arg(QLatin1String(call)).arg(rc);
-        return false;
-    };
-    // Dafin: `dafin --bench` only; free when the benchmark is off.
-    const drift::bench::Scope benchImport(drift::bench::Phase::PreviewCudaImport);
-
-    CUgraphicsResource resources[2] = {yRes, uvRes};
-    CUresult rc = api.cuGraphicsMapResources(2, resources, stream);
-    if (rc != kCuSuccess)
-        return fail("cuGraphicsMapResources", rc);
-
-    CUarray yArray = nullptr;
-    CUarray uvArray = nullptr;
-    bool ok = true;
-    rc = api.cuGraphicsSubResourceGetMappedArray(&yArray, yRes, 0, 0);
-    if (rc == kCuSuccess)
-        rc = api.cuGraphicsSubResourceGetMappedArray(&uvArray, uvRes, 0, 0);
-    if (rc != kCuSuccess || !yArray || !uvArray)
-        ok = fail("cuGraphicsSubResourceGetMappedArray", rc);
-
-    if (ok) {
-        // The interleaved UV plane is full-width in bytes over half the rows: width/2 texels
-        // of two bytes each.
-        rc = queueCudaPlaneCopy(api, stream, yArray, frame->data[0],
-                                size_t(qMax(0, frame->linesize[0])), size_t(width), size_t(height));
-        if (rc == kCuSuccess)
-            rc = queueCudaPlaneCopy(api, stream, uvArray, frame->data[1],
-                                    size_t(qMax(0, frame->linesize[1])), size_t(width),
-                                    size_t(height / 2));
-        if (rc != kCuSuccess)
-            ok = fail("cuMemcpy2DAsync", rc);
-    }
-
-    api.cuGraphicsUnmapResources(2, resources, stream);
-
-    // Unmap only orders the copies on the stream; it does not wait for them. This does, and
-    // it is the sync point that makes the textures safe for the convert shader. One wait on
-    // one stream per frame, against a full hardware-transfer download plus PBO upload if this
-    // path is not taken.
-    if (ok) {
-        const drift::bench::Scope benchSync(drift::bench::Phase::PreviewCudaSync);
-        rc = api.cuStreamSynchronize(stream);
-        if (rc != kCuSuccess)
-            ok = fail("cuStreamSynchronize", rc);
-    }
-    if (!ok) {
-        *why += QStringLiteral(" (%1x%2, pitch %3/%4, stream %5)")
-                    .arg(width)
-                    .arg(height)
-                    .arg(frame->linesize[0])
-                    .arg(frame->linesize[1])
-                    .arg(stream ? QStringLiteral("set") : QStringLiteral("null"));
-    }
-    return ok;
-}
 #endif
+
+// What glClientWaitSync said, in the terms the fence gate uses. Anything unexpected counts as a
+// refusal.
+drift::fence::Wait classifyWait(GLenum result)
+{
+    if (result == GL_ALREADY_SIGNALED || result == GL_CONDITION_SATISFIED)
+        return drift::fence::Wait::Signaled;
+    if (result == GL_TIMEOUT_EXPIRED)
+        return drift::fence::Wait::TimedOut;
+    return drift::fence::Wait::Failed;
+}
+
+// One bounded wait on a slot's fence, settled by the fence gate: the slot is reusable only when
+// the GPU is finished with it (or a full finish made it so); a timeout keeps the fence.
+drift::fence::Verdict settleSlotFence(QOpenGLExtraFunctions *gl, GLsync &fence)
+{
+    return drift::fence::settle(
+        fence,
+        [&](GLsync f) {
+            return classifyWait(
+                gl->glClientWaitSync(f, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000)));
+        },
+        [&](GLsync f) { gl->glDeleteSync(f); }, [&] { gl->glFinish(); });
+}
 
 QMutex g_previewImportMutex;
 GlRuntime::PreviewUploadPath g_previewUploadPath = GlRuntime::PreviewUploadPath::None;
@@ -1630,22 +1524,28 @@ void GlRuntime::unregisterExportCudaResources(int slot)
     ExportNv12Slot &s = m_exportNv12[slot];
     CudaGlApi &api = cudaGlApi();
     if (api.ok && (s.cudaY || s.cudaUv)) {
-        // From the context they were registered in, for the same reason the import side does:
-        // CUDA refuses an unregister from anywhere else and the registration would leak.
-        CUcontext owner = nullptr;
-        if (s.cudaDevice) {
-            const auto *device = reinterpret_cast<const AVHWDeviceContext *>(s.cudaDevice->data);
-            if (device && device->hwctx)
-                owner = *reinterpret_cast<CUcontext const *>(device->hwctx);
-        }
-        const bool pushed = owner && api.cuCtxPushCurrent(owner) == kCuSuccess;
-        if (s.cudaY)
-            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(s.cudaY));
-        if (s.cudaUv)
-            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(s.cudaUv));
-        if (pushed) {
-            CUcontext popped = nullptr;
-            api.cuCtxPopCurrent(&popped);
+        if (s.cudaStuck) {
+            // CUDA refused to unmap these twice. Unregistering a resource that may still be
+            // mapped is the one thing not to do; the registration is given up instead and the
+            // textures under it are left alone too (see destroyExportNv12Slot).
+            cg::noteAbandonedRegistration();
+        } else {
+            // From the context they were registered in, for the same reason the import side
+            // does: CUDA refuses an unregister from anywhere else and the registration would
+            // leak.
+            CUcontext owner = nullptr;
+            if (s.cudaDevice) {
+                const auto *device = reinterpret_cast<const AVHWDeviceContext *>(s.cudaDevice->data);
+                if (device && device->hwctx)
+                    owner = *reinterpret_cast<CUcontext const *>(device->hwctx);
+            }
+            cg::ContextScope scope(api, owner);
+            cg::RegisteredPair pair{s.cudaY, s.cudaUv};
+            const cg::Failure failure = cg::unregisterPair(api, &pair);
+            if (failure.failed)
+                qWarning("GlRuntime: CUDA export unregister failed: %s",
+                         qUtf8Printable(describeInterop(failure)));
+            scope.release();
         }
     }
     s.cudaY = nullptr;
@@ -1674,9 +1574,10 @@ void GlRuntime::destroyExportNv12Slot(int slot)
             gl->glDeleteFramebuffers(1, &s.yFbo);
         if (s.uvFbo)
             gl->glDeleteFramebuffers(1, &s.uvFbo);
-        if (s.yTex)
+        // Textures CUDA may still hold mapped are left to the driver rather than deleted under it.
+        if (s.yTex && !s.cudaStuck)
             gl->glDeleteTextures(1, &s.yTex);
-        if (s.uvTex)
+        if (s.uvTex && !s.cudaStuck)
             gl->glDeleteTextures(1, &s.uvTex);
     }
     s = ExportNv12Slot{};
@@ -1709,6 +1610,8 @@ bool GlRuntime::ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int wi
     // them has to go first.
     unregisterExportCudaResources(slot);
     if (s.fence) {
+        // The buffer and textures this fence guarded are deleted just below, and GL keeps a
+        // deleted object alive until the GPU has finished with it, so dropping it here is safe.
         gl->glDeleteSync(s.fence);
         s.fence = nullptr;
     }
@@ -1718,6 +1621,12 @@ bool GlRuntime::ensureExportNv12Slot(QOpenGLExtraFunctions *gl, int slot, int wi
     }
     deleteFbo(s.yFbo);
     deleteFbo(s.uvFbo);
+    if (s.cudaStuck) {
+        // Possibly still mapped by CUDA: forget the names instead of deleting them.
+        s.yTex = 0;
+        s.uvTex = 0;
+        s.cudaStuck = false;
+    }
     deleteTex(s.yTex);
     deleteTex(s.uvTex);
     s.width = 0;
@@ -1768,11 +1677,12 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
 
     ExportNv12Slot &s = m_exportNv12[slot];
     s.pboValid = false;
-    if (s.fence) {
-        gl->glClientWaitSync(s.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
-        gl->glDeleteSync(s.fence);
-        s.fence = nullptr;
-    }
+    // The slot is written again only once the GPU is finished with its previous readback. A
+    // timeout keeps the fence and refuses the frame (the exporter composes it again or sends a
+    // counted stand-in); before, it deleted the fence and went on, and the slot was reused while
+    // the GPU might still have been reading it.
+    if (settleSlotFence(gl, s.fence) == drift::fence::Verdict::Busy)
+        return false;
 
     auto drawPlane = [&](QOpenGLShaderProgram *program, GLuint fbo, int w, int h) {
         if (!program)
@@ -1847,6 +1757,8 @@ bool GlRuntime::copyNv12SlotToCuda(int slot, AVFrame *dst)
         || dst->height != s.height)
         return false;
 
+    if (g_cudaInteropAbandoned.load(std::memory_order_relaxed))
+        return false;
     CudaGlApi &api = cudaGlApi();
     if (!api.ok)
         return false;
@@ -1855,68 +1767,60 @@ bool GlRuntime::copyNv12SlotToCuda(int slot, AVFrame *dst)
     CUstream stream = nullptr;
     if (!cudaContextOf(dst, &ctx, &stream))
         return false;
-    if (api.cuCtxPushCurrent(ctx) != kCuSuccess)
+    // Popped again on every path out of here, and a refused push means nothing below runs.
+    cg::ContextScope scope(api, ctx);
+    if (!scope.ok()) {
+        qWarning("GlRuntime: CUDA export copy skipped: cuCtxPushCurrent returned CUDA error %d",
+                 scope.pushResult());
         return false;
+    }
 
     const AVBufferRef *frameDevice =
         reinterpret_cast<const AVHWFramesContext *>(dst->hw_frames_ctx->data)->device_ref;
     if (s.cudaDevice && frameDevice && s.cudaDevice->data != frameDevice->data)
         unregisterExportCudaResources(slot);
 
-    bool ok = false;
     if (!s.cudaY || !s.cudaUv) {
-        CUgraphicsResource yRes = nullptr;
-        CUgraphicsResource uvRes = nullptr;
         // Read-only: CUDA never writes these, and telling it so lets the driver skip the
-        // write-back it would otherwise have to assume on unmap.
-        CUresult rc =
-            api.cuGraphicsGLRegisterImage(&yRes, s.yTex, GL_TEXTURE_2D, kCuRegisterReadOnly);
-        if (rc == kCuSuccess)
-            rc = api.cuGraphicsGLRegisterImage(&uvRes, s.uvTex, GL_TEXTURE_2D, kCuRegisterReadOnly);
-        if (rc == kCuSuccess) {
-            s.cudaY = yRes;
-            s.cudaUv = uvRes;
-            s.cudaDevice = frameDevice ? av_buffer_ref(frameDevice) : nullptr;
+        // write-back it would otherwise have to assume on unmap. All or nothing: a second plane
+        // that cannot be registered takes the first one back.
+        cg::RegisteredPair pair;
+        const cg::Failure failure = cg::registerPair(api, s.yTex, s.uvTex, GL_TEXTURE_2D,
+                                                     kCuRegisterReadOnly, &pair);
+        if (failure.failed) {
+            qWarning("GlRuntime: CUDA export registration failed: %s",
+                     qUtf8Printable(describeInterop(failure)));
+            return false;
+        }
+        s.cudaY = pair.y;
+        s.cudaUv = pair.uv;
+        s.cudaDevice = frameDevice ? av_buffer_ref(frameDevice) : nullptr;
+    }
+
+    // The UV texture is RG8 at half size: width/2 texels of two bytes is width bytes a row, over
+    // half the rows. Both copies are queued on the frame's stream and waited for before the
+    // encoder is handed the surface; the encoder reads it from elsewhere.
+    const cg::CopyResult copy = cg::copyNv12Planes(
+        api, stream, cg::RegisteredPair{s.cudaY, s.cudaUv}, cg::Direction::TextureToDevice,
+        cg::Plane{dst->data[0], size_t(qMax(0, dst->linesize[0]))},
+        cg::Plane{dst->data[1], size_t(qMax(0, dst->linesize[1]))}, s.width, s.height);
+    if (!copy.ok) {
+        qWarning("GlRuntime: CUDA export copy failed: %s (%dx%d, pitch %d/%d)",
+                 qUtf8Printable(describeInterop(copy.failure)), s.width, s.height,
+                 dst->linesize[0], dst->linesize[1]);
+        if (copy.leftMapped) {
+            // The driver may still hold the textures mapped: never unregister or delete them,
+            // and use no more interop this session.
+            s.cudaStuck = true;
+            g_cudaInteropAbandoned.store(true, std::memory_order_relaxed);
         } else {
-            if (yRes)
-                api.cuGraphicsUnregisterResource(yRes);
-            if (uvRes)
-                api.cuGraphicsUnregisterResource(uvRes);
+            // Nothing is mapped and nothing is queued, so the registration can go cleanly; the
+            // next frame, if CUDA is tried again, registers from scratch.
+            unregisterExportCudaResources(slot);
         }
     }
-
-    if (s.cudaY && s.cudaUv) {
-        CUgraphicsResource resources[2] = {static_cast<CUgraphicsResource>(s.cudaY),
-                                           static_cast<CUgraphicsResource>(s.cudaUv)};
-        if (api.cuGraphicsMapResources(2, resources, stream) == kCuSuccess) {
-            CUarray yArray = nullptr;
-            CUarray uvArray = nullptr;
-            CUresult rc = api.cuGraphicsSubResourceGetMappedArray(&yArray, resources[0], 0, 0);
-            if (rc == kCuSuccess)
-                rc = api.cuGraphicsSubResourceGetMappedArray(&uvArray, resources[1], 0, 0);
-            bool copied = false;
-            if (rc == kCuSuccess && yArray && uvArray) {
-                // The UV texture is RG8 at half size: width/2 texels of two bytes is width
-                // bytes a row, over half the rows.
-                rc = queueCudaPlaneReadback(api, stream, dst->data[0],
-                                            size_t(qMax(0, dst->linesize[0])), yArray,
-                                            size_t(s.width), size_t(s.height));
-                if (rc == kCuSuccess)
-                    rc = queueCudaPlaneReadback(api, stream, dst->data[1],
-                                                size_t(qMax(0, dst->linesize[1])), uvArray,
-                                                size_t(s.width), size_t(s.height / 2));
-                copied = rc == kCuSuccess;
-            }
-            api.cuGraphicsUnmapResources(2, resources, stream);
-            // Both copies are queued on the frame's stream; the encoder reads the surface from
-            // elsewhere, so wait for them here rather than hand it over mid-flight.
-            ok = copied && api.cuStreamSynchronize(stream) == kCuSuccess;
-        }
-    }
-
-    CUcontext popped = nullptr;
-    api.cuCtxPopCurrent(&popped);
-    return ok;
+    scope.release();
+    return copy.ok;
 #endif
 }
 
@@ -1934,20 +1838,18 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
     if (!s.pbo || s.width != width || s.height != height || !s.pboValid)
         return false;
 
-    if (s.fence) {
-        GLenum wait = GL_WAIT_FAILED;
-        {
-            const drift::bench::Scope benchWait(drift::bench::Phase::ExportFenceWait);
-            wait = gl->glClientWaitSync(s.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
-        }
-        gl->glDeleteSync(s.fence);
-        s.fence = nullptr;
-        // A timeout means the readback may not have finished, so the buffer may still hold the
-        // previous frame. Report it; the exporter composes the frame again instead of guessing.
-        if (wait == GL_WAIT_FAILED || wait == GL_TIMEOUT_EXPIRED) {
-            s.pboValid = false;
-            return false;
-        }
+    // A timeout means the readback may not have finished, so the buffer may still hold the
+    // previous frame. Report it and KEEP the fence: the exporter composes the frame again, and
+    // that pack waits for the same fence before it writes the slot. A fence the driver refused
+    // to wait for is settled with a full finish, after which the readback is certainly done.
+    drift::fence::Verdict fenceVerdict = drift::fence::Verdict::Busy;
+    {
+        const drift::bench::Scope benchWait(drift::bench::Phase::ExportFenceWait);
+        fenceVerdict = settleSlotFence(gl, s.fence);
+    }
+    if (fenceVerdict == drift::fence::Verdict::Busy) {
+        s.pboValid = false;
+        return false;
     }
 
     const drift::bench::Scope benchCopy(drift::bench::Phase::ExportHostCopy);
@@ -1986,17 +1888,22 @@ bool GlRuntime::waitPresentFence(int slotIndex, GLuint64 timeoutNs)
         fence = nullptr;
         return true;
     }
-    // Only wait for this slot's prior publish — not the whole GPU pipeline.
-    const GLenum result = gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNs);
-    if (result == GL_TIMEOUT_EXPIRED)
-        return false;
-    // Anything else consumed the fence, including GL_WAIT_FAILED. Report the slot as
-    // reusable: the sync object is gone either way, so refusing it would take the slot
-    // out of the ring for good and a broken driver would stall the preview permanently.
-    drift::gl::present::clearProducerFence(m_presentRing[slotIndex].texture());
-    gl->glDeleteSync(fence);
-    fence = nullptr;
-    return true;
+    // Only wait for this slot's prior publish — not the whole GPU pipeline. A timeout keeps the
+    // fence and the slot stays busy. A fence the driver refused to wait for can never signal, so
+    // refusing the slot would take it out of the ring for good: it is settled with a full
+    // finish instead (a certain point after which the slot is idle) and then reused.
+    const GLuint texture = m_presentRing[slotIndex].texture();
+    return drift::fence::settle(
+               fence,
+               [&](GLsync f) {
+                   return classifyWait(gl->glClientWaitSync(f, GL_SYNC_FLUSH_COMMANDS_BIT, timeoutNs));
+               },
+               [&](GLsync f) {
+                   drift::gl::present::clearProducerFence(texture);
+                   gl->glDeleteSync(f);
+               },
+               [&] { gl->glFinish(); })
+        == drift::fence::Verdict::Reusable;
 }
 
 GlTarget &GlRuntime::preparePresentSlot(int slotIndex, int width, int height)
@@ -2214,7 +2121,8 @@ void GlRuntime::releaseUploadSlot(QOpenGLExtraFunctions *gl, int index)
     selectUploadSlot(index);
     unregisterCudaResources();
     VideoUploadSlot &slot = m_uploadSlots[index];
-    if (gl) {
+    // Textures CUDA may still hold mapped are left to the driver rather than deleted under it.
+    if (gl && !slot.cudaStuck) {
         if (slot.y)
             gl->glDeleteTextures(1, &slot.y);
         if (slot.uv)
@@ -2367,11 +2275,9 @@ bool GlRuntime::waitVideoPboFence(QOpenGLExtraFunctions *gl, int index)
     GLsync &fence = m_videoPboFence[index];
     if (!fence)
         return true;
-    const GLenum result =
-        gl->glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
-    gl->glDeleteSync(fence);
-    fence = nullptr;
-    return result != GL_TIMEOUT_EXPIRED && result != GL_WAIT_FAILED;
+    // A timeout keeps the fence and refuses the buffer: the upload that used it may still be
+    // running, and the next turn of the ring asks again.
+    return settleSlotFence(gl, fence) == drift::fence::Verdict::Reusable;
 }
 
 bool GlRuntime::waitLatestVideoUploads(QOpenGLExtraFunctions *gl, int count)
@@ -2400,15 +2306,13 @@ void GlRuntime::unregisterCudaResources()
             if (device && device->hwctx)
                 owner = *reinterpret_cast<CUcontext const *>(device->hwctx);
         }
-        const bool pushed = owner && api.cuCtxPushCurrent(owner) == kCuSuccess;
-        if (m_cudaYResource)
-            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(m_cudaYResource));
-        if (m_cudaUvResource)
-            api.cuGraphicsUnregisterResource(static_cast<CUgraphicsResource>(m_cudaUvResource));
-        if (pushed) {
-            CUcontext popped = nullptr;
-            api.cuCtxPopCurrent(&popped);
-        }
+        cg::ContextScope scope(api, owner);
+        cg::RegisteredPair pair{m_cudaYResource, m_cudaUvResource};
+        const cg::Failure failure = cg::unregisterPair(api, &pair);
+        if (failure.failed)
+            qWarning("GlRuntime: CUDA unregister failed: %s",
+                     qUtf8Printable(describeInterop(failure)));
+        scope.release();
     }
     m_cudaYResource = nullptr;
     m_cudaUvResource = nullptr;
@@ -2433,8 +2337,8 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     Q_UNUSED(frame);
     return false;
 #else
-    if (m_cudaImportFailed || !gl || !frame || frame->format != AV_PIX_FMT_CUDA
-        || !cudaSwFormatIsNv12(frame))
+    if (m_cudaImportFailed || g_cudaInteropAbandoned.load(std::memory_order_relaxed) || !gl
+        || !frame || frame->format != AV_PIX_FMT_CUDA || !cudaSwFormatIsNv12(frame))
         return false;
 
     // CUDA can only register GL textures that live on its own GPU. On a hybrid laptop compositing
@@ -2471,8 +2375,13 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     if (!ensureVideoUploadTextures(gl, w, h))
         return false;
 
-    if (api.cuCtxPushCurrent(ctx) != kCuSuccess)
+    // Popped again on every path out of here; a refused push means nothing below runs.
+    cg::ContextScope scope(api, ctx);
+    if (!scope.ok()) {
+        qWarning("GlRuntime: CUDA interop skipped: cuCtxPushCurrent returned CUDA error %d",
+                 scope.pushResult());
         return false;
+    }
 
     // ClipReader shares one CUDA device between readers, so this normally never changes. When it
     // does — an exporter's device, or a device recreated after a failure — the registrations made
@@ -2487,38 +2396,43 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
     if (deviceChanged || m_cudaTexW != w || m_cudaTexH != h || !m_cudaYResource
         || !m_cudaUvResource) {
         unregisterCudaResources();
-        CUgraphicsResource yRes = nullptr;
-        CUgraphicsResource uvRes = nullptr;
-        CUresult rc =
-            api.cuGraphicsGLRegisterImage(&yRes, m_videoY, GL_TEXTURE_2D, kCuRegisterWriteDiscard);
-        if (rc == kCuSuccess)
-            rc = api.cuGraphicsGLRegisterImage(&uvRes, m_videoUV, GL_TEXTURE_2D,
-                                               kCuRegisterWriteDiscard);
-        if (rc == kCuSuccess) {
-            m_cudaYResource = yRes;
-            m_cudaUvResource = uvRes;
+        // All or nothing: a second plane that cannot be registered takes the first one back.
+        cg::RegisteredPair pair;
+        const cg::Failure failure = cg::registerPair(api, m_videoY, m_videoUV, GL_TEXTURE_2D,
+                                                     kCuRegisterWriteDiscard, &pair);
+        if (!failure.failed) {
+            m_cudaYResource = pair.y;
+            m_cudaUvResource = pair.uv;
             m_cudaResourceDevice = frameDevice ? av_buffer_ref(frameDevice) : nullptr;
             m_cudaTexW = w;
             m_cudaTexH = h;
         } else {
-            if (yRes)
-                api.cuGraphicsUnregisterResource(yRes);
-            if (uvRes)
-                api.cuGraphicsUnregisterResource(uvRes);
-            noteZeroCopyDecline(
-                QStringLiteral("cuGraphicsGLRegisterImage failed (CUDA error %1)").arg(rc));
+            noteZeroCopyDecline(QStringLiteral("cuGraphicsGLRegisterImage failed (CUDA error %1)")
+                                    .arg(failure.rc));
             m_cudaImportFailed = true;
         }
     }
 
     if (m_cudaYResource && m_cudaUvResource) {
-        QString why;
-        ok = copyCudaNv12ToTextures(api, stream, static_cast<CUgraphicsResource>(m_cudaYResource),
-                                    static_cast<CUgraphicsResource>(m_cudaUvResource), frame, w, h,
-                                    &why);
+        // Dafin: `dafin --bench` only; free when the benchmark is off.
+        const drift::bench::Scope benchImport(drift::bench::Phase::PreviewCudaImport);
+        const cg::CopyResult copy = cg::copyNv12Planes(
+            api, stream, cg::RegisteredPair{m_cudaYResource, m_cudaUvResource},
+            cg::Direction::DeviceToTexture,
+            cg::Plane{frame->data[0], size_t(qMax(0, frame->linesize[0]))},
+            cg::Plane{frame->data[1], size_t(qMax(0, frame->linesize[1]))}, w, h);
+        ok = copy.ok;
         if (ok) {
             m_cudaCopyFailures = 0;
         } else {
+            const QString why =
+                describeInterop(copy.failure)
+                + QStringLiteral(" (%1x%2, pitch %3/%4, stream %5)")
+                      .arg(w)
+                      .arg(h)
+                      .arg(frame->linesize[0])
+                      .arg(frame->linesize[1])
+                      .arg(stream ? QStringLiteral("set") : QStringLiteral("null"));
             // A copy failure is not the same answer as "this driver cannot do interop": a
             // registration made against another reader's context, or a map that lost a race
             // with the decoder, refuses one frame and succeeds on the next once the resources
@@ -2528,14 +2442,31 @@ bool GlRuntime::importCudaNv12(QOpenGLExtraFunctions *gl, const AVFrame *frame)
             noteZeroCopyDecline(
                 QStringLiteral("copying the NVDEC surface into GL textures failed: %1").arg(why));
             qWarning("GlRuntime: CUDA interop copy failed: %s", qUtf8Printable(why));
-            unregisterCudaResources();
-            if (++m_cudaCopyFailures >= kCudaCopyFailureLimit)
+            if (copy.leftMapped) {
+                // Unmap was refused twice, so the textures may still be mapped. Unregistering
+                // them or deleting them now is exactly what must not happen: give the
+                // registration up, keep the textures out of every later delete, and stop using
+                // interop for the rest of the session.
+                cg::noteAbandonedRegistration();
+                if (m_currentUploadSlot >= 0)
+                    m_uploadSlots[size_t(m_currentUploadSlot)].cudaStuck = true;
+                m_cudaYResource = nullptr;
+                m_cudaUvResource = nullptr;
+                av_buffer_unref(&m_cudaResourceDevice);
+                m_cudaTexW = 0;
+                m_cudaTexH = 0;
                 m_cudaImportFailed = true;
+                g_cudaInteropAbandoned.store(true, std::memory_order_relaxed);
+            } else {
+                // Nothing is mapped and nothing is queued: safe to register from scratch.
+                unregisterCudaResources();
+                if (++m_cudaCopyFailures >= kCudaCopyFailureLimit)
+                    m_cudaImportFailed = true;
+            }
         }
     }
 
-    CUcontext popped = nullptr;
-    api.cuCtxPopCurrent(&popped);
+    scope.release();
     return ok;
 #endif
 }

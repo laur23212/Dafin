@@ -116,6 +116,9 @@ struct GpuEffectDefinition
     QList<GpuEffectBufferSpec> intermediateBuffers;
     QList<GpuEffectTextureSpec> textures;
     QList<GpuEffectPass> passes;
+    // Problems the package loaded with anyway (see GpuPackageParse::AliasPolicy), one sentence
+    // each, for the log and the debug report.
+    QStringList warnings;
     // "requires": "depth": the depth prelude is compiled into every pass and the clip's depth map
     // is bound beside the declared inputs. See docs/gpu-effects.md.
     bool needsDepth = false;
