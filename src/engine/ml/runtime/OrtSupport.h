@@ -1,5 +1,6 @@
 #pragma once
 
+#include "engine/diagnostics/RouteStats.h"
 #include "engine/ml/runtime/OrtRuntime.h"
 
 #include <QDebug>
@@ -112,8 +113,10 @@ inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env,
                                        bool sharedArena = false)
 {
     const QString ep = providerToTry(tag);
-    if (ep.isEmpty())
+    if (ep.isEmpty()) {
+        drift::routes::noteOrtProvider("cpu");
         return {};
+    }
     const bool explicitEp = variantExplicit();
 
     try {
@@ -128,6 +131,7 @@ inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env,
                          qUtf8Printable(epName));
                 if (!explicitEp)
                     markAutoProviderFailed(nullptr, ep);
+                    drift::routes::noteFallback(drift::routes::Fallback::OrtFellBackToCpu);
                 return explicitEp ? QStringLiteral("%1 reports no usable device.").arg(epName)
                                   : QString();
             }
@@ -142,6 +146,7 @@ inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env,
                 if (!explicitEp) {
                     qInfo("[%s] %s Using CPU.", tag, qUtf8Printable(problem));
                     markAutoProviderFailed(nullptr, ep);
+                    drift::routes::noteFallback(drift::routes::Fallback::OrtFellBackToCpu);
                     return {};
                 }
                 qWarning("[%s] %s", tag, qUtf8Printable(problem));
@@ -172,12 +177,15 @@ inline QString appendRequestedProvider(Ort::SessionOptions &opts, Ort::Env &env,
             return QStringLiteral("%1 is not available in the installed AI engine.").arg(ep);
         }
         qInfo("[%s] execution provider %s enabled.", tag, qUtf8Printable(ep));
+        drift::routes::noteOrtProvider(ep.toStdString());
     } catch (const Ort::Exception &e) {
         if (!explicitEp) {
             qInfo("[%s] %s is present but could not be initialised (%s); using CPU.", tag,
                   qUtf8Printable(ep), e.what());
             markAutoProviderFailed(nullptr, ep);
+            drift::routes::noteFallback(drift::routes::Fallback::OrtFellBackToCpu);
         } else {
+            drift::routes::noteFallback(drift::routes::Fallback::OrtFellBackToCpu);
             qWarning("[%s] %s could not be set up (%s). Falling back to CPU; if the message "
                      "mentions loading a shared library, the installed ONNX Runtime has no %s "
                      "provider.",

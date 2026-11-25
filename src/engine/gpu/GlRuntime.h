@@ -583,6 +583,10 @@ private:
         void *cudaY = nullptr;
         void *cudaUv = nullptr;
         AVBufferRef *cudaDevice = nullptr;
+        // True only between a pack that read the planes back into `pbo` and the map that
+        // consumed them. A CUDA-route pack never writes the buffer, so mapping it then would
+        // return whatever an earlier frame left there as if it were this one.
+        bool pboValid = false;
     };
     ExportNv12Slot m_exportNv12[kExportNv12Slots];
 

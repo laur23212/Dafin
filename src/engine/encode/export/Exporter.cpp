@@ -3,6 +3,8 @@
 #include "engine/EngineTuning.h"
 #include "engine/encode/export/EncoderProbe.h"
 #include "engine/encode/export/HwEncodeFallback.h"
+#include "engine/encode/export/Nv12ExportQueue.h"
+#include "engine/diagnostics/RouteStats.h"
 
 #include "engine/audio/AudioMixer.h"
 #include "engine/decode/readers/ClipReader.h"
@@ -2798,16 +2800,6 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
             nv12Uv.resize(size_t(outW) * size_t(outH / 2));
         }
 
-        struct InflightNv12
-        {
-            int slot = 0;
-            int64_t pts = 0;
-            drift::TimeUs timeUs = 0;
-            bool packed = false;
-        };
-        InflightNv12 inflight[GpuCompositor::kExportNv12Slots];
-        int inflightCount = 0;
-
         // NVENC's frame can be filled from the compositor's own GL textures, which skips a
         // full-frame readback into system memory and the matching upload back to the card —
         // two copies of every frame, on a path where nothing ever looks at the CPU pixels.
@@ -2816,72 +2808,117 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
         // The GL vendor matters as much as the encoder: CUDA can only register textures that
         // live on its own GPU, so on a hybrid machine compositing on the integrated one the
         // registration cannot succeed and every frame would pay for a composite it throws away.
-        bool cudaExport = useGpuNv12 && hwUpload && vdef->hw == HwBackend::Nvenc
+        const bool cudaEligible = useGpuNv12 && hwUpload && vdef->hw == HwBackend::Nvenc
             && swPixFmt == AV_PIX_FMT_NV12 && outPixFmt == AV_PIX_FMT_CUDA
             && GpuCompositor::status().vendor.contains(QStringLiteral("NVIDIA"), Qt::CaseInsensitive);
 
-        auto consumeNv12Head = [&]() -> bool {
-            const InflightNv12 job = inflight[0];
-            for (int i = 0; i < inflightCount - 1; ++i)
-                inflight[i] = inflight[i + 1];
-            --inflightCount;
+        // Why this export took the road it did, for the Debug info dialog.
+        {
+            using drift::routes::ExportPlan;
+            ExportPlan plan = ExportPlan::CudaRenderGpuNotNvidia;
+            if (!useGpuNv12)
+                plan = forceCpuSws ? ExportPlan::CpuSwscaleForced
+                                   : ExportPlan::CpuSwscaleNoGpuCompositor;
+            else if (cudaEligible)
+                plan = ExportPlan::DirectCudaEligible;
+            else if (!(hwUpload && vdef->hw == HwBackend::Nvenc))
+                plan = ExportPlan::HostPboNv12; // not NVENC: CUDA was never a candidate
+            else if (!(swPixFmt == AV_PIX_FMT_NV12 && outPixFmt == AV_PIX_FMT_CUDA))
+                plan = ExportPlan::CudaNeedsNv12Surface;
+            drift::routes::notePlan(plan);
+        }
 
-            bool packed = job.packed;
-            if (cudaExport && packed) {
-                av_frame_unref(hwframe);
-                if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
-                    error = QStringLiteral("Could not allocate a hardware frame");
-                    return false;
-                }
-                if (GpuCompositor::finishExportNv12ToCuda(job.slot, hwframe)) {
-                    applySdrBt709Tags(hwframe);
-                    hwframe->pts = job.pts;
-                    return sendVideoAndAudio(job.pts, hwframe);
-                }
-                // The planes were never packed for readback, so this frame has to be composed
-                // again the ordinary way rather than salvaged out of the PBO. Every frame after
-                // it is packed for readback from the start.
-                av_frame_unref(hwframe);
-                cudaExport = false;
-                GpuScene retry;
-                if (!compositor.buildSceneAt(job.timeUs, composeOptions, &retry)) {
-                    retry = GpuScene{};
-                    retry.canvasSize = QSize(outW, outH);
-                    retry.backgroundColor = Qt::black;
-                }
-                packed = GpuCompositor::beginExportNv12(retry, outW, outH, job.slot);
-            }
-
-            if (av_frame_make_writable(vframe) < 0) {
-                error = QStringLiteral("Video frame not writable");
-                return false;
-            }
-
-            bool mapped = false;
-            if (packed) {
-                if (swPixFmt == AV_PIX_FMT_NV12) {
-                    mapped = GpuCompositor::finishExportNv12(job.slot, vframe->data[0],
-                                                             vframe->linesize[0], vframe->data[1],
-                                                             vframe->linesize[1], outW, outH);
-                } else {
-                    mapped = GpuCompositor::finishExportNv12(job.slot, nv12Y.data(), outW,
-                                                             nv12Uv.data(), outW, outW, outH);
-                    if (mapped)
-                        nv12ToYuv420p(nv12Y.data(), outW, nv12Uv.data(), outW, vframe);
-                }
-            }
-            if (!mapped) {
-                if (vdef->hasAlpha)
-                    fillTransparentFrame(vframe);
-                else
-                    fillLimitedBlackFrame(vframe);
-                warn(QStringLiteral("readback@%1").arg(job.timeUs / 1'000'000),
-                     QStringLiteral("The frame at %1 could not be read back from the GPU; a black frame was used")
+        // The frames composed but not yet encoded live in a queue that knows which route each
+        // one was prepared for (see Nv12ExportQueue.h): when a CUDA copy fails it redoes every
+        // pending CUDA frame on the PBO route, so none is ever read from a buffer that was never
+        // written. The hooks below are the real operations; tests drive the same queue with fakes.
+        namespace nq = drift::nv12q;
+        static_assert(nq::Queue::kCapacity == GpuCompositor::kExportNv12Slots);
+        nq::Hooks nv12Hooks;
+        nv12Hooks.prepare = [&](const nq::Job &job, nq::Mode mode) -> bool {
+            GpuScene scene;
+            if (!compositor.buildSceneAt(job.timeUs, composeOptions, &scene)) {
+                scene = GpuScene{};
+                scene.canvasSize = QSize(outW, outH);
+                scene.backgroundColor = Qt::black;
+                warn(QStringLiteral("frame@%1").arg(job.timeUs / 1'000'000),
+                     QStringLiteral("The frame at %1 could not be drawn; a black frame was used")
                          .arg(clock(job.timeUs)));
             }
-
-            return sendVideoAndAudio(job.pts);
+            if (job.attempt == 0)
+                collectDecodeProblems(job.timeUs);
+            return GpuCompositor::beginExportNv12(scene, outW, outH, job.slot,
+                                                  mode == nq::Mode::Cuda);
         };
+        nv12Hooks.deliverCuda = [&](const nq::Job &job) -> nq::Outcome {
+            av_frame_unref(hwframe);
+            if (av_hwframe_get_buffer(vctx->hw_frames_ctx, hwframe, 0) < 0) {
+                error = QStringLiteral("Could not allocate a hardware frame");
+                return nq::Outcome::Fatal;
+            }
+            if (!GpuCompositor::finishExportNv12ToCuda(job.slot, hwframe)) {
+                av_frame_unref(hwframe);
+                drift::routes::noteFallback(drift::routes::Fallback::ExportCudaCopyFailed);
+                return nq::Outcome::CopyFailed;
+            }
+            applySdrBt709Tags(hwframe);
+            hwframe->pts = job.pts;
+            if (!sendVideoAndAudio(job.pts, hwframe))
+                return nq::Outcome::Fatal;
+            drift::routes::countEncode(drift::routes::EncodeRoute::DirectCuda);
+            return nq::Outcome::Ok;
+        };
+        nv12Hooks.deliverHost = [&](const nq::Job &job) -> nq::Outcome {
+            if (av_frame_make_writable(vframe) < 0) {
+                error = QStringLiteral("Video frame not writable");
+                return nq::Outcome::Fatal;
+            }
+            bool mapped = false;
+            if (swPixFmt == AV_PIX_FMT_NV12) {
+                mapped = GpuCompositor::finishExportNv12(job.slot, vframe->data[0],
+                                                         vframe->linesize[0], vframe->data[1],
+                                                         vframe->linesize[1], outW, outH);
+            } else {
+                mapped = GpuCompositor::finishExportNv12(job.slot, nv12Y.data(), outW,
+                                                         nv12Uv.data(), outW, outW, outH);
+                if (mapped)
+                    nv12ToYuv420p(nv12Y.data(), outW, nv12Uv.data(), outW, vframe);
+            }
+            if (!mapped) {
+                drift::routes::noteFallback(drift::routes::Fallback::ExportHostReadFailed);
+                return nq::Outcome::CopyFailed;
+            }
+            if (!sendVideoAndAudio(job.pts))
+                return nq::Outcome::Fatal;
+            drift::routes::countEncode(drift::routes::EncodeRoute::GlPboHostNv12);
+            return nq::Outcome::Ok;
+        };
+        nv12Hooks.deliverPlaceholder = [&](const nq::Job &job) -> nq::Outcome {
+            if (av_frame_make_writable(vframe) < 0) {
+                error = QStringLiteral("Video frame not writable");
+                return nq::Outcome::Fatal;
+            }
+            drift::routes::noteFallback(drift::routes::Fallback::ExportFramePlaceholder);
+            if (vdef->hasAlpha)
+                fillTransparentFrame(vframe);
+            else
+                fillLimitedBlackFrame(vframe);
+            warn(QStringLiteral("readback@%1").arg(job.timeUs / 1'000'000),
+                 QStringLiteral("The frame at %1 could not be read back from the GPU; a black frame was used")
+                     .arg(clock(job.timeUs)));
+            return sendVideoAndAudio(job.pts) ? nq::Outcome::Ok : nq::Outcome::Fatal;
+        };
+        // Cancel: a frame packed for the host still has a fence the slot must be done with
+        // before the next export reuses it. CUDA-route frames never set one.
+        nv12Hooks.discard = [&](const nq::Job &job) {
+            if (job.mode != nq::Mode::Pbo)
+                return;
+            std::vector<uint8_t> dumpY(size_t(outW) * size_t(outH));
+            std::vector<uint8_t> dumpUv(size_t(outW) * size_t(outH / 2));
+            GpuCompositor::finishExportNv12(job.slot, dumpY.data(), outW, dumpUv.data(), outW,
+                                            outW, outH);
+        };
+        nq::Queue nv12Queue(std::move(nv12Hooks), cudaEligible);
 
         QImage lastGoodFrame;
         for (int64_t i = 0; i < totalFrames; ++i) {
@@ -2893,25 +2930,11 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
             const drift::TimeUs t = rangeStartUs + frameTimeUs(firstFrame + i, frameRate);
 
             if (useGpuNv12) {
-                if (inflightCount == GpuCompositor::kExportNv12Slots) {
-                    if (!consumeNv12Head())
+                if (nv12Queue.full()) {
+                    if (!nv12Queue.consumeHead())
                         goto cleanup;
                 }
-
-                GpuScene scene;
-                if (!compositor.buildSceneAt(t, composeOptions, &scene)) {
-                    scene = GpuScene{};
-                    scene.canvasSize = QSize(outW, outH);
-                    scene.backgroundColor = Qt::black;
-                    warn(QStringLiteral("frame@%1").arg(t / 1'000'000),
-                         QStringLiteral("The frame at %1 could not be drawn; a black frame was used").arg(clock(t)));
-                }
-                collectDecodeProblems(t);
-
-                const int slot = int(i % GpuCompositor::kExportNv12Slots);
-                const bool packed =
-                    GpuCompositor::beginExportNv12(scene, outW, outH, slot, cudaExport);
-                inflight[inflightCount++] = InflightNv12{slot, i, t, packed};
+                nv12Queue.push(int(i % GpuCompositor::kExportNv12Slots), i, t, outW, outH);
                 continue;
             }
 
@@ -2949,26 +2972,16 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
             }
             if (!sendVideoAndAudio(i))
                 goto cleanup;
+            drift::routes::countEncode(drift::routes::EncodeRoute::CpuSwscale);
         }
 
         if (useGpuNv12 && !cancelled) {
-            while (inflightCount > 0) {
-                if (!consumeNv12Head())
+            while (nv12Queue.pending() > 0) {
+                if (!nv12Queue.consumeHead())
                     goto cleanup;
             }
         } else if (useGpuNv12) {
-            while (inflightCount > 0) {
-                const InflightNv12 job = inflight[0];
-                for (int i = 0; i < inflightCount - 1; ++i)
-                    inflight[i] = inflight[i + 1];
-                --inflightCount;
-                if (!job.packed)
-                    continue;
-                std::vector<uint8_t> dumpY(size_t(outW) * size_t(outH));
-                std::vector<uint8_t> dumpUv(size_t(outW) * size_t(outH / 2));
-                GpuCompositor::finishExportNv12(job.slot, dumpY.data(), outW, dumpUv.data(), outW,
-                                                outW, outH);
-            }
+            nv12Queue.discardAll();
         }
 
         if (!cancelled) {
