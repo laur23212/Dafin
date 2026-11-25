@@ -599,7 +599,7 @@ private slots:
         auto hex = [](const QString &s) {
             QString out;
             for (const QChar c : s)
-                out += QStringLiteral("%1").arg(c.unicode(), 4, 16, QLatin1Char('0'));
+                out += QStringLiteral("%1").arg(uint(c.unicode()), 4, 16, QLatin1Char('0'));
             return out.toUpper();
         };
         QCOMPARE(decodeFilmoraHexText(QStringLiteral("0054006500780074")), QStringLiteral("Text"));
