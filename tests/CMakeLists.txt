@@ -752,6 +752,19 @@ target_include_directories(tst_wfpsafe PRIVATE ../src)
 target_link_libraries(tst_wfpsafe PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore ZLIB::ZLIB)
 add_test(NAME WfpSafe COMMAND tst_wfpsafe)
 set_tests_properties(WfpSafe PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
+# Dafin (C20): robust Filmora import — relinking by verified identity, rational fps, proven-only speed
+# ramps, the cancellable single-apply import (tst_wfpimport), and effect paths confined to their folder
+# (tst_confinedpath; it compiles GpuPackageParse.cpp itself so it needs no engine, GL or media).
+qt_add_executable(tst_wfpimport tst_wfpimport.cpp)
+target_include_directories(tst_wfpimport PRIVATE ../src)
+target_link_libraries(tst_wfpimport PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore ZLIB::ZLIB)
+add_test(NAME WfpImport COMMAND tst_wfpimport)
+set_tests_properties(WfpImport PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
+qt_add_executable(tst_confinedpath tst_confinedpath.cpp ../src/engine/packages/GpuPackageParse.cpp)
+target_include_directories(tst_confinedpath PRIVATE ../src)
+target_link_libraries(tst_confinedpath PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftcore)
+add_test(NAME ConfinedPath COMMAND tst_confinedpath)
+set_tests_properties(ConfinedPath PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
 # Dafin: tutorial content — tutorial.json is valid, feature ids are unique, and every tour target
 # is an element in the QML sources or on tests/tutorial/known_missing.txt. Plain Python, no Qt.
 find_package(Python3 QUIET COMPONENTS Interpreter)

@@ -117,6 +117,119 @@ CurveSummary summarizeCurve(const QJsonValue &speedParam)
     return out;
 }
 
+// A speed ramp read from Filmora's speedParam keys, accepted only when it is proven.
+//
+// What is known about the layout is only that keys carry `_value` (the speed). Nothing published
+// says what `_time` counts, how the keys are joined, or what unit the speed is in, so none of that
+// is trusted: a ramp is mapped only when ALL of these hold, and otherwise it stays what it was, one
+// constant speed reported as approximated.
+//   1. every key has a finite `_time` and a `_value` inside Dafin's ramp range, the times strictly
+//      increase, and the first is 0;
+//   2. the times are either 0..1 or ticks that end at the clip's source length (so they say where in
+//      the source the key is; times that end at the length on the timeline are not mapped);
+//   3. read as straight lines between the keys over the source, the ramp makes the clip last as long
+//      as the project says it lasts (0.2 %, at least 20 ms). That is the proof: the file itself
+//      agrees with the reading. It is not proof of Filmora's easing between the keys.
+struct RampProof
+{
+    bool ok = false;
+    QList<SpeedPoint> points;
+    QString why;           // when not ok: the first rule that failed
+    int64_t errorUs = 0;   // when ok: how far the predicted length is from the recorded one
+};
+
+RampProof proveRamp(const QJsonValue &speedParam, int64_t srcSpanUs, int64_t timelineDurationUs)
+{
+    RampProof out;
+    QJsonObject curveObject;
+    if (speedParam.isObject())
+        curveObject = speedParam.toObject();
+    else if (speedParam.isString())
+        curveObject = QJsonDocument::fromJson(speedParam.toString().toUtf8()).object();
+    const QJsonArray keys = curveObject.value(QStringLiteral("keyframeSets")).toArray();
+    if (keys.size() < 2) {
+        out.why = tr("The curve has fewer than two keys.");
+        return out;
+    }
+    if (srcSpanUs <= 0 || timelineDurationUs <= 0) {
+        out.why = tr("The clip has no usable length.");
+        return out;
+    }
+    struct Key
+    {
+        double t;
+        double v;
+    };
+    QList<Key> ks;
+    for (const QJsonValue &kv : keys) {
+        const QJsonObject k = kv.toObject();
+        if (!k.contains(QStringLiteral("_time"))) {
+            out.why = tr("The keys do not say where on the clip they are.");
+            return out;
+        }
+        const double t = k.value(QStringLiteral("_time")).toDouble(std::nan(""));
+        const double v = k.value(QStringLiteral("_value")).toDouble(std::nan(""));
+        if (!std::isfinite(t) || !std::isfinite(v) || t < 0) {
+            out.why = tr("A key's position or speed is not a usable number.");
+            return out;
+        }
+        if (v < kMinCurveSpeed || v > kMaxCurveSpeed) {
+            out.why = tr("A key's speed (%1×) is outside the %2× to %3× Dafin's ramps cover.")
+                          .arg(QString::number(v, 'g', 4), QString::number(kMinCurveSpeed, 'g', 3),
+                               QString::number(kMaxCurveSpeed, 'g', 3));
+            return out;
+        }
+        ks.append({t, v});
+    }
+    for (int i = 1; i < ks.size(); ++i) {
+        if (!(ks.at(i).t > ks.at(i - 1).t)) {
+            out.why = tr("The keys are not in order along the clip.");
+            return out;
+        }
+    }
+    if (ks.first().t != 0.0) {
+        out.why = tr("The first key is not at the start of the clip.");
+        return out;
+    }
+    const double last = ks.last().t;
+    const double sourceTicks = double(srcSpanUs) * 10.0;
+    if (last <= 1.0 + 1e-9) {
+        if (std::abs(last - 1.0) > 1e-6) {
+            out.why = tr("The last key is not at the end of the clip.");
+            return out;
+        }
+    } else if (std::abs(last - sourceTicks) > 0.005 * sourceTicks) {
+        out.why = tr("The keys' positions do not end where the clip's source ends.");
+        return out;
+    }
+    QList<SpeedPoint> points;
+    for (const Key &k : std::as_const(ks)) {
+        SpeedPoint p;
+        p.pos = k.t / last;
+        p.speed = k.v;
+        points.append(p); // no handles: straight lines between the keys
+    }
+    SpeedCurve curve;
+    curve.setPoints(points);
+    if (curve.isEmpty()) {
+        out.why = tr("The keys do not make a curve.");
+        return out;
+    }
+    const int64_t predicted = curve.retimedDurationUs(srcSpanUs);
+    const int64_t error = std::abs(predicted - timelineDurationUs);
+    const int64_t tolerance = std::max<int64_t>(20'000, timelineDurationUs / 500);
+    if (error > tolerance) {
+        out.why = tr("Read as straight lines between the keys, the ramp would last %1 s, but the clip lasts %2 s.")
+                      .arg(QString::number(double(predicted) / 1e6, 'f', 3),
+                           QString::number(double(timelineDurationUs) / 1e6, 'f', 3));
+        return out;
+    }
+    out.ok = true;
+    out.points = points;
+    out.errorUs = error;
+    return out;
+}
+
 // What a clip's `effectChainList` holds. Only the shape is read, never what an effect would do:
 // effects are not imported, so all the report needs is how many there were and what they were
 // called. `unrecognized` counts chains whose structure is not the one seen in saved projects
@@ -186,10 +299,18 @@ QString localPathFromFilmora(const QString &uriOrPath)
     return s;
 }
 
-std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
+std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error, CancelPtr cancel)
 {
     const QString fileName = QFileInfo(wfpPath).fileName();
+    const auto cancelled = [&]() -> std::optional<ImportedTimeline> {
+        if (error)
+            *error = QStringLiteral("cancelled");
+        return std::nullopt;
+    };
+    if (isCancelled(cancel))
+        return cancelled();
     WfpArchive archive(wfpPath);
+    archive.setCancel(cancel);
     WfpStatus zipStatus;
     if (!archive.open(&zipStatus)) {
         if (error) {
@@ -213,6 +334,8 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
     // simply absent or not JSON is skipped, as before.
     WfpStatus fatal;
     const auto failWith = [&]() -> std::optional<ImportedTimeline> {
+        if (fatal.code == WfpError::Cancelled)
+            return cancelled();
         if (error)
             *error = tr("%1 was not opened: %2").arg(fileName, fatal.message());
         return std::nullopt;
@@ -313,6 +436,19 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
             timeline.fps = r.at(0).toDouble() / r.at(1).toDouble();
             rateStated = true;
             rateAsWritten = QStringLiteral("%1/%2").arg(r.at(0).toDouble(), 0, 'f', 0).arg(r.at(1).toDouble(), 0, 'f', 0);
+            const double fn = r.at(0).toDouble();
+            const double fd = r.at(1).toDouble();
+            if (fn == std::floor(fn) && fd == std::floor(fd) && fn < 1e9 && fd < 1e9) {
+                timeline.fpsNum = int(fn);
+                timeline.fpsDen = int(fd);
+            }
+        }
+    }
+    {
+        const KeptRate kept = keptFrameRate(timeline.fpsNum, timeline.fpsDen);
+        if (kept.valid()) {
+            timeline.keptFpsNum = kept.num;
+            timeline.keptFpsDen = kept.den;
         }
     }
     {
@@ -328,6 +464,15 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
             e.hint = tr("Check the frame rate in Project settings.");
         } else if (qAbs(timeline.fps - projectFps) < 1e-6) {
             e.status = CompatStatus::Preserved;
+        } else if (timeline.keptFpsNum > 0) {
+            // 29.97 and its kin: Dafin edits on the whole grid but keeps the exact rate for export.
+            e.status = CompatStatus::Preserved;
+            e.where = tr("Frame rate");
+            e.reason = tr("The frame rate is %1 (%2 fps).")
+                           .arg(QStringLiteral("%1/%2").arg(timeline.keptFpsNum).arg(timeline.keptFpsDen),
+                                QString::number(timeline.fps, 'f', 5));
+            e.applied = tr("Kept as %1/%2 for export (\"Same as project\"); the timeline's editing grid is %3 fps.")
+                            .arg(timeline.keptFpsNum).arg(timeline.keptFpsDen).arg(projectFps);
         } else {
             e.status = CompatStatus::Approximated;
             e.reason = tr("The frame rate is %1 (%2 fps).").arg(rateAsWritten, QString::number(timeline.fps, 'f', 5));
@@ -377,6 +522,8 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
         out.locked = track.value(QStringLiteral("lock")).toBool() || track.value(QStringLiteral("isLock")).toBool();
         const QJsonArray clipList = track.value(QStringLiteral("clipList")).toArray();
         for (int ci = 0; ci < clipList.size(); ++ci) {
+            if (isCancelled(cancel))
+                return cancelled();
             const QJsonObject clip = clipList.at(ci).toObject();
             const QString sourceId = QStringLiteral("%1:%2:%3:%4").arg(timelineKey, kind).arg(t).arg(ci);
             const QString where = isAudio ? tr("Audio track %1, clip %2").arg(trackLabel).arg(ci + 1)
@@ -437,23 +584,45 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
             double rateValue = srcOut > c.srcInUs ? double(srcOut - c.srcInUs) / double(c.durationUs) : 0.0;
             const double curve = constantSpeedOf(speed.value(QStringLiteral("speedParam")));
             const bool ramps = curve <= 0;
-            if (ramps) {
+            // A ramp becomes a Dafin speed ramp only when it is proven (see proveRamp); any other
+            // ramp stays one constant speed, said so in the report and the notes.
+            RampProof proof;
+            if (ramps && !c.still)
+                proof = proveRamp(speed.value(QStringLiteral("speedParam")), outPoint - c.srcInUs, c.durationUs);
+            if (ramps && !proof.ok) {
                 if (!timeline.notes.contains(tr("Speed ramps became constant speeds.")))
                     timeline.notes.append(tr("Speed ramps became constant speeds."));
-            } else if (rateValue <= 0) {
+            } else if (!ramps && rateValue <= 0) {
                 rateValue = curve;
             }
+            if (!c.still && srcOut > c.srcInUs)
+                c.srcSpanUs = srcOut - c.srcInUs;
             const bool speedUsable = rateValue > 0.01 && rateValue < 100.0;
             c.speed = c.still ? 1.0 : (speedUsable ? rateValue : 1.0);
             if (qAbs(c.speed - 1.0) < 1e-3)
                 c.speed = 1.0;
+            if (proof.ok) {
+                c.speedPoints = proof.points;
+                c.speed = 1.0; // the ramp carries the speed; Clip::speed stays 1
+            }
             if (c.still) {
                 c.srcInUs = 0;
                 c.reverse = false;
             }
 
             bool clean = true;
-            if (ramps && !c.still) {
+            if (proof.ok) {
+                CompatEntry e;
+                e.status = CompatStatus::Preserved;
+                e.construct = QStringLiteral("speed_curve");
+                e.sourceId = sourceId;
+                e.where = where;
+                e.sourceTimeUs = begin;
+                e.applied = tr("Mapped to a Dafin speed ramp of %n point(s), joined by straight lines; it lasts as long as the clip does in the project (within %1 ms).",
+                               nullptr, int(proof.points.size()))
+                                .arg(QString::number(double(proof.errorUs) / 1000.0, 'f', 1));
+                report.add(e);
+            } else if (ramps && !c.still) {
                 const CurveSummary curveInfo = summarizeCurve(speed.value(QStringLiteral("speedParam")));
                 CompatEntry e;
                 e.status = CompatStatus::Approximated;
@@ -465,6 +634,8 @@ std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error)
                                .arg(QString::number(curveInfo.min, 'g', 4), QString::number(curveInfo.max, 'g', 4));
                 e.applied = tr("The ramp became one constant speed of %1×: the source span over the timeline span.")
                                 .arg(QString::number(c.speed, 'g', 5));
+                if (!proof.why.isEmpty())
+                    e.reason += QLatin1Char(' ') + tr("It was not mapped because: %1").arg(proof.why);
                 e.hint = tr("Set the ramp again in the clip's Speed tools.");
                 report.add(e);
                 clean = false;

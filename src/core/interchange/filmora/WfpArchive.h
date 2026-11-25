@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/interchange/CancelToken.h"
+
 #include <QByteArray>
 #include <QFile>
 #include <QJsonObject>
@@ -75,6 +77,7 @@ enum class WfpError {
     JsonTooDeep,
     JsonInvalid,
     JsonNotObject,
+    Cancelled, // the caller's CancelToken was set while a member was being read
 };
 
 struct WfpStatus
@@ -130,6 +133,9 @@ public:
     // for opening a project (which only needs two or three members).
     bool verifyAll(WfpStatus *status);
 
+    // Polled while a member is inflated; once set, the read ends with WfpError::Cancelled.
+    void setCancel(CancelPtr cancel) { m_cancel = std::move(cancel); }
+
     qint64 inflatedBytes() const { return m_inflatedTotal; }
     const WfpLimits &limits() const { return m_limits; }
 
@@ -146,6 +152,7 @@ private:
     QList<Member> m_members;
     qint64 m_inflatedTotal = 0;
     bool m_opened = false;
+    CancelPtr m_cancel;
 };
 
 } // namespace drift::interchange::filmora

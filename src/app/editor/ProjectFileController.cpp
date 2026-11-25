@@ -18,6 +18,7 @@
 #include "core/interchange/OtioReader.h"
 #include "core/interchange/premiere/PrprojReader.h"
 #include "core/interchange/ResolveReader.h"
+#include "core/interchange/ImportPipeline.h"
 #include "core/interchange/ImportedTimelineProject.h"
 #include "core/interchange/filmora/FilmoraProjectParser.h"
 #include "core/interchange/premiere/PremiereProjectParser.h"
@@ -143,6 +144,11 @@ ProjectFileController::ProjectFileController(AppController *app, QObject *parent
 
 ProjectFileController::~ProjectFileController()
 {
+    // A Filmora import still reading: stop it and wait, so its queued hand-back never lands on a
+    // deleted object.
+    if (m_importCancel)
+        m_importCancel->cancel();
+    m_importFuture.waitForFinished();
     m_queuedSaves.clear();
     m_saveWrite.waitForFinished();
 }
@@ -960,6 +966,7 @@ void ProjectFileController::finishProjectLoad(bool ok, const QString &message)
     // reaches here — a rejected request returns before ever calling this — so it is
     // always safe to release: nothing else can be mid-load while we are.
     m_projectLoadPending = false;
+    m_importActive = false;
     emit projectLoadPendingChanged();
     emit projectLoadFinished(ok, message);
 }
@@ -997,88 +1004,60 @@ void ProjectFileController::loadProjectJson(const QUrl &url)
 // its media's shape the way adding it from the bin would.
 namespace {
 
-void fitImportedLayouts(drift::Project &project)
+// What the import knows how to ask about a file: its duration (to tell apart files of the same
+// name) and the shape of its picture (to fit the clip). Runs on the import's worker thread.
+drift::interchange::MediaFacts probeForImport(const QString &path)
 {
-    QHash<QString, QSize> sizes;
-    const auto sizeOf = [&sizes](const drift::Clip &clip) {
-        const auto it = sizes.constFind(clip.path);
-        if (it != sizes.constEnd())
-            return *it;
-        QSize size;
-        if (QFileInfo(clip.path).isFile()) {
-            if (clip.type == drift::ClipType::Image) {
-                QImageReader reader(clip.path);
-                reader.setAutoTransform(true);
-                size = reader.size();
-                if (reader.transformation() & QImageIOHandler::TransformationRotate90)
-                    size.transpose();
-            }
-            if (!size.isValid()) {
-                const MediaInfo info = MediaProbe::probe(clip.path);
-                for (const StreamInfo &stream : info.streams) {
-                    if (stream.type == StreamInfo::Type::Video && !stream.attachedPicture && stream.width > 0) {
-                        size = QSize(stream.width, stream.height);
-                        if (stream.rotationDegrees == 90 || stream.rotationDegrees == 270)
-                            size.transpose();
-                        break;
-                    }
-                }
-            }
-        }
-        sizes.insert(clip.path, size);
-        return size;
-    };
-    const double canvasW = qMax(1, project.width());
-    const double canvasH = qMax(1, project.height());
-    for (drift::Track &track : project.tracks()) {
-        for (drift::Clip &clip : track.clips) {
-            if (clip.type != drift::ClipType::Video && clip.type != drift::ClipType::Image)
-                continue;
-            const QSize media = sizeOf(clip);
-            double x = 0, y = 0, w = canvasW, h = canvasH;
-            if (media.width() > 0 && media.height() > 0) {
-                const double scale = qMin(canvasW / media.width(), canvasH / media.height());
-                w = media.width() * scale;
-                h = media.height() * scale;
-                x = (canvasW - w) / 2.0;
-                y = (canvasH - h) / 2.0;
-            }
-            clip.transformX = {};
-            clip.transformY = {};
-            clip.transformW = {};
-            clip.transformH = {};
-            clip.transformX.setKeyframe(0, x);
-            clip.transformY.setKeyframe(0, y);
-            clip.transformW.setKeyframe(0, qMax(1.0, w));
-            clip.transformH.setKeyframe(0, qMax(1.0, h));
+    drift::interchange::MediaFacts facts;
+    QImageReader reader(path);
+    reader.setAutoTransform(true);
+    if (reader.canRead()) {
+        QSize size = reader.size();
+        if (reader.transformation() & QImageIOHandler::TransformationRotate90)
+            size.transpose();
+        if (size.isValid()) {
+            facts.known = true;
+            facts.size = size;
+            return facts;
         }
     }
+    const MediaInfo info = MediaProbe::probe(path);
+    for (const StreamInfo &stream : info.streams) {
+        if (stream.type == StreamInfo::Type::Video && !stream.attachedPicture && stream.width > 0) {
+            QSize size(stream.width, stream.height);
+            if (stream.rotationDegrees == 90 || stream.rotationDegrees == 270)
+                size.transpose();
+            facts.size = size;
+            break;
+        }
+    }
+    facts.known = info.ok || facts.size.isValid();
+    if (info.durationUs > 0)
+        facts.durationUs = info.durationUs;
+    return facts;
 }
 
 } // namespace
 
 void ProjectFileController::loadOtherEditorProject(const QUrl &url, const QString &format)
 {
+    // Premiere Pro. (Filmora has its own background path: loadFilmoraProject.)
+    Q_UNUSED(format);
     const QString path = readTargetPath(url);
     if (path.isEmpty()) {
         m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
         return;
     }
-    const bool filmora = format == QLatin1String("filmora");
-    const QString appName = filmora ? QStringLiteral("Filmora") : QStringLiteral("Premiere Pro");
+    const QString appName = QStringLiteral("Premiere Pro");
 
     QString readError;
-    std::optional<drift::interchange::ImportedTimeline> timeline;
-    if (filmora) {
-        timeline = drift::interchange::filmora::parse(path, &readError);
-    } else {
-        QFile file(path);
-        if (!file.open(QIODevice::ReadOnly)) {
-            m_app->setLastMessage(tr("Can’t open %1").arg(QFileInfo(path).fileName()), QStringLiteral("error"));
-            return;
-        }
-        timeline = drift::interchange::premiere::parse(file.readAll(), &readError);
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        m_app->setLastMessage(tr("Can’t open %1").arg(QFileInfo(path).fileName()), QStringLiteral("error"));
+        return;
     }
+    const std::optional<drift::interchange::ImportedTimeline> timeline =
+        drift::interchange::premiere::parse(file.readAll(), &readError);
     if (!timeline) {
         m_app->setLastMessage(readError.isEmpty() ? tr("Failed to open the %1 project").arg(appName) : readError,
                               QStringLiteral("error"));
@@ -1086,7 +1065,7 @@ void ProjectFileController::loadOtherEditorProject(const QUrl &url, const QStrin
     }
 
     drift::interchange::ProjectBuildResult built = drift::interchange::toProject(*timeline, path);
-    fitImportedLayouts(built.project);
+    drift::interchange::fitImportedLayouts(built.project, probeForImport, {});
 
     // Drop an in-flight bundle extract so it cannot land on top of this document.
     ++m_loadGeneration;
@@ -1102,8 +1081,6 @@ void ProjectFileController::loadOtherEditorProject(const QUrl &url, const QStrin
     setDirty(true);
     deleteRecoveryFile();
     m_app->setProjectLayoutChosen(true);
-    // "success" only when nothing was left out, rounded or missing: an import that kept the media
-    // but dropped its effects, or rounded its frame rate, is a warning (the summary says what).
     m_app->setLastMessage(drift::interchange::summary(*timeline, built, appName),
                           built.missingMedia.isEmpty() && timeline->skippedClips == 0 && !timeline->report.hasLoss()
                               ? QStringLiteral("success")
@@ -1112,7 +1089,135 @@ void ProjectFileController::loadOtherEditorProject(const QUrl &url, const QStrin
 
 void ProjectFileController::loadFilmoraProject(const QUrl &url)
 {
-    loadOtherEditorProject(url, QStringLiteral("filmora"));
+    const QString path = readTargetPath(url);
+    if (path.isEmpty()) {
+        m_app->setLastMessage(tr("That project location isn’t valid"), QStringLiteral("error"));
+        return;
+    }
+    if (!beginProjectLoad()) {
+        m_app->setLastMessage(tr("Still opening a project — try again in a moment."), QStringLiteral("warning"));
+        return;
+    }
+    m_importActive = true;
+    emit projectLoadPendingChanged(); // importCancellable follows it
+    m_app->setLastMessage(tr("Reading the Filmora project…"));
+    startFilmoraImport(path, {});
+}
+
+void ProjectFileController::startFilmoraImport(const QString &path, const QHash<QString, QString> &choices)
+{
+    m_importPath = path;
+    m_importWaitingForAnswers = false;
+    m_importCancel = std::make_shared<drift::interchange::CancelToken>();
+    const int generation = ++m_loadGeneration;
+    // The previous worker (the one that asked its questions) has already returned.
+    m_importFuture.waitForFinished();
+    m_importFuture = QtConcurrent::run([this, path, choices, cancel = m_importCancel, generation]() {
+        drift::interchange::ImportRequest request;
+        request.wfpPath = path;
+        request.probe = probeForImport;
+        request.cancel = cancel;
+        request.relinkChoices = choices;
+        auto outcome = std::make_shared<drift::interchange::ImportOutcome>(drift::interchange::runFilmoraImport(request));
+        QMetaObject::invokeMethod(
+            this, [this, generation, outcome]() { finishFilmoraImport(generation, outcome); }, Qt::QueuedConnection);
+    });
+}
+
+void ProjectFileController::finishFilmoraImport(int generation,
+                                                const std::shared_ptr<drift::interchange::ImportOutcome> &outcome)
+{
+    using Status = drift::interchange::ImportOutcome::Status;
+    if (generation != m_loadGeneration) {
+        // Something else took the document over while this was reading; it owns the screen now.
+        finishProjectLoad(false, tr("The Filmora import was replaced by another one."));
+        return;
+    }
+    switch (outcome->status) {
+    case Status::Cancelled: {
+        const QString message = tr("Filmora import cancelled. The project was not changed.");
+        m_app->setLastMessage(message);
+        finishProjectLoad(false, message);
+        return;
+    }
+    case Status::Failed:
+        m_app->setLastMessage(outcome->error, QStringLiteral("error"));
+        finishProjectLoad(false, outcome->error);
+        return;
+    case Status::NeedsChoice: {
+        QVariantList questions;
+        for (const drift::interchange::ImportQuestion &q : outcome->built.questions) {
+            QVariantList candidates;
+            for (const drift::interchange::MediaCandidate &c : q.candidates) {
+                candidates.append(QVariantMap{
+                    {QStringLiteral("path"), c.path},
+                    {QStringLiteral("folder"), QDir::toNativeSeparators(QFileInfo(c.path).absolutePath())},
+                    {QStringLiteral("sizeBytes"), double(c.size)},
+                    {QStringLiteral("durationUs"), double(c.durationUs)},
+                    {QStringLiteral("checked"), c.verifiedBy.join(QStringLiteral(", "))},
+                });
+            }
+            questions.append(QVariantMap{{QStringLiteral("key"), q.key},
+                                         {QStringLiteral("clipName"), q.clipName},
+                                         {QStringLiteral("candidates"), candidates}});
+        }
+        m_importWaitingForAnswers = true;
+        m_app->setLastMessage(tr("Choose the files this Filmora project uses…"));
+        emit importRelinkQuestions(questions);
+        return; // the load stays pending until the person answers or cancels
+    }
+    case Status::Ok:
+        break;
+    }
+
+    // One apply, of a project that is complete.
+    drift::interchange::ProjectBuildResult &built = outcome->built;
+    const drift::interchange::ImportedTimeline &timeline = *outcome->timeline;
+    ++m_loadGeneration;
+    const QByteArray data = QJsonDocument(built.project.toJson()).toJson(QJsonDocument::Compact);
+    QString error;
+    if (!m_app->applyProjectJson(data, &error)) {
+        m_app->setLastMessage(error, QStringLiteral("error"));
+        finishProjectLoad(false, error);
+        return;
+    }
+    m_embeddedSources.clear();
+    // Untitled: Save writes a Dafin project, never over the file it came from.
+    setCurrentProjectPath(QString());
+    setDirty(true);
+    deleteRecoveryFile();
+    m_app->setProjectLayoutChosen(true);
+    const QString message = drift::interchange::summary(timeline, built, QStringLiteral("Filmora"));
+    m_app->setLastMessage(message,
+                          built.missingMedia.isEmpty() && timeline.skippedClips == 0 && !timeline.report.hasLoss()
+                              ? QStringLiteral("success")
+                              : QStringLiteral("warning"));
+    finishProjectLoad(true, message);
+}
+
+void ProjectFileController::cancelOtherEditorImport()
+{
+    if (m_importWaitingForAnswers) {
+        // No worker is running: the person closed the question dialog.
+        m_importWaitingForAnswers = false;
+        const QString message = tr("Filmora import cancelled. The project was not changed.");
+        m_app->setLastMessage(message);
+        finishProjectLoad(false, message);
+        return;
+    }
+    if (m_importCancel)
+        m_importCancel->cancel(); // the worker ends at its next check and finishFilmoraImport reports it
+}
+
+void ProjectFileController::answerImportRelinkQuestions(const QVariantMap &choices)
+{
+    if (!m_importWaitingForAnswers)
+        return;
+    QHash<QString, QString> answers;
+    for (auto it = choices.constBegin(); it != choices.constEnd(); ++it)
+        answers.insert(it.key(), it.value().toString());
+    m_app->setLastMessage(tr("Reading the Filmora project…"));
+    startFilmoraImport(m_importPath, answers);
 }
 
 void ProjectFileController::loadPremiereProject(const QUrl &url)
@@ -1556,8 +1661,8 @@ void ProjectFileController::cancelCollectMedia()
 
 void ProjectFileController::loadProject(const QUrl &url)
 {
-    // Dafin: projects from Premiere Pro and Filmora open as an untitled Dafin project. They are
-    // read here on the GUI thread; the edit itself is small next to a .drift bundle's media.
+    // Dafin: projects from Premiere Pro and Filmora open as an untitled Dafin project. Filmora's is
+    // read on a worker thread and can be cancelled; Premiere's is read here, as before.
     {
         const QString local = url.isLocalFile() ? url.toLocalFile() : url.toString();
         if (local.endsWith(QLatin1String(".prproj"), Qt::CaseInsensitive)) {

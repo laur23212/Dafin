@@ -170,6 +170,8 @@ QString WfpStatus::key() const
         return QStringLiteral("size_mismatch");
     case WfpError::CrcMismatch:
         return QStringLiteral("crc32_mismatch");
+    case WfpError::Cancelled:
+        return QStringLiteral("cancelled");
     case WfpError::JsonTooDeep:
         return QStringLiteral("json_too_deep");
     case WfpError::JsonInvalid:
@@ -231,6 +233,8 @@ QString WfpStatus::message() const
     case WfpError::JsonInvalid:
     case WfpError::JsonNotObject:
         return tr("A project description in the file can't be read.");
+    case WfpError::Cancelled:
+        return tr("The import was cancelled.");
     }
     return {};
 }
@@ -528,6 +532,10 @@ bool WfpArchive::inflateMember(const Member &member, QByteArray *out, WfpStatus 
     if (member.method == 0) {
         qint64 done = 0;
         while (done < declared) {
+            if (isCancelled(m_cancel)) {
+                m_inflatedTotal += done;
+                return fail(status, WfpError::Cancelled, member.name.left(80));
+            }
             const qint64 n = std::min<qint64>(declared - done, 1 << 20);
             if (m_file.read(data.data() + done, n) != n) {
                 m_inflatedTotal += done;
@@ -552,6 +560,10 @@ bool WfpArchive::inflateMember(const Member &member, QByteArray *out, WfpStatus 
         WfpError error = WfpError::None;
         bool ended = false;
         while (true) {
+            if (isCancelled(m_cancel)) {
+                error = WfpError::Cancelled;
+                break;
+            }
             if (strm.avail_in == 0 && remaining > 0) {
                 const qint64 n = std::min<qint64>(remaining, kChunk);
                 if (m_file.read(inBuf.data(), n) != n) {

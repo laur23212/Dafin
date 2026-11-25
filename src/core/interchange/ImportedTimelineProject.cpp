@@ -1,4 +1,5 @@
 #include "core/interchange/ImportedTimelineProject.h"
+#include "core/interchange/MediaRelink.h"
 
 #include "core/project/Track.h"
 #include "core/project/clip/Clip.h"
@@ -38,87 +39,10 @@ bool isAudioSuffix(const QString &path)
     return audio.contains(QFileInfo(path).suffix().toLower());
 }
 
-// Finds a file that moved: the stored path, the path relative to the project file, then a file of
-// the same name in the project's folder tree (a few thousand entries at most).
-class MediaFinder
-{
-public:
-    explicit MediaFinder(const QString &projectFile)
-        : m_dir(QFileInfo(projectFile).absolutePath())
-    {
-    }
-
-    QString find(const QString &stored, const QString &relative, bool *found)
-    {
-        const QString key = stored + QLatin1Char('\x1f') + relative;
-        const auto cached = m_cache.constFind(key);
-        if (cached != m_cache.constEnd()) {
-            *found = cached->second;
-            return cached->first;
-        }
-        QString result = stored;
-        bool ok = false;
-        QString normalized = stored;
-        normalized.replace(QLatin1Char('\\'), QLatin1Char('/'));
-        if (!normalized.isEmpty() && QFileInfo(normalized).isFile()) {
-            result = QFileInfo(normalized).absoluteFilePath();
-            ok = true;
-        }
-        if (!ok && !relative.isEmpty()) {
-            QString rel = relative;
-            rel.replace(QLatin1Char('\\'), QLatin1Char('/'));
-            const QFileInfo info(QDir(m_dir).filePath(rel));
-            if (info.isFile()) {
-                result = info.absoluteFilePath();
-                ok = true;
-            }
-        }
-        if (!ok) {
-            const QString name = QFileInfo(normalized).fileName();
-            if (!name.isEmpty()) {
-                indexFolder();
-                const QString hit = m_byName.value(name.toLower());
-                if (!hit.isEmpty()) {
-                    result = hit;
-                    ok = true;
-                }
-            }
-        }
-        if (!ok)
-            result = normalized;
-        m_cache.insert(key, {result, ok});
-        *found = ok;
-        return result;
-    }
-
-private:
-    void indexFolder()
-    {
-        if (m_indexed)
-            return;
-        m_indexed = true;
-        if (m_dir.isEmpty())
-            return;
-        QDirIterator it(m_dir, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-        int seen = 0;
-        while (it.hasNext() && seen < 20000) {
-            const QString path = it.next();
-            ++seen;
-            const QString name = it.fileName().toLower();
-            if (!m_byName.contains(name))
-                m_byName.insert(name, path);
-        }
-    }
-
-    QString m_dir;
-    bool m_indexed = false;
-    QHash<QString, QString> m_byName;
-    QHash<QString, QPair<QString, bool>> m_cache;
-};
-
 } // namespace
 
-ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &projectFile)
+ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &projectFile,
+                             const BuildOptions &options)
 {
     ProjectBuildResult result;
     Project &project = result.project;
@@ -126,29 +50,114 @@ ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &pr
     project.setName(timeline.name.isEmpty() ? QFileInfo(projectFile).completeBaseName() : timeline.name);
     project.setResolution(qMax(16, timeline.width), qMax(16, timeline.height));
     project.setFps(projectFpsFor(timeline.fps));
+    if (timeline.keptFpsNum > 0 && timeline.keptFpsDen > 1)
+        project.setExactFrameRate(timeline.keptFpsNum, timeline.keptFpsDen);
     if (timeline.sampleRate >= 8000)
         project.setSampleRate(timeline.sampleRate);
     project.tracks().clear();
 
-    MediaFinder finder(projectFile);
+    MediaRelinker finder(projectFile, options.probe, options.cancel, options.relinkChoices);
+    QHash<QString, MediaNeed> needs;
+    QHash<QString, RelinkOutcome> outcomes;
+    const auto needKey = [](const ImportedClip &c) { return relinkKey(c.path) + QLatin1Char('\x1f') + c.relativePath; };
+    // What each stored file has to be: long enough for every clip that uses it, and the identity
+    // the project recorded, if it recorded one.
+    for (const ImportedTrack &in : timeline.tracks) {
+        for (const ImportedClip &c : in.clips) {
+            MediaNeed &need = needs[needKey(c)];
+            if (!c.still) {
+                const int64_t span = c.srcSpanUs > 0 ? c.srcSpanUs
+                                                      : int64_t(std::llround(double(c.durationUs) * c.speed));
+                need.requiredDurationUs = qMax(need.requiredDurationUs, c.srcInUs + span);
+            }
+            if (c.expectedSize >= 0 && need.expectedSize < 0)
+                need.expectedSize = c.expectedSize;
+            if (!c.expectedPartialHash.isEmpty() && need.expectedPartialHash.isEmpty())
+                need.expectedPartialHash = c.expectedPartialHash;
+        }
+    }
     QHash<QString, QString> assetForPath;
     QSet<QString> missing;
+    QSet<QString> asked;
+
+    const auto sourceIdOf = [](const ImportedClip &c) {
+        return c.sourceId.isEmpty() ? QStringLiteral("clip:%1").arg(c.name) : c.sourceId;
+    };
     const auto assetFor = [&](const ImportedClip &c, bool audioTrack, QString *path) {
-        bool found = false;
-        *path = finder.find(c.path, c.relativePath, &found);
-        if (!found) {
-            missing.insert(QDir::toNativeSeparators(*path));
+        const QString key = needKey(c);
+        if (!outcomes.contains(key)) {
+            outcomes.insert(key, finder.find(c.path, c.relativePath, needs.value(key)));
+            const RelinkOutcome &first = outcomes[key];
+            // Said once per file, whatever the number of clips that use it.
             CompatEntry entry;
-            entry.status = CompatStatus::MissingDependency;
-            entry.construct = QStringLiteral("media_file");
-            entry.sourceId = c.sourceId.isEmpty() ? QStringLiteral("clip:%1").arg(c.name) : c.sourceId;
-            entry.where = c.name.isEmpty() ? QFileInfo(*path).fileName() : c.name;
+            entry.sourceId = sourceIdOf(c);
+            entry.where = c.name.isEmpty() ? QFileInfo(first.path).fileName() : c.name;
             entry.sourceTimeUs = c.startUs >= 0 ? c.startUs : -1;
-            entry.reason = tr("The media file is not on this computer, nor beside the project file.");
-            entry.applied = tr("The clip was kept and shows as missing.");
-            entry.hint = tr("Relink the clip, or put the file back where the project expects it.");
-            result.report.add(entry);
+            entry.construct = QStringLiteral("media_file");
+            switch (first.how) {
+            case RelinkHow::AtStoredPath:
+            case RelinkHow::RelativeToProject:
+                break;
+            case RelinkHow::ByNameUnique:
+            case RelinkHow::ByNameIdenticalCopies:
+            case RelinkHow::Chosen:
+                entry.construct = QStringLiteral("media_relinked");
+                if (first.how == RelinkHow::Chosen || first.verified()) {
+                    entry.status = CompatStatus::Preserved;
+                    entry.applied = first.how == RelinkHow::Chosen
+                        ? tr("Linked to %1, the file you chose.").arg(QDir::toNativeSeparators(first.path))
+                        : tr("Linked to %1 (checked: %2).").arg(QDir::toNativeSeparators(first.path),
+                                                                first.verifiedBy.join(QStringLiteral(", ")));
+                } else {
+                    entry.status = CompatStatus::Approximated;
+                    entry.reason = tr("The media file is not where the project says; one file of the same name was found.");
+                    entry.applied = tr("Linked to %1. Nothing could confirm it is the same file.")
+                                        .arg(QDir::toNativeSeparators(first.path));
+                    entry.hint = tr("Check that the clip shows the right footage.");
+                }
+                result.report.add(entry);
+                break;
+            case RelinkHow::Ambiguous:
+            case RelinkHow::NotFound: {
+                entry.status = CompatStatus::MissingDependency;
+                if (first.how == RelinkHow::Ambiguous) {
+                    entry.reason = tr("%n different files of this name fit and nothing tells them apart.", nullptr,
+                                      int(first.candidates.size()));
+                    entry.applied = tr("The clip was kept and shows as missing until you choose the file.");
+                    entry.hint = tr("Choose the right file, or relink the clip yourself.");
+                } else if (first.declined) {
+                    entry.reason = tr("You chose to leave this clip unlinked.");
+                    entry.applied = tr("The clip was kept and shows as missing.");
+                    entry.hint = tr("Relink the clip when you have the file.");
+                } else {
+                    entry.reason = tr("The media file is not on this computer, nor beside the project file.");
+                    if (first.rejected > 0)
+                        entry.reason = tr("%n file(s) of this name were found beside the project, but none can be this clip's media (too short, or not the file the project used).",
+                                          nullptr, first.rejected);
+                    if (first.searchIncomplete)
+                        entry.reason += QLatin1Char(' ') + tr("The folder is too big to search completely.");
+                    entry.applied = tr("The clip was kept and shows as missing.");
+                    entry.hint = tr("Relink the clip, or put the file back where the project expects it.");
+                }
+                result.report.add(entry);
+                break;
+            }
+            }
+            if (first.cancelled)
+                result.cancelled = true;
+            if (first.how == RelinkHow::Ambiguous && !asked.contains(relinkKey(c.path))) {
+                asked.insert(relinkKey(c.path));
+                ImportQuestion q;
+                q.key = relinkKey(c.path);
+                q.clipName = c.name.isEmpty() ? QFileInfo(first.path).fileName() : c.name;
+                q.candidates = first.candidates;
+                result.questions.append(q);
+            }
         }
+        const RelinkOutcome &outcome = outcomes[key];
+        *path = outcome.path;
+        if (!outcome.found())
+            missing.insert(QDir::toNativeSeparators(*path));
         const auto it = assetForPath.constFind(*path);
         if (it != assetForPath.constEnd())
             return *it;
@@ -181,6 +190,13 @@ ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &pr
             clip.srcIn = 0;
             clip.srcOut = clip.timelineDuration;
             clip.speed = 1.0;
+        } else if (!c.speedPoints.isEmpty() && c.srcSpanUs > 0) {
+            // A proven ramp: the source range is what the file says, the ramp decides how long it
+            // takes, and the clip keeps the length the project gave it on the timeline.
+            clip.speed = 1.0;
+            clip.srcIn = qMax<int64_t>(0, c.srcInUs);
+            clip.srcOut = clip.srcIn + c.srcSpanUs;
+            clip.speedCurve.setPoints(c.speedPoints);
         } else {
             clip.srcIn = qMax<int64_t>(0, c.srcInUs);
             clip.srcOut = clip.srcIn + clip.sourceSpanUs();
@@ -192,6 +208,10 @@ ProjectBuildResult toProject(const ImportedTimeline &timeline, const QString &pr
     };
 
     for (const ImportedTrack &in : timeline.tracks) {
+        if (result.cancelled || isCancelled(options.cancel)) {
+            result.cancelled = true;
+            return result;
+        }
         if (in.audio) {
             Track track;
             track.type = TrackType::Audio;
@@ -291,6 +311,9 @@ QString summary(const ImportedTimeline &timeline, const ProjectBuildResult &resu
     if (unrecognized > 0)
         parts.append(tr("%n item(s) were in a layout Dafin does not recognise.", nullptr, unrecognized));
     parts.append(rateNotes);
+    if (timeline.keptFpsNum > 0)
+        parts.append(tr("Frame rate kept at %1/%2 for export; the editing grid is %3 fps.")
+                         .arg(timeline.keptFpsNum).arg(timeline.keptFpsDen).arg(result.project.fps()));
     parts.append(tr("Effects, transitions, titles and keyframes stay behind."));
     for (const QString &note : timeline.notes)
         parts.append(note);

@@ -142,7 +142,12 @@ void resolveExportRange(const drift::Project &project, const ExportSettings &set
 // The rate frames are sampled at: the project's, or the one the dialog asked for.
 AVRational exportFrameRate(const drift::Project &project, const ExportSettings &settings)
 {
-    AVRational frameRate{qMax(1, project.fps()), 1};
+    // "Same as project": the exact rate the project carries (29.97 for one imported at
+    // 30000/1001), else its whole fps.
+    int projNum = 0;
+    int projDen = 1;
+    project.frameRate(&projNum, &projDen);
+    AVRational frameRate{qMax(1, projNum), qMax(1, projDen)};
     if (settings.fpsNum > 0 && settings.fpsDen > 0)
         frameRate = AVRational{settings.fpsNum, settings.fpsDen};
     av_reduce(&frameRate.num, &frameRate.den, frameRate.num, frameRate.den, INT_MAX);
@@ -1384,10 +1389,7 @@ bool runGifExport(const drift::Project &project, const ExportSettings &settings,
     int outH = 0;
     scaleSize(projW, projH, settings.targetHeight, outW, outH);
 
-    AVRational frameRate{qMax(1, project.fps()), 1};
-    if (settings.fpsNum > 0 && settings.fpsDen > 0)
-        frameRate = AVRational{settings.fpsNum, settings.fpsDen};
-    av_reduce(&frameRate.num, &frameRate.den, frameRate.num, frameRate.den, INT_MAX);
+    const AVRational frameRate = exportFrameRate(project, settings);
     const AVRational frameTb{frameRate.den, frameRate.num};
     const double fpsValue = av_q2d(frameRate);
 
