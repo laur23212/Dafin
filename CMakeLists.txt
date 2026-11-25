@@ -805,6 +805,8 @@ add_library(driftcore STATIC
     src/core/project/sources/SceneSource.h
     src/core/scene/SceneTitle.h
     src/core/scene/SceneTitle.cpp
+    src/core/scene/SceneKeycaps.h
+    src/core/scene/SceneKeycaps.cpp
     src/core/scene/SceneCatalog.h
     src/core/scene/SceneCatalog.cpp
     src/core/base/ZipArchive.h
@@ -884,6 +886,13 @@ qt_add_resources(driftcore "dafin_scene_titles"
     PREFIX "/scene-titles"
     BASE "${CMAKE_SOURCE_DIR}/tools/scene-ref/scenes"
     FILES ${DAFIN_SCENE_TITLE_FILES}
+)
+# Dafin: the Smart Keycaps key dictionary (docs/scene-keycaps.md), one file read by both renderers:
+# tools/scene-ref/keycaps.py from the source tree, core/scene/SceneKeycaps.cpp from :/keycaps.
+qt_add_resources(driftcore "dafin_keycaps"
+    PREFIX "/keycaps"
+    BASE "${CMAKE_SOURCE_DIR}/tools/scene-ref/keycaps"
+    FILES "${CMAKE_SOURCE_DIR}/tools/scene-ref/keycaps/key-dictionary.json"
 )
 
 # Dafin: the built-in editing skill for AI Assist (Taste Engine + opt-in Creator Style, text only, no frames).

@@ -1,5 +1,6 @@
 #include "engine/render2d/scene/ScenePainter.h"
 
+#include "core/scene/SceneKeycaps.h"
 #include "engine/render2d/text/fonts/SkiaFonts.h"
 
 #include "include/core/SkBitmap.h"
@@ -42,7 +43,7 @@ using scene::Scene;
 
 namespace {
 
-constexpr int kSS = 2; // sprite2x supersampling
+constexpr int kSS = 2; // sprite2x supersampling (a flattened group may draw its sprite at its own "ss")
 
 // Python's round(): half to even.
 double roundHalfEven(double v)
@@ -273,6 +274,7 @@ struct GlyphRun
     SkFont font;
     std::vector<SkGlyphID> glyphs;
     std::vector<SkPoint> pos; // pen positions relative to the text's origin
+    SkScalar end = 0;         // pen position after the run's last advance
 };
 
 class CollectRuns final : public SkShaper::RunHandler
@@ -290,7 +292,11 @@ public:
         runs.push_back(std::move(run));
         return {runs.back().glyphs.data(), runs.back().pos.data(), nullptr, nullptr, {x, 0}};
     }
-    void commitRunBuffer(const RunInfo &info) override { x += info.fAdvance.fX; }
+    void commitRunBuffer(const RunInfo &info) override
+    {
+        x += info.fAdvance.fX;
+        runs.back().end = x;
+    }
     void commitLine() override {}
 };
 
@@ -439,9 +445,47 @@ sk_sp<SkImage> premulImage(const Img &spr)
     return bm.asImage();
 }
 
-// sprite2x text: drawn at 2x with 7/8 px (1x) of padding, reduced with Lanczos. The padding's
-// parity is chosen so that the pen lands exactly on the actor's baseline anchor.
-TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color, QPointF pen)
+// PIL's FreeTypeFont.getbbox(text, anchor="ls") in its basic layout (_imagingft.c,
+// bounding_box_and_anchors), relative to the pen at the baseline. It is not the drawn ink: it
+// spans the pen origin and the advance (rounded as FreeType's PIXEL()), the baseline is always
+// inside it, and each glyph counts with its grid-fitted control box (FT_GLYPH_BBOX_PIXELS) at its
+// whole-pixel pen position. Skia's FreeType glyph bounds are that same control box, rounded out.
+// render.py measures Smart Keycaps with it (Sprite2x.ink) and centres a flattened group's text with
+// it (group_sprite, textbbox), so the native side does too.
+SkIRect pilBBox(const SkFont &font, const QString &text)
+{
+    const std::vector<GlyphRun> runs = basicLayout(font, text);
+    int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+    for (const GlyphRun &r : runs) {
+        std::vector<SkRect> b(r.glyphs.size());
+        r.font.getBounds({r.glyphs.data(), r.glyphs.size()}, {b.data(), b.size()}, nullptr);
+        for (size_t i = 0; i < b.size(); ++i) {
+            const int px = int(std::floor(r.pos[i].fX + 0.5f));
+            const SkScalar next = i + 1 < b.size() ? r.pos[i + 1].fX : r.end;
+            x1 = qMax(x1, int(std::floor(next + 0.5f)));
+            if (b[i].isEmpty())
+                continue;
+            const SkIRect g = b[i].roundOut();
+            x0 = qMin(x0, px + g.left());
+            x1 = qMax(x1, px + g.right());
+            y0 = qMin(y0, g.top());
+            y1 = qMax(y1, g.bottom());
+        }
+    }
+    return SkIRect::MakeLTRB(x0, y0, x1, y1);
+}
+
+// Non-negative remainder.
+int posMod(int a, int m)
+{
+    const int r = a % m;
+    return r < 0 ? r + m : r;
+}
+
+// sprite2x text: drawn at ss x (2, or a flattened group's "ss") with 7/8 px (1x) of padding,
+// reduced with Lanczos. The padding is chosen so that the pen lands exactly on the actor's
+// baseline anchor; at ss = 2 this is the original 14/15 and 16/17 px parity rule, unchanged.
+TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color, QPointF pen, int ss = kSS)
 {
     TextArt art;
     const std::vector<GlyphRun> runs = basicLayout(font2x, text);
@@ -454,11 +498,11 @@ TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color,
         ink.offset(bounds.left(), bounds.top());
     // L, T: ink box relative to the pen at 2x (PIL's getbbox, ascender cancelled out).
     const int L = ink.left(), T = ink.top();
-    const double pen2x = pen.x() * kSS, base2x = pen.y() * kSS;
-    // Sprite top-left at 2x = pen2x - (padL - L); it must be even so the 1x sprite is whole.
-    const int padL = (int(std::llround(pen2x)) - (14 - L)) % 2 == 0 ? 14 : 15;
-    const int padT = (int(std::llround(base2x)) - (16 - T)) % 2 == 0 ? 16 : 17;
-    Img spr{ink.width() + 28, ink.height() + 32, {}};
+    const double pen2x = pen.x() * ss, base2x = pen.y() * ss;
+    // Sprite top-left at ss x = pen2x - (padL - L); it must be a multiple of ss so the 1x sprite is whole.
+    const int padL = 7 * ss + posMod(int(std::llround(pen2x)) - 7 * ss + L, ss);
+    const int padT = 8 * ss + posMod(int(std::llround(base2x)) - 8 * ss + T, ss);
+    Img spr{ink.width() + 14 * ss, ink.height() + 16 * ss, {}};
     spr.px.assign(size_t(spr.w) * spr.h * 4, 0);
     for (int y = 0; y < ink.height(); ++y)
         for (int x = 0; x < ink.width(); ++x) {
@@ -472,9 +516,9 @@ TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color,
         }
     // Outside the ink PIL leaves (0,0,0,0); inside, colour with coverage alpha (zero alpha keeps
     // the colour, which premultiplication erases anyway).
-    const Img small = pilResizeRgba(std::move(spr), (ink.width() + 28) / kSS, (ink.height() + 32) / kSS);
+    const Img small = pilResizeRgba(std::move(spr), (ink.width() + 14 * ss) / ss, (ink.height() + 16 * ss) / ss);
     art.image = premulImage(small);
-    art.origin = QPointF((std::llround(pen2x) - (padL - L)) / double(kSS), (std::llround(base2x) - (padT - T)) / double(kSS));
+    art.origin = QPointF((std::llround(pen2x) - (padL - L)) / double(ss), (std::llround(base2x) - (padT - T)) / double(ss));
     int l = small.w, t = small.h, r = -1, b = -1;
     for (int y = 0; y < small.h; ++y)
         for (int x = 0; x < small.w; ++x)
@@ -546,6 +590,26 @@ public:
             }
             faces.insert(it.key(), tf);
         }
+        // Smart Keycaps, phase B (docs/scene-keycaps.md): widths, rows and anchors from the same ink
+        // the sprites are placed by, before any text art is made from those anchors.
+        if (scene.keycaps) {
+            QHash<QString, scene::KeycapInk> measured;
+            const scene::KeycapMeasure measure = [&](const QString &font, int px,
+                                                     const QString &text) -> std::optional<scene::KeycapInk> {
+                const sk_sp<SkTypeface> tf = faces.value(font);
+                if (!tf || px <= 0)
+                    return std::nullopt;
+                const QString key = font + QLatin1Char('\n') + QString::number(px) + QLatin1Char('\n') + text;
+                if (const auto it = measured.constFind(key); it != measured.constEnd())
+                    return it.value();
+                const SkIRect b = pilBBox(pixelFont(tf, px), text);
+                const scene::KeycapInk ink{b.left(), b.top(), b.right(), b.bottom()};
+                measured.insert(key, ink);
+                return ink;
+            };
+            if (!scene::layoutKeycaps(scene, measure, error))
+                return;
+        }
         for (const Actor &a : std::as_const(scene.actors)) {
             if (a.type != QLatin1String("text"))
                 continue;
@@ -556,18 +620,16 @@ public:
                     *error = QStringLiteral("%1: at.sprite is a conversion-only anchor; use at.baseline").arg(a.id);
                     return;
                 }
-                const SkFont f2 = pixelFont(tf, int(a.size) * kSS);
-                if (a.centerInGroup) {
+                const int ss = spriteScale(a);
+                const SkFont f2 = pixelFont(tf, int(a.size) * ss);
+                if (a.centerInGroup) { // render.py group_sprite: centred by PIL's textbbox, not the ink
                     const Actor *g = scene.actor(a.parent);
-                    const std::vector<GlyphRun> runs = basicLayout(f2, a.text);
-                    const SkIRect b = layoutBounds(runs, {0, 0});
-                    SkIRect ink = alphaBox(coverage(runs, {0, 0}, b));
-                    ink.offset(b.left(), b.top());
+                    const SkIRect ink = pilBBox(f2, a.text);
                     const double gw = g ? g->groupW : 0, gh = g ? g->groupH : 0;
-                    pen = QPointF(((gw * kSS - ink.width()) / 2.0 - ink.left()) / kSS,
-                                  ((gh * kSS - ink.height()) / 2.0 - ink.top()) / kSS + a.centerDy);
+                    pen = QPointF(((gw * ss - ink.width()) / 2.0 - ink.left()) / ss,
+                                  ((gh * ss - ink.height()) / 2.0 - ink.top()) / ss + a.centerDy);
                 }
-                texts.insert(a.id, spriteText(f2, a.text, a.color, pen));
+                texts.insert(a.id, spriteText(f2, a.text, a.color, pen, ss));
             } else {
                 if (a.anchorKind != QLatin1String("baseline")) {
                     *error = QStringLiteral("%1: at.lt is a conversion-only anchor; use at.baseline").arg(a.id);
@@ -588,15 +650,27 @@ public:
 
     bool inFlatGroup(const Actor &a) const
     {
+        return flatGroupOf(a) != nullptr;
+    }
+
+    const Actor *flatGroupOf(const Actor &a) const
+    {
         for (QString p = a.parent; !p.isEmpty();) {
             const Actor *g = scene.actor(p);
             if (!g)
-                return false;
+                return nullptr;
             if (g->flatten)
-                return true;
+                return g;
             p = g->parent;
         }
-        return false;
+        return nullptr;
+    }
+
+    // A flattened group's children are drawn at the group's "ss" (render.py group_sprite), the rest at 2x.
+    int spriteScale(const Actor &a) const
+    {
+        const Actor *g = flatGroupOf(a);
+        return g ? qMax(1, g->ss) : kSS;
     }
 };
 
@@ -661,12 +735,15 @@ void drawLine(SkCanvas &c, const Actor &a, const Channels &ch, bool snap)
     }
 }
 
-void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, double ox, double oy)
+// PIL draws a box shape at ss x with its right/bottom pixel included: 1/ss px past x1, y1 at 1x
+// (ss = 2 for a shape sprite, a flattened group's own "ss" inside it).
+void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, double ox, double oy, int ss = kSS)
 {
     const double dx = (snap ? roundHalfEven(ch.dx) : ch.dx) + ox;
     const double dy = (snap ? roundHalfEven(ch.dy) : ch.dy) + oy;
+    const double past = 1.0 / qMax(1, ss);
     const SkRect r = SkRect::MakeLTRB(SkScalar(a.box[0] + dx), SkScalar(a.box[1] + dy),
-                                      SkScalar(a.box[0] + a.boxWidth() + 0.5 + dx), SkScalar(a.box[3] + 0.5 + dy));
+                                      SkScalar(a.box[0] + a.boxWidth() + past + dx), SkScalar(a.box[3] + past + dy));
     c.save();
     if (ch.wipe < 1.0)
         c.clipRect(SkRect::MakeLTRB(r.left() - 8, r.top() - 8, SkScalar(r.left() + roundHalfEven(r.width() * qMax(0.0, ch.wipe))), r.bottom() + 8));
@@ -710,10 +787,16 @@ public:
         const SkSamplingOptions sampling = exact ? SkSamplingOptions() : SkSamplingOptions(SkCubicResampler::Mitchell());
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
+            if (a.hidden) // Smart Keycaps: a "+" that would start a wrapped row
+                continue;
             bool skip = false;
-            const Channels ch = scene::drawChannels(sc, a, t, &skip);
+            Channels ch = scene::drawChannels(sc, a, t, &skip);
             if (skip)
                 continue;
+            if (a.snapTrunc) { // "snap": "trunc", as Stage13 A: int(dx), int(dy)
+                ch.dx = std::trunc(ch.dx);
+                ch.dy = std::trunc(ch.dy);
+            }
             if (a.type == QLatin1String("group")) {
                 if (a.flatten)
                     drawFlatGroup(c, a, ch, sampling);
@@ -855,7 +938,7 @@ private:
             else if (k.type == QLatin1String("rect"))
                 drawSpriteRect(c, k, rest, x, y);
             else if (k.hasBox)
-                drawBoxShape(c, k, rest, true, x, y);
+                drawBoxShape(c, k, rest, true, x, y, g.ss);
             else if (k.type == QLatin1String("line")) {
                 c.save();
                 c.translate(SkScalar(x), SkScalar(y));
@@ -1020,6 +1103,15 @@ QHash<QString, QRectF> sceneRestBoxes(const SceneRenderer &renderer)
     QHash<QString, QRectF> boxes;
     const Channels rest;
     for (const Actor &a : renderer.scene.actors) {
+        // As render.py rest_boxes: a hidden actor has none, a flattened group is one box and its
+        // children are inside it (their coordinates are the group's).
+        if (a.hidden || renderer.inFlatGroup(a))
+            continue;
+        if (a.type == QLatin1String("group")) {
+            if (a.flatten)
+                boxes.insert(a.id, QRectF(a.groupAt, QSizeF(a.groupW, a.groupH)));
+            continue;
+        }
         if (a.type == QLatin1String("text")) {
             boxes.insert(a.id, renderer.texts.value(a.id).ink);
         } else if (a.hasBox) {

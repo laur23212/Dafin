@@ -28,6 +28,24 @@ Item {
     // Dafin: Scene Titles (docs/scene-titles.md), built-in ports and installed files.
     property int scenesTick: 0
     readonly property var scenes: scenesTick >= 0 ? EditorState.sceneTitles() : []
+    // Dafin: Titles › Keyboard Shortcuts, the Smart Keycaps scenes (docs/scene-keycaps.md), apart from
+    // Titles › Scenes. The four approved titles sit next to the template of the same layout.
+    readonly property string shortcutCategory: "Keyboard Shortcuts"
+    readonly property var otherScenes: scenes.filter(s => s.category !== shortcutCategory)
+    readonly property var shortcutScenes: scenes.filter(s => s.category === shortcutCategory)
+                                                .map((s, i) => ({ "scene": s, "rank": shortcutRank(s.id), "i": i }))
+                                                .sort((a, b) => a.rank - b.rank || a.i - b.i)
+                                                .map(x => x.scene)
+    function shortcutRank(id) {
+        const approved = { "dafin.shortcut.13a-shortcut-keys": 35,                 // before T04 Multiple Modifiers
+                           "dafin.shortcut.13c-u3-mac-dual-names-force-quit": 55,  // before T06 Dual Key Names
+                           "dafin.shortcut.13c-u1-universal-horizontal-copy": 75,  // before T08 Side by Side
+                           "dafin.shortcut.13c-u2-universal-vertical-paste": 85 }  // before T09 Stacked
+        if (approved[id] !== undefined)
+            return approved[id]
+        const m = /^dafin\.keyboard-shortcuts\.t(\d\d)-/.exec(id)
+        return m ? Number(m[1]) * 10 : 1000
+    }
     // Dafin: Filmora titles converted from linked folders (Settings › Asset Providers).
     readonly property var linkedPresets: presets.filter(p => p.origin === "linked")
 
@@ -128,9 +146,10 @@ Item {
         if (url.toString().length === 0)
             return
         const result = EditorState.installSceneTitle(url)
-        if (result.ok === true)
-            root.section = "scenes"
-        else
+        if (result.ok === true) {
+            const installed = EditorState.sceneTitles().find(s => s.id === result.id)
+            root.section = installed && installed.category === root.shortcutCategory ? "shortcuts" : "scenes"
+        } else
             reportDialog.openWith(result)
     }
 
@@ -180,11 +199,20 @@ Item {
 
             ThemedChip {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: root.scenes.length > 0
-                text: qsTr("Scenes · %1").arg(root.scenes.length)
+                visible: root.otherScenes.length > 0
+                text: qsTr("Scenes · %1").arg(root.otherScenes.length)
                 variant: "outline"
                 selected: root.section === "scenes"
                 onClicked: root.section = "scenes"
+            }
+
+            ThemedChip {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.shortcutScenes.length > 0
+                text: qsTr("Keyboard Shortcuts · %1").arg(root.shortcutScenes.length)
+                variant: "outline"
+                selected: root.section === "shortcuts"
+                onClicked: root.section = "shortcuts"
             }
 
             ThemedChip {
@@ -426,7 +454,7 @@ Item {
         }
     }
 
-    // Dafin: Titles › Scenes. One card per Scene Title; each lands as one clip.
+    // Dafin: Titles › Scenes and Titles › Keyboard Shortcuts. One card per Scene Title; each lands as one clip.
     GridView {
         id: sceneGrid
         readonly property int columnCount: 2
@@ -444,8 +472,8 @@ Item {
         cellWidth: Math.floor(width / columnCount)
         cellHeight: Math.round(cardSize * 0.5625) + Theme.spacingSm
                     + Math.ceil(labelMetrics.height) + Theme.assetCardGap
-        visible: root.section === "scenes" && !root.searching
-        model: root.scenes
+        visible: (root.section === "scenes" || root.section === "shortcuts") && !root.searching
+        model: root.section === "shortcuts" ? root.shortcutScenes : root.otherScenes
 
         delegate: SceneTitleCard {
             cardSize: sceneGrid.cardSize

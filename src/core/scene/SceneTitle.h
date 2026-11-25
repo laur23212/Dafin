@@ -14,9 +14,12 @@
 #include <QVariant>
 
 #include <functional>
+#include <memory>
 #include <optional>
 
 namespace drift::scene {
+
+struct KeycapsPlan; // core/scene/SceneKeycaps.h
 
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
@@ -61,6 +64,9 @@ struct Actor
 {
     QString id, role, type; // type: text rect roundRect line route ellipse ring group
     QString parent;         // id of the enclosing group, empty at top level
+    QString keycapsBlock;   // the keycaps block that made this actor (docs/scene-keycaps.md), else empty
+    bool hidden = false;    // "_hidden": not drawn (Smart Keycaps: a "+" that would start a wrapped row)
+    bool snapTrunc = false; // "snap": "trunc": the offsets are truncated to whole px, not rounded
     TimedBlock in, out;
     QStringList dependsOn;
 
@@ -100,6 +106,7 @@ struct Actor
     QPointF groupAt;
     double groupW = 0.0, groupH = 0.0;
     bool flatten = false;
+    int ss = 2;             // "ss": supersampling of a flattened group's sprite (2, or 3 for the Mac keycaps)
 
     bool isShapeBox() const { return hasBox; }
     double boxWidth() const { return restWidth >= 0.0 ? restWidth : box[2] - box[0]; }
@@ -134,6 +141,8 @@ struct Scene
     QVariantMap values;    // resolved param values
     QList<Actor> actors;   // flat, draw order, groups before their children
     double holdStart = 0.0, holdEnd = 0.0;
+    // Smart Keycaps: what phase A expanded, for phase B (layoutKeycaps). Null without keycaps actors.
+    std::shared_ptr<const KeycapsPlan> keycaps;
 
     const Actor *actor(const QString &id) const;
     int indexOf(const QString &id) const;
