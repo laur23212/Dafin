@@ -33,7 +33,10 @@ namespace {
 //    "animation" field read, letter-by-letter entrances fitted to Filmora's length.
 // 7: older titles (Data/data.xml with an NLETitleArray caption) are converted too; video titles
 //    (a colour video and its _L0 matte) say why they are not added yet.
-constexpr int kImporterVersion = 7;
+// 8: shaders Dafin can't supply faithfully (own texture inputs, several unknown values or extra
+//    inputs) are refused with every cause named; a shader that fails to compile says what was
+//    assumed about it.
+constexpr int kImporterVersion = 8;
 
 // Failsafe caps: a folder that is not what it seems (a whole drive, a damaged file) must not
 // stall or exhaust the import.
@@ -930,6 +933,10 @@ private:
             QFile::remove(markerPath(m_outRoot));
             if (!compiled) {
                 r->skipReason = QStringLiteral("Its shader does not compile here: %1").arg(firstLine(error));
+                if (!shader.notes.isEmpty()) {
+                    // What was assumed while converting, so the failure can be understood.
+                    r->skipReason += QStringLiteral(" (note: %1)").arg(shader.notes.join(QStringLiteral("; ")));
+                }
                 return;
             }
         }
@@ -1341,6 +1348,7 @@ ShaderTranslation translateFilmoraShader(const QByteArray &fragFile, const QJson
     }
     if (!body.contains(QLatin1String("FUNCNAME"))) {
         out.error = QStringLiteral("Its shader is locked or in a form Dafin can't read");
+        out.codes = {QStringLiteral("no-function")};
         return out;
     }
     body = withoutComments(body);
@@ -1356,9 +1364,16 @@ ShaderTranslation translateFilmoraShader(const QByteArray &fragFile, const QJson
             continue; // the same parameter twice is declared once
         if (!kIdentifier.match(name).hasMatch()) {
             out.error = QStringLiteral("A parameter has a name Dafin can't use (%1)").arg(name.left(40));
+            out.codes = {QStringLiteral("bad-param-name")};
             return out;
         }
         const QString type = p.value(QStringLiteral("TYPE")).toString().toLower();
+        if (type != QLatin1String("float") && type != QLatin1String("int") && type != QLatin1String("bool")) {
+            // Still a number slider (what it has always been), but said, so a shader that then
+            // fails to compile can be explained.
+            out.notes.append(QStringLiteral("parameter %1 has type '%2', read as a plain number")
+                                 .arg(name, type.isEmpty() ? QStringLiteral("none") : type.left(24)));
+        }
         const QString uniform = QStringLiteral("fm_") + name;
         uniforms.append(QStringLiteral("uniform float %1;").arg(uniform));
         // Dafin binds every number as a float; Filmora's ints and bools are read back as such.
@@ -1396,24 +1411,71 @@ ShaderTranslation translateFilmoraShader(const QByteArray &fragFile, const QJson
         }
     }
     translated += body.mid(last);
-    if (!unknown.isEmpty()) {
-        out.error = QStringLiteral("Needs values only Filmora's renderer provides (%1)")
-                        .arg(unknown.mid(0, 3).join(QStringLiteral(", ")));
-        return out;
-    }
 
     // Samplers: a filter reads its clip as INPUT / INPUT1, a transition the two clips as
-    // INPUT1 / INPUT2. Anything past that is one of Filmora's own extra render passes.
+    // INPUT1 / INPUT2. Anything past that is one of Filmora's own extra render passes or an
+    // auxiliary texture Dafin has nothing to bind to.
     static const QRegularExpression kInput(QStringLiteral("\\bINPUT(\\d*)\\s*\\("));
+    QStringList extraInputs;
     for (auto it = kInput.globalMatch(translated); it.hasNext();) {
         const QString n = it.next().captured(1);
         const bool ok = transition ? (n == QLatin1String("1") || n == QLatin1String("2"))
                                    : (n.isEmpty() || n == QLatin1String("1"));
-        if (!ok) {
-            out.error = QStringLiteral("Uses Filmora's extra render passes (INPUT%1)").arg(n);
-            return out;
-        }
+        const QString shown = QStringLiteral("INPUT") + n;
+        if (!ok && !extraInputs.contains(shown))
+            extraInputs.append(shown);
     }
+    // Textures the shader declares itself: nothing would be bound to them, so they would read
+    // as black and the effect would look wrong without any error.
+    static const QRegularExpression kOwnSampler(
+        QStringLiteral("\\buniform\\s+(?:(?:lowp|mediump|highp)\\s+)?sampler\\w*\\s+([A-Za-z_][A-Za-z0-9_]*)"));
+    QStringList ownSamplers;
+    for (auto it = kOwnSampler.globalMatch(translated); it.hasNext();) {
+        const QString name = it.next().captured(1);
+        if (!ownSamplers.contains(name))
+            ownSamplers.append(name);
+    }
+
+    // Every cause is named, not only the first: a creator reading "why some weren't added"
+    // should not have to fix one thing to learn about the next.
+    const auto listed = [](const QStringList &names) {
+        constexpr int kShown = 4;
+        QString text = names.mid(0, kShown).join(QStringLiteral(", "));
+        if (names.size() > kShown)
+            text += QStringLiteral(" and %1 more").arg(names.size() - kShown);
+        return text;
+    };
+    QStringList problems;
+    if (!unknown.isEmpty()) {
+        out.codes.append(QStringLiteral("renderer-values"));
+        problems.append(QStringLiteral("Needs values only Filmora's renderer provides (%1)").arg(listed(unknown)));
+    }
+    if (!extraInputs.isEmpty()) {
+        out.codes.append(QStringLiteral("extra-inputs"));
+        problems.append(QStringLiteral("Uses Filmora's extra render passes or auxiliary textures (%1)")
+                            .arg(listed(extraInputs)));
+    }
+    if (!ownSamplers.isEmpty()) {
+        out.codes.append(QStringLiteral("own-samplers"));
+        problems.append(QStringLiteral("Declares its own texture inputs Dafin can't supply (%1)")
+                            .arg(listed(ownSamplers)));
+    }
+    if (!problems.isEmpty()) {
+        out.error = problems.join(QStringLiteral("; "));
+        return out;
+    }
+
+    // GLSL that #version 330 core rejects: said as a note, so a compile failure can be explained.
+    static const QRegularExpression kLegacy(QStringLiteral("\\b(texture2D|texture2DProj|gl_FragColor|varying|attribute)\\b"));
+    QStringList legacy;
+    for (auto it = kLegacy.globalMatch(translated); it.hasNext();) {
+        const QString word = it.next().captured(1);
+        if (!legacy.contains(word))
+            legacy.append(word);
+    }
+    if (!legacy.isEmpty())
+        out.notes.append(QStringLiteral("uses old GLSL (%1) that Dafin's shader version does not accept")
+                             .arg(legacy.join(QStringLiteral(", "))));
 
     QString header = QStringLiteral(
         "#version 330 core\n"

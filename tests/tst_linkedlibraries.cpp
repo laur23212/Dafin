@@ -902,6 +902,113 @@ private slots:
         QCOMPARE(report.skipped(), 1);
         QVERIFY(report.items.at(0).skipReason.contains(QLatin1String("undeclared identifier")));
         QVERIFY(!report.items.at(0).skipReason.contains(QLatin1String("more")));
+        // Nothing was assumed about this one, so nothing is added to the driver's words.
+        QVERIFY(!report.items.at(0).skipReason.contains(QLatin1String("note:")));
+    }
+
+    void refusalNamesEveryCauseNotOnlyTheFirst()
+    {
+        const QByteArray frag =
+            "uniform sampler2D grain;\n"
+            "vec4 FUNCNAME(vec2 tc) {\n"
+            "    float g = PREFIX(gloss) + PREFIX(sheen);\n"
+            "    return INPUT(tc) * g + INPUT2(tc) + INPUT3(tc);\n"
+            "}\n";
+        const ShaderTranslation t = translateFilmoraShader(frag, filterConf(false), false);
+        QVERIFY(!t.ok);
+        QVERIFY(t.source.isEmpty());
+        for (const char *word : {"gloss", "sheen", "INPUT2", "INPUT3", "grain"})
+            QVERIFY2(t.error.contains(QLatin1String(word)), word);
+        QCOMPARE(t.codes, (QStringList{QStringLiteral("renderer-values"), QStringLiteral("extra-inputs"),
+                                       QStringLiteral("own-samplers")}));
+        // INPUT and INPUT1 are the filter's own clip: never named as a problem.
+        QVERIFY(!t.error.contains(QLatin1String("INPUT1")));
+        QVERIFY(!t.error.contains(QLatin1String("INPUT,")));
+    }
+
+    void longListsInTheReasonAreShortened()
+    {
+        QByteArray frag = "vec4 FUNCNAME(vec2 tc) { float v = 0.0;\n";
+        for (const char *name : {"aa", "bb", "cc", "dd", "ee", "ff"})
+            frag += QByteArray("v += PREFIX(") + name + QByteArray(");\n");
+        frag += "return INPUT(tc) * v; }\n";
+        const ShaderTranslation t = translateFilmoraShader(frag, filterConf(false), false);
+        QVERIFY(!t.ok);
+        QVERIFY(t.error.contains(QLatin1String("aa, bb, cc, dd and 2 more")));
+        QCOMPARE(t.codes, (QStringList{QStringLiteral("renderer-values")}));
+    }
+
+    void aNameUsedTwiceIsNamedOnce()
+    {
+        const QByteArray frag =
+            "vec4 FUNCNAME(vec2 tc) { return INPUT3(tc) + INPUT3(tc * 2.0) + PREFIX(zz) * PREFIX(zz); }\n";
+        const ShaderTranslation t = translateFilmoraShader(frag, filterConf(false), false);
+        QVERIFY(!t.ok);
+        QCOMPARE(t.error.count(QLatin1String("INPUT3")), 1);
+        QCOMPARE(t.error.count(QLatin1String("zz")), 1);
+    }
+
+    void samplerWordsInCommentsAreNotRefused()
+    {
+        const QByteArray frag =
+            "// uniform sampler2D grain;\n"
+            "vec4 FUNCNAME(vec2 tc) { return INPUT(tc); } /* uniform sampler2D other; */\n";
+        const ShaderTranslation t = translateFilmoraShader(frag, filterConf(false), false);
+        QVERIFY2(t.ok, qPrintable(t.error));
+        QVERIFY(t.codes.isEmpty());
+    }
+
+    void assumptionsBecomeNotes()
+    {
+        QJsonObject conf = filterConf(false);
+        QJsonArray params = conf.value(QStringLiteral("PARAMS")).toArray();
+        params.append(QJsonObject{{QStringLiteral("NAME"), QStringLiteral("grainMap")},
+                                  {QStringLiteral("TYPE"), QStringLiteral("image")},
+                                  {QStringLiteral("DEFAULT"), 0},
+                                  {QStringLiteral("MIN"), 0},
+                                  {QStringLiteral("MAX"), 1}});
+        conf.insert(QStringLiteral("PARAMS"), params);
+        ShaderTranslation t = translateFilmoraShader(kFilterFrag, conf, false);
+        QVERIFY2(t.ok, qPrintable(t.error)); // still converts, as before
+        QCOMPARE(t.notes.size(), 1);
+        QVERIFY(t.notes.first().contains(QLatin1String("grainMap")));
+        QVERIFY(t.notes.first().contains(QLatin1String("image")));
+
+        // The notes are the ones in the plain shader's case: none.
+        t = translateFilmoraShader(kFilterFrag, filterConf(false), false);
+        QVERIFY(t.ok);
+        QVERIFY(t.notes.isEmpty());
+
+        const QByteArray old = "vec4 FUNCNAME(vec2 tc) { return texture2D(u_currentTexture, tc); }\n";
+        t = translateFilmoraShader(old, filterConf(false), false);
+        QVERIFY(t.ok);
+        QVERIFY(t.notes.join(QLatin1Char(' ')).contains(QLatin1String("texture2D")));
+    }
+
+    void aCompileFailureSaysWhatWasAssumed()
+    {
+        QTemporaryDir source;
+        QTemporaryDir out;
+        QJsonObject conf = filterConf(false);
+        QJsonArray params = conf.value(QStringLiteral("PARAMS")).toArray();
+        params.append(QJsonObject{{QStringLiteral("NAME"), QStringLiteral("grainMap")},
+                                  {QStringLiteral("TYPE"), QStringLiteral("image")},
+                                  {QStringLiteral("DEFAULT"), 0},
+                                  {QStringLiteral("MIN"), 0},
+                                  {QStringLiteral("MAX"), 1}});
+        conf.insert(QStringLiteral("PARAMS"), params);
+        writeShaderItem(QDir(source.path()).filePath(QStringLiteral("Filter/3_Grain")), 2101, 3,
+                        QStringLiteral("Grain"), QString(), kFilterFrag, conf, false);
+        const ShaderCheck reject = [](const QString &, QString *error) {
+            *error = QStringLiteral("ERROR: 0:9: no matching overload");
+            return false;
+        };
+        const ImportReport report = importFilmoraFolder(source.path(), out.path(), reject);
+        QCOMPARE(report.skipped(), 1);
+        const QString reason = report.items.at(0).skipReason;
+        QVERIFY(reason.contains(QLatin1String("no matching overload")));
+        QVERIFY(reason.contains(QLatin1String("note:")));
+        QVERIFY(reason.contains(QLatin1String("grainMap")));
     }
 };
 
