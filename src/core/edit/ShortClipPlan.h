@@ -12,11 +12,13 @@
 #include "core/base/Time.h"
 
 #include <QList>
+#include <QPair>
 #include <QString>
 #include <QStringList>
 #include <QVector>
 
 namespace drift {
+struct Clip;
 struct Transcript;
 }
 
@@ -122,5 +124,9 @@ struct Segment
 // keyword, an exclamation) and how close it is to the target, less a little for opening on "and",
 // "but" or "so" or ending without a full stop.
 QList<Segment> planShorts(const QList<Unit> &units, const Signals &input, const Options &options);
+
+// Timeline seconds (first = earlier edge) that the source-time range [sourceStart, sourceEnd] plays
+// over in `clip`, through its speed, speed curve and direction. The preview of a highlight plays this.
+QPair<double, double> timelineSpanOfSource(const Clip &clip, double sourceStart, double sourceEnd);
 
 } // namespace drift::shorts

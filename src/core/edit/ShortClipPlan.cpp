@@ -1,6 +1,7 @@
 #include "core/edit/ShortClipPlan.h"
 
 #include "core/project/Transcript.h"
+#include "core/project/clip/Clip.h"
 
 #include <QRegularExpression>
 #include <QSet>
@@ -462,6 +463,15 @@ QList<Segment> planShorts(const QList<Unit> &units, const Signals &input, const 
         out.append(chosen);
     }
     return out;
+}
+
+QPair<double, double> timelineSpanOfSource(const Clip &clip, double sourceStart, double sourceEnd)
+{
+    // The clip's own inverse mapping, so a speed curve and a reversed clip land where they play.
+    const double start = usToSeconds(clip.timelineStart);
+    const double a = start + usToSeconds(clip.sourceUsToClipLocalUs(secondsToUs(sourceStart)));
+    const double b = start + usToSeconds(clip.sourceUsToClipLocalUs(secondsToUs(sourceEnd)));
+    return {std::min(a, b), std::max(a, b)};
 }
 
 } // namespace drift::shorts

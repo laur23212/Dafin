@@ -466,13 +466,11 @@ void ShortClipsController::preview(int index)
     }
     const drift::Clip &clip = m_app->m_project.tracks().at(t).clips.at(c);
     const Segment &s = m_result.segments.at(index);
-    // Source seconds to timeline seconds through the clip's speed and direction.
-    const double speed = clip.effectiveSpeed();
-    const double in = drift::usToSeconds(clip.srcIn);
-    const double out = drift::usToSeconds(clip.srcOut);
+    // Source seconds to timeline seconds through the clip's speed, speed curve and direction.
     const double start = drift::usToSeconds(clip.timelineStart);
-    double a = clip.reverse ? start + (out - s.end) / speed : start + (s.start - in) / speed;
-    double b = clip.reverse ? start + (out - s.start) / speed : start + (s.end - in) / speed;
+    const QPair<double, double> span = drift::shorts::timelineSpanOfSource(clip, s.start, s.end);
+    double a = span.first;
+    double b = span.second;
     a = std::clamp(a, start, drift::usToSeconds(clip.timelineEnd()));
     b = std::clamp(b, start, drift::usToSeconds(clip.timelineEnd()));
     m_previewStartSeconds = a;

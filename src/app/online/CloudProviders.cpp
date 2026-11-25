@@ -279,6 +279,12 @@ Response run(const std::function<QNetworkReply *(QNetworkAccessManager &)> &send
             const int wait = qBound(1, retryAfter.toInt(), 30);
             for (int i = 0; i < wait * 5 && !(cancel && cancel()); ++i)
                 QThread::msleep(200);
+            // Told to stop during the wait: don't send the retry (an upload could be minutes long).
+            if (cancel && cancel()) {
+                if (error)
+                    *error = {QStringLiteral("cancelled"), QStringLiteral("Cancelled")};
+                return out;
+            }
             continue;
         }
         break;
@@ -355,6 +361,16 @@ std::shared_ptr<Transcript> transcriptFromScribe(const QJsonObject &response, co
     t->diarized = !speakerIndex.isEmpty();
     return t;
 }
+
+namespace detail {
+
+int getForTest(const QUrl &url, const CancelFn &cancel, CloudError *error)
+{
+    return run([&](QNetworkAccessManager &nam) { return nam.get(QNetworkRequest(url)); }, 20000, cancel, {}, error)
+        .status;
+}
+
+} // namespace detail
 
 namespace elevenlabs {
 

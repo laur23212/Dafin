@@ -24,6 +24,11 @@ qt_add_executable(tst_aishorts tst_aishorts.cpp)
 target_include_directories(tst_aishorts PRIVATE ../src)
 target_link_libraries(tst_aishorts PRIVATE Qt6::Test driftcore)
 add_test(NAME AiShorts COMMAND tst_aishorts)
+# Dafin: Smart Shorts preview span through a clip's speed, speed curve and direction.
+qt_add_executable(tst_shortspan tst_shortspan.cpp)
+target_include_directories(tst_shortspan PRIVATE ../src)
+target_link_libraries(tst_shortspan PRIVATE Qt6::Test driftcore)
+add_test(NAME ShortSpan COMMAND tst_shortspan)
 qt_add_executable(tst_snapsticky tst_snapsticky.cpp)
 target_include_directories(tst_snapsticky PRIVATE ../src)
 target_link_libraries(tst_snapsticky PRIVATE Qt6::Test driftcore)
@@ -231,6 +236,24 @@ qt_add_executable(tst_downloads
 target_include_directories(tst_downloads PRIVATE ../src)
 target_link_libraries(tst_downloads PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME Downloads COMMAND tst_downloads)
+
+# Dafin: what a job reports when cancel and success race (JobRegistry alone, no GUI, no models).
+qt_add_executable(tst_jobregistry
+    tst_jobregistry.cpp
+    ../src/app/jobs/JobRegistry.cpp
+)
+target_include_directories(tst_jobregistry PRIVATE ../src)
+target_link_libraries(tst_jobregistry PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME JobRegistry COMMAND tst_jobregistry)
+
+# Dafin: a cloud call told to stop while it waits out a rate limit sends no retry (local sockets).
+qt_add_executable(tst_cloudcancel
+    tst_cloudcancel.cpp
+    ../src/app/online/CloudProviders.cpp
+)
+target_include_directories(tst_cloudcancel PRIVATE ../src)
+target_link_libraries(tst_cloudcancel PRIVATE Qt6::Test Qt6::Core Qt6::Network Qt6::Concurrent driftcore)
+add_test(NAME CloudCancel COMMAND tst_cloudcancel)
 
 qt_add_executable(tst_projectbundle tst_projectbundle.cpp)
 target_include_directories(tst_projectbundle PRIVATE ../src)
