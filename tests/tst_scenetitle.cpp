@@ -618,7 +618,12 @@ private slots:
         for (const scene::SceneEntry &e : scene::SceneCatalog::instance().entries())
             if (e.origin == QLatin1String("builtin") && e.category == QLatin1String("Keyboard Shortcuts"))
                 ++shortcuts;
-        QCOMPARE(shortcuts, 22);
+        // 13_A, 13C U1-U3, T01-T18, and the 7 kept variants (13B A1-A4, 13D U1-U3)
+        QCOMPARE(shortcuts, 29);
+        for (const char *name : {"13B_A1_Single_Function_Key", "13B_A2_Two_Mixed_Keys", "13B_A3_Four_Mixed_Keys",
+                                 "13B_A4_Wide_Spacebar", "13D_U1_Universal_Horizontal_Copy_EN",
+                                 "13D_U2_Universal_Vertical_Paste_EN", "13D_U3_Mac_Dual_Names_Force_Quit_EN"})
+            QVERIFY2(scene::loadScene(readJson(scenePath(name))).has_value(), name);
     }
 
     void missingFontIsAnError()

@@ -126,12 +126,31 @@ Two notes from the port:
 - The three width formulas of the proofs (hand-set, ink + 90, semantic) are three skins. They were
   not unified, because that would redraw approved designs.
 
+## The 7 kept variants (13B A1–A4, 13D U1–U3)
+
+Seven more Titles › Keyboard Shortcuts presets, all on the same actor, written by
+`build_shortcut_variants.py` from the approved scenes. They add data only, no design:
+
+| Preset | From | What changes |
+|---|---|---|
+| `13B_A1_Single_Function_Key` … `13B_A4_Wide_Spacebar` | `13_A_Shortcut_Keys` | no `lock`; Stage13B flow (`maxWidth` 1034, `rowPitch` 132, `plusDy` 18) and timing (`keyStep` 0.22, every key leaves at 4.69, "+" at the neighbours' midpoint + 0.04); own eyebrow, title and shortcut. A4 carries a `lock` for the one key `space`, because Stage13B's spacebar is an odd 355 px and the `ink` model rounds widths to even |
+| `13D_U1_…_EN` … `13D_U3_…_EN` | `13C_U1`–`U3` | English eyebrow, title, note and label texts only. Same keys, layout and timing |
+
+Text actors keep the script's sprite position, so each new string's baseline is recomputed from its
+own ink box (`rebase`); without it a string with other diacritics sits 3–6 px off.
+
+Checked against the original scripts, 150 frames each, bit for bit (`test_parity.py --keycaps13b
+<Stage13B source> --keycaps13d <Stage13D source> --symbols …`), and against the MP4s with
+`compare.py` (SSIM ≥ 0.996 per actor; A4 0.975 from the spacebar's glyph edges). Status stays
+`ART_EXPERIMENT_PENDING_CREATOR_VERDICT`, as in the ledgers; the creator has not approved a native export.
+
 ## Tests and commands
 
 ```
 python3 -I tools/scene-ref/test_keycaps.py          # headless, no archive
 python3 -I tools/scene-ref/test_parity.py --keycaps13 <Stage13 source> --keycaps13c <Stage13C source> \
         [--symbols <NotoSansSymbols2-Regular.ttf>]
+python3 -I tools/scene-ref/build_shortcut_variants.py   # the 7 kept variants (13B A1-A4, 13D U1-U3)
 python3 -I tools/scene-ref/build_keycap_scenes.py --receipts <84_EXACT_MEDIA_RECEIPTS.json>
 ```
 

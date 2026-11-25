@@ -244,7 +244,7 @@ class Scenes(unittest.TestCase):
         def has_keycaps(f):
             return any(a.get('type') == 'keycaps' for a in json.loads(f.read_text(encoding='utf-8'))['actors'])
         files = [f for f in sorted(SCENES.glob('13*.scene.json')) + sorted(SCENES.glob('T*.scene.json')) if has_keycaps(f)]
-        self.assertEqual(len(files), 4 + 18)
+        self.assertEqual(len(files), 4 + 18 + 7)  # + the 7 kept variants (13B A1-A4, 13D U1-U3)
         for f in files:
             raw = load_raw(f.name)
             sc = core.load_scene(raw)

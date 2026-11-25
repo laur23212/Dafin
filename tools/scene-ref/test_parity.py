@@ -234,6 +234,60 @@ def check_keycaps13c(src: Path, frames, font_dir: Path, symbols: Path | None):
     return res
 
 
+def _patched_frozen(src: Path, font_dir: Path):
+    frozen = src / 'original_render_stage13_v6_0_4_FROZEN_COPY.py'
+    patched = Path(__import__('tempfile').mkdtemp()) / frozen.name
+    patched.write_text(frozen.read_text(encoding='utf-8').replace(NOTO, str(font_dir)), encoding='utf-8')
+    return patched
+
+
+def check_keycaps13b(src: Path, frames, font_dir: Path):
+    """Smart Keycaps at default values against Stage13B A1-A4 (dynamic-width cases)."""
+    patched = _patched_frozen(src, font_dir)
+    m = patched_module(src / 'render_stage13B_shortcut_flex.py', 'stage13b_original',
+                       {NOTO: str(font_dir), "Path(__file__).resolve().parent/'original_render_stage13_v6_0_4_FROZEN_COPY.py'": f"Path({str(patched)!r})"})
+    res = []
+    for case, asset in (('A1_Single_Function_Key', '13B_A1_Single_Function_Key'),
+                        ('A2_Two_Mixed_Keys', '13B_A2_Two_Mixed_Keys'),
+                        ('A3_Four_Mixed_Keys', '13B_A3_Four_Mixed_Keys'),
+                        ('A4_Wide_Spacebar', '13B_A4_Wide_Spacebar')):
+        job = render.Job(core.load_scene(HERE / 'scenes' / f'{asset}.scene.json'), font_dirs=[font_dir])
+        ref = m.Scene(m.CASES[case])
+        bad = []
+        for i in frames:
+            mx, n = diff(ref.frame(i / 25), job.direct_frame(i))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        res.append({'example': asset, 'frames': len(frames), 'mismatched': bad})
+    return res
+
+
+def check_keycaps13d(src: Path, frames, font_dir: Path, symbols: Path | None):
+    """Smart Keycaps at default values against Stage13D U1/U2/U3 (the English 13C)."""
+    stand_in = symbols is None
+    sym = str(symbols) if symbols else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+    patched = _patched_frozen(src, font_dir)
+    m = patched_module(src / 'render_stage13D_universal_shortcut_english.py', 'stage13d_original',
+                       {SYMBOLS: sym, NOTO: str(font_dir),
+                        "Path(__file__).resolve().parent/'original_render_stage13_v6_0_4_FROZEN_COPY.py'": f"Path({str(patched)!r})"})
+    res = []
+    for case in ('U1_Universal_Horizontal_Copy_EN', 'U2_Universal_Vertical_Paste_EN', 'U3_Mac_Dual_Names_Force_Quit_EN'):
+        asset = '13D_' + case
+        raw = json.loads((HERE / 'scenes' / f'{asset}.scene.json').read_text(encoding='utf-8'))
+        if stand_in:
+            raw['fonts']['symbols'] = {'family': 'DejaVu Sans (stand-in)', 'file': sym}
+        job = render.Job(core.load_scene(raw), font_dirs=[font_dir])
+        ref = m.UniversalScene(case)
+        bad = []
+        for i in frames:
+            mx, n = diff(ref.frame(i / 25), job.direct_frame(i))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        res.append({'example': asset + (' [stand-in symbol font: mechanics only]' if stand_in else ''),
+                    'frames': len(frames), 'mismatched': bad})
+    return res
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--stage15', type=Path)
@@ -244,6 +298,8 @@ def main():
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--keycaps13', type=Path, help='Stage13_PracticalOverlays .../source (render_stage13_practical_overlays.py)')
     ap.add_argument('--keycaps13c', type=Path, help='Stage13C_UniversalShortcut .../source (render_stage13C_universal_shortcut.py + frozen copy)')
+    ap.add_argument('--keycaps13b', type=Path, help='Stage13B_ShortcutFlex .../source (render_stage13B_shortcut_flex.py + frozen copy)')
+    ap.add_argument('--keycaps13d', type=Path, help='Stage13D_UniversalShortcut_English .../source (render_stage13D_universal_shortcut_english.py + frozen copy)')
     ap.add_argument('--font-dir', type=Path, default=HERE.parent.parent / 'scene-fonts')
     ap.add_argument('--symbols', type=Path, help='the proofs\' NotoSansSymbols2-Regular.ttf')
     ap.add_argument('--frames', default='all')
@@ -270,6 +326,10 @@ def main():
         res.append(check_keycaps13(o.keycaps13, frames, o.font_dir))
     if o.keycaps13c:
         res.extend(check_keycaps13c(o.keycaps13c, frames, o.font_dir, o.symbols))
+    if o.keycaps13b:
+        res.extend(check_keycaps13b(o.keycaps13b, frames, o.font_dir))
+    if o.keycaps13d:
+        res.extend(check_keycaps13d(o.keycaps13d, frames, o.font_dir, o.symbols))
     print(json.dumps(res, indent=1))
     return 1 if any(r['mismatched'] for r in res) or not res else 0
 

@@ -1,0 +1,250 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.shortcut.13b-a2-two-mixed-keys",
+ "label": "Two Mixed Keys",
+ "category": "Keyboard Shortcuts",
+ "source": {
+  "asset": "13B_A2_Two_Mixed_Keys",
+  "sha256": "14d53171ec82b6794903e5e98565088955c873147cbcea4bcf689a458189b562",
+  "script": "Dafin_TitleDesign_Part6_Stage13B_ShortcutFlex_Delta_v6.0.5 :: source/render_stage13B_shortcut_flex.py A2_Two_Mixed_Keys",
+  "status": "ART_EXPERIMENT_PENDING_CREATOR_VERDICT"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "WHITE": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SILVER": [
+   184,
+   194,
+   200
+  ],
+  "FAINT": [
+   58,
+   69,
+   74
+  ]
+ },
+ "fonts": {
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "COMANDĂ RAPIDĂ",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Copiază",
+   "label": "Title"
+  },
+  {
+   "id": "shortcut",
+   "type": "text",
+   "default": "Ctrl+C",
+   "label": "Shortcut"
+  }
+ ],
+ "actors": [
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     354.0,
+     369.0
+    ]
+   },
+   "in": {
+    "start": 0.18,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 10
+    }
+   },
+   "out": {
+    "start": 4.65,
+    "dur": 0.25,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 70,
+   "color": "WHITE",
+   "at": {
+    "baseline": [
+     345.0,
+     463.0
+    ]
+   },
+   "in": {
+    "start": 0.3,
+    "dur": 0.48,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 13
+    }
+   },
+   "out": {
+    "start": 4.68,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "rule",
+   "type": "line",
+   "from": [
+    347,
+    513
+   ],
+   "to": [
+    1381,
+    513
+   ],
+   "width": 1,
+   "color": "SOFT",
+   "in": {
+    "start": 0.52,
+    "dur": 0.55,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.93,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "keys",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "windows",
+   "skin": "classic-pc",
+   "labelPolicy": "names",
+   "at": [
+    347,
+    568
+   ],
+   "shortcut": "{shortcut}",
+   "sep": {
+    "size": 43
+   },
+   "timing": {
+    "key": {
+     "start": 0.85,
+     "keyStep": 0.22,
+     "in": {
+      "dur": 0.38,
+      "dy": 18,
+      "snap": "trunc"
+     },
+     "out": {
+      "start": 4.69,
+      "revStep": 0.0,
+      "dur": 0.3
+     }
+    },
+    "sep": {
+     "rel": "mid",
+     "off": 0.04,
+     "in": {
+      "dur": 0.32
+     },
+     "out": {
+      "start": 4.75,
+      "dur": 0.3
+     }
+    }
+   },
+   "flow": {
+    "gap": 32,
+    "plusDx": 16,
+    "plusDy": 18,
+    "maxWidth": 1034,
+    "rowPitch": 132
+   }
+  }
+ ]
+}

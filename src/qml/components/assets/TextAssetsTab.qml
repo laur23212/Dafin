@@ -40,7 +40,15 @@ Item {
         const approved = { "dafin.shortcut.13a-shortcut-keys": 35,                 // before T04 Multiple Modifiers
                            "dafin.shortcut.13c-u3-mac-dual-names-force-quit": 55,  // before T06 Dual Key Names
                            "dafin.shortcut.13c-u1-universal-horizontal-copy": 75,  // before T08 Side by Side
-                           "dafin.shortcut.13c-u2-universal-vertical-paste": 85 }  // before T09 Stacked
+                           "dafin.shortcut.13c-u2-universal-vertical-paste": 85,   // before T09 Stacked
+                           // the 7 kept variants, each beside the layout it varies
+                           "dafin.shortcut.13b-a1-single-function-key": 15,        // after T01 Single Key
+                           "dafin.shortcut.13b-a2-two-mixed-keys": 25,             // after T02 Two-Key Chord
+                           "dafin.shortcut.13b-a4-wide-spacebar": 33,              // after T03 Wide Keys
+                           "dafin.shortcut.13b-a3-four-mixed-keys": 45,            // after T04 Multiple Modifiers
+                           "dafin.shortcut.13d-u3-mac-dual-names-force-quit-en": 56,
+                           "dafin.shortcut.13d-u1-universal-horizontal-copy-en": 76,
+                           "dafin.shortcut.13d-u2-universal-vertical-paste-en": 86 }
         if (approved[id] !== undefined)
             return approved[id]
         const m = /^dafin\.keyboard-shortcuts\.t(\d\d)-/.exec(id)
