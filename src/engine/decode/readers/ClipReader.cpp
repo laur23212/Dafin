@@ -684,6 +684,17 @@ bool ClipReader::lookupCachedFrame(drift::TimeUs sourceUs, QImage &out) const
     return true;
 }
 
+bool ClipReader::lookupCachedFrameExact(drift::TimeUs ptsUs, QImage &out) const
+{
+    for (const CachedFrame &entry : m_videoCache) {
+        if (entry.ptsUs == ptsUs) {
+            out = entry.image;
+            return true;
+        }
+    }
+    return false;
+}
+
 void ClipReader::storeCachedFrame(drift::TimeUs ptsUs, const QImage &image)
 {
     if (image.isNull())
@@ -2091,6 +2102,102 @@ bool ClipReader::readVideoFrameAt(drift::TimeUs sourceUs, QImage &out, int maxWi
         return false;
 
     return decodeVideoFrameAtOnce(sourceUs, out, maxWidth, maxHeight, nullptr);
+}
+
+bool ClipReader::decodeVideoFramePairAtOnce(drift::TimeUs sourceUs, VideoFramePair &out,
+                                            int maxWidth, int maxHeight, bool *hwFailure)
+{
+    if (hwFailure)
+        *hwFailure = false;
+    out = VideoFramePair{};
+    if (!ensureVideoDecoder())
+        return false;
+
+    applyDecodeSize(decodeSizeFor(maxWidth, maxHeight));
+
+    while (m_hasPeek && sourceUs >= m_peekPtsUs)
+        promotePeekToCover();
+
+    // Slow motion asks for many output times inside one source interval, so the common case is
+    // that the cursor already straddles this time and there is nothing to do. Checking first
+    // keeps that case free, and leaves advanceVideoTo — the same call the single-frame path
+    // makes — to handle every other one.
+    if (!coverHolds(sourceUs) && !(m_hasCover && sourceUs == m_coverPtsUs)) {
+        if (!advanceVideoTo(sourceUs, hwFailure))
+            return false;
+    }
+    if (!m_coverFrame || !m_hasCover)
+        return false;
+
+    auto take = [&](const AVFrame *frame, drift::TimeUs ptsUs, QImage &dst,
+                    bool *tookHwFailure) -> bool {
+        if (!frame)
+            return false;
+        if (lookupCachedFrameExact(ptsUs, dst))
+            return true;
+        QImage converted;
+        if (!convertFrame(frame, converted, m_decodeW, m_decodeH)) {
+            if (m_hwAccelActive
+                && (frame->format == m_hwPixFmt
+                    || isHardwarePixelFormat(static_cast<AVPixelFormat>(frame->format)))) {
+                recordHardwareFailure(QStringLiteral("reading the decoded surface back failed"));
+                if (tookHwFailure)
+                    *tookHwFailure = true;
+                m_videoPositioned = false;
+            }
+            return false;
+        }
+        dst = converted;
+        storeCachedFrame(ptsUs, converted);
+        return true;
+    };
+
+    if (!take(m_coverFrame, m_coverPtsUs, out.a, hwFailure))
+        return false;
+    out.ptsA = m_coverPtsUs;
+    out.hasA = true;
+
+    // A second frame that will not convert is not a failure of the read: the caller repeats the
+    // first, which is what Dafin did before any of this existed. Its hardware trouble is
+    // deliberately not reported upward either — the cover came back, so there is nothing for the
+    // sticky software fallback to rescue, and tearing the decoder down would throw away the
+    // frame we are about to return.
+    if (m_hasPeek && m_peekFrame) {
+        bool peekHwFailure = false;
+        if (take(m_peekFrame, m_peekPtsUs, out.b, &peekHwFailure)) {
+            out.ptsB = m_peekPtsUs;
+            out.hasB = true;
+        } else {
+            out.b = QImage();
+        }
+    }
+    return true;
+}
+
+bool ClipReader::readVideoFramePairAt(drift::TimeUs sourceUs, VideoFramePair &out, int maxWidth,
+                                      int maxHeight)
+{
+#ifdef Q_OS_ANDROID
+    // Same reason as readVideoFrameAt: a MEDIACODEC surface frame is an opaque gralloc handle
+    // with no route back to a QImage, so there is nothing to blend.
+    if (m_mcSurfaceMode) {
+        m_mcSurfaceDisabled = true;
+        teardownVideoDecoder();
+        m_hwAccelDisabled = false;
+    }
+#endif
+
+    bool hwFailure = false;
+    if (decodeVideoFramePairAtOnce(sourceUs, out, maxWidth, maxHeight, &hwFailure))
+        return true;
+
+    if (!hwFailure)
+        return false;
+
+    if (!fallbackFromHardwareDecoder())
+        return false;
+
+    return decodeVideoFramePairAtOnce(sourceUs, out, maxWidth, maxHeight, nullptr);
 }
 
 bool ClipReader::decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,

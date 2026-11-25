@@ -1022,6 +1022,9 @@ add_library(driftengine STATIC
     src/engine/encode/export/SegmentedExport.h
     src/engine/encode/export/SegmentedExport.cpp
     src/engine/decode/readers/PreviewVideoFrame.h
+    src/engine/decode/readers/VideoFramePair.h
+    src/engine/decode/interp/FrameBracket.h
+    src/engine/decode/interp/FrameBracket.cpp
     src/engine/decode/readers/ClipReader.h
     src/engine/decode/readers/ClipReader.cpp
     src/engine/diagnostics/DebugReport.h

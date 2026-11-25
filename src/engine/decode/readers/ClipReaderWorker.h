@@ -49,6 +49,11 @@ public slots:
     void closePath();
     QImage decodeVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth, int maxHeight,
                        int rotationCorrection = 0);
+    // The pair either side of sourceUs, for smooth slow motion. Same reader, same cursor and
+    // same cache as decodeVideo — the frames are already decoded, so this costs a colour
+    // conversion of the second one and nothing else.
+    VideoFramePair decodeVideoPair(quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
+                                   int maxHeight, int rotationCorrection);
     PreviewVideoFrame decodePreviewVideo(quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
                                          int maxHeight, int rotationCorrection = 0,
                                          bool approximate = false,
