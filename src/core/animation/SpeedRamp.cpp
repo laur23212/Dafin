@@ -49,6 +49,26 @@ bool clipAudioFollowsSpeed(const Clip &clip)
     return speed >= kMinCurveSpeed - 1e-9 && speed <= kMaxCurveSpeed + 1e-9;
 }
 
+double clipAudioTempo(const Clip &clip, TimeUs playStartUs, TimeUs blockEndUs)
+{
+    // Take the ramp's average over the block rather than its value at the left edge: differencing
+    // the mapping is the curve's integral, so the audio cannot slowly slide against the picture
+    // over a long ramp. The exception is the final, partly-overhanging block — timelineToSourceUs
+    // clamps at the clip's end, so differencing there would under-report the rate.
+    double tempo = clip.effectiveSpeed();
+    if (clip.hasSpeedCurve()) {
+        // A reversed clip's source position falls as the timeline advances, so the difference is
+        // negative there; the stretcher takes a rate, and ClipAudioBlock::reverse the direction.
+        tempo = blockEndUs <= clip.timelineEnd()
+                    ? std::abs(static_cast<double>(clip.timelineToSourceUs(blockEndUs)
+                                                   - clip.timelineToSourceUs(playStartUs)))
+                          / static_cast<double>(blockEndUs - playStartUs)
+                    : clip.speedCurve.speedAtTimelineOffset(playStartUs - clip.timelineStart,
+                                                            clip.srcOut - clip.srcIn);
+    }
+    return tempo;
+}
+
 bool isFreezeFrameClip(const Clip &clip)
 {
     return !clip.hasSpeedCurve() && clip.speed > 0.0 && clip.speed < kFreezeSpeedCeiling;

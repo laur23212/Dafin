@@ -6,6 +6,7 @@
 #include "app/jobs/vision/SegmentationController.h"
 #include "app/editor/ProjectFileController.h"
 #include "app/editor/PreferencesController.h"
+#include "core/project/AudioLayoutFingerprint.h"
 #include <cmath>
 #include "ui/preview/PreviewController.h"
 
@@ -2292,45 +2293,11 @@ QVariantList AppController::subtitleWaveformPeaks(double startSeconds, double du
     return {};
 }
 
-// Everything the AudioMixer reads, and nothing else — so a transform keyframe edit does not
-// invalidate a beat grid while moving, trimming, retiming or muting the music does.
+// The digest itself is drift::audioLayoutFingerprint (core/project/AudioLayoutFingerprint.h), so
+// a test can pin what does and does not invalidate a beat grid.
 QByteArray AppController::audioLayoutFingerprint() const
 {
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-    for (const drift::Track &track : m_project.tracks()) {
-        if (track.type != drift::TrackType::Audio && track.type != drift::TrackType::Video)
-            continue;
-        hash.addData(track.muted ? "m" : "-");
-        for (const drift::Clip &clip : track.clips) {
-            const QString row = QStringLiteral("%1|%2|%3|%4|%5|%6|%7|%8|%9|%10")
-                                    .arg(clip.assetId)
-                                    .arg(clip.timelineStart)
-                                    .arg(clip.timelineDuration)
-                                    .arg(clip.srcIn)
-                                    .arg(clip.srcOut)
-                                    .arg(clip.speed)
-                                    .arg(clip.reverse ? 1 : 0)
-                                    .arg(clip.suppressEmbeddedAudio ? 1 : 0)
-                                    .arg(clip.audioEffects.size())
-                                    .arg(clip.pan);
-            hash.addData(row.toUtf8());
-            // Tangents shape the volume ramp, so they belong in the digest alongside the values.
-            for (const auto &kv : clip.volume.keyframes().asKeyValueRange()) {
-                hash.addData(QStringLiteral("v%1:%2:%3:%4:%5:%6:%7")
-                                 .arg(kv.first)
-                                 .arg(kv.second.value)
-                                 .arg(kv.second.inDx)
-                                 .arg(kv.second.inDy)
-                                 .arg(kv.second.outDx)
-                                 .arg(kv.second.outDy)
-                                 .arg(kv.second.hold ? 1 : 0)
-                                 .toUtf8());
-            }
-            if (clip.hasSpeedCurve())
-                hash.addData("c");
-        }
-    }
-    return hash.result();
+    return drift::audioLayoutFingerprint(m_project);
 }
 
 void AppController::analyzeBeats(double startSeconds, double durSeconds)

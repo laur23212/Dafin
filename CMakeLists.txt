@@ -767,6 +767,7 @@ add_library(driftcore STATIC
     src/core/effects/Mask.h
     src/core/effects/Mask.cpp
     src/core/tracking/MotionTracker.h
+    src/core/tracking/TrackerTiming.h
     src/core/project/Transition.h
     src/core/project/Transition.cpp
     src/core/text/animation/TextParamSpec.h
@@ -817,6 +818,7 @@ add_library(driftcore STATIC
     src/core/project/Track.h
     src/core/project/Track.cpp
     src/core/project/Project.h
+    src/core/project/AudioLayoutFingerprint.h
     src/core/project/Project.cpp
     src/core/project/RenderSnapshot.h
     src/core/project/RenderSnapshot.cpp

@@ -22,6 +22,12 @@ inline constexpr double kMaxUniformSpeed = 100.0;
 // picture and plays no sound, rather than letting the sound slide away from the picture.
 bool clipAudioFollowsSpeed(const Clip &clip);
 
+// The tempo the audio stretcher has to follow over the timeline span [playStartUs, blockEndUs) of
+// `clip` (blockEndUs > playStartUs): the source time that span covers, divided by its length. Always
+// positive. A reversed clip walks its source backwards, but the stretcher is told that with
+// ClipAudioBlock::reverse; the tempo itself is how fast the source passes, never a direction.
+double clipAudioTempo(const Clip &clip, TimeUs playStartUs, TimeUs blockEndUs);
+
 // A freeze frame is a clip holding one source frame: a 1 µs sliver of source stretched over the
 // held length. Uniform speeds never go this low, so the rate alone tells a freeze frame apart, and
 // a project needs no new field for it (older builds simply play it as the held frame it is).

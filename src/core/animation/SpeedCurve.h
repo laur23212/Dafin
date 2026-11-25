@@ -29,6 +29,8 @@ struct SpeedPoint
     double outDx = 0.0;
     double outDy = 0.0;
     bool corner = false;
+
+    bool operator==(const SpeedPoint &) const = default;
 };
 
 // Variable playback rate across a clip.
@@ -53,6 +55,13 @@ public:
     void clear();
 
     double speedAt(double pos) const;
+
+    // The fastest rate anywhere on the ramp, handles included (it reads the flattened table, so a
+    // tangent that overshoots its points counts). 1 for a curve with no ramp.
+    double peakSpeed() const;
+
+    // Same ramp: the same control points. The sample table is derived from them.
+    bool operator==(const SpeedCurve &other) const { return m_points == other.m_points; }
 
     // Timeline duration this curve stretches `sourceSpanUs` of media into.
     TimeUs retimedDurationUs(TimeUs sourceSpanUs) const;
