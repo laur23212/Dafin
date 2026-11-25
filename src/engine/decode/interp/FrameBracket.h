@@ -1,23 +1,9 @@
 #pragma once
 
+#include "core/animation/FrameInterpolation.h"
 #include "core/base/Time.h"
 
 namespace drift::interp {
-
-// Slow motion asks the timeline for times that fall *between* two frames the file actually
-// holds. Mode says what to show there. Serialized with the project, so these numbers are part
-// of the file format: append, never renumber.
-enum class Mode : int {
-    // The frame at or before the time, held until the next one is due. What Dafin did before
-    // any of this existed, and still the default: it invents nothing.
-    Sampling = 0,
-    // Mix the two frames either side by how far between them the time falls. Cheap, always
-    // available, and wrong in a predictable way — moving edges go double rather than smooth.
-    Blending = 1,
-    // Motion-compensated synthesis. Falls back to Blending wherever the motion cannot be
-    // trusted, which is often, so it is a quality setting and not a different feature.
-    Flow = 2,
-};
 
 // What the sampler did, as opposed to what it was asked to do. A clip set to Flow still
 // reports Blend or Repeat on the frames where flow was declined, and the difference is worth
@@ -143,7 +129,7 @@ constexpr ReadWindow readWindowMirrored(TimeUs srcIn, TimeUs srcOut, TimeUs cove
 
 // Pure: same arguments, same answer, no clock, no cache, no decoder. Which is what makes the
 // preview and the export agree, and what lets this be tested without a video file.
-Decision decide(Mode mode, const Pair &pair, const Query &query);
+Decision decide(FrameInterpMode mode, const Pair &pair, const Query &query);
 
 // Longest gap worth blending across, as a multiple of the pair's own spacing is not knowable
 // here, so this is an absolute default: a third of a second. Past that the two frames are

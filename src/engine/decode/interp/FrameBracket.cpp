@@ -4,7 +4,7 @@
 
 namespace drift::interp {
 
-Decision decide(Mode mode, const Pair &pair, const Query &query)
+Decision decide(FrameInterpMode mode, const Pair &pair, const Query &query)
 {
     Decision out;
 
@@ -39,7 +39,7 @@ Decision decide(Mode mode, const Pair &pair, const Query &query)
         return out;
     }
 
-    if (mode == Mode::Sampling) {
+    if (mode == FrameInterpMode::Sampling) {
         out.reason = Reason::ModeIsSampling;
         return out;
     }
@@ -81,7 +81,7 @@ Decision decide(Mode mode, const Pair &pair, const Query &query)
     // microsecond uniform — each of which drifts away from the real timestamps on exactly the
     // variable-rate and ramped material this feature exists for.
     out.alpha = std::clamp(static_cast<double>(into) / static_cast<double>(span), 0.0, 1.0);
-    out.route = (mode == Mode::Flow) ? Route::Flow : Route::Blend;
+    out.route = (mode == FrameInterpMode::Flow) ? Route::Flow : Route::Blend;
     return out;
 }
 
