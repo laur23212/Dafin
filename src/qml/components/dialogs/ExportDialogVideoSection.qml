@@ -224,6 +224,39 @@ Column {
             }
         }
 
+        // Dafin: opt-in HDR tagging, only for the 10/12-bit software encoders that can carry it.
+        Column {
+            width: parent.width
+            spacing: Theme.spacingSm
+            visible: dialog.videoSupportsHdr
+
+            ThemedLabel {
+                text: qsTr("Colour")
+                size: "sm"
+            }
+
+            ThemedComboBox {
+                id: colorProfileCombo
+                width: parent.width
+                textRole: "label"
+                valueRole: "id"
+                model: [
+                    { id: "sdr", label: qsTr("SDR (Rec.709) — default") },
+                    { id: "hdr10", label: qsTr("HDR10 (PQ, Rec.2020)") },
+                    { id: "hlg", label: qsTr("HLG (Rec.2020)") }
+                ]
+                currentIndex: Math.max(0, indexOfValue(dialog.colorProfile))
+                onActivated: function (index) { dialog.colorProfile = currentValue }
+            }
+
+            ThemedLabel {
+                width: parent.width
+                visible: dialog.colorProfile !== "sdr"
+                wrapMode: Text.WordWrap
+                text: qsTr("The SDR picture is placed in an HDR file at the standard reference white (203 nits), so it plays at the right brightness on HDR screens. It does not add HDR highlights.")
+            }
+        }
+
         Column {
             width: parent.width
             spacing: Theme.spacingMd

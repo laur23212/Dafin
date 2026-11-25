@@ -41,6 +41,9 @@ struct ExportSettings
     int crf = 18;
     int videoBitrateKbps = 12000;
     QString videoPreset = QStringLiteral("medium");
+    // Dafin: "sdr" (BT.709, the default) | "hdr10" (BT.2100 PQ) | "hlg" (BT.2100 HLG). HDR needs a
+    // 10-bit software codec (see HdrExport.h); the SDR export is unchanged.
+    QString colorProfile = QStringLiteral("sdr");
     QString audioCodecId = QStringLiteral("aac");
     int audioBitrateKbps = 192;
     bool audioOnly = false;

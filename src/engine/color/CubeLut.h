@@ -29,7 +29,15 @@ CubeLut identityLut(int n);
 CubeLut resampledLut(const CubeLut &lut, int n = 33);
 // Width n*n, height n. Texel (x = b*n + r, y = g) holds lut(r, g, b), rows top to bottom.
 QByteArray bakeTiledRgba8(const CubeLut &lut);
+// Dafin: the same tiling as half floats (four qfloat16 per texel, GL_RGBA16F / GL_HALF_FLOAT), for a
+// high-precision path. Output values are kept as they are, including below 0 and above 1, which
+// bakeTiledRgba8 clamps. The SDR GPU path still uses bakeTiledRgba8.
+QByteArray bakeTiledRgba16F(const CubeLut &lut);
+// True when any lattice output lies outside [0, 1], i.e. the 8-bit bake would clip it.
+bool lutHasOutOfRangeValues(const CubeLut &lut);
 QRgb applyLut(const CubeLut &lut, QRgb px, float amount);
+// Dafin: float version of applyLut with no clamping of the result (input is clamped to the domain).
+void applyLutF(const CubeLut &lut, const float in[3], float amount, float out[3]);
 
 using LutResolver = std::function<QString(const QString &lookId)>;
 void setLutResolver(LutResolver resolver);

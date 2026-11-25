@@ -410,6 +410,7 @@ QVariantMap AppController::exportDefaultSettings() const
         {QStringLiteral("crf"), s.crf},
         {QStringLiteral("videoBitrateKbps"), s.videoBitrateKbps},
         {QStringLiteral("videoPreset"), s.videoPreset},
+        {QStringLiteral("colorProfile"), s.colorProfile},
         {QStringLiteral("audioCodecId"), s.audioCodecId},
         {QStringLiteral("audioBitrateKbps"), s.audioBitrateKbps},
         {QStringLiteral("audioOnly"), s.audioOnly},
@@ -453,6 +454,7 @@ QVariantMap AppController::lastExportSettings() const
     takeInt(QStringLiteral("crf"));
     takeInt(QStringLiteral("videoBitrateKbps"));
     takeString(QStringLiteral("videoPreset"));
+    takeString(QStringLiteral("colorProfile"));
     takeString(QStringLiteral("audioCodecId"));
     takeInt(QStringLiteral("audioBitrateKbps"));
     takeBool(QStringLiteral("audioOnly"));
@@ -493,6 +495,7 @@ void AppController::rememberExportChoice(const QString &outputPath, const QVaria
     put(QStringLiteral("crf"));
     put(QStringLiteral("videoBitrateKbps"));
     put(QStringLiteral("videoPreset"));
+    put(QStringLiteral("colorProfile"));
     put(QStringLiteral("audioCodecId"));
     put(QStringLiteral("audioBitrateKbps"));
     put(QStringLiteral("audioOnly"));

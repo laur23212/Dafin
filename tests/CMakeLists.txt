@@ -77,6 +77,12 @@ target_include_directories(tst_colorwheel PRIVATE ../src)
 target_link_libraries(tst_colorwheel PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME ColorWheel COMMAND tst_colorwheel)
 
+# Dafin: HDR10/HLG export maths, converter, half-float LUT bake and real encoded files.
+qt_add_executable(tst_hdrexport tst_hdrexport.cpp)
+target_include_directories(tst_hdrexport PRIVATE ../src)
+target_link_libraries(tst_hdrexport PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine)
+add_test(NAME HdrExport COMMAND tst_hdrexport)
+
 qt_add_executable(tst_pdfsource tst_pdfsource.cpp)
 target_include_directories(tst_pdfsource PRIVATE ../src)
 target_link_libraries(tst_pdfsource PRIVATE Qt6::Test driftcore)

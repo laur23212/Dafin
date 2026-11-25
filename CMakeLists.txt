@@ -1015,6 +1015,8 @@ add_library(driftengine STATIC
     src/engine/ml/vision/detection/ObjectDetector.cpp
     src/engine/encode/export/Exporter.h
     src/engine/encode/export/Exporter.cpp
+    src/engine/encode/export/HdrExport.h
+    src/engine/encode/export/HdrExport.cpp
     src/engine/encode/export/HwEncodeFallback.h
     src/engine/encode/export/HwEncodeFallback.cpp
     src/engine/encode/export/EncoderProbe.h
@@ -1079,6 +1081,8 @@ add_library(driftengine STATIC
     src/engine/gpu/effects/LookupTextures.cpp
     src/engine/color/CubeLut.h
     src/engine/color/CubeLut.cpp
+    src/engine/color/HdrColor.h
+    src/engine/color/HdrColor.cpp
     src/engine/color/ScopeAnalysis.h
     src/engine/color/ScopeAnalysis.cpp
     src/engine/compositor/FrameCompositor.h

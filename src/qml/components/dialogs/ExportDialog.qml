@@ -34,6 +34,8 @@ ThemedDialog {
     property string rateControl: "crf"
     property int crf: 18
     property string videoPreset: "medium"
+    // Dafin: "sdr" | "hdr10" | "hlg"; only sent for codecs with supportsHdr.
+    property string colorProfile: "sdr"
     property string audioCodecId: "aac"
     property int audioBitrateKbps: 192
     property bool advancedOpen: false
@@ -120,6 +122,7 @@ ThemedDialog {
 
     readonly property bool videoLossless: !!(currentVideoCodec && currentVideoCodec.lossless)
     readonly property bool videoHasAlpha: !!(currentVideoCodec && currentVideoCodec.hasAlpha)
+    readonly property bool videoSupportsHdr: !!(currentVideoCodec && currentVideoCodec.supportsHdr)
     readonly property bool videoSupportsCrf: !!(currentVideoCodec && currentVideoCodec.supportsCrf)
     readonly property bool videoSupportsBitrate: !!(currentVideoCodec && currentVideoCodec.supportsBitrate)
     readonly property bool videoSupportsPreset: !!(currentVideoCodec && currentVideoCodec.supportsPreset)
@@ -274,6 +277,7 @@ ThemedDialog {
             crf = Math.max(1, crf)
         videoBitrateKbps = src.videoBitrateKbps || defaults.videoBitrateKbps || 12000
         videoPreset = src.videoPreset || defaults.videoPreset || "medium"
+        colorProfile = src.colorProfile || "sdr"
         audioBitrateKbps = src.audioBitrateKbps || defaults.audioBitrateKbps || 192
 
         // Older builds saved x264 CRF 0 with a prohibitively slow preset.
@@ -386,6 +390,7 @@ ThemedDialog {
             "crf": crf,
             "videoBitrateKbps": videoBitrateKbps,
             "videoPreset": videoPreset,
+            "colorProfile": videoSupportsHdr && !isAudioOnly && !isGifExport ? colorProfile : "sdr",
             "audioCodecId": audioCodecId,
             "audioBitrateKbps": audioBitrateKbps,
             "audioOnly": isAudioOnly,
