@@ -238,6 +238,10 @@ private slots:
 
     // Scene Title preparation: Skia text edges over coloured backgrounds.
     void skiaEdgesOverColouredBackgroundsHaveNoHalo();
+
+    // Stage 36: a semi-transparent background colour is cleared premultiplied.
+    void semiTransparentBackgroundIsPremultiplied_data();
+    void semiTransparentBackgroundIsPremultiplied();
 };
 
 void AlphaCompositeTest::initTestCase()
@@ -540,6 +544,56 @@ void AlphaCompositeTest::skiaEdgesOverColouredBackgroundsHaveNoHalo()
         }
     }
 #endif
+}
+
+void AlphaCompositeTest::semiTransparentBackgroundIsPremultiplied_data()
+{
+    QTest::addColumn<double>("alpha");
+    for (const double a : {0.0, 0.3, 0.5, 1.0})
+        QTest::addRow("alpha%.2f", a) << a;
+}
+
+// fillBackground cleared the premultiplied canvas with the straight colour, so (0.8, 0.2, 0.1, 0.3)
+// stored red 204 under alpha 77: not a valid premultiplied pixel, read back as saturated red. The
+// preview (premultiplied readback) and export (straight) must both carry the colour as set.
+void AlphaCompositeTest::semiTransparentBackgroundIsPremultiplied()
+{
+    NEED_GL();
+    QFETCH(double, alpha);
+    const Rgba colour{0.8, 0.2, 0.1, alpha};
+
+    GpuScene scene;
+    scene.canvasSize = kCanvas;
+    scene.backgroundColor = QColor::fromRgbF(float(colour.r), float(colour.g), float(colour.b),
+                                             float(colour.a));
+
+    const QImage exported = renderScene(scene);
+    QVERIFY(!exported.isNull());
+    QString why;
+    QVERIFY2(close(exported.pixelColor(32, 32), colour, 2, &why), qPrintable(QStringLiteral("export: ") + why));
+
+    const GpuFrameTexture preview = GpuCompositor::renderToTexture(scene);
+    QVERIFY(preview.isValid());
+    if (preview.image.isNull())
+        QSKIP("the preview shares its texture with the GUI context; no readback to compare");
+
+    // The preview hands the scene graph premultiplied pixels: no channel may exceed alpha.
+    const QImage premul = preview.image.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+    const QRgb p = premul.pixel(32, 32);
+    QVERIFY2(qRed(p) <= qAlpha(p) && qGreen(p) <= qAlpha(p) && qBlue(p) <= qAlpha(p),
+             qPrintable(QStringLiteral("preview premultiplied %1,%2,%3 over alpha %4")
+                            .arg(qRed(p)).arg(qGreen(p)).arg(qBlue(p)).arg(qAlpha(p))));
+
+    // And it is the same frame as the export.
+    const QColor fromPreview = preview.image.convertToFormat(QImage::Format_RGBA8888).pixelColor(32, 32);
+    const QColor fromExport = exported.pixelColor(32, 32);
+    QVERIFY2(qAbs(fromPreview.alpha() - fromExport.alpha()) <= 1
+                 && (fromExport.alpha() < 24
+                     || (qAbs(fromPreview.red() - fromExport.red()) <= 1
+                         && qAbs(fromPreview.green() - fromExport.green()) <= 1
+                         && qAbs(fromPreview.blue() - fromExport.blue()) <= 1)),
+             qPrintable(QStringLiteral("preview %1, export %2")
+                            .arg(fromPreview.name(QColor::HexArgb), fromExport.name(QColor::HexArgb))));
 }
 
 QTEST_MAIN(AlphaCompositeTest)
