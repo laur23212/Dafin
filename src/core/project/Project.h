@@ -182,7 +182,27 @@ public:
     void setModifiedAt(const QDateTime &modifiedAt) { m_modifiedAt = modifiedAt; }
 
     int fps() const { return m_fps; }
-    void setFps(int fps) { m_fps = qMax(1, fps); }
+    void setFps(int fps)
+    {
+        m_fps = qMax(1, fps);
+        dropExactFrameRateIfStale();
+    }
+    // Dafin (C20): the exact rational rate beside the whole-number fps, for a project that came in
+    // at 29.97 and the like. The editing grid stays on whole frames (fps()); only the rate frames
+    // are exported at ("Same as project") follows this. Kept only while it still rounds to fps().
+    void setExactFrameRate(int num, int den)
+    {
+        m_fpsNum = num;
+        m_fpsDen = den;
+        dropExactFrameRateIfStale();
+    }
+    bool hasExactFrameRate() const { return m_fpsNum > 0 && m_fpsDen > 1; }
+    // The rate frames are exported at when the export dialog says "same as project".
+    void frameRate(int *num, int *den) const
+    {
+        *num = hasExactFrameRate() ? m_fpsNum : m_fps;
+        *den = hasExactFrameRate() ? m_fpsDen : 1;
+    }
 
     int width() const { return m_width; }
     int height() const { return m_height; }
@@ -353,6 +373,17 @@ public:
     QString contentHash() const;
 
 private:
+    void dropExactFrameRateIfStale()
+    {
+        if (m_fpsNum > 0 && m_fpsDen > 1) {
+            const double rate = double(m_fpsNum) / double(m_fpsDen);
+            if (static_cast<int>(rate + 0.5) == m_fps)
+                return;
+        }
+        m_fpsNum = 0;
+        m_fpsDen = 0;
+    }
+
     QString m_name = QStringLiteral("Untitled Project");
     QString m_id;
     QString m_author;
@@ -362,6 +393,8 @@ private:
     QDateTime m_createdAt;
     QDateTime m_modifiedAt;
     int m_fps = 30;
+    int m_fpsNum = 0; // exact rate as num/den when fps is its rounding (29.97 -> 30000/1001); 0 = none
+    int m_fpsDen = 0;
     int m_width = 1920;
     int m_height = 1080;
     int m_sampleRate = 48000;

@@ -807,6 +807,8 @@ add_library(driftcore STATIC
     src/core/scene/SceneTitle.cpp
     src/core/scene/SceneCatalog.h
     src/core/scene/SceneCatalog.cpp
+    src/core/base/ConfinedPath.h
+    src/core/base/ConfinedPath.cpp
     src/core/base/ZipArchive.h
     src/core/base/ZipArchive.cpp
     src/core/project/sources/DotLottie.h
@@ -821,6 +823,11 @@ add_library(driftcore STATIC
     src/core/project/ProjectWorkspaces.cpp
     src/core/interchange/ImportedTimeline.h
     src/core/interchange/CompatibilityReport.h
+    src/core/interchange/CancelToken.h
+    src/core/interchange/MediaRelink.h
+    src/core/interchange/MediaRelink.cpp
+    src/core/interchange/ImportPipeline.h
+    src/core/interchange/ImportPipeline.cpp
     src/core/interchange/ImportedTimelineProject.h
     src/core/interchange/ImportedTimelineProject.cpp
     src/core/interchange/premiere/PremiereProjectParser.h
@@ -3040,6 +3047,7 @@ qt_add_qml_module(drift
         src/qml/components/shell/CircularProgress.qml
         src/qml/components/dialogs/RecoveryDialog.qml
         src/qml/components/dialogs/BackupOfferDialog.qml
+        src/qml/components/dialogs/ImportRelinkDialog.qml
         src/qml/components/dialogs/MissingMediaDialog.qml
         src/qml/components/dialogs/ResumeExportDialog.qml
         src/qml/components/dialogs/UnsavedChangesDialog.qml

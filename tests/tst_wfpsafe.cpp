@@ -401,7 +401,9 @@ private slots:
         QVERIFY(summary(*t, built, QStringLiteral("Filmora")).contains(QStringLiteral("effects attached")));
     }
 
-    void fractionalFrameRateIsReportedAsRoundedTo30()
+    // C20 / D-013: 30000/1001 is no longer rounded away. The project keeps the exact rate for export
+    // and says so; the editing grid stays at the whole 30 fps, and the report names both.
+    void fractionalFrameRateIsKeptForExportOnAWholeEditingGrid()
     {
         QString error;
         const auto t = filmora::parse(writeFixture(QStringLiteral("fractional_2997fps.wfp")), &error);
@@ -409,17 +411,24 @@ private slots:
         QCOMPARE(t->fpsNum, 30000);
         QCOMPARE(t->fpsDen, 1001);
         QVERIFY(qAbs(t->fps - 30000.0 / 1001.0) < 1e-9);
-        QVERIFY(t->report.hasLoss());
+        QCOMPARE(t->keptFpsNum, 30000);
+        QCOMPARE(t->keptFpsDen, 1001);
+        QVERIFY(!t->report.hasLoss());
         const CompatEntry e = t->report.entries.first();
         QCOMPARE(e.construct, QStringLiteral("frame_rate"));
-        QCOMPARE(e.status, CompatStatus::Approximated);
+        QCOMPARE(e.status, CompatStatus::Preserved);
         QVERIFY(e.reason.contains(QStringLiteral("30000/1001")));
         QVERIFY(e.applied.contains(QStringLiteral("30 fps")));
         // what the project builder actually does matches what was reported
         const ProjectBuildResult built = toProject(*t, QStringLiteral("x.wfp"));
         QCOMPARE(built.project.fps(), 30);
         QCOMPARE(projectFpsFor(t->fps), 30);
-        QVERIFY(summary(*t, built, QStringLiteral("Filmora")).contains(QStringLiteral("30 fps")));
+        int num = 0;
+        int den = 0;
+        built.project.frameRate(&num, &den);
+        QCOMPARE(num, 30000);
+        QCOMPARE(den, 1001);
+        QVERIFY(summary(*t, built, QStringLiteral("Filmora")).contains(QStringLiteral("30000/1001")));
     }
 
     void rampAndAttachedEffectAreReportedSeparately()
