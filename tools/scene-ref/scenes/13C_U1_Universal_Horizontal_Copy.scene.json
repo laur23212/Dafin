@@ -1,0 +1,460 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.shortcut.13c-u1-universal-horizontal-copy",
+ "label": "Universal Shortcut, side by side",
+ "category": "Keyboard Shortcuts",
+ "source": {
+  "asset": "13C_U1_Universal_Horizontal_Copy",
+  "sha256": "6cb72764387933183f056e667a10cb248f7bfc05ec658b46474433187cf385ff",
+  "script": "Dafin_TitleDesign_Part6_Stage13C_UniversalShortcut_Delta_v6.0.6 :: source/render_stage13C_universal_shortcut.py UniversalScene",
+  "status": "ART_APPROVED_BY_CREATOR_STAGE13C_NOT_DAFIN_NATIVE"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "WHITE": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SILVER": [
+   184,
+   194,
+   200
+  ],
+  "FAINT": [
+   58,
+   69,
+   74
+  ]
+ },
+ "fonts": {
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "symbols": {
+   "family": "Noto Sans Symbols 2",
+   "weight": 400,
+   "file": "NotoSansSymbols2-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "SCURTĂTURĂ UNIVERSALĂ",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Copiază",
+   "label": "Title"
+  },
+  {
+   "id": "shortcutWindows",
+   "type": "text",
+   "default": "Ctrl+C",
+   "label": "Windows / Linux shortcut"
+  },
+  {
+   "id": "shortcutMac",
+   "type": "text",
+   "default": "Command+C",
+   "label": "macOS shortcut"
+  }
+ ],
+ "actors": [
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     355.0,
+     286.0
+    ]
+   },
+   "in": {
+    "start": 0.18,
+    "dur": 0.35,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 7
+    }
+   },
+   "out": {
+    "start": 4.79,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 73,
+   "color": "WHITE",
+   "at": {
+    "baseline": [
+     346.0,
+     387.5
+    ]
+   },
+   "in": {
+    "start": 0.32,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 11
+    }
+   },
+   "out": {
+    "start": 4.75,
+    "dur": 0.33,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "rule",
+   "type": "line",
+   "from": [
+    350,
+    474
+   ],
+   "to": [
+    1561,
+    474
+   ],
+   "width": 1,
+   "color": "SOFT",
+   "in": {
+    "start": 0.55,
+    "dur": 0.6,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.9,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "divider",
+   "role": "rule",
+   "type": "line",
+   "from": [
+    948,
+    551
+   ],
+   "to": [
+    948,
+    824
+   ],
+   "width": 1,
+   "color": "FAINT",
+   "in": {
+    "start": 0.7,
+    "dur": 0.5,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.84,
+    "dur": 0.35,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "labelWindows",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "WINDOWS / LINUX",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     359.0,
+     582.5
+    ]
+   },
+   "in": {
+    "start": 0.7,
+    "dur": 0.37,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.73,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "labelMac",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "macOS",
+   "font": "semi",
+   "size": 25,
+   "color": "SILVER",
+   "at": {
+    "baseline": [
+     1030.0,
+     582.5
+    ]
+   },
+   "in": {
+    "start": 0.8799999999999999,
+    "dur": 0.37,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.73,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "keysWindows",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "windows",
+   "skin": "classic-pc",
+   "labelPolicy": "names",
+   "at": [
+    350,
+    638
+   ],
+   "shortcut": "{shortcutWindows}",
+   "flow": {
+    "gap": 32,
+    "plusDx": 16,
+    "plusDy": "center"
+   },
+   "sep": {
+    "size": 41
+   },
+   "timing": {
+    "key": {
+     "start": 0.88,
+     "keyStep": 0.17,
+     "in": {
+      "dur": 0.4,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.72,
+      "dur": 0.3
+     }
+    },
+    "sep": {
+     "rel": "left",
+     "off": 0.17,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.75,
+      "dur": 0.28
+     }
+    }
+   }
+  },
+  {
+   "id": "keysMac",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "macos",
+   "skin": "classic-mac",
+   "labelPolicy": "glyph",
+   "at": [
+    1022,
+    638
+   ],
+   "shortcut": "{shortcutMac}",
+   "flow": {
+    "gap": 32,
+    "plusDx": 16,
+    "plusDy": "center"
+   },
+   "sep": {
+    "size": 41
+   },
+   "timing": {
+    "key": {
+     "start": 1.34,
+     "keyStep": 0.17,
+     "in": {
+      "dur": 0.4,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.72,
+      "dur": 0.3
+     }
+    },
+    "sep": {
+     "rel": "left",
+     "off": 0.17,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.75,
+      "dur": 0.28
+     }
+    }
+   }
+  },
+  {
+   "id": "macName",
+   "role": "note",
+   "type": "text",
+   "text": "Command / Cmd",
+   "font": "regular",
+   "size": 25,
+   "color": "SILVER",
+   "at": {
+    "baseline": [
+     1031.0,
+     802.0
+    ]
+   },
+   "in": {
+    "start": 1.8,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.66,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "note",
+   "role": "note",
+   "type": "text",
+   "text": "O singură acțiune, două sisteme",
+   "font": "regular",
+   "size": 26,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     359.0,
+     933.0
+    ]
+   },
+   "in": {
+    "start": 2.05,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.64,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  }
+ ]
+}

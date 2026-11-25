@@ -1,0 +1,555 @@
+{
+ "format": "dafin.keycap-template-catalog",
+ "version": 1,
+ "note": "The 18 Stage13F templates (v6.1.0 manifest) as data for build_keycap_scenes.py. Visuals are PENDING creator approval.",
+ "templates": [
+  {
+   "id": "T01",
+   "name": "Windows — Single Key",
+   "scope": "windows_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Rename",
+   "footer": "Single key. No + separator.",
+   "tags": [
+    "windows",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T01_Single_key",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "F2",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T02",
+   "name": "Windows — Two Keys",
+   "scope": "windows_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Copy",
+   "footer": "Standard PC keycap styling.",
+   "tags": [
+    "windows",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T02_Two-key_chord",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+C",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T03",
+   "name": "Windows — Wide Keys",
+   "scope": "windows_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Custom Shortcut",
+   "footer": "Spacebar and Shift use semantic widths.",
+   "tags": [
+    "windows",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T03_Semantic_wide_keys",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Shift+Space",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T04",
+   "name": "Windows — Multiple Modifiers",
+   "scope": "windows_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Custom Key Binding",
+   "footer": "Example only — customize for your app.",
+   "tags": [
+    "windows",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T04_Multiple_modifiers",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+Alt+Shift+S",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T05",
+   "name": "macOS — Apple Symbols",
+   "scope": "macos_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Copy",
+   "footer": "Command is distinct from Option.",
+   "tags": [
+    "macos",
+    "macos_only",
+    "16:9"
+   ],
+   "file": "T05_Apple_symbols",
+   "variants": [
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyph",
+     "applicable": true,
+     "shortcut": "Command+C",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T06",
+   "name": "macOS — Dual Key Names",
+   "scope": "macos_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Force Quit",
+   "footer": "Option / Alt and Command / Cmd remain separate.",
+   "tags": [
+    "macos",
+    "macos_only",
+    "16:9"
+   ],
+   "file": "T06_Dual_key_names",
+   "variants": [
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyphPlusNames",
+     "applicable": true,
+     "shortcut": "Option+Command+Esc",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T07",
+   "name": "macOS — PC Keyboard",
+   "scope": "macos_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Custom Keyboard Mapping",
+   "footer": "Manual physical legend overrides; not a guaranteed mapping.",
+   "tags": [
+    "macos",
+    "macos_only",
+    "16:9"
+   ],
+   "file": "T07_PC_keyboard_labels",
+   "variants": [
+    {
+     "platform": "macos",
+     "keyboardProfile": "pc-on-mac-custom",
+     "labelPolicy": "physical",
+     "applicable": true,
+     "shortcut": "Option+Command+S",
+     "instruction": "Example mapping — verify on your keyboard",
+     "legends": {
+      "alt": "Alt",
+      "command": "Win"
+     }
+    }
+   ]
+  },
+  {
+   "id": "T08",
+   "name": "Universal — Side by Side",
+   "scope": "universal",
+   "layout": "horizontal",
+   "aspect": "16:9",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Copy",
+   "footer": "One action, two independently editable shortcuts.",
+   "tags": [
+    "universal",
+    "16:9"
+   ],
+   "file": "T08_Side_by_side",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+C",
+     "instruction": null,
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyph",
+     "applicable": true,
+     "shortcut": "Command+C",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T09",
+   "name": "Universal — Stacked",
+   "scope": "universal",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Paste",
+   "footer": "Stacked layout stays legible in narrow frames.",
+   "tags": [
+    "universal",
+    "16:9"
+   ],
+   "file": "T09_Stacked",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+V",
+     "instruction": null,
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyphPlusNames",
+     "applicable": true,
+     "shortcut": "Command+V",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T10",
+   "name": "Universal — Different Shortcuts",
+   "scope": "universal",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Capture Selected Area",
+   "footer": "Similar user goal; not identical application behavior.",
+   "tags": [
+    "universal",
+    "16:9"
+   ],
+   "file": "T10_Different_bindings",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Win+Shift+S",
+     "instruction": "Open the Windows snipping overlay",
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyph",
+     "applicable": true,
+     "shortcut": "Command+Shift+4",
+     "instruction": "Capture an area of the screen",
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T11",
+   "name": "Sequence — Step by Step",
+   "scope": "windows_only",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Sequential Shortcut",
+   "footer": "First chord, THEN next chord — not simultaneous.",
+   "tags": [
+    "advanced",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T11_Chained_sequence",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+K THEN Ctrl+C",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T12",
+   "name": "Alternatives — Choose One",
+   "scope": "windows_only",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Two Ways to Trigger",
+   "footer": "Two editable example alternatives joined with OR.",
+   "tags": [
+    "advanced",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T12_Alternatives",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+Shift+X OR Alt+X",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T13",
+   "name": "Universal — Different Steps",
+   "scope": "universal",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Open Settings",
+   "footer": "Different contexts: these are NOT equivalent actions.",
+   "tags": [
+    "advanced",
+    "universal",
+    "16:9"
+   ],
+   "file": "T13_Platform-specific_steps",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Win+I",
+     "instruction": "Open Windows Settings",
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyph",
+     "applicable": true,
+     "shortcut": "Command+Comma",
+     "instruction": "Open app settings in many Mac apps",
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T14",
+   "name": "Windows — Platform-Specific",
+   "scope": "universal",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Open Run",
+   "footer": "Unavailable platform is never assigned invented keys.",
+   "tags": [
+    "advanced",
+    "universal",
+    "16:9"
+   ],
+   "file": "T14_Windows-only_action",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Win+R",
+     "instruction": "Windows Run dialog",
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyph",
+     "applicable": false,
+     "shortcut": "",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T15",
+   "name": "Custom — Any Key",
+   "scope": "windows_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Custom Keyboard",
+   "footer": "Unknown labels use measured-width fallback.",
+   "tags": [
+    "advanced",
+    "windows_only",
+    "16:9"
+   ],
+   "file": "T15_Unknown_custom_key",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Fn+custom:Macro 7",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T16",
+   "name": "Universal — Vertical 9:16",
+   "scope": "universal",
+   "layout": "stacked",
+   "aspect": "9:16",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Copy",
+   "footer": "Portrait-safe stacked layout.",
+   "tags": [
+    "universal",
+    "9:16"
+   ],
+   "file": "T16_Vertical_9x16",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+C",
+     "instruction": null,
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyphPlusNames",
+     "applicable": true,
+     "shortcut": "Command+C",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T17",
+   "name": "macOS — Written Key Names",
+   "scope": "macos_only",
+   "layout": "auto",
+   "aspect": "16:9",
+   "eyebrow": "KEYBOARD SHORTCUT",
+   "title": "Paste",
+   "footer": "Uses the word Command rather than its symbol.",
+   "tags": [
+    "macos",
+    "macos_only",
+    "16:9"
+   ],
+   "file": "T17_Names_instead_of_symbols",
+   "variants": [
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Command+V",
+     "instruction": null,
+     "legends": {}
+    }
+   ]
+  },
+  {
+   "id": "T18",
+   "name": "Universal — Custom Sequences",
+   "scope": "universal",
+   "layout": "stacked",
+   "aspect": "16:9",
+   "eyebrow": "UNIVERSAL SHORTCUT",
+   "title": "Application Shortcut",
+   "footer": "Illustrative only; no automatic app mapping asserted.",
+   "tags": [
+    "advanced",
+    "universal",
+    "16:9"
+   ],
+   "file": "T18_Independent_custom_sequences",
+   "variants": [
+    {
+     "platform": "windows",
+     "keyboardProfile": "pc-generic",
+     "labelPolicy": "names",
+     "applicable": true,
+     "shortcut": "Ctrl+Alt+K",
+     "instruction": "Configure the Windows shortcut in the app",
+     "legends": {}
+    },
+    {
+     "platform": "macos",
+     "keyboardProfile": "apple-ansi-example",
+     "labelPolicy": "glyphPlusNames",
+     "applicable": true,
+     "shortcut": "Option+Command+Shift+K",
+     "instruction": "Configure the macOS shortcut independently",
+     "legends": {}
+    }
+   ]
+  }
+ ]
+}

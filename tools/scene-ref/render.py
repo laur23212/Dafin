@@ -43,7 +43,7 @@ SS = 2  # sprite2x supersampling factor
 # name in title-fonts/ can be a different cut (NotoSerif-Regular.ttf is). A "sha256" in the
 # scene's font entry picks the exact file.
 FONT_DIRS = [Path('/usr/share/fonts'), Path('/usr/local/share/fonts'), Path.home() / '.fonts',
-             Path.home() / '.local/share/fonts', REPO / 'title-fonts']
+             Path.home() / '.local/share/fonts', REPO / 'title-fonts', REPO / 'scene-fonts']
 
 
 @lru_cache(maxsize=None)
@@ -165,10 +165,17 @@ class Sprite2x:
         self.cache = {}
         r = sc.raw.get('render', {})
         self.mix_color = core.parse_color(r.get('mixColor', [9, 12, 17]), sc.palette)
+        if sc.keycap_blocks:
+            import keycaps
+            keycaps.layout(sc, self.ink)
 
     # -- text ---------------------------------------------------------------------------------
-    def font(self, key, size):
-        return _truetype(font_path(self.sc, key, self.font_dirs), int(size) * SS, False)
+    def font(self, key, size, ss=SS):
+        return _truetype(font_path(self.sc, key, self.font_dirs), int(size) * ss, False)
+
+    def ink(self, font_key, px, text):
+        """Ink box of `text` at exactly `px` pixels, relative to the baseline origin (PIL getbbox, anchor ls)."""
+        return _truetype(font_path(self.sc, font_key, self.font_dirs), int(px), False).getbbox(text, anchor='ls')
 
     def text_sprite(self, a):
         key = ('text', a['text'], a['font'], a['size'], tuple(self.color(a)))
@@ -239,9 +246,9 @@ class Sprite2x:
             raise SceneError(f'{a["id"]}: {t} cannot be drawn inside a flattened group')
 
     def group_sprite(self, g, children):
-        key = ('group', g['id'], json.dumps([{k: v for k, v in c.items() if not k.startswith('_')} for c in children], sort_keys=True, default=str))
+        key = ('group', g['id'], g.get('ss', SS), tuple(g['size']), json.dumps([{k: v for k, v in c.items() if not k.startswith('_')} for c in children], sort_keys=True, default=str))
         if key not in self.cache:
-            f = SS
+            f = int(g.get('ss', SS))
             gw, gh = g['size']
             im = Image.new('RGBA', (gw * f, gh * f))
             d = ImageDraw.Draw(im)
@@ -249,7 +256,7 @@ class Sprite2x:
                 if 'in' in c or 'out' in c:
                     raise SceneError(f'{c["id"]}: children of a flattened group cannot animate on their own')
                 if c['type'] == 'text':
-                    fo = self.font(c['font'], c['size'])
+                    fo = self.font(c['font'], c['size'], f)
                     al = c.get('align', {})
                     if al.get('h') == 'center' and al.get('v') == 'center':
                         bb = d.textbbox((0, 0), c['text'], font=fo)
@@ -258,7 +265,7 @@ class Sprite2x:
                         d.text((tx, ty), c['text'], font=fo, fill=_rgba(self.color(c)))
                     else:
                         bx, by = c['at']['baseline']
-                        d.text((bx * f, by * f), c['text'], font=fo, fill=_rgba(self.color(c)), anchor='ls')
+                        d.text((round(bx * f, 6), round(by * f, 6)), c['text'], font=fo, fill=_rgba(self.color(c)), anchor='ls')
                 elif c['type'] == 'line':
                     (ax, ay), (bx, by) = c['from'], c['to']
                     self._pil_shape(d, c, (ax * f, ay * f, bx * f, by * f), f)
@@ -292,6 +299,8 @@ class Sprite2x:
         acts = self.sc.actors
         by_id = {a['id']: a for a in acts}
         for a in acts:
+            if a.get('_hidden'):
+                continue
             ch = core.channels(a, t)
             p = a.get('_parent')
             skip = False
@@ -331,7 +340,10 @@ class Sprite2x:
     def _draw(self, a, ch, canvas, acc):
         if ch['scale'] != 1:
             raise SceneError(f'{a["id"]}: scale is not implemented in the sprite2x profile yet')
-        dx, dy = self._snap(ch['dx']), self._snap(ch['dy'])
+        if a.get('snap') == 'trunc':
+            dx, dy = int(ch['dx']), int(ch['dy'])
+        else:
+            dx, dy = self._snap(ch['dx']), self._snap(ch['dy'])
         t = a['type']
         if t in ('text', 'rect', 'roundRect', 'ellipse', 'ring', 'group'):
             if t == 'text':
