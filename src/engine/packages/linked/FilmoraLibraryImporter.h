@@ -73,13 +73,21 @@ struct ShaderTranslation
 {
     bool ok = false;
     QString source; // the whole Dafin fragment shader
-    QString error;  // why not, in plain words
+    QString error;  // why not, in plain words: every problem found, not only the first
+    // Stable machine-readable reasons behind `error`, one per problem, in the order they are
+    // named there: "no-function", "bad-param-name", "renderer-values", "extra-inputs",
+    // "own-samplers". Empty when ok.
+    QStringList codes;
+    // Things that did not stop the conversion but may explain a wrong or failing result later
+    // (a parameter type Dafin reads as a plain number, GLSL that #version 330 core rejects).
+    QStringList notes;
 };
 
 // A Filmora GPU shader (the .frag file as stored, base64 when the conf says ENCRYPT, and its
 // .conf) as a Dafin package shader: FUNCNAME/INPUT/PREFIX(...) mapped onto Dafin's uniforms and
-// samplers, one uniform per parameter. Fails, with the reason, on anything that needs Filmora's
-// own render passes (an unknown PREFIX name, extra INPUTn textures).
+// samplers, one uniform per parameter. Refuses, naming every cause, anything Dafin can't supply
+// faithfully: an unknown PREFIX name, extra INPUTn textures, textures the shader declares itself.
+// It never guesses: an unsupported shader is left out rather than drawn wrongly.
 ShaderTranslation translateFilmoraShader(const QByteArray &fragFile, const QJsonObject &conf,
                                          bool transition);
 
