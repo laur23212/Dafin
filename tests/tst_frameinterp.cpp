@@ -1,5 +1,7 @@
 #include <QtTest>
 
+#include "engine/decode/interp/FlowEstimator.h"
+#include "engine/decode/interp/FlowSynth.h"
 #include "engine/decode/interp/FrameBlend.h"
 #include "engine/decode/interp/FrameBracket.h"
 
@@ -31,6 +33,13 @@ private slots:
     void blendKeepsHiddenColourOutOfEdges();
     void blendIsOrderIndependentAndRepeatable();
 
+    void flowDeclinesRatherThanGuessOnAFeaturelessWall();
+    void flowBeatsBlendOnACleanTranslation();
+    void flowIsExactAtBothEnds();
+    void flowIsSymmetricUnderSwappingTheFrames();
+    void flowNeverPunchesAHoleInThePicture();
+    void confidenceAndVisibilityAreSeparateSignals();
+
     void theModeSurvivesAProjectFileRoundTrip();
 };
 
@@ -47,6 +56,99 @@ Query plainQuery(TimeUs readUs)
     Query q;
     q.readUs = readUs;
     return q;
+}
+
+
+// A deterministic textured field, smooth enough that a gradient-based solver has something to
+// lock onto and irregular enough that it is not a repeating pattern -- a repeating one is
+// genuinely ambiguous and a solver that claimed otherwise would be the thing at fault.
+double valueNoise(double x, double y)
+{
+    const auto hash = [](int i, int j) {
+        quint32 h = static_cast<quint32>(i) * 374761393u + static_cast<quint32>(j) * 668265263u;
+        h = (h ^ (h >> 13)) * 1274126177u;
+        return static_cast<double>((h ^ (h >> 16)) & 0xffffu) / 65535.0;
+    };
+    const auto octave = [&](double scale) {
+        const double sx = x / scale;
+        const double sy = y / scale;
+        const int x0 = static_cast<int>(std::floor(sx));
+        const int y0 = static_cast<int>(std::floor(sy));
+        const double fx = sx - x0;
+        const double fy = sy - y0;
+        const double ex = fx * fx * (3.0 - 2.0 * fx);
+        const double ey = fy * fy * (3.0 - 2.0 * fy);
+        const double v00 = hash(x0, y0);
+        const double v10 = hash(x0 + 1, y0);
+        const double v01 = hash(x0, y0 + 1);
+        const double v11 = hash(x0 + 1, y0 + 1);
+        return (1 - ey) * ((1 - ex) * v00 + ex * v10) + ey * ((1 - ex) * v01 + ex * v11);
+    };
+    return 0.6 * octave(9.0) + 0.3 * octave(4.0) + 0.1 * octave(21.0);
+}
+
+// A window onto that field, offset by whole pixels. Whole pixels on purpose: the shifted frames
+// are then exact crops of one image rather than resamplings of each other, so the middle frame
+// really is the right answer and the test is not grading the solver against a blur.
+QImage texturedWindow(int offsetX, int offsetY, int width = 192, int height = 144)
+{
+    QImage image(width, height, QImage::Format_RGBA8888);
+    for (int y = 0; y < height; ++y) {
+        quint8 *row = image.scanLine(y);
+        for (int x = 0; x < width; ++x) {
+            const double n = valueNoise(x + offsetX, y + offsetY);
+            quint8 *p = row + x * 4;
+            p[0] = static_cast<quint8>(std::clamp(int(n * 255.0), 0, 255));
+            p[1] = static_cast<quint8>(std::clamp(int(n * 220.0) + 20, 0, 255));
+            p[2] = static_cast<quint8>(std::clamp(int((1.0 - n) * 200.0) + 30, 0, 255));
+            p[3] = 255;
+        }
+    }
+    return image;
+}
+
+QImage flatWall(int width = 192, int height = 144, int level = 130)
+{
+    QImage image(width, height, QImage::Format_RGBA8888);
+    image.fill(QColor(level, level, level, 255));
+    return image;
+}
+
+double psnrAgainst(const QImage &candidate, const QImage &truth)
+{
+    const QImage c = candidate.convertToFormat(QImage::Format_RGBA8888);
+    const QImage t = truth.convertToFormat(QImage::Format_RGBA8888);
+    double squared = 0.0;
+    qint64 count = 0;
+    for (int y = 0; y < t.height(); ++y) {
+        const quint8 *rc = c.constScanLine(y);
+        const quint8 *rt = t.constScanLine(y);
+        for (int x = 0; x < t.width(); ++x) {
+            for (int ch = 0; ch < 3; ++ch) {
+                const double d = double(rc[x * 4 + ch]) - double(rt[x * 4 + ch]);
+                squared += d * d;
+                ++count;
+            }
+        }
+    }
+    if (count == 0)
+        return 0.0;
+    const double mse = squared / double(count);
+    return mse <= 0.0 ? 99.0 : 10.0 * std::log10(255.0 * 255.0 / mse);
+}
+
+int maxAbsDifference(const QImage &lhs, const QImage &rhs)
+{
+    const QImage a = lhs.convertToFormat(QImage::Format_RGBA8888);
+    const QImage b = rhs.convertToFormat(QImage::Format_RGBA8888);
+    int worst = 0;
+    for (int y = 0; y < a.height(); ++y) {
+        const quint8 *ra = a.constScanLine(y);
+        const quint8 *rb = b.constScanLine(y);
+        for (int i = 0; i < a.width() * 4; ++i)
+            worst = std::max(worst, std::abs(int(ra[i]) - int(rb[i])));
+    }
+    return worst;
 }
 
 } // namespace
@@ -416,6 +518,156 @@ void FrameInterpTest::theModeSurvivesAProjectFileRoundTrip()
     QCOMPARE(frameInterpModeFromString(QString()), FrameInterpMode::Sampling);
     QCOMPARE(frameInterpModeFromString(QStringLiteral("rife-v9")), FrameInterpMode::Sampling);
     QCOMPARE(frameInterpModeFromString(QStringLiteral("Blending")), FrameInterpMode::Sampling);
+}
+
+
+// Flow is a research path and off by default; these fix the properties that decide whether it
+// may ever be anything else. The headline one is that it has to actually beat the blend.
+
+void FrameInterpTest::flowDeclinesRatherThanGuessOnAFeaturelessWall()
+{
+    const QImage a = flatWall();
+    const QImage b = flatWall();
+
+    FlowSynthStats stats;
+    const FlowPairAnalysis analysis = estimateFlow(a, b, FlowOptions{});
+    const QImage result = synthesizeFlowFrame(a, b, 0.5, analysis, FlowSynthOptions{}, &stats);
+
+    // Null is the instruction to blend, and the blend of two identical frames is one of them.
+    // A solver that returned a confident answer here would be claiming to know which way an
+    // untextured wall moved.
+    QVERIFY(result.isNull());
+    QVERIFY(stats.declined);
+    QVERIFY(stats.meanConfidence < FlowSynthOptions{}.minMeanConfidence);
+}
+
+void FrameInterpTest::flowBeatsBlendOnACleanTranslation()
+{
+    // Four pixels between the two frames, so the frame in the middle is the one two pixels
+    // along -- and it exists, which is what makes this measurable rather than a matter of taste.
+    const QImage a = texturedWindow(0, 0);
+    const QImage truth = texturedWindow(2, 0);
+    const QImage b = texturedWindow(4, 0);
+
+    const QImage blended = blendFrames(a, b, 0.5);
+    QVERIFY(!blended.isNull());
+
+    FlowSynthStats stats;
+    const FlowPairAnalysis analysis = estimateFlow(a, b, FlowOptions{});
+    const QImage flowed = synthesizeFlowFrame(a, b, 0.5, analysis, FlowSynthOptions{}, &stats);
+    QVERIFY(!flowed.isNull());
+    QVERIFY(!stats.declined);
+
+    const double blendPsnr = psnrAgainst(blended, truth);
+    const double flowPsnr = psnrAgainst(flowed, truth);
+
+    // The whole case for this path. If it ever stops being true on a clean translation -- the
+    // easiest thing flow can be asked to do -- then flow has no business being offered at all
+    // and the blend should stay the only option.
+    QVERIFY2(flowPsnr > blendPsnr + 1.0,
+             qPrintable(QStringLiteral("flow %1 dB vs blend %2 dB: flow must win a clean "
+                                       "translation by a clear margin or it is not worth having")
+                            .arg(flowPsnr, 0, 'f', 2)
+                            .arg(blendPsnr, 0, 'f', 2)));
+}
+
+void FrameInterpTest::flowIsExactAtBothEnds()
+{
+    const QImage a = texturedWindow(0, 0);
+    const QImage b = texturedWindow(4, 0);
+    const FlowPairAnalysis analysis = estimateFlow(a, b, FlowOptions{});
+
+    // Byte for byte the frame itself, not a round trip through a warp that happens to be the
+    // identity: switching this on must not alter a frame that lands on a real timestamp.
+    QCOMPARE(synthesizeFlowFrame(a, b, 0.0, analysis, FlowSynthOptions{}), a);
+    QCOMPARE(synthesizeFlowFrame(a, b, 1.0, analysis, FlowSynthOptions{}), b);
+}
+
+void FrameInterpTest::flowIsSymmetricUnderSwappingTheFrames()
+{
+    const QImage a = texturedWindow(0, 0);
+    const QImage b = texturedWindow(4, 0);
+
+    const QImage forward =
+        synthesizeFlowFrame(a, b, 0.25, estimateFlow(a, b, FlowOptions{}), FlowSynthOptions{});
+    const QImage swapped =
+        synthesizeFlowFrame(b, a, 0.75, estimateFlow(b, a, FlowOptions{}), FlowSynthOptions{});
+
+    QVERIFY(!forward.isNull());
+    QVERIFY(!swapped.isNull());
+
+    // Reversing a clip reads the same footage the other way round, so the two have to agree.
+    // Not bit-exact: the two estimates are separate solves on swapped inputs.
+    QVERIFY2(maxAbsDifference(forward, swapped) <= 24,
+             "a frame built between two others must not depend on which way round they came");
+}
+
+void FrameInterpTest::flowNeverPunchesAHoleInThePicture()
+{
+    // A hard-edged bar sweeping over texture: every frame has a band being uncovered, which is
+    // exactly where a warp has nothing to sample and where the temptation is to leave a gap.
+    const auto withBar = [](int barX) {
+        QImage image = texturedWindow(0, 0);
+        for (int y = 0; y < image.height(); ++y) {
+            quint8 *row = image.scanLine(y);
+            for (int x = barX; x < std::min(barX + 30, image.width()); ++x) {
+                quint8 *p = row + x * 4;
+                p[0] = 20;
+                p[1] = 200;
+                p[2] = 60;
+                p[3] = 255;
+            }
+        }
+        return image;
+    };
+
+    const QImage a = withBar(40);
+    const QImage b = withBar(58);
+
+    FlowSynthStats stats;
+    const QImage result =
+        synthesizeFlowFrame(a, b, 0.5, estimateFlow(a, b, FlowOptions{}), FlowSynthOptions{},
+                            &stats);
+    if (result.isNull()) {
+        // Declining is allowed here. Falling over is not.
+        QVERIFY(stats.declined);
+        return;
+    }
+
+    QCOMPARE(result.size(), a.size());
+    const QImage checked = result.convertToFormat(QImage::Format_RGBA8888);
+    for (int y = 0; y < checked.height(); ++y) {
+        const quint8 *row = checked.constScanLine(y);
+        for (int x = 0; x < checked.width(); ++x) {
+            // Both inputs are fully opaque everywhere, so any transparency in the output is a
+            // hole where the solver gave up, and a hole is never the honest answer: something
+            // was photographed there.
+            QCOMPARE(row[x * 4 + 3], quint8(255));
+        }
+    }
+}
+
+void FrameInterpTest::confidenceAndVisibilityAreSeparateSignals()
+{
+    // A flat wall: nothing to solve, so confidence should be low -- and yet every part of it is
+    // plainly visible in both frames, so visibility should not be. Collapsing the two into one
+    // number loses exactly this distinction, which is why they are two maps.
+    const QImage wall = flatWall();
+    const FlowPairAnalysis flat = estimateFlow(wall, wall, FlowOptions{});
+    QVERIFY(flat.isValid());
+
+    double confidenceTotal = 0.0;
+    for (quint8 v : flat.confidenceA.value)
+        confidenceTotal += v;
+    const double meanConfidence = confidenceTotal / (255.0 * flat.confidenceA.value.size());
+
+    int visibleCells = 0;
+    for (quint8 v : flat.visibleFromA.value)
+        visibleCells += (v > 0) ? 1 : 0;
+    const double visibleFraction = double(visibleCells) / flat.visibleFromA.value.size();
+
+    QVERIFY2(meanConfidence < 0.2, "a blank wall gives a solver nothing to be confident about");
+    QVERIFY2(visibleFraction > 0.9, "a blank wall is still entirely visible in both frames");
 }
 
 QTEST_APPLESS_MAIN(FrameInterpTest)

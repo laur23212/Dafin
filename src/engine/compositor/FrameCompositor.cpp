@@ -3,6 +3,8 @@
 #include "engine/audio/analysis/AudioFrameAnalysis.h"
 #include "engine/decode/probe/StillImage.h"
 
+#include "engine/decode/interp/FlowEstimator.h"
+#include "engine/decode/interp/FlowSynth.h"
 #include "engine/decode/interp/FrameBlend.h"
 #include "engine/decode/interp/FrameBracket.h"
 #include "engine/decode/readers/ClipReaderPool.h"
@@ -924,11 +926,23 @@ QImage decodeVideoFrameForRead(const drift::Clip &clip, const drift::VideoRead &
         drift::interp::decide(clip.interpolation,
                               {pair.ptsA, pair.ptsB, pair.hasA, pair.hasB}, query);
 
+    if (decision.route == drift::interp::Route::Flow) {
+        // Flow is offered, so it is tried -- and it is allowed to decline. It declines on a
+        // featureless wall, on motion too large to be a tween of these two frames, and wherever
+        // too much of the frame is being uncovered; on this footage, measured, it also loses to
+        // the blend on heavy occlusion. A decline falls through to the blend below, which is the
+        // working picture and stays the fallback until flow is shown to beat it on real footage
+        // and the rendered motion is approved.
+        const drift::interp::FlowPairAnalysis analysis =
+            drift::interp::estimateFlow(pair.a, pair.b, drift::interp::FlowOptions{});
+        QImage synthesized = drift::interp::synthesizeFlowFrame(
+            pair.a, pair.b, decision.alpha, analysis, drift::interp::FlowSynthOptions{});
+        if (!synthesized.isNull())
+            return synthesized;
+    }
+
     if (decision.route == drift::interp::Route::Blend
         || decision.route == drift::interp::Route::Flow) {
-        // Flow has no estimator behind it yet, so it mixes. Deliberately not silent about that:
-        // the route it reports is Flow and the picture is a blend, which is what tells a
-        // measurement run that flow is not actually in the comparison.
         QImage mixed = drift::interp::blendFrames(pair.a, pair.b, decision.alpha);
         if (!mixed.isNull())
             return mixed;

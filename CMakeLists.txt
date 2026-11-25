@@ -1027,6 +1027,13 @@ add_library(driftengine STATIC
     src/engine/decode/interp/FrameBracket.cpp
     src/engine/decode/interp/FrameBlend.h
     src/engine/decode/interp/FrameBlend.cpp
+    src/engine/decode/interp/LinearLight.h
+    src/engine/decode/interp/LinearLight.cpp
+    src/engine/decode/interp/FlowField.h
+    src/engine/decode/interp/FlowEstimator.h
+    src/engine/decode/interp/FlowEstimator.cpp
+    src/engine/decode/interp/FlowSynth.h
+    src/engine/decode/interp/FlowSynth.cpp
     src/engine/decode/readers/ClipReader.h
     src/engine/decode/readers/ClipReader.cpp
     src/engine/diagnostics/DebugReport.h
