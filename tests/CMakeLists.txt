@@ -12,6 +12,13 @@ target_link_libraries(tst_core PRIVATE Qt6::Test driftcore)
 target_compile_definitions(tst_core PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data")
 add_test(NAME Core COMMAND tst_core)
 
+# Dafin: places that must notice a speed curve (audio tempo of a reversed ramp, beat-cache identity,
+# tracker placement). Pure logic, no GPU, no decoder.
+qt_add_executable(tst_speedcurveidentity tst_speedcurveidentity.cpp)
+target_include_directories(tst_speedcurveidentity PRIVATE ../src)
+target_link_libraries(tst_speedcurveidentity PRIVATE Qt6::Test driftcore)
+add_test(NAME SpeedCurveIdentity COMMAND tst_speedcurveidentity)
+
 # Dafin: planning behind the Beat markers and Auto ducking buttons.
 qt_add_executable(tst_beatduck tst_beatduck.cpp)
 target_include_directories(tst_beatduck PRIVATE ../src)

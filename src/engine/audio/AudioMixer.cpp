@@ -209,20 +209,8 @@ void AudioMixer::readClipAudio(QVector<float> &out, const drift::Clip &clip, qui
     if (!retimer)
         return;
 
-    // Take the ramp's average over the block rather than its value at the left edge: differencing
-    // the mapping is the curve's integral, so the audio cannot slowly slide against the picture
-    // over a long ramp. The exception is the final, partly-overhanging block — timelineToSourceUs
-    // clamps at the clip's end, so differencing there would under-report the rate.
     const drift::TimeUs blockEndUs = playStartUs + framesToUs(wantFrames, sampleRate);
-    double tempo = clip.effectiveSpeed();
-    if (clip.hasSpeedCurve()) {
-        tempo = blockEndUs <= clip.timelineEnd()
-                    ? static_cast<double>(clip.timelineToSourceUs(blockEndUs)
-                                          - clip.timelineToSourceUs(playStartUs))
-                          / static_cast<double>(blockEndUs - playStartUs)
-                    : clip.speedCurve.speedAtTimelineOffset(playStartUs - clip.timelineStart,
-                                                            clip.srcOut - clip.srcIn);
-    }
+    const double tempo = drift::clipAudioTempo(clip, playStartUs, blockEndUs);
 
     drift::ClipAudioBlock block;
     block.identity = clipAudioIdentity(clip);

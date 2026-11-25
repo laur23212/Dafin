@@ -108,6 +108,13 @@ double SpeedCurve::speedAt(double pos) const
     return m_speeds.at(i) + (m_speeds.at(i + 1) - m_speeds.at(i)) * f;
 }
 
+double SpeedCurve::peakSpeed() const
+{
+    if (isEmpty() || m_speeds.isEmpty())
+        return 1.0;
+    return *std::max_element(m_speeds.cbegin(), m_speeds.cend());
+}
+
 TimeUs SpeedCurve::retimedDurationUs(TimeUs sourceSpanUs) const
 {
     if (isEmpty() || sourceSpanUs <= 0)

@@ -7,6 +7,7 @@
 #include "core/edit/MaskSpace.h"
 #include "core/edit/TimelineOps.h"
 #include "core/tracking/MotionTracker.h"
+#include "core/tracking/TrackerTiming.h"
 #include "engine/compositor/layers/MaskApplier.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/render3d/editor/ClipGizmo.h"
@@ -175,9 +176,7 @@ typename QMap<TimeUs, V>::const_iterator nearestKey(const QMap<TimeUs, V> &map, 
 // How far apart a sample and a wanted source time may be and still count as the same frame.
 TimeUs matchTolerance(const drift::Project &project, const Clip &host)
 {
-    return qMax<TimeUs>(
-        1, static_cast<TimeUs>(std::llround(double(drift::frameDurationUs(project.fps()))
-                                            * qMax(1.0, host.effectiveSpeed()) / 2.0)));
+    return drift::trackerMatchToleranceUs(drift::frameDurationUs(project.fps()), host);
 }
 
 // Clip-frame size in pixels at a timeline time. Tracker coordinates are normalized, so this is only
@@ -1784,8 +1783,7 @@ double valueAt(const drift::KeyframeTrack<double> &track, TimeUs t, double fallb
 // Where a follower sits on the timeline and in its source; a change re-aims its keys.
 bool samePlacement(const Clip &a, const Clip &b)
 {
-    return a.timelineStart == b.timelineStart && a.timelineDuration == b.timelineDuration && a.srcIn == b.srcIn
-           && a.srcOut == b.srcOut && a.speed == b.speed && a.reverse == b.reverse;
+    return drift::sameTrackerPlacement(a, b);
 }
 
 // The tracker's own data: its samples and how its targets hang off it. A change means the edit
