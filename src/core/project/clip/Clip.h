@@ -4,6 +4,7 @@
 #include "core/animation/ClipAnimation.h"
 #include "core/effects/Effect.h"
 #include "core/animation/FadeShape.h"
+#include "core/animation/FrameInterpolation.h"
 #include "core/animation/Keyframe.h"
 #include "core/effects/Mask.h"
 #include "core/project/media/MediaAsset.h"
@@ -150,6 +151,10 @@ struct Clip
     // moment. The source range stays fixed and the timeline duration is what the ramp derives.
     SpeedCurve speedCurve;
     bool reverse = false; // play source range backward; speed still applies as magnitude
+    // What to show between two frames the media holds, which is what a slowed clip spends its
+    // length doing. Sampling — hold the frame at or before the time — is the default and was
+    // the only behaviour before this existed, so an older project opens unchanged.
+    FrameInterpMode interpolation = FrameInterpMode::Sampling;
     bool flipH = false;
     bool flipV = false;
     // Meaningful on a Mask-kind adjustment clip and nowhere else — a media clip's masks live on

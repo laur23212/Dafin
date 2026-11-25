@@ -3,6 +3,10 @@
 #include "engine/audio/analysis/AudioFrameAnalysis.h"
 #include "engine/decode/probe/StillImage.h"
 
+#include "engine/decode/interp/FlowEstimator.h"
+#include "engine/decode/interp/FlowSynth.h"
+#include "engine/decode/interp/FrameBlend.h"
+#include "engine/decode/interp/FrameBracket.h"
 #include "engine/decode/readers/ClipReaderPool.h"
 #include "engine/render3d/DepthRelief.h"
 #include "engine/packages/effects/EffectCatalog.h"
@@ -875,6 +879,80 @@ QImage decodedStillImage(const QString &path, int maxWidth, int maxHeight)
     return image;
 }
 
+// How near a real timestamp counts as landing on it, so a clip running at normal speed against
+// a matching output rate takes the cheap path instead of mixing every frame with its neighbour
+// at alpha 0.001. A millisecond is a couple of per cent of a frame at ordinary rates, and
+// comfortably more than the rounding timelineToSourceUs can introduce.
+constexpr drift::TimeUs kInterpOnFrameToleranceUs = 1'000;
+
+// One frame of a video clip at an already-resolved read position, mixing the two real frames
+// either side of it when the clip asks for that.
+//
+// Both frames come from the decoder at explicit source timestamps. Nothing here reaches for a
+// previously presented frame or a render target to stand in for "the one before": history taken
+// out of a reused buffer is whatever the last composite happened to leave in it, which makes
+// the picture depend on the order the preview wandered through the timeline — so a scrub
+// backwards, a pause and a re-render disagree with each other, and the export disagrees with
+// whatever was approved on screen.
+QImage decodeVideoFrameForRead(const drift::Clip &clip, const drift::VideoRead &read, int boundW,
+                               int boundH)
+{
+    ClipReaderPool &pool = ClipReaderPool::instance();
+    const quint64 streamId = streamIdFor(clip.id);
+
+    const auto readSingle = [&] {
+        return pool.readVideoFrame(read.path, streamId, read.sourceUs, boundW, boundH,
+                                   clip.rotationCorrection);
+    };
+
+    if (clip.interpolation == drift::FrameInterpMode::Sampling)
+        return readSingle();
+
+    const VideoFramePair pair =
+        pool.readVideoFramePair(read.path, streamId, read.sourceUs, boundW, boundH,
+                                clip.rotationCorrection);
+    if (!pair.hasA)
+        return readSingle();
+
+    drift::interp::Query query;
+    query.readUs = read.sourceUs;
+    query.trimLoUs = read.trimLoUs;
+    query.trimHiUs = read.trimHiUs;
+    query.haveTrim = read.trimHiUs > read.trimLoUs;
+    query.maxGapUs = drift::interp::kDefaultMaxGapUs;
+    query.onFrameToleranceUs = kInterpOnFrameToleranceUs;
+
+    const drift::interp::Decision decision =
+        drift::interp::decide(clip.interpolation,
+                              {pair.ptsA, pair.ptsB, pair.hasA, pair.hasB}, query);
+
+    if (decision.route == drift::interp::Route::Flow) {
+        // Flow is offered, so it is tried -- and it is allowed to decline. It declines on a
+        // featureless wall, on motion too large to be a tween of these two frames, and wherever
+        // too much of the frame is being uncovered; on this footage, measured, it also loses to
+        // the blend on heavy occlusion. A decline falls through to the blend below, which is the
+        // working picture and stays the fallback until flow is shown to beat it on real footage
+        // and the rendered motion is approved.
+        const drift::interp::FlowPairAnalysis analysis =
+            drift::interp::estimateFlow(pair.a, pair.b, drift::interp::FlowOptions{});
+        QImage synthesized = drift::interp::synthesizeFlowFrame(
+            pair.a, pair.b, decision.alpha, analysis, drift::interp::FlowSynthOptions{});
+        if (!synthesized.isNull())
+            return synthesized;
+    }
+
+    if (decision.route == drift::interp::Route::Blend
+        || decision.route == drift::interp::Route::Flow) {
+        QImage mixed = drift::interp::blendFrames(pair.a, pair.b, decision.alpha);
+        if (!mixed.isNull())
+            return mixed;
+    }
+
+    // Every other route, and a mix that could not be made: the frame at or before the time,
+    // which is exactly what readVideoFrame would have returned.
+    return pair.a;
+}
+
 // maxWidth/maxHeight bound the decode buffer. They are deliberately *not* the
 // clip's layout rect: the layout rect moves every frame under a scale keyframe,
 // and a changing decode size invalidates the decoder's frame cache and forces a
@@ -897,8 +975,7 @@ QImage decodeClipMediaFrame(const drift::Clip &clip, drift::TimeUs timelineUs, i
         image = decodedStillImage(clip.path, boundW, boundH);
     } else {
         const drift::VideoRead read = drift::resolveVideoRead(clip, timelineUs, t_allowProxies);
-        image = ClipReaderPool::instance().readVideoFrame(read.path, streamIdFor(clip.id), read.sourceUs,
-                                                          boundW, boundH, clip.rotationCorrection);
+        image = decodeVideoFrameForRead(clip, read, boundW, boundH);
     }
     if (framed)
         image = drift::cropSourceFrame(image, crop, clip.sourceFrameAngle);

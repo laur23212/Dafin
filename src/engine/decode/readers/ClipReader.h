@@ -3,6 +3,7 @@
 #include "engine/decode/hw/HwAccel.h"
 #include "engine/decode/hw/MediaCodecImagePool.h"
 #include "engine/decode/readers/PreviewVideoFrame.h"
+#include "engine/decode/readers/VideoFramePair.h"
 #include "core/base/Time.h"
 
 #include <QImage>
@@ -48,6 +49,23 @@ public:
     // change the decode size — and therefore does not invalidate the frame cache
     // — on every frame. Callers scale the returned image to their layout rect.
     bool readVideoFrameAt(drift::TimeUs sourceUs, QImage &out, int maxWidth, int maxHeight);
+    // The two real frames either side of a source time, for smooth slow motion.
+    //
+    // This decodes nothing extra. The reader already keeps a cover (the last frame at or before
+    // the request) and a peek (the next one), because a variable-frame-rate gap longer than a
+    // project tick otherwise looks like a backward jump and re-seeks a whole GOP. That pair *is*
+    // the bracket, carrying the timestamps the decoder reported, so all this does is convert
+    // both and hand them over instead of discarding the peek.
+    //
+    // It shares the cursor, the frame cache and the stream identity with readVideoFrameAt rather
+    // than opening a second decoder, which would evict the frames both of them want.
+    //
+    // `hasB` is false at the end of a stream, and `ptsA` can even sit *after* sourceUs when a
+    // seek landed before the first frame — so the pair is a report of what the decoder has, not
+    // a promise that it straddles anything. drift::interp::decide() is what turns this plus the
+    // clip's trim into a route; it checks all of that.
+    bool readVideoFramePairAt(drift::TimeUs sourceUs, VideoFramePair &out, int maxWidth,
+                              int maxHeight);
     // Same seek/decode path as readVideoFrameAt, but returns an AVFrame handle for
     // the preview compositor (hardware surfaces stay on the GPU).
     // With `approximate` (a scrub in progress) the reader may return the nearest frame that is
@@ -218,6 +236,8 @@ private:
     bool convertFramePreview(const AVFrame *frame, PreviewVideoFrame &out, int targetWidth, int targetHeight);
     bool decodeVideoFrameAtOnce(drift::TimeUs sourceUs, QImage &out, int maxWidth, int maxHeight,
                                 bool *hwFailure);
+    bool decodeVideoFramePairAtOnce(drift::TimeUs sourceUs, VideoFramePair &out, int maxWidth,
+                                    int maxHeight, bool *hwFailure);
     bool decodePreviewVideoFrameAtOnce(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,
                                        int maxHeight, bool *hwFailure);
     bool decodePreviewVideoFrameApprox(drift::TimeUs sourceUs, PreviewVideoFrame &out, int maxWidth,
@@ -258,6 +278,11 @@ private:
     void applyDecodeSize(const QSize &size);
     drift::TimeUs frameToleranceUs() const;
     bool lookupCachedFrame(drift::TimeUs sourceUs, QImage &out) const;
+    // Keyed on the exact timestamp, unlike lookupCachedFrame, which returns the nearest frame
+    // within half a source frame. The pair needs exactness: on a stream whose two frames fall
+    // inside that window, the tolerant lookup would hand back the same image for both and the
+    // blend would quietly become a repeat.
+    bool lookupCachedFrameExact(drift::TimeUs ptsUs, QImage &out) const;
     void storeCachedFrame(drift::TimeUs ptsUs, const QImage &image);
     bool lookupCachedPreview(drift::TimeUs sourceUs, PreviewVideoFrame &out) const;
     // The cached frame latest in [loUs, hiUs] (plus the usual tolerance past hiUs).

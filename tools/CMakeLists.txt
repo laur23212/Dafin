@@ -24,6 +24,14 @@ target_link_libraries(benchcomposite PRIVATE Qt6::Core Qt6::Gui driftengine drif
 drift_copy_effects(benchcomposite)
 drift_copy_transitions(benchcomposite)
 
+add_executable(frameinterpcompare frameinterpcompare.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/decode/interp/FrameBlend.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/decode/interp/LinearLight.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/decode/interp/FlowEstimator.cpp
+    ${CMAKE_SOURCE_DIR}/src/engine/decode/interp/FlowSynth.cpp)
+target_include_directories(frameinterpcompare PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_link_libraries(frameinterpcompare PRIVATE Qt6::Core Qt6::Gui)
+
 add_executable(benchexport benchexport.cpp)
 target_include_directories(benchexport PRIVATE ${CMAKE_SOURCE_DIR}/src)
 target_link_libraries(benchexport PRIVATE Qt6::Core Qt6::Gui driftengine driftcore)

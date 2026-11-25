@@ -139,6 +139,16 @@ struct VideoRead
 {
     QString path;
     TimeUs sourceUs = 0;
+    // The clip's trim, expressed in the timestamps of `path` — which is not the clip's
+    // [srcIn, srcOut] when a reverse proxy is in play, because that file holds the covered range
+    // flipped end for end. Whoever needs a *neighbouring* frame rather than this one needs this
+    // window to know which neighbours belong to the clip: proxies are matched by containment, so
+    // the file routinely holds footage either side of the trim, and on a cut that footage is the
+    // next or previous shot.
+    //
+    // Reading one frame at `sourceUs` never needed this, which is why it is new.
+    TimeUs trimLoUs = 0;
+    TimeUs trimHiUs = 0;
 };
 //
 // allowPreviewProxy is set only by live preview; export must leave it off so it always reads

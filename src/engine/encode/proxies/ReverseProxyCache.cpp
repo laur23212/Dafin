@@ -508,7 +508,7 @@ void ReverseProxyCache::sweep(qint64 maxBytes)
 VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs, bool allowPreviewProxy)
 {
     const TimeUs sourceUs = clip.timelineToSourceUs(timelineUs);
-    VideoRead read{clip.path, sourceUs};
+    VideoRead read{clip.path, sourceUs, clip.srcIn, clip.srcOut};
     bool reversed = false;
     if (clip.reverse && clip.type == ClipType::Video && !clip.path.isEmpty()) {
         TimeUs coverEndUs = 0;
@@ -518,7 +518,8 @@ VideoRead resolveVideoRead(const Clip &clip, TimeUs timelineUs, bool allowPrevie
         // mirror. timelineToSourceUs already walked down from srcOut, and this undoes that walk —
         // the composite reads the proxy strictly forwards.
         if (!proxy.isEmpty()) {
-            read = {proxy, coverEndUs - sourceUs};
+            // The trim's two ends swap over with the timestamps, so srcOut becomes the low end.
+            read = {proxy, coverEndUs - sourceUs, coverEndUs - clip.srcOut, coverEndUs - clip.srcIn};
             reversed = true;
         }
     }

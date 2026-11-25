@@ -280,6 +280,7 @@ QJsonObject clipToJson(const Clip &clip)
         {QStringLiteral("speed"), clip.speed},
         {QStringLiteral("speedCurve"), clip.speedCurve.toJson()},
         {QStringLiteral("reverse"), clip.reverse},
+        {QStringLiteral("interpolation"), frameInterpModeToString(clip.interpolation)},
         {QStringLiteral("flipH"), clip.flipH},
         {QStringLiteral("flipV"), clip.flipV},
         {QStringLiteral("mask"), maskToJson(clip.mask)},
@@ -477,6 +478,8 @@ Clip clipFromJsonV2(const QJsonObject &object, int canvasW = 1920, int canvasH =
     clip.speed = object.value(QStringLiteral("speed")).toDouble(1.0);
     clip.speedCurve = SpeedCurve::fromJson(object.value(QStringLiteral("speedCurve")).toArray());
     clip.reverse = object.value(QStringLiteral("reverse")).toBool(false);
+    clip.interpolation =
+        frameInterpModeFromString(object.value(QStringLiteral("interpolation")).toString());
     clip.flipH = object.value(QStringLiteral("flipH")).toBool(false);
     clip.flipV = object.value(QStringLiteral("flipV")).toBool(false);
     clip.mask = maskFromJson(object.value(QStringLiteral("mask")).toObject());

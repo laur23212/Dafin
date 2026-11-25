@@ -96,6 +96,11 @@ public:
     // decoder losslessly.
     QImage readVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs, int maxWidth,
                           int maxHeight, int rotationCorrection = 0);
+    // The pair either side of sourceUs. Goes to the same worker and the same ClipReader as
+    // readVideoFrame, deliberately: a separate decoder for the neighbour frame would fight this
+    // one for the frame cache and re-seek the GOP on every read.
+    VideoFramePair readVideoFramePair(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
+                                      int maxWidth, int maxHeight, int rotationCorrection);
     // Preview path: AVFrame handle (hardware surfaces stay on the GPU). Empty when decode fails.
     PreviewVideoFrame readPreviewVideoFrame(const QString &path, quint64 streamId, drift::TimeUs sourceUs,
                                             int maxWidth, int maxHeight, int rotationCorrection = 0);

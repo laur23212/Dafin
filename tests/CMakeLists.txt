@@ -808,3 +808,16 @@ if(Python3_Interpreter_FOUND)
         COMMAND ${Python3_EXECUTABLE} -I ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/check_tutorial.py
                 ${CMAKE_SOURCE_DIR})
 endif()
+
+# Dafin: smooth slow motion — which two real source frames a between-frames time falls between,
+# and what to show there (pure arithmetic on decoder timestamps, no decoder needed).
+qt_add_executable(tst_frameinterp
+    tst_frameinterp.cpp
+    ../src/engine/decode/interp/FrameBracket.cpp
+    ../src/engine/decode/interp/FrameBlend.cpp
+    ../src/engine/decode/interp/LinearLight.cpp
+    ../src/engine/decode/interp/FlowEstimator.cpp
+    ../src/engine/decode/interp/FlowSynth.cpp)
+target_include_directories(tst_frameinterp PRIVATE ../src)
+target_link_libraries(tst_frameinterp PRIVATE Qt6::Test Qt6::Gui Qt6::Core)
+add_test(NAME FrameInterp COMMAND tst_frameinterp)

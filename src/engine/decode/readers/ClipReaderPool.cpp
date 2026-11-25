@@ -14,6 +14,7 @@ ClipReaderPool &ClipReaderPool::instance()
     if (!registered) {
         qRegisterMetaType<drift::TimeUs>("drift::TimeUs");
         qRegisterMetaType<PreviewVideoFrame>("PreviewVideoFrame");
+        qRegisterMetaType<VideoFramePair>("VideoFramePair");
         qRegisterMetaType<quintptr>("quintptr");
         qRegisterMetaType<QList<quint64>>("QList<quint64>");
         registered = true;
@@ -416,6 +417,45 @@ QImage ClipReaderPool::readVideoFrame(const QString &path, quint64 streamId, dri
     if (retired)
         stopWorkerEntry(*retired);
     return frame;
+}
+
+VideoFramePair ClipReaderPool::readVideoFramePair(const QString &path, quint64 streamId,
+                                                  drift::TimeUs sourceUs, int maxWidth,
+                                                  int maxHeight, int rotationCorrection)
+{
+    if (path.isEmpty())
+        return {};
+
+    WorkerEntry *entry = nullptr;
+    {
+        QMutexLocker lock(&m_mutex);
+        entry = &ensureVideoWorker(path, streamId, 0);
+        ++entry->inFlight;
+    }
+    ClipReaderWorker *worker = entry->worker;
+
+    VideoFramePair pair;
+    QElapsedTimer decodeWait;
+    decodeWait.start();
+    QMetaObject::invokeMethod(worker, "decodeVideoPair", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(VideoFramePair, pair), Q_ARG(quint64, streamId),
+                              Q_ARG(drift::TimeUs, sourceUs), Q_ARG(int, maxWidth),
+                              Q_ARG(int, maxHeight), Q_ARG(int, rotationCorrection));
+    t_decodeWaitNs += decodeWait.nsecsElapsed();
+
+    // No prefetch here. The single-frame path reads one frame per composite and wants the next
+    // one ready; this one already holds the frame after the time it was asked for, and asking
+    // for another would promote the cursor past the pair that the next few output frames of a
+    // slowed clip are all going to want.
+
+    std::unique_ptr<WorkerEntry> retired;
+    {
+        QMutexLocker lock(&m_mutex);
+        retired = endReadLocked(entry);
+    }
+    if (retired)
+        stopWorkerEntry(*retired);
+    return pair;
 }
 
 PreviewVideoFrame ClipReaderPool::readPreviewVideoFrame(const QString &path, quint64 streamId,
