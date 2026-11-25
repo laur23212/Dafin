@@ -1017,6 +1017,10 @@ add_library(driftengine STATIC
     src/engine/encode/export/Exporter.cpp
     src/engine/encode/export/HwEncodeFallback.h
     src/engine/encode/export/HwEncodeFallback.cpp
+    src/engine/encode/export/Nv12ExportQueue.h
+    src/engine/encode/export/Nv12ExportQueue.cpp
+    src/engine/diagnostics/RouteStats.h
+    src/engine/diagnostics/RouteStats.cpp
     src/engine/encode/export/EncoderProbe.h
     src/engine/encode/export/EncoderProbe.cpp
     src/engine/encode/export/SegmentedExport.h

@@ -1,4 +1,5 @@
 #include "engine/diagnostics/DebugReport.h"
+#include "engine/diagnostics/RouteStats.h"
 
 #include "engine/decode/readers/ClipReader.h"
 #include "engine/encode/export/Exporter.h"
@@ -415,9 +416,146 @@ QString activeDecodeLabel()
                          : QStringLiteral("%1 — %2: %3").arg(base, failed, why);
 }
 
+// --- route and device rows ------------------------------------------------------------------
+// What each stage ran on, and which road the frames took. All of it is counted where the decision
+// is made (RouteStats.h); nothing is measured for this report, nothing waits on the GPU, and no
+// file name or media content is ever part of it.
+
+drift::routes::DeviceId renderDeviceId(const QList<drift::gpu::Adapter> &gpus)
+{
+    drift::routes::DeviceId id;
+    const QString vendor = drift::hwaccel::renderVendor();
+    id.available = !vendor.isEmpty();
+    id.vendorId = drift::gpu::vendorIdForGlVendor(vendor);
+    if (id.vendorId == 0)
+        return id;
+    const drift::gpu::PciId pci = drift::gpu::renderPciId(vendor);
+    const drift::gpu::Adapter *only = nullptr;
+    int candidates = 0;
+    for (const drift::gpu::Adapter &gpu : gpus) {
+        if (gpu.vendorId != id.vendorId || (pci.isValid() && gpu.deviceId != pci.device))
+            continue;
+        only = &gpu;
+        ++candidates;
+    }
+    // Two identical cards cannot be told apart from the GL strings: no key, so no MATCHED.
+    if (candidates == 1 && !only->slot.isEmpty())
+        id.key = only->slot.toStdString();
+    return id;
+}
+
+drift::routes::DeviceId nvidiaDeviceId(const QList<drift::gpu::Adapter> &gpus)
+{
+    drift::routes::DeviceId id;
+    const drift::gpu::Adapter *only = nullptr;
+    int count = 0;
+    for (const drift::gpu::Adapter &gpu : gpus) {
+        if (gpu.vendorId != 0x10de)
+            continue;
+        only = &gpu;
+        ++count;
+    }
+    id.available = count > 0;
+    id.vendorId = count > 0 ? 0x10de : 0;
+    if (count == 1 && !only->slot.isEmpty())
+        id.key = only->slot.toStdString();
+    return id;
+}
+
+QString matchLabel(drift::routes::Match match, const QString &detail = {})
+{
+    const QString id = QString::fromLatin1(drift::routes::id(match));
+    return detail.isEmpty() ? id : QStringLiteral("%1 (%2)").arg(id, detail);
+}
+
+drift::routes::Match fromRenderMatch(drift::hwaccel::RenderMatch match)
+{
+    using drift::hwaccel::RenderMatch;
+    switch (match) {
+    case RenderMatch::Matches:
+        return drift::routes::Match::Matched;
+    case RenderMatch::Mismatch:
+        return drift::routes::Match::Mismatched;
+    case RenderMatch::Unknown:
+        break;
+    }
+    return drift::routes::Match::Unknown;
+}
+
+QString decodeMatchLabel(const drift::routes::DeviceId &render, const drift::routes::DeviceId &nvidia)
+{
+    using drift::routes::Match;
+    const std::optional<drift::hwaccel::Backend> active = ClipReader::activeDecodeBackend();
+    if (!active || *active == drift::hwaccel::Backend::None)
+        return matchLabel(Match::Unavailable, trReport("software decode or nothing decoded yet"));
+    const QString name = QString::fromLatin1(drift::hwaccel::name(*active));
+    if (*active == drift::hwaccel::Backend::Cuda)
+        return matchLabel(drift::routes::classifyDeviceMatch(render, nvidia), name);
+    return matchLabel(fromRenderMatch(drift::hwaccel::describeRenderMatch(*active).match), name);
+}
+
+QString encodeMatchLabel(const drift::routes::DeviceId &render, const drift::routes::DeviceId &nvidia)
+{
+    drift::routes::DeviceId nvenc = nvidia;
+    nvenc.available = nvidia.available && avcodec_find_encoder_by_name("h264_nvenc") != nullptr;
+    return matchLabel(drift::routes::classifyDeviceMatch(render, nvenc), QStringLiteral("NVENC"));
+}
+
+QString onnxMatchLabel(const drift::routes::Snapshot &stats, const drift::routes::DeviceId &render,
+                       const drift::routes::DeviceId &nvidia)
+{
+    using drift::routes::Match;
+    if (stats.ortProvider.empty())
+        return matchLabel(Match::Unavailable, trReport("no AI model loaded yet"));
+    const QString provider = QString::fromStdString(stats.ortProvider);
+    if (provider == QLatin1String("cuda"))
+        return matchLabel(drift::routes::classifyDeviceMatch(render, nvidia), provider);
+    if (provider == QLatin1String("cpu"))
+        return matchLabel(Match::Unavailable, trReport("running on the CPU"));
+    // Another provider (DirectML, MIGraphX, a plugin): its device is not reported to us.
+    return matchLabel(Match::Unknown, provider);
+}
+
+template <int N, typename E>
+QString countsLabel(const uint64_t (&counts)[N])
+{
+    QStringList parts;
+    for (int i = 0; i < N; ++i) {
+        if (counts[i] > 0)
+            parts << QStringLiteral("%1 %2").arg(QString::fromLatin1(drift::routes::id(E(i))))
+                         .arg(counts[i]);
+    }
+    return parts.isEmpty() ? trReport("none yet") : parts.join(QStringLiteral(", "));
+}
+
 QVariantMap systemRow(const QString &label, const QString &value)
 {
     return {{QStringLiteral("label"), label}, {QStringLiteral("value"), value}};
+}
+
+void appendRouteRows(QVariantList &system, const QList<drift::gpu::Adapter> &gpus)
+{
+    const drift::routes::Snapshot stats = drift::routes::snapshot();
+    const drift::routes::DeviceId render = renderDeviceId(gpus);
+    const drift::routes::DeviceId nvidia = nvidiaDeviceId(gpus);
+
+    const QString renderer = GpuCompositor::status().renderer;
+    system.append(systemRow(trReport("Render device"),
+                            renderer.isEmpty() ? trReport("Unknown") : renderer));
+    system.append(systemRow(trReport("Decode device"), decodeMatchLabel(render, nvidia)));
+    system.append(systemRow(trReport("Encode device"), encodeMatchLabel(render, nvidia)));
+    system.append(systemRow(trReport("AI model device"), onnxMatchLabel(stats, render, nvidia)));
+    system.append(systemRow(trReport("Frame import routes"),
+                            countsLabel<drift::routes::kImportRoutes, drift::routes::ImportRoute>(
+                                stats.imports)));
+    system.append(systemRow(trReport("Export plan"),
+                            QString::fromLatin1(drift::routes::id(stats.plan))));
+    system.append(systemRow(trReport("Export frame routes"),
+                            countsLabel<drift::routes::kEncodeRoutes, drift::routes::EncodeRoute>(
+                                stats.encodes)));
+    system.append(systemRow(trReport("Route fallbacks"),
+                            countsLabel<drift::routes::kFallbacks, drift::routes::Fallback>(
+                                stats.fallbacks)));
 }
 
 QString supportLabel(bool ok)
@@ -681,6 +819,7 @@ QVariantMap DebugReport::collect()
     }
     system.append(systemRow(trReport("Preview upload"), previewUploadLabel()));
     system.append(systemRow(trReport("Zero-copy"), zeroCopyLabel()));
+    appendRouteRows(system, gpus);
 #if defined(Q_OS_WIN)
     if (drift::gpu::preferenceSupported()) {
         QString preference = trReport("Windows default");

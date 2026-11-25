@@ -1,4 +1,5 @@
 #include "engine/gpu/GlRuntime.h"
+#include "engine/diagnostics/RouteStats.h"
 #include "engine/gpu/PresentClaims.h"
 #include "engine/EngineTuning.h"
 #include "engine/gpu/effects/LookupTextures.h"
@@ -814,8 +815,30 @@ drift::gl::GlStatusInfo describeContext(const QOpenGLContext *context, QOpenGLEx
     return info;
 }
 
-void recordPreviewUploadPath(GlRuntime::PreviewUploadPath path)
+// `hwSource`: the frame was decoded on a GPU, so a CpuRoundTrip means it was read back and sent up
+// again rather than that it started in system memory. Counted for the route statistics only.
+void recordPreviewUploadPath(GlRuntime::PreviewUploadPath path, bool hwSource = false)
 {
+    using Route = drift::routes::ImportRoute;
+    switch (path) {
+    case GlRuntime::PreviewUploadPath::CudaInterop:
+        drift::routes::countImport(Route::CudaInterop);
+        break;
+    case GlRuntime::PreviewUploadPath::VaapiDmaBuf:
+        drift::routes::countImport(Route::VaapiDmaBuf);
+        break;
+    case GlRuntime::PreviewUploadPath::D3d11Interop:
+        drift::routes::countImport(Route::D3d11Interop);
+        break;
+    case GlRuntime::PreviewUploadPath::MediaCodecImage:
+        drift::routes::countImport(Route::MediaCodecImage);
+        break;
+    case GlRuntime::PreviewUploadPath::CpuRoundTrip:
+        drift::routes::countImport(hwSource ? Route::HwDownload : Route::SoftwareUpload);
+        break;
+    case GlRuntime::PreviewUploadPath::None:
+        break;
+    }
     QMutexLocker lock(&g_previewImportMutex);
     g_previewUploadPath = path;
 }
@@ -1740,6 +1763,7 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
         return false;
 
     ExportNv12Slot &s = m_exportNv12[slot];
+    s.pboValid = false;
     if (s.fence) {
         gl->glClientWaitSync(s.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
         gl->glDeleteSync(s.fence);
@@ -1799,7 +1823,8 @@ bool GlRuntime::packCanvasToNv12Slot(const GlTarget &canvas, int outW, int outH,
 
     gl->glFlush();
     s.fence = gl->glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-    return s.fence != nullptr;
+    s.pboValid = s.fence != nullptr;
+    return s.pboValid;
 }
 
 bool GlRuntime::copyNv12SlotToCuda(int slot, AVFrame *dst)
@@ -1900,7 +1925,9 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
         return false;
 
     ExportNv12Slot &s = m_exportNv12[slot];
-    if (!s.pbo || s.width != width || s.height != height)
+    // Nothing was read back into this buffer for the frame being asked about (it was packed for
+    // the CUDA route, or the pack failed): mapping it would return an older frame's pixels.
+    if (!s.pbo || s.width != width || s.height != height || !s.pboValid)
         return false;
 
     if (s.fence) {
@@ -1908,8 +1935,12 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
             gl->glClientWaitSync(s.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
         gl->glDeleteSync(s.fence);
         s.fence = nullptr;
-        if (wait == GL_WAIT_FAILED)
+        // A timeout means the readback may not have finished, so the buffer may still hold the
+        // previous frame. Report it; the exporter composes the frame again instead of guessing.
+        if (wait == GL_WAIT_FAILED || wait == GL_TIMEOUT_EXPIRED) {
+            s.pboValid = false;
             return false;
+        }
     }
 
     const GLsizeiptr yBytes = GLsizeiptr(width) * height;
@@ -1931,6 +1962,7 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
 
     gl->glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     gl->glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+    s.pboValid = false;
     return true;
 }
 
@@ -3634,7 +3666,11 @@ GlTarget promoteVideoFrameToTarget(GlRuntime &rt, QOpenGLExtraFunctions *gl,
             return {};
         texY = rt.m_videoY;
         texUV = rt.m_videoUV;
-        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CpuRoundTrip);
+        const bool hwSource = av->hw_frames_ctx != nullptr;
+        // A CUDA surface that did not take the interop road was downloaded instead.
+        if (av->format == AV_PIX_FMT_CUDA)
+            drift::routes::noteFallback(drift::routes::Fallback::CudaInteropRefused);
+        recordPreviewUploadPath(GlRuntime::PreviewUploadPath::CpuRoundTrip, hwSource);
     }
 
     const int destW = qMax(2, frame.displayWidth() & ~1);

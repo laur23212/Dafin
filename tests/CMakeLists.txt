@@ -60,6 +60,22 @@ target_include_directories(tst_hwencodefallback PRIVATE ../src)
 target_link_libraries(tst_hwencodefallback PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME HwEncodeFallback COMMAND tst_hwencodefallback)
 
+# Dafin: NVENC export's in-flight frames when a CUDA copy fails (pure logic, simulated GPU).
+qt_add_executable(tst_nv12exportqueue
+    tst_nv12exportqueue.cpp
+    ../src/engine/encode/export/Nv12ExportQueue.cpp)
+target_include_directories(tst_nv12exportqueue PRIVATE ../src)
+target_link_libraries(tst_nv12exportqueue PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME Nv12ExportQueue COMMAND tst_nv12exportqueue)
+
+# Dafin: route counters and GPU identity classification (pure logic).
+qt_add_executable(tst_routestats
+    tst_routestats.cpp
+    ../src/engine/diagnostics/RouteStats.cpp)
+target_include_directories(tst_routestats PRIVATE ../src)
+target_link_libraries(tst_routestats PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME RouteStats COMMAND tst_routestats)
+
 qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
 target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
