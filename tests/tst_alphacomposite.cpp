@@ -282,7 +282,7 @@ void AlphaCompositeTest::normalOverTransparentIsIdentity()
 
 void AlphaCompositeTest::multiplyOverClearKeepsSource()
 {
-    NEED_GL());
+    NEED_GL();
     // Opaque red, Multiply, over a fully transparent canvas: nothing to multiply with, so the
     // source is what is left. The shader as found returns black here.
     GpuScene scene = transparentScene();
@@ -295,7 +295,7 @@ void AlphaCompositeTest::multiplyOverClearKeepsSource()
     QVERIFY((qAbs(c.alpha() - 255)) <= (1));
 
     // Half-alpha source over clear keeps both its colour and its alpha.
-    GpuScene half = transparentScene());
+    GpuScene half = transparentScene();
     half.items.append(plainItem(solid({1, 0, 0, 0.5}), drift::BlendMode::Multiply));
     const QColor h = renderScene(half).pixelColor(32, 32);
     QVERIFY((qAbs(h.alpha() - 128)) <= (1));
@@ -305,7 +305,7 @@ void AlphaCompositeTest::multiplyOverClearKeepsSource()
 
 void AlphaCompositeTest::alphaRampThroughBlendKeepsRamp()
 {
-    NEED_GL());
+    NEED_GL();
     // Left-to-right alpha ramp of one colour: through any blend over clear, each column must come
     // out with the ramp's own alpha and colour.
     QImage ramp(kSide, kSide, QImage::Format_RGBA8888);
@@ -398,7 +398,7 @@ void AlphaCompositeTest::crossfadeMatchesReferenceAtEveryProgress_data()
 {
     QTest::addColumn<double>("progress");
     QTest::addColumn<double>("fromAlpha");
-    QTest::addColumn<double>("toAlpha"));
+    QTest::addColumn<double>("toAlpha");
     for (const double p : {0.0, 0.25, 0.5, 0.75, 1.0})
         for (const auto &alphas : std::array<std::array<double, 2>, 6>{{
                  {1.0, 1.0}, {1.0, 0.0}, {0.0, 1.0}, {0.5, 1.0}, {1.0, 0.5}, {0.25, 0.75}}})
