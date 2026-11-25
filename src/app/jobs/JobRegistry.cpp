@@ -108,7 +108,11 @@ QString JobRegistry::start(const QString &kind, const QString &target, Lane lane
             work(entry->context);
         {
             QMutexLocker lock(&entry->context.m_state->mutex);
-            if (entry->context.cancelled() && !entry->context.m_state->ok) {
+            if (entry->context.cancelled()) {
+                // cancel() only succeeds before the work finished, so a job that got this far with
+                // the flag set was cancelled, even if the work still called succeed() on its way out.
+                entry->context.m_state->ok = false;
+                entry->context.m_state->result = {};
                 entry->context.m_state->errorCode = QStringLiteral("cancelled");
                 entry->context.m_state->error = QStringLiteral("Cancelled");
             } else if (!entry->context.m_state->finished) {
@@ -145,7 +149,14 @@ bool JobRegistry::cancel(const QString &id)
     const auto entry = m_jobs.value(id);
     if (!entry || !entry->active)
         return false;
-    entry->context.m_cancel.storeRelaxed(1);
+    {
+        // Under the state lock, so cancel and succeed()/fail() cannot both win: a job whose work
+        // already finished keeps its outcome, and cancel says so by returning false.
+        QMutexLocker lock(&entry->context.m_state->mutex);
+        if (entry->context.m_state->finished)
+            return false;
+        entry->context.m_cancel.storeRelaxed(1);
+    }
     emit jobChanged(id);
     return true;
 }

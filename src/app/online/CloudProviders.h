@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QObject>
 #include <QString>
+#include <QUrl>
 
 #include <functional>
 #include <memory>
@@ -92,6 +93,12 @@ QByteArray textToSpeech(const QString &key, const QString &model, const QString 
 QJsonObject voices(const QString &key, const QString &search, bool mine, int page, int limit, CloudError *error);
 bool checkKey(const QString &key, CloudError *error);
 } // namespace fish
+
+namespace detail {
+// One blocking GET through the request loop every provider call shares (cancel polling, the single
+// 429 retry). Returns the HTTP status. tests/tst_cloudcancel points it at a local server.
+int getForTest(const QUrl &url, const CancelFn &cancel, CloudError *error);
+} // namespace detail
 
 // Scribe's response as a Transcript (source time = the uploaded audio's time).
 std::shared_ptr<Transcript> transcriptFromScribe(const QJsonObject &response, const QString &model);
