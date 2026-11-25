@@ -445,6 +445,8 @@ private slots:
     void effectsApplyOnTopOfTheCutoutForeground();
     void aVideoEffectsAdjustmentKeepsItsOwnMask();
     void standaloneAdjustmentKeepsSeeThroughCanvasAlpha();
+    void adjustmentLayerEffectsSeeTheProjectFrameRate_data();
+    void adjustmentLayerEffectsSeeTheProjectFrameRate();
     void pinnedLaneAdjustmentsStayOnTheirOwnClip();
     void transformLayerMatrixMapsTheBox();
     void parentedQuadKeepsDepthAndNearPlanes();
@@ -12781,6 +12783,109 @@ void EngineTest::standaloneAdjustmentKeepsSeeThroughCanvasAlpha()
     const QImage opaqueAdjusted = GpuCompositor::render(scene);
     scene.items.removeLast();
     QCOMPARE(opaqueAdjusted.pixelColor(16, 16), GpuCompositor::render(scene).pixelColor(16, 16));
+}
+
+void EngineTest::adjustmentLayerEffectsSeeTheProjectFrameRate_data()
+{
+    QTest::addColumn<int>("fps");
+    QTest::addColumn<int>("expectedRate");
+    QTest::newRow("24") << 24 << 24;
+    QTest::newRow("25") << 25 << 25;
+    QTest::newRow("60") << 60 << 60;
+    // Unset still reads as 30, as it always has.
+    QTest::newRow("unset") << 0 << 30;
+}
+
+// Stage 30 G1: the standalone adjustment path ran its effects with no PipelineAux, so u_frameRate
+// read 30 and u_frameIndex counted 30 fps frames whatever the project's rate. The same effect on a
+// clip and on an adjustment layer must see the same rate and frame index.
+void EngineTest::adjustmentLayerEffectsSeeTheProjectFrameRate()
+{
+    if (!GpuCompositor::isAvailable())
+        QSKIP("No GPU compositor available");
+    QFETCH(int, fps);
+    QFETCH(int, expectedRate);
+
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString pkg = dir.filePath(QStringLiteral("effects/frame_probe"));
+    QVERIFY(QDir().mkpath(pkg));
+    {
+        QFile json(QDir(pkg).filePath(QStringLiteral("effect.json")));
+        QVERIFY(json.open(QIODevice::WriteOnly | QIODevice::Text));
+        json.write(R"({"id": "test.frame_probe", "backend": "gpu", "parameters": [],
+          "pipeline": {"intermediateBuffers": [], "passes": [
+            {"passIndex": 0, "fragmentShader": "x.frag",
+             "inputs": [{"type": "source_texture"}], "output": {"type": "canvas"}}]}})");
+        QFile frag(QDir(pkg).filePath(QStringLiteral("x.frag")));
+        QVERIFY(frag.open(QIODevice::WriteOnly | QIODevice::Text));
+        // Red: the frame rate. Green: the frame index. Both as 8-bit levels, opaque.
+        frag.write("#version 330 core\nin vec2 v_texCoord; out vec4 fragColor;\n"
+                   "uniform sampler2D u_currentTexture;\n"
+                   "uniform float u_frameRate;\nuniform int u_frameIndex;\n"
+                   "void main(){ vec4 src = texture(u_currentTexture, v_texCoord);\n"
+                   " fragColor = vec4(u_frameRate / 255.0, float(u_frameIndex) / 255.0,"
+                   " 0.0 * src.b, 1.0); }\n");
+    }
+    reloadEffectCatalog({dir.filePath(QStringLiteral("effects")), QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR)});
+    const auto restoreCatalog = qScopeGuard([] {
+        reloadEffectCatalog({QString::fromUtf8(DRIFT_TEST_EFFECTS_DIR)});
+    });
+    QVERIFY(effectDefForId(QStringLiteral("test.frame_probe")));
+
+    // 2 s into the clip: frame 48 at 24, 50 at 25, 120 at 60, 60 at the 30 fallback.
+    const drift::TimeUs clipTimeUs = drift::secondsToUs(2.0);
+    const int expectedIndex = 2 * expectedRate;
+
+    drift::Effect probe;
+    probe.catalogId = QStringLiteral("test.frame_probe");
+    QImage white(32, 32, QImage::Format_RGBA8888);
+    white.fill(Qt::white);
+
+    GpuItem clip;
+    clip.layer.valid = true;
+    clip.layer.source = white;
+    clip.layer.rect = QRectF(0, 0, 32, 32);
+    clip.layer.clipTimeUs = clipTimeUs;
+    clip.layer.frameRate = fps;
+
+    GpuScene onClip;
+    onClip.canvasSize = QSize(32, 32);
+    onClip.backgroundColor = Qt::black;
+    GpuItem probedClip = clip;
+    probedClip.layer.effects.append(probe);
+    onClip.items.append(probedClip);
+
+    GpuScene onAdjustment;
+    onAdjustment.canvasSize = QSize(32, 32);
+    onAdjustment.backgroundColor = Qt::black;
+    onAdjustment.items.append(clip);
+    GpuItem adjustment;
+    adjustment.isAdjustment = true;
+    adjustment.layer.valid = true;
+    adjustment.layer.rect = QRectF(0, 0, 32, 32);
+    adjustment.layer.effects.append(probe);
+    adjustment.layer.clipTimeUs = clipTimeUs;
+    adjustment.layer.frameRate = fps;
+    onAdjustment.items.append(adjustment);
+
+    const QImage clipOut = GpuCompositor::render(onClip);
+    const QImage adjustmentOut = GpuCompositor::render(onAdjustment);
+    QVERIFY(!clipOut.isNull() && !adjustmentOut.isNull());
+
+    const auto describe = [](const QColor &c) {
+        return QStringLiteral("rate %1 index %2").arg(c.red()).arg(c.green());
+    };
+    const QColor c = clipOut.pixelColor(16, 16);
+    const QColor a = adjustmentOut.pixelColor(16, 16);
+    QVERIFY2(qAbs(c.red() - expectedRate) <= 1 && qAbs(c.green() - expectedIndex) <= 1,
+             qPrintable(QStringLiteral("clip: %1, want rate %2 index %3")
+                            .arg(describe(c)).arg(expectedRate).arg(expectedIndex)));
+    QVERIFY2(qAbs(a.red() - expectedRate) <= 1 && qAbs(a.green() - expectedIndex) <= 1,
+             qPrintable(QStringLiteral("adjustment layer: %1, want rate %2 index %3")
+                            .arg(describe(a)).arg(expectedRate).arg(expectedIndex)));
+    QVERIFY2(qAbs(a.red() - c.red()) <= 1 && qAbs(a.green() - c.green()) <= 1,
+             qPrintable(QStringLiteral("clip %1 vs adjustment layer %2").arg(describe(c), describe(a))));
 }
 
 // A transition draws the incoming clip across instants that belong to the outgoing one, where the

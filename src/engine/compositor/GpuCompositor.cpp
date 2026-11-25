@@ -1870,10 +1870,13 @@ void composeOnGlThread(GlRuntime &rt, const GpuScene &scene, GlTarget &outCanvas
                     drift::applyFaceUniforms(&params, item.layer.faceSlots);
 
                 // A standalone adjustment works on the whole canvas, which no single clip's depth
-                // describes, so depth packages pass through here.
+                // describes, so depth packages pass through here. Only the frame rate is carried,
+                // so u_frameRate and u_frameIndex match the same effect on a clip.
+                PipelineAux aux;
+                aux.frameRate = item.layer.frameRate;
                 const std::vector<const GlTarget *> sources{&target};
                 GlTarget next = runPipeline(rt, gl, def->meta.id, def->gpu, sources, params,
-                                            item.layer.clipTimeUs, 0.0, target.size());
+                                            item.layer.clipTimeUs, 0.0, target.size(), &aux);
                 if (!next.isValid())
                     continue;
 
