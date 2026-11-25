@@ -41,6 +41,7 @@ struct TitleFont
     QString family;
     int weight = 400;
     bool italic = false;
+    QString file; // the font file in the linked folder, when known (Scene Titles name files)
 };
 
 struct TitleContext
@@ -57,7 +58,17 @@ struct TitleConversion
     QJsonObject templateJson; // a complete Dafin title template (format 1)
     QStringList leftOut;      // what could not be carried over, in plain words
     QString error;            // why nothing could be made
+    // A title of several text elements is also built as a Scene Title (docs/scene-titles.md), one
+    // actor per element where Filmora placed it; then `sceneJson` is set and `sceneLeftOut` names
+    // what the scene does not carry. The joined `templateJson` stays as the fallback.
+    QJsonObject sceneJson;
+    QStringList sceneLeftOut;
 };
+
+// Scene Titles name font files; this one ships with Dafin (scene-fonts/) and stands in for a
+// title's font that is not in the linked folder.
+inline constexpr const char *kSceneFallbackFontFile = "NotoSansDisplay-SemiBold.ttf";
+inline constexpr const char *kSceneFallbackFontFamily = "Noto Sans Display";
 
 TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &templateId,
                                     const QString &label, const QString &category,

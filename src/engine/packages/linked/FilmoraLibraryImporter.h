@@ -27,6 +27,9 @@
 //   type 1 title              a Dafin title template (FilmoraTitleConverter): text, font,
 //                             fill, outline, shadow, animation, its Filmora filters as clip
 //                             effects; plus the fonts in its Font/ folder         -> text-styles
+//                             (several text elements: a Scene Title               -> scene-titles)
+//   Art title                 a TextArt XML (<TextNode>, Data/data.xml or data.xml on its own,
+//                             with or without resinfo.json): ordered shading layers -> text-styles
 // A folder with Data/filter.xml but no resinfo.json is read too (type from filter.xml and the
 // folder names). Files outside any item are used by what they are: fonts (a "Fonts" folder,
 // say), .cube looks, and stickers (videos, pictures, Lottie JSON), categorised by their folder.
@@ -44,6 +47,7 @@ struct ImportedItem
     QString category;   // the Dafin category id it went into
     QString source;     // the item's folder, or the loose file
     QString skipReason; // not imported (or only partly), and why, in plain words
+    QString fidelity;   // titles only: "faithful", "approximated" or "unsupported" (titles-report.txt)
 };
 
 struct ImportReport

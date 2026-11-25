@@ -44,7 +44,8 @@ bool isInside(const QString &inner, const QString &outer)
 
 const QStringList kAllKinds = {QStringLiteral("effects"), QStringLiteral("transitions"),
                                QStringLiteral("stickers"), QStringLiteral("fonts"),
-                               QStringLiteral("looks"), QStringLiteral("text-styles")};
+                               QStringLiteral("looks"), QStringLiteral("text-styles"),
+                               QStringLiteral("scene-titles")};
 
 } // namespace
 
