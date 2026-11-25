@@ -1,0 +1,15 @@
+geo keysWindows.a0c0k0 group at=312.000000,549.000000 size=170.000000,105.000000
+geo keysWindows.a0c0k0.plate box box=3.000000,3.000000,166.000000,101.000000
+geo keysWindows.a0c0k0.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keysWindows.a0c0p1 text size=39.000000 baseline=508.000000,612.500000 center=0 dy=0.000000 hidden=0
+geo keysWindows.a0c0k1 group at=565.000000,549.000000 size=108.000000,105.000000
+geo keysWindows.a0c0k1.plate box box=3.000000,3.000000,104.000000,101.000000
+geo keysWindows.a0c0k1.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keysWindows.a0then1 text size=23.000000 baseline=329.000000,735.000000 center=0 dy=0.000000 hidden=0
+geo keysWindows.a0c1k0 group at=312.000000,785.000000 size=170.000000,105.000000
+geo keysWindows.a0c1k0.plate box box=3.000000,3.000000,166.000000,101.000000
+geo keysWindows.a0c1k0.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keysWindows.a0c1p1 text size=39.000000 baseline=508.000000,848.500000 center=0 dy=0.000000 hidden=0
+geo keysWindows.a0c1k1 group at=565.000000,785.000000 size=108.000000,105.000000
+geo keysWindows.a0c1k1.plate box box=3.000000,3.000000,104.000000,101.000000
+geo keysWindows.a0c1k1.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0

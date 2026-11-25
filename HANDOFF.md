@@ -1,29 +1,46 @@
-# HANDOFF: Smart Keycaps (C9), branch `day10-fx-keycaps`
+# HANDOFF: Smart Keycaps, native (C9n), branch `day11-fx-keycaps-native`
 
-Base: `origin/day9-fx-scene-engine` (6dfbf71). `origin/dafin-edition` has no Scene Title engine yet, so this
-branch has to land after day9 (or together with it).
+Base: `origin/dafin-edition` (65561313) with `day10-fx-keycaps` (C9, Python reference, 3032d357) merged in
+(`--no-ff`, no conflicts). The C9 handoff it replaces said "native: nothing written"; that is now done, below.
 
-## Done (Python reference, tested headless)
-- `tools/scene-ref/keycaps.py` + `keycaps/key-dictionary.json`: identities, Windows/macOS profiles, label
-  policies, widths (skins classic-pc, classic-mac, smart-pc, smart-mac), N keys, chords, THEN/OR, Spacebar, wrap, 9:16, `lock`.
-- 13_A_Shortcut_Keys and 13C_U1/U2/U3 as `keycaps` scenes; T01–T18 (`keycaps/template-catalog.json` → `build_keycap_scenes.py`).
-- `test_keycaps.py` (26 tests), `test_parity.py --keycaps13 --keycaps13c` (150 frames each, 0 differences;
-  Mac keys with a stand-in symbol font), ctest entries `SceneRefPython`, `SmartKeycapsPython`.
-- Docs: `docs/scene-keycaps.md`, `docs/scene-titles.md` (actor type), `scene-fonts/README.md`, DAFIN.md row.
+## Done
+- `src/core/scene/SceneKeycaps.{h,cpp}`: the 1:1 port of `tools/scene-ref/keycaps.py` (grammar, dictionary from
+  `:/keycaps/key-dictionary.json`, `resolveKey`, phase A `expandKeycaps`, `keyWidth` with `ink` / `inkMac` /
+  `semantic`, phase B `layoutKeycaps` with wrap + hidden "+", THEN / OR, label, `lock`). Same error messages.
+- `SceneTitle.{h,cpp}`: actor type `keycaps`; `Actor::hidden` (`_hidden`), `ss`, `snapTrunc` (`snap: "trunc"`),
+  `keycapsBlock`; `Scene::keycaps` (the plan phase B reads).
+- `ScenePainter.cpp`: phase B in `SceneRenderer::build`, before the text sprites, measuring with `pilBBox` (PIL's
+  `getbbox(anchor='ls')` on Skia's FreeType glyph boxes, not the drawn ink); per-group `ss` for the sprites and
+  box shapes (ss = 2 is the old code, unchanged); `snap: "trunc"`; hidden actors skipped; `sceneRestBoxes` gives a
+  flattened group one box (as `render.py rest_boxes`).
+- `CMakeLists.txt`: the sources, and the dictionary as resource `dafin_keycaps` next to the scene GLOB.
+- `TextAssetsTab.qml`: Titles › **Keyboard Shortcuts** (22, the approved four next to their template);
+  Titles › Scenes keeps the other scenes.
+- `tools/scene-ref/core_values.py`: `--geometry` (phase B values) and `--ink-table`; the old output is unchanged
+  (the three existing `core_*.txt` regenerate byte for byte).
+- `tests/tst_scenetitle.cpp` + `tests/data/scene-titles/`: 9 keycaps rows for `coreMatchesReference` (exact) and
+  `keycapsGeometryMatchesReference` (≤ 0.5 px), 13A + 13C U1/U2/U3 in `nativeMatchesReference` (frames 25, 40, 75,
+  110; SSIM ≥ 0.97, ≤ 0.5 px), `keycapsRelayoutFollowsTheShortcut`, `keycapsCommandOnWindowsIsAnError`,
+  `keycapsDictionaryAndGrammar`, `keycapsScenesLoadNatively`.
+- Docs: `docs/scene-keycaps.md` ("Native"), `docs/scene-titles.md` (actor table), new DAFIN.md row.
 
-## NOT done
-1. **Native C++ mirror.** Nothing native was written (no Qt headers in the authoring sandbox, so no compile). Plan:
-   - `src/core/scene/SceneKeycaps.{h,cpp}`: port `keycaps.py` (`parse_shortcut`, `resolve_key`, `expand_block`, `key_width`, `layout`),
-     dictionary read from qrc (add `keycaps/key-dictionary.json` to the scene resources in CMakeLists.txt, next to the GLOB at ~l.879).
-   - `SceneTitle.cpp`: accept type `keycaps` (the `types` set ~l.990), Actor fields `hidden`, `ss`, `snap`; run phase A in the expander.
-   - `ScenePainter.cpp`: run phase B next to `resolveConstraints`, with the painter's ink measurement (`getbbox(..., anchor='ls')` equivalent).
-   - Tests: `core_values.py` dump of expanded actors + `tests/tst_scenetitle.cpp` for 13_A and 13C_U1; then the SSIM ≥ 0.97 / 0.5 px gate.
-   Until then `SceneCatalog` silently skips every keycap scene (it drops scenes whose `loadScene` fails), so nothing breaks.
-2. **QML category "Keyboard Shortcuts"** in `TextAssetsTab.qml` (needs the native load first).
-3. (done) Real-font parity of the Mac keys: font recovered from the Debian package, in `scene-fonts/`, pinned in the scenes; 0 differences.
-4. **Creator approval** of the 18 template visuals and of a native export.
+## Checked outside CI (authoring sandbox: Qt 6.4.2 QtCore, no Skia)
+- SceneTitle.cpp + SceneKeycaps.cpp compile and run: phase A dump and phase B geometry equal the reference line
+  for line on all 22 scenes and on edited shortcuts (all four Mac label policies, wrapping, THEN / OR, custom, F-keys),
+  with the reference's own measurements replayed; 12 error cases word for word.
+- The loader-only test slots (all `coreMatchesReference` rows, dictionary, grammar, errors, catalog = 22) pass.
+- ScenePainter.cpp and tst_scenetitle.cpp pass `-fsyntax-only` against the pinned Skia headers (e7c90ecc).
+- The `pilBBox` model (HarfBuzz advances, `PIXEL()` pens, grid-fitted FT_LOAD_DEFAULT control boxes, union with
+  origin/advance/baseline) equals PIL's `getbbox` on all 638 measurements of the 22 scenes (freetype-py + uharfbuzz).
+
+## NOT run (IMPLEMENTED_UNTESTED)
+- Anything Skia: `keycapsGeometryMatchesReference`, `nativeMatchesReference` (keycaps rows), `keycapsRelayout…`,
+  `keycapsScenesLoadNatively`, the renderer half of `keycapsCommandOnWindowsIsAnError`. First real run = CI.
+- Risk to watch in CI: if Skia's FreeType (the build's own copy) hints a glyph's control box 1 px differently from
+  Pillow's, a key width moves by 2 px and the geometry gate names the actor. That is an engine difference to fix,
+  not a reason to widen the gate.
+- QML not run (no Qt Quick here). Creator approval of a native export.
 
 ## Things to know
-- The comma key (T13) shows the comma mid-plate like an apostrophe: the approved 13F proof centres the ink box, so this is the proof's own look.
-- T06 uses "Esc" (approved U3), the 13F proof printed "ESC".
-- 13_A's widths are hand-set: kept through `lock`, only for Ctrl+Shift+S.
+- Not bugs: T13's comma sits mid-plate (the 13F proof centres the ink); T06 prints "Esc" like the approved U3.
+- Regenerating test data: commands at the end of `docs/scene-keycaps.md`, "Native tests".

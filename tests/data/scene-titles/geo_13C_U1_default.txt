@@ -1,0 +1,16 @@
+geo keysWindows.a0c0k0 group at=350.000000,638.000000 size=188.000000,107.000000
+geo keysWindows.a0c0k0.plate box box=2.000000,2.000000,185.000000,104.000000
+geo keysWindows.a0c0k0.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keysWindows.a0c0p1 text size=41.000000 baseline=561.000000,703.500000 center=0 dy=0.000000 hidden=0
+geo keysWindows.a0c0k1 group at=606.000000,638.000000 size=116.000000,107.000000
+geo keysWindows.a0c0k1.plate box box=2.000000,2.000000,113.000000,104.000000
+geo keysWindows.a0c0k1.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keysMac.a0c0k0 group at=1022.000000,638.000000 size=122.000000,107.000000
+geo keysMac.a0c0k0.plate box box=3.000000,3.000000,118.000000,103.000000
+geo keysMac.a0c0k0.shine line from=18.000000,6.000000 to=104.000000,6.000000
+geo keysMac.a0c0k0.text text size=53.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keysMac.a0c0p1 text size=41.000000 baseline=1167.000000,703.500000 center=0 dy=0.000000 hidden=0
+geo keysMac.a0c0k1 group at=1212.000000,638.000000 size=122.000000,107.000000
+geo keysMac.a0c0k1.plate box box=3.000000,3.000000,118.000000,103.000000
+geo keysMac.a0c0k1.shine line from=18.000000,6.000000 to=104.000000,6.000000
+geo keysMac.a0c0k1.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0

@@ -10,7 +10,7 @@ reproduces the approved frames, and any difference is an engine bug.
 | Key dictionary, grammar, profiles, widths, layout (`tools/scene-ref/keycaps.py`, `keycaps/key-dictionary.json`) | IMPLEMENTED, tested headless (`test_keycaps.py`, 26 tests) |
 | Parity with the approved scripts, 150 frames each | 13_A and 13C U1/U2/U3: identical bit for bit, with the real `NotoSansSymbols2-Regular.ttf` (`test_parity.py --keycaps13c … --symbols scene-fonts/NotoSansSymbols2-Regular.ttf`). The hold frame of U1/U2/U3 also equals the approved `…_SOURCE_HOLD.png` of the Stage13C package, 0 differing pixels. Not compared: the encoded MP4s (lossy) |
 | 18 templates T01–T18 (`scenes/T*.scene.json`) | generated and rendered; **the creator has not approved their visuals** |
-| Native C++ mirror | NOT_RUN (see "Native" at the end) |
+| Native C++ mirror (`src/core/scene/SceneKeycaps.{h,cpp}`, loader, painter, catalog) | IMPLEMENTED_UNTESTED until the CI runs `tst_scenetitle` (see "Native" at the end). Checked outside CI against Qt 6.4 without Skia: phase A and phase B equal the reference line for line on all 22 scenes and on edited shortcuts (every label policy, wrapping, THEN / OR, custom keys), given the reference's own measurements; the errors are word for word |
 
 ## What it is
 
@@ -138,10 +138,69 @@ python3 -I tools/scene-ref/build_keycap_scenes.py --receipts <84_EXACT_MEDIA_REC
 `NotoSansSymbols2-Regular.ttf` (sha256 876598db…1688, `fonts-noto-core 20201225-2`) is in `scene-fonts/` and
 pinned by the Mac scenes.
 
-## Native (not done)
+## Native
 
-Planned: `src/core/scene/SceneKeycaps.{h,cpp}` mirrors `keycaps.py` (same dictionary, read from the
-Qt resources; same two phases; layout in the painter next to `resolveConstraints`, with the
-painter's own ink measurement). The loader gets the actor type and the `hidden`, `ss`, `snap`
-fields. Until then the keycap scenes are in the catalog but do not load natively, and the value
-tests (`core_values.py` dumps, `tests/tst_scenetitle.cpp`) are not written.
+`src/core/scene/SceneKeycaps.{h,cpp}` mirrors `keycaps.py` function for function: `parseShortcut`,
+`resolveKey`, `expandKeycaps` (phase A), `keyWidth` (`ink`, `inkMac`, `semantic`) and
+`layoutKeycaps` (phase B: rows, wrapping with the hidden "+", THEN / OR joiners, the label, `lock`).
+Where the Python reads `a.get(k, default)` the C++ does the same, and the arithmetic keeps the
+reference's order and its `int()`, `ceil` and `//` steps. The messages are the same words: Command in
+a Windows block is `keycaps: 'command' is a macOS key and has no place on a Windows block`.
+
+- **Dictionary.** `tools/scene-ref/keycaps/key-dictionary.json` is compiled into the Qt resources as
+  `:/keycaps/key-dictionary.json` (`CMakeLists.txt`, next to the scene GLOB). One file, two readers.
+  The native reader refuses a dictionary where an alias is another key's id or belongs to two keys,
+  because a `QJsonObject` has no file order to break such a tie the way Python does.
+- **Loader (`SceneTitle.cpp`).** `keycaps` is an actor type. The generator's text slots
+  (`shortcut`, `labelPolicy`, `orWord`, `thenWord`, `label.text`) take the params, then phase A runs
+  and its actors are parsed like any others, without a font. The `Actor` gets `hidden` (`_hidden`),
+  `ss` (a flattened group's supersampling) and `snapTrunc` (`snap: "trunc"`), and
+  `Scene::keycaps` keeps what phase B needs.
+- **Painter (`ScenePainter.cpp`).** Phase B runs in `SceneRenderer::build`, before the text sprites
+  are made and next to `resolveConstraints`, so every param edit lays the keys out again. Its
+  measurement is PIL's `getbbox(text, anchor='ls')` mirrored on Skia (`pilBBox`). That box is not the
+  drawn ink. It runs from the pen origin to the advance (FreeType's `PIXEL()`), always includes the
+  baseline, and counts each glyph by its grid-fitted control box (`FT_GLYPH_BBOX_PIXELS`) at its
+  whole-pixel pen. Skia's FreeType glyph bounds are that same box (`FT_Outline_Get_CBox` of the
+  hinted outline, rounded out, with the same `FT_LOAD_TARGET_NORMAL` hinting). Measuring coverage
+  instead would make CTRL 186 px wide, not 188. The model was checked against PIL on all 638
+  measurements the 22 scenes make, with HarfBuzz and FreeType directly: 0 differences. A
+  flattened group's centred text uses the same box, as `render.py` centres by `textbbox`.
+  A flattened group draws its children at its own `ss` (2, or 3 for the Mac and Smart skins), and
+  its box shapes end `1/ss` px past `x1, y1`, as PIL's do at that scale. At `ss = 2` the sprite maths is
+  the old code, unchanged. `snap: "trunc"` truncates the offsets (Stage13 A), and a hidden "+" is not
+  drawn and has no rest box.
+- **Compatibility mode.** There is no new shader. The keycaps are the same Skia `VectorPainter` pass
+  as every Scene Title, on the GPU and on the CPU raster of low-spec mode (OpenGL < 3.3) alike. The
+  sprites and the layout are built once per document and param values and cached, so a frame costs
+  what any other Scene Title frame costs.
+- **Catalog and library.** `SceneCatalog` no longer skips the 22 scenes. Titles › **Keyboard
+  Shortcuts** lists them (T01–T18, with 13_A before T04, 13C U3 before T06, U1 before T08 and U2
+  before T09), and Titles › Scenes keeps the other scenes (`TextAssetsTab.qml`).
+
+### Native tests (`tests/tst_scenetitle.cpp`)
+
+| Test | What | Data |
+|---|---|---|
+| `coreMatchesReference` (keycaps rows) | phase A, exactly: actors, texts, timing, channels | `core_values.py` → `tests/data/scene-titles/core_{13_A_default,13_A_relayout,13C_U1_default,13C_U2_default,13C_U3_default,T06_default,T11_default,T12_default,T16_wrap}.txt` |
+| `keycapsGeometryMatchesReference` | phase B with the painter's measurement: sizes and flags exact, positions ≤ 0.5 px | `core_values.py --geometry` → `geo_*.txt`, same rows |
+| `nativeMatchesReference` (13A, 13C U1/U2/U3) | actor SSIM ≥ 0.97 and centroid ≤ 0.5 px on frames 25, 40 (entrance), 75, 110 (hold) | `render.py render … --frames 25,40,75,110 --no-mp4` → `tests/data/scene-titles/<scene>/` |
+| `keycapsRelayoutFollowsTheShortcut` | a `shortcut` param edit: the lock holds for Ctrl+Shift+S only (213, 250, 112), Ctrl+C gets 188, 116 | |
+| `keycapsCommandOnWindowsIsAnError` | Command on Windows, Win on a Mac, `Ctrl++C`, an unknown key: the reference's messages | |
+| `keycapsDictionaryAndGrammar` | `test_keycaps.py` Dictionary and Grammar, native | |
+| `keycapsScenesLoadNatively` | `ss`, `snap`, a wrapped "+" hidden and out of the rest boxes, 22 scenes in the catalog | |
+
+Regenerate the data after a reference change:
+
+```
+S=tools/scene-ref; D=tests/data/scene-titles
+python3 -I $S/core_values.py $S $S/scenes/13_A_Shortcut_Keys.scene.json > $D/core_13_A_default.txt
+python3 -I $S/core_values.py $S $S/scenes/13_A_Shortcut_Keys.scene.json --geometry > $D/geo_13_A_default.txt
+python3 -I $S/render.py render $S/scenes/13_A_Shortcut_Keys.scene.json --out out/ --frames 25,40,75,110 --no-mp4
+```
+
+`--ink-table FILE` also writes every measurement phase B made, so a port can be compared with the
+reference's own numbers without any font engine.
+
+Status: IMPLEMENTED_UNTESTED until the CI's Tests on Linux runs `tst_scenetitle`. NATIVE_TESTED only
+after that run passes. Approved only after the creator has seen a native export.

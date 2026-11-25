@@ -197,8 +197,8 @@ Fields of each type:
 | `route` | `points` (polyline traced by `progress`), `width`, `color` |
 | `ellipse` | `box`, `fill`, `strokeColor`, `stroke` |
 | `ring` | `box`, `color`, `stroke` (outline only) |
-| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. |
-| `keycaps` | Generator for keyboard shortcuts, expanded into groups and texts at load. Reference renderer only for now. See `docs/scene-keycaps.md`. |
+| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. `ss` (default 2) is the supersampling of that sprite (the Mac keycaps use 3). `snap: "trunc"` truncates the group's offsets to whole px instead of rounding them (Stage13 A). |
+| `keycaps` | Generator for keyboard shortcuts, expanded into groups and texts at load (phase A) and laid out once text can be measured (phase B). Reference renderer and native (`core/scene/SceneKeycaps.*`). See `docs/scene-keycaps.md`. |
 | `repeat` | `count` (number or expression), `as` (variable name, default `i`), `actor` (a template whose fields may be `{"expr": …}`, with an id like `segment{i}`) |
 
 ## Constraints
