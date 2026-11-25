@@ -275,7 +275,7 @@ void AlphaCompositeTest::normalOverTransparentIsIdentity()
                 QVERIFY((qAbs(g.red() - w.red())) <= (1));
             } else {
                 // Half-alpha tile: white stays white, black stays black (straight readback).
-                QVERIFY((qAbs(g.red() - w.red())) <= (3);
+                QVERIFY((qAbs(g.red() - w.red())) <= (3));
             }
         }
 }
@@ -292,7 +292,7 @@ void AlphaCompositeTest::multiplyOverClearKeepsSource()
     QVERIFY((qAbs(c.red() - 255)) <= (1));
     QVERIFY((c.green()) <= (1));
     QVERIFY((c.blue()) <= (1));
-    QVERIFY((qAbs(c.alpha() - 255)) <= (1);
+    QVERIFY((qAbs(c.alpha() - 255)) <= (1));
 
     // Half-alpha source over clear keeps both its colour and its alpha.
     GpuScene half = transparentScene());
@@ -300,7 +300,7 @@ void AlphaCompositeTest::multiplyOverClearKeepsSource()
     const QColor h = renderScene(half).pixelColor(32, 32);
     QVERIFY((qAbs(h.alpha() - 128)) <= (1));
     QVERIFY((qAbs(h.red() - 255)) <= (4));
-    QVERIFY((h.green()) <= (3);
+    QVERIFY((h.green()) <= (3));
 }
 
 void AlphaCompositeTest::alphaRampThroughBlendKeepsRamp()
@@ -391,7 +391,7 @@ void AlphaCompositeTest::crossfadeRedToClearIsPremultiplied()
     QVERIFY((qAbs(c.alpha() - 128)) <= (1));
     QVERIFY((qAbs(c.red() - 255)) <= (3));
     QVERIFY((c.green()) <= (2));
-    QVERIFY((c.blue()) <= (2);
+    QVERIFY((c.blue()) <= (2));
 }
 
 void AlphaCompositeTest::crossfadeMatchesReferenceAtEveryProgress_data()
