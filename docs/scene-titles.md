@@ -470,7 +470,49 @@ Engine additions (reference renderer, `tools/scene-ref/render.py`):
 Not designed, so not done: text wrapping, more than two anchor items, and the bar layout of
 `15_A_Step_Focus` for `totalSteps ≠ 5` (creator decision, see Native notes).
 
-**Native status.** The C++ loader and `ScenePainter` do not know these additions yet:
-`ss`, `circle`, `solid` background, `fillGroup`, `fitBox`, `after`. Until they do, these scenes are
-**IMPLEMENTED in the reference, native NOT_RUN**; `loadScene` refuses them with "unknown type" or
-ignores the new fields. See `HANDOFF.md`.
+### Native mirror (C10n)
+
+`core/scene/SceneTitle` loads every C10 field and `engine/render2d/scene/ScenePainter` draws it,
+as a mirror of `render.py` (still the bit-exact reference). The native side is pure 2D Skia on the
+CPU raster or the existing GPU path: no new shader, so compatibility mode (OpenGL < 3.3) is
+unchanged.
+
+- **Text `ss: 1`** (sprite1x): drawn once at 1×, no Lanczos. The sprite is PIL's `getbbox` (anchor
+  `la`) plus 4 px left and right and 2 px below, the pen 4 px in on the ascender line, laid at
+  `(bx − 4, by − ascender)`; the ascender is the hhea ascender scaled and rounded up, as
+  FreeType's size metrics. `ss: 2` is the sprite2x path as before.
+- **Flattened group `ss: 3`**: its texts are drawn at 3× and reduced to exactly 1/3 (the group
+  reduces its whole 3× image in `render.py`); its shapes are Skia vectors whose inclusive PIL
+  corners end 1/f px past the 1× corner, outline `int(stroke·f)/f` px.
+- **Centred group text** (`align {h, v, dy}`) is centred on PIL's `textbbox`, which is not the ink:
+  it reaches the pen on the left, the rounded advance on the right and the baseline vertically
+  ("File" at 126 px is 0..203 although its ink is 10..198). `fitBox` measures the same box.
+- **Layout** (`scene::resolveLayout`, run once per build before the texts are drawn, sprite2x
+  only, as `Sprite2x.layout()`): `fitBox` (group width = `max(min, ceil(box/ss + 2·padX))`), then
+  `after` in dependency order (x = the target's right edge + `gap`; a text's right edge is its pen
+  plus its advance rounded half to even, a group's is x + width), then every `fillGroup` child
+  gets `[l, t, w − r, h − b]` of its group. Advances are HarfBuzz's with kerning on, which is what
+  PIL's `getlength` returns (checked to 0.02 px on the scenes' texts).
+- **`circle`** (`cv2.circle`, `LINE_AA`): integer centre on a pixel centre. Measured against
+  OpenCV with an area-coverage model: a disc covers radius r + 0.5; a ring of thickness t is centred
+  on r and 1.3 px wide for t = 1, else `2·ceil(t/2) + 1.7` (t = 2: 3.7 px). SSIM against cv2 of
+  that model: 0.997 (r = 22 ring, r = 4 and 6 discs). On the alpha layer opacity scales coverage;
+  `opacityMode: "mixWith"` and `mix: "trunc"` only change the proofs' opaque compositing, so they
+  are read and do not change native pixels.
+- **`preview.background.kind: "solid"`**: `--render-scene --matte reference` writes the solid
+  matte (`scenePreviewMatte`), and `native_compare.py` lays the native frames on the same matte.
+- `rest_boxes` (render.py) and `sceneRestBoxes` (native) now put actors of plain groups at the
+  group's position (the chevrons of 14_A were measured at 0,0 before); a flattened group is one
+  box. Pixels are unchanged.
+
+Tests: `tst_scenetitle` — `coreMatchesReference` (the 7 scenes, defaults and param variants,
+`core_*.txt`), `layoutMatchesReference` (`core_values.py --layout`, `layout_*.txt`),
+`nativeMatchesReference` (reference frames 10/20/40/65/135 of the 7 scenes and of 12B_C with empty
+badges, gate SSIM ≥ 0.97 and ≤ 0.5 px), `menuCardsFollowTheirLabels`, `unitFollowsTheValue`,
+`emptyBadgeIsAPlainRing`, `definitionAccentIsShort`; `loaderRefusesWhatTheSpecRefuses` covers the
+values the spec does not allow (`ss` out of range, `fitBox` outside a flattened group or on a
+non-child, `after` to an unknown actor or on a line). Bit parity with the Part6 scripts stays in
+Python (`test_parity.py`).
+
+Status: see DAFIN.md, row "Scene Titles: native mirror (C10n)". Not creator-approved until a
+native export is reviewed.

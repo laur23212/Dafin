@@ -4,8 +4,10 @@
 // per frame onto a premultiplied, transparent layer, with the maths of its render profile:
 //
 // - sprite2x: text is drawn at 2x from the scene's exact font file, reduced with the same Lanczos
-//   filter the proofs used and laid at whole pixels; rects are solid; lines and routes are
-//   antialiased strokes. Rounded shapes are drawn as Skia vectors (no port uses them yet).
+//   filter the proofs used and laid at whole pixels ("ss": 1 draws it once at 1x, no reduction);
+//   rects are solid; lines, routes and circles are antialiased strokes; a flattened group draws
+//   its texts at its own factor (2 or 3) and its shapes as Skia vectors. fitBox / after /
+//   fillGroup are measured once per build (scene::resolveLayout) before the texts are drawn.
 // - mask1x: text is a 1x HarfBuzz-shaped mask, cut by clipTo and scaled by opacity; rects replace
 //   what is under them, alpha included.
 //
@@ -55,6 +57,9 @@ QImage renderSceneFrame(const std::shared_ptr<const SceneRenderer> &renderer, do
 
 // The BASE matte of the Stage13+ proofs (DARK + 7.2·x + 3.2·(1−y)), RGB32.
 QImage sceneBaseMatte(QSize size, scene::Rgba dark = {9, 12, 17, 255});
+
+// The scene's own preview matte: BASE, or the flat colour of preview.background.kind "solid".
+QImage scenePreviewMatte(const scene::Scene &scene, QSize size);
 
 // The frame laid over a matte the way the proofs did (uint8(clip(dst·(1−a) + src·a))).
 QImage compositeOverMatte(const QImage &premultipliedFrame, const QImage &matte);

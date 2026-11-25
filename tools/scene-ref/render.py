@@ -508,25 +508,34 @@ class Sprite2x:
 
     # -- geometry for compare.py --------------------------------------------------------------
     def rest_boxes(self, t):
+        by_id = {a['id']: a for a in self.sc.actors}
         boxes = {}
         for a, ch in self.walk(t):
+            # Actors inside plain groups are in group coordinates: add the groups' "at".
+            ox = oy = 0
+            p = a.get('_parent')
+            while p:
+                g = by_id[p]
+                ox += g.get('at', [0, 0])[0]; oy += g.get('at', [0, 0])[1]
+                p = g.get('_parent')
             tp = a['type']
             if tp == 'text':
                 spr = self.text_sprite(a)[0]; x, y = self.text_origin(a)
-                boxes[a['id']] = (x, y, x + spr.w, y + spr.h)
+                b = (x, y, x + spr.w, y + spr.h)
             elif tp in ('line', 'route'):
                 pts = [a['from'], a['to']] if tp == 'line' else a['points']
                 w = a.get('width', 1) + 2
                 xs, ys = [p[0] for p in pts], [p[1] for p in pts]
-                boxes[a['id']] = (min(xs) - w, min(ys) - w, max(xs) + w + 1, max(ys) + w + 1)
+                b = (min(xs) - w, min(ys) - w, max(xs) + w + 1, max(ys) + w + 1)
             elif tp == 'group':
-                gx, gy = a['at']; boxes[a['id']] = (gx, gy, gx + a['size'][0], gy + a['size'][1])
+                gx, gy = a['at']; b = (gx, gy, gx + a['size'][0], gy + a['size'][1])
             elif tp == 'circle':
                 (cx, cy), r = a['center'], a['radius'] + 2
-                boxes[a['id']] = (cx - r, cy - r, cx + r + 1, cy + r + 1)
+                b = (cx - r, cy - r, cx + r + 1, cy + r + 1)
             else:
                 spr, (x, y) = self.shape_sprite(a)
-                boxes[a['id']] = (x, y, x + spr.w, y + spr.h)
+                b = (x, y, x + spr.w, y + spr.h)
+            boxes[a['id']] = (b[0] + ox, b[1] + oy, b[2] + ox, b[3] + oy)
         return boxes
 
 

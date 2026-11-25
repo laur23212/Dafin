@@ -13,6 +13,7 @@
 #include "include/core/SkRRect.h"
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkSurface.h"
+#include "include/core/SkSurfaceProps.h"
 #include "include/core/SkTypeface.h"
 #if defined(SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE)
 #include "include/ports/SkFontMgr_empty.h"
@@ -374,7 +375,8 @@ qint64 quantizeLikeHbFt(GlyphRun &r, const SkFont &shapedWith, SkScalar atX, qin
 // (quantizeLikeHbFt). sprite2x: cmap glyphs and pair kerning, no ligatures or contextual forms, so
 // those features are off. mask1x is RAQM: HarfBuzz's default features.
 // letterSpacing draws one character at a time, as the proofs did.
-std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, double letterSpacing, bool ligatures)
+std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, double letterSpacing, bool ligatures,
+                                   double *advance = nullptr)
 {
     static const sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make();
     static QMutex mutex; // one shaper, not thread-safe
@@ -410,19 +412,100 @@ std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, doub
         }
         return h.runs.empty() ? double(h.x) : atX + double(pen26) / 64.0;
     };
+    double end = 0.0;
     if (letterSpacing == 0.0) {
-        shapeOne(text, 0.0);
+        end = shapeOne(text, 0.0);
     } else {
         double x = 0.0;
         for (const QChar c : text)
-            x = shapeOne(QString(c), x) + letterSpacing;
+            end = x = shapeOne(QString(c), x) + letterSpacing;
     }
+    if (advance)
+        *advance = end;
     return out;
 }
 
-std::vector<GlyphRun> basicLayout(const SkFont &font, const QString &text)
+std::vector<GlyphRun> basicLayout(const SkFont &font, const QString &text, double *advance = nullptr)
 {
-    return shapedLayout(font, text, 0.0, false);
+    return shapedLayout(font, text, 0.0, false, advance);
+}
+
+// PIL's textbbox / getbbox of a basic layout, pen at 0 and the baseline at 0 (anchor "ls"): the
+// glyphs' boxes (FT_GLYPH_BBOX_PIXELS), widened to the pen on the left, to the rounded advance on
+// the right and to the baseline below/above.
+// It is not the ink: "File" is 0..135 at 84 px although its ink is 7..133. render.py measures
+// fitBox and centres group texts with it, so the native layout must too.
+struct PilBox
+{
+    int left = 0, top = 0, right = 0, bottom = 0;
+    double advance = 0.0;
+};
+
+// The layout's pen positions and total advance in FreeType's 26.6 units, as PIL sums them: every
+// glyph advance is a whole 1/64 px (HarfBuzz at a 64× scale), Skia's shaper keeps 1/65536. Only
+// the measurements use this; the drawn glyphs keep Skia's positions. ("Export settings and more"
+// at 126 px: 1479.50 in PIL, 1479.49 unquantised, which rounds the other way.)
+double quantisedPens(const std::vector<GlyphRun> &runs, double end, std::vector<double> *pens)
+{
+    std::vector<double> x;
+    for (const GlyphRun &r : runs)
+        for (const SkPoint &p : r.pos)
+            x.push_back(p.fX);
+    double q = 0.0;
+    for (size_t i = 0; i < x.size(); ++i) {
+        if (pens)
+            pens->push_back(q);
+        const double next = i + 1 < x.size() ? x[i + 1] : end;
+        q += std::round((next - x[i]) * 64.0) / 64.0;
+    }
+    return x.empty() ? end : q;
+}
+
+double pilAdvance(const SkFont &font, const QString &text)
+{
+    double end = 0.0;
+    const std::vector<GlyphRun> runs = basicLayout(font, text, &end);
+    return quantisedPens(runs, end, nullptr);
+}
+
+PilBox pilBBox(const SkFont &font, const QString &text)
+{
+    PilBox box;
+    double end = 0.0;
+    const std::vector<GlyphRun> runs = basicLayout(font, text, &end);
+    std::vector<double> pens;
+    box.advance = quantisedPens(runs, end, &pens);
+    SkRect u = SkRect::MakeEmpty();
+    size_t k = 0;
+    for (const GlyphRun &r : runs) {
+        std::vector<SkRect> b(r.glyphs.size());
+        r.font.getBounds({r.glyphs.data(), r.glyphs.size()}, {b.data(), b.size()}, nullptr);
+        for (size_t i = 0; i < b.size(); ++i, ++k)
+            if (!b[i].isEmpty())
+                u.join(b[i].makeOffset(std::floor(pens[k] + 0.5), std::floor(r.pos[i].fY + 0.5f)));
+    }
+    const SkIRect g = u.isEmpty() ? SkIRect::MakeEmpty() : u.roundOut();
+    box.left = qMin(0, g.left());
+    box.right = qMax(int(std::floor(box.advance + 0.5)), g.isEmpty() ? 0 : g.right()); // PIXEL(): half up
+    // Vertically the box always holds the baseline ("-" is -40..0 at 126 px, "." -19..1).
+    box.top = g.isEmpty() ? 0 : qMin(0, g.top());
+    box.bottom = g.isEmpty() ? 0 : qMax(0, g.bottom());
+    return box;
+}
+
+// FreeType's size ascender (PIL's getmetrics()[0]): hhea ascender scaled, rounded up.
+int pilAscender(const SkFont &font)
+{
+    const sk_sp<SkTypeface> tf = font.refTypeface();
+    const int upem = tf ? tf->getUnitsPerEm() : 0;
+    quint8 hhea[8] = {};
+    if (upem > 0 && tf->getTableData(SkSetFourByteTag('h', 'h', 'e', 'a'), 0, sizeof hhea, hhea) == sizeof hhea) {
+        const int asc = qint16(quint16(hhea[4]) << 8 | hhea[5]);
+        return int(std::ceil(asc * double(font.getSize()) / upem - 1e-9));
+    }
+    SkFontMetrics m;
+    font.getMetrics(&m);
+    return int(std::ceil(-m.fAscent - 1e-9));
 }
 
 // Coverage of a glyph layout drawn with its pen at `origin` on an A8 surface the size of `bounds`
@@ -432,7 +515,11 @@ SkBitmap coverage(const std::vector<GlyphRun> &runs, SkPoint origin, const SkIRe
     SkBitmap bm;
     bm.allocPixels(SkImageInfo::MakeA8(qMax(1, bounds.width()), qMax(1, bounds.height())));
     bm.eraseColor(SK_ColorTRANSPARENT);
-    SkCanvas canvas(bm);
+    // Linear coverage, as FreeType renders it for PIL: no text contrast and gamma 1. Skia's default
+    // (contrast 0.5, sRGB, applied to A8 masks) left every proof text ~3.5 % lighter, which
+    // moved the centroid of 15_B's definition line by 0.55 px (gate 0.5).
+    const SkSurfaceProps linear(0, kUnknown_SkPixelGeometry, 0.0f, 1.0f);
+    SkCanvas canvas(bm, linear);
     canvas.translate(SkScalar(-bounds.left()), SkScalar(-bounds.top()));
     SkPaint paint;
     paint.setAntiAlias(true);
@@ -505,65 +592,40 @@ sk_sp<SkImage> premulImage(const Img &spr)
     return bm.asImage();
 }
 
-// PIL's FreeTypeFont.getbbox(text, anchor="ls") in its basic layout (_imagingft.c,
-// bounding_box_and_anchors), relative to the pen at the baseline. It is not the drawn ink: it
-// spans the pen origin and the advance (rounded as FreeType's PIXEL()), the baseline is always
-// inside it, and each glyph counts with its grid-fitted control box (FT_GLYPH_BBOX_PIXELS) at its
-// whole-pixel pen position. Skia's FreeType glyph bounds are that same control box, rounded out.
-// render.py measures Smart Keycaps with it (Sprite2x.ink) and centres a flattened group's text with
-// it (group_sprite, textbbox), so the native side does too.
-SkIRect pilBBox(const SkFont &font, const QString &text)
-{
-    const std::vector<GlyphRun> runs = basicLayout(font, text);
-    int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-    for (const GlyphRun &r : runs) {
-        std::vector<SkRect> b(r.glyphs.size());
-        r.font.getBounds({r.glyphs.data(), r.glyphs.size()}, {b.data(), b.size()}, nullptr);
-        for (size_t i = 0; i < b.size(); ++i) {
-            const int px = int(std::floor(r.pos[i].fX + 0.5f));
-            const SkScalar next = i + 1 < b.size() ? r.pos[i + 1].fX : r.end;
-            x1 = qMax(x1, int(std::floor(next + 0.5f)));
-            if (b[i].isEmpty())
-                continue;
-            const SkIRect g = b[i].roundOut();
-            x0 = qMin(x0, px + g.left());
-            x1 = qMax(x1, px + g.right());
-            y0 = qMin(y0, g.top());
-            y1 = qMax(y1, g.bottom());
-        }
-    }
-    return SkIRect::MakeLTRB(x0, y0, x1, y1);
-}
-
-// Non-negative remainder.
-int posMod(int a, int m)
-{
-    const int r = a % m;
-    return r < 0 ? r + m : r;
-}
-
-// sprite2x text: drawn at ss x (2, or a flattened group's "ss") with 7/8 px (1x) of padding,
-// reduced with Lanczos. The padding is chosen so that the pen lands exactly on the actor's
-// baseline anchor; at ss = 2 this is the original 14/15 and 16/17 px parity rule, unchanged.
-TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color, QPointF pen, int ss = kSS)
+// sprite2x text: drawn at f× (2, or a flattened group's 3) with 7/8 px (1x) of padding, reduced
+// with Lanczos. The padding is chosen so that the pen lands exactly on the actor's baseline
+// anchor. `exactGrid` keeps the f× sprite a whole multiple of f: a flattened group reduces its
+// whole f× image to exactly 1/f (render.py group_sprite), a lone text sprite by width // 2.
+TextArt spriteText(const SkFont &fontF, const QString &text, const Rgba &color, QPointF pen, int f = kSS,
+                   bool exactGrid = false)
 {
     TextArt art;
-    const std::vector<GlyphRun> runs = basicLayout(font2x, text);
+    const std::vector<GlyphRun> runs = basicLayout(fontF, text);
     const SkIRect bounds = layoutBounds(runs, {0, 0});
     const SkBitmap cov = coverage(runs, {0, 0}, bounds);
     // The sprite is sized by PIL's getbbox (render.py text_sprite), which spans the pen origin and
     // the advance, not by the drawn ink: with the ink, an odd width made (w + 14 ss) / ss truncate,
     // the reduction was no longer exactly ss : 1 and a long line drifted (15_B line1, 0.55 px).
-    SkIRect ink = pilBBox(font2x, text);
+    const PilBox pb = pilBBox(fontF, text);
+    SkIRect ink = SkIRect::MakeLTRB(pb.left, pb.top, pb.right, pb.bottom);
     if (ink.isEmpty())
         ink = SkIRect::MakeXYWH(0, 0, 1, 1);
-    // L, T: PIL's getbbox relative to the pen at 2x (ascender cancelled out).
+    // L, T: ink box relative to the pen at f× (PIL's getbbox, ascender cancelled out).
     const int L = ink.left(), T = ink.top();
-    const double pen2x = pen.x() * ss, base2x = pen.y() * ss;
-    // Sprite top-left at ss x = pen2x - (padL - L); it must be a multiple of ss so the 1x sprite is whole.
-    const int padL = 7 * ss + posMod(int(std::llround(pen2x)) - 7 * ss + L, ss);
-    const int padT = 8 * ss + posMod(int(std::llround(base2x)) - 8 * ss + T, ss);
-    Img spr{ink.width() + 14 * ss, ink.height() + 16 * ss, {}};
+    const double penF = pen.x() * f, baseF = pen.y() * f;
+    // Sprite top-left at f× = penF - (padL - L); it must be a multiple of f so the 1x sprite is
+    // whole: the smallest pad from `base` up that makes it so (f = 2: 14 or 15, 16 or 17).
+    const auto padFor = [f](long long p, int inkOffset, int base) {
+        return base + int(((p + inkOffset - base) % f + f) % f);
+    };
+    const int padL = padFor(std::llround(penF), L, 7 * f);
+    const int padT = padFor(std::llround(baseF), T, 8 * f);
+    int sprW = ink.width() + 14 * f, sprH = ink.height() + 16 * f;
+    if (exactGrid) {
+        sprW = (sprW + f - 1) / f * f;
+        sprH = (sprH + f - 1) / f * f;
+    }
+    Img spr{sprW, sprH, {}};
     spr.px.assign(size_t(spr.w) * spr.h * 4, 0);
     for (int y = 0; y < ink.height(); ++y)
         for (int x = 0; x < ink.width(); ++x) {
@@ -579,9 +641,9 @@ TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color,
         }
     // Outside the ink PIL leaves (0,0,0,0); inside, colour with coverage alpha (zero alpha keeps
     // the colour, which premultiplication erases anyway).
-    const Img small = pilResizeRgba(std::move(spr), (ink.width() + 14 * ss) / ss, (ink.height() + 16 * ss) / ss);
+    const Img small = pilResizeRgba(std::move(spr), sprW / f, sprH / f);
     art.image = premulImage(small);
-    art.origin = QPointF((std::llround(pen2x) - (padL - L)) / double(ss), (std::llround(base2x) - (padT - T)) / double(ss));
+    art.origin = QPointF((std::llround(penF) - (padL - L)) / double(f), (std::llround(baseF) - (padT - T)) / double(f));
     int l = small.w, t = small.h, r = -1, b = -1;
     for (int y = 0; y < small.h; ++y)
         for (int x = 0; x < small.w; ++x)
@@ -593,6 +655,42 @@ TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color,
             }
     art.ink = r < 0 ? QRectF(art.origin, QSizeF(0, 0))
                     : QRectF(art.origin + QPointF(l, t), QSizeF(r + 1 - l, b + 1 - t));
+    art.valid = true;
+    return art;
+}
+
+// sprite1x text ("ss": 1, the Stage11/12 Label): drawn once at 1x, no reduction. The sprite is
+// PIL's getbbox (anchor "la") plus 4 px each side and 2 below, the pen 4 px in on the ascender
+// line, laid at (bx − 4, by − ascender). What falls outside the sprite is cut, as in PIL.
+TextArt sprite1xText(const SkFont &font1x, const QString &text, const Rgba &color, QPointF pen)
+{
+    constexpr int kPad = 4;
+    TextArt art;
+    const std::vector<GlyphRun> runs = basicLayout(font1x, text);
+    const PilBox box = pilBBox(font1x, text);
+    const int asc = pilAscender(font1x);
+    const int w = qMax(1, box.right + 2 * kPad), h = qMax(1, box.bottom + asc + 2);
+    const SkBitmap cov = coverage(runs, {SkScalar(kPad), SkScalar(asc)}, SkIRect::MakeWH(w, h));
+    Img spr{w, h, std::vector<quint8>(size_t(w) * h * 4, 0)};
+    int l = w, t = h, r = -1, b = -1;
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x) {
+            const quint8 a = *static_cast<const quint8 *>(cov.getAddr(x, y));
+            if (!a)
+                continue;
+            quint8 *p = spr.at(x, y);
+            p[0] = quint8(color.r);
+            p[1] = quint8(color.g);
+            p[2] = quint8(color.b);
+            p[3] = a;
+            l = qMin(l, x);
+            r = qMax(r, x);
+            t = qMin(t, y);
+            b = qMax(b, y);
+        }
+    art.image = premulImage(spr);
+    art.origin = QPointF(pen.x() - kPad, pen.y() - asc);
+    art.ink = r < 0 ? QRectF(art.origin, QSizeF(0, 0)) : QRectF(art.origin + QPointF(l, t), QSizeF(r + 1 - l, b + 1 - t));
     art.valid = true;
     return art;
 }
@@ -665,35 +763,62 @@ public:
                 const QString key = font + QLatin1Char('\n') + QString::number(px) + QLatin1Char('\n') + text;
                 if (const auto it = measured.constFind(key); it != measured.constEnd())
                     return it.value();
-                const SkIRect b = pilBBox(pixelFont(tf, px), text);
-                const scene::KeycapInk ink{b.left(), b.top(), b.right(), b.bottom()};
+                const PilBox b = pilBBox(pixelFont(tf, px), text);
+                const scene::KeycapInk ink{b.left, b.top, b.right, b.bottom};
                 measured.insert(key, ink);
                 return ink;
             };
             if (!scene::layoutKeycaps(scene, measure, error))
                 return;
         }
+        // Measured layout first (fitBox, after, fillGroup): it moves pens and sizes groups, so
+        // the texts below are drawn where they end up. render.py does it in Sprite2x only.
+        if (scene.profile == Profile::Sprite2x) {
+            scene::LayoutFns fns;
+            fns.inkWidth = [&faces](const Actor &t, int ss) -> std::optional<double> {
+                const sk_sp<SkTypeface> tf = faces.value(t.font);
+                if (!tf)
+                    return std::nullopt;
+                const PilBox b = pilBBox(pixelFont(tf, int(t.size) * ss), t.text);
+                return double(b.right - b.left);
+            };
+            fns.advance = [&faces](const Actor &t, int ss) -> std::optional<double> {
+                const sk_sp<SkTypeface> tf = faces.value(t.font);
+                if (!tf)
+                    return std::nullopt;
+                return pilAdvance(pixelFont(tf, int(t.size) * ss), t.text);
+            };
+            if (!scene::resolveLayout(scene, fns, error))
+                return;
+        }
         for (const Actor &a : std::as_const(scene.actors)) {
             if (a.type != QLatin1String("text"))
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
-            if (scene.profile == Profile::Sprite2x || inFlatGroup(a)) {
+            const Actor *flat = flatGroupOf(a);
+            if (scene.profile == Profile::Sprite2x || flat) {
                 QPointF pen = a.baseline;
                 if (a.anchorKind == QLatin1String("sprite")) {
                     *error = QStringLiteral("%1: at.sprite is a conversion-only anchor; use at.baseline").arg(a.id);
                     return;
                 }
-                const int ss = spriteScale(a);
-                const SkFont f2 = pixelFont(tf, int(a.size) * ss);
-                if (a.centerInGroup) { // render.py group_sprite: centred by PIL's textbbox, not the ink
-                    const Actor *g = scene.actor(a.parent);
-                    const SkIRect ink = pilBBox(f2, a.text);
-                    const double gw = g ? g->groupW : 0, gh = g ? g->groupH : 0;
-                    pen = QPointF(((gw * ss - ink.width()) / 2.0 - ink.left()) / ss,
-                                  a.alignTop ? (a.centerTop * ss - ink.top()) / ss
-                                             : ((gh * ss - ink.height()) / 2.0 - ink.top()) / ss + a.centerDy);
+                // Inside a flattened group the group's factor draws it (its own "ss" is unused).
+                const int f = flat ? flat->ss : a.ss;
+                if (f == 1) {
+                    texts.insert(a.id, sprite1xText(pixelFont(tf, int(a.size)), a.text, a.color, pen));
+                    continue;
                 }
-                texts.insert(a.id, spriteText(f2, a.text, a.color, pen, ss));
+                const SkFont ff = pixelFont(tf, int(a.size) * f);
+                if (a.centerInGroup) {
+                    // render.py group_sprite: centred on PIL's textbbox (not the ink), at f×.
+                    const Actor *g = scene.actor(a.parent);
+                    const PilBox bb = pilBBox(ff, a.text);
+                    const double gw = g ? g->groupW : 0, gh = g ? g->groupH : 0;
+                    pen = QPointF(((gw * f - (bb.right - bb.left)) / 2.0 - bb.left) / f,
+                                  a.alignTop ? (a.centerTop * f - bb.top) / f
+                                             : ((gh * f - (bb.bottom - bb.top)) / 2.0 - bb.top) / f + a.centerDy);
+                }
+                texts.insert(a.id, spriteText(ff, a.text, a.color, pen, f, flat != nullptr));
             } else {
                 if (a.anchorKind != QLatin1String("baseline")) {
                     *error = QStringLiteral("%1: at.lt is a conversion-only anchor; use at.baseline").arg(a.id);
@@ -712,11 +837,7 @@ public:
         scene::resolveConstraints(scene, ink, error);
     }
 
-    bool inFlatGroup(const Actor &a) const
-    {
-        return flatGroupOf(a) != nullptr;
-    }
-
+    // The nearest flattened group around `a` (which then draws it), or null.
     const Actor *flatGroupOf(const Actor &a) const
     {
         for (QString p = a.parent; !p.isEmpty();) {
@@ -728,13 +849,6 @@ public:
             p = g->parent;
         }
         return nullptr;
-    }
-
-    // A flattened group's children are drawn at the group's "ss" (render.py group_sprite), the rest at 2x.
-    int spriteScale(const Actor &a) const
-    {
-        const Actor *g = flatGroupOf(a);
-        return g ? qMax(1, g->ss) : kSS;
     }
 };
 
@@ -799,19 +913,18 @@ void drawLine(SkCanvas &c, const Actor &a, const Channels &ch, bool snap)
     }
 }
 
-// PIL draws a box shape at ss x with its right/bottom pixel included: 1/ss px past x1, y1 at 1x
-// (ss = 2 for a shape sprite, a flattened group's own "ss" inside it).
+// PIL shapes drawn at f× with inclusive corners: the last f× pixel ends 1/f px past the 1x corner.
 // `replace`: inside a flattened group, as render.py's ImageDraw on the group's RGBA sprite, a shape
 // replaces what is under it instead of blending over it (a stroke over its own fill, a line over a
-// plate). kSrc does that, and its coverage lerp stands in for the 2x edge after the Lanczos.
-void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, double ox, double oy, int ss = kSS,
+// plate). kSrc does that, and its coverage lerp stands in for the f× edge after the Lanczos.
+void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, double ox, double oy, int f = kSS,
                   bool replace = false)
 {
     const double dx = (snap ? roundHalfEven(ch.dx) : ch.dx) + ox;
     const double dy = (snap ? roundHalfEven(ch.dy) : ch.dy) + oy;
-    const double past = 1.0 / qMax(1, ss);
+    const double end = 1.0 / qMax(1, f);
     const SkRect r = SkRect::MakeLTRB(SkScalar(a.box[0] + dx), SkScalar(a.box[1] + dy),
-                                      SkScalar(a.box[0] + a.boxWidth() + past + dx), SkScalar(a.box[3] + past + dy));
+                                      SkScalar(a.box[0] + a.boxWidth() + end + dx), SkScalar(a.box[3] + end + dy));
     c.save();
     if (ch.wipe < 1.0)
         c.clipRect(SkRect::MakeLTRB(r.left() - 8, r.top() - 8, SkScalar(r.left() + roundHalfEven(r.width() * qMax(0.0, ch.wipe))), r.bottom() + 8));
@@ -826,12 +939,39 @@ void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, do
         c.drawRRect(outer, paint);
     }
     if (a.hasStroke && a.stroke > 0) {
+        // PIL's outline is int(stroke·f) f× px, inside the box.
+        const SkScalar w = SkScalar(std::trunc(a.stroke * f) / f);
         SkRRect inner;
-        outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+        outer.inset(w, w, &inner);
         paint.setColor(skColor(a.strokeColor, ch.opacity));
         c.drawDRRect(outer, inner, paint);
     }
     c.restore();
+}
+
+// cv2.circle(..., LINE_AA) on the alpha layer: integer centre on a pixel centre. Measured against
+// OpenCV with an area-coverage model (tools/scene-ref: see docs, "Native mirror (C10n)"): a disc
+// of radius r covers up to r + 0.5; a ring of thickness t is centred on r and 1.3 px wide for
+// t = 1, else 2·ceil(t/2) + 1.7 (r = 22, t = 2: 3.7 px; SSIM 0.997 against cv2). Opacity scales
+// the coverage, as render.py's draw_alpha does ("mixWith" / "mix" only matter on an opaque frame).
+void drawCircle(SkCanvas &c, const Actor &a, const Channels &ch, bool snap)
+{
+    const double op = qMin(1.0, ch.opacity);
+    if (op <= 0.0)
+        return;
+    const double dx = snap ? roundHalfEven(ch.dx) : ch.dx, dy = snap ? roundHalfEven(ch.dy) : ch.dy;
+    const SkScalar cx = SkScalar(a.center.x() + dx + 0.5), cy = SkScalar(a.center.y() + dy + 0.5);
+    SkPaint paint;
+    paint.setAntiAlias(true);
+    paint.setColor(skColor(a.color, op));
+    if (a.hasFill) {
+        c.drawCircle(cx, cy, SkScalar(a.radius + 0.5), paint);
+        return;
+    }
+    const int t = qMax(1, int(std::trunc(a.width)));
+    paint.setStyle(SkPaint::kStroke_Style);
+    paint.setStrokeWidth(SkScalar(t == 1 ? 1.3 : 2 * ((t + 1) / 2) + 1.7));
+    c.drawCircle(cx, cy, SkScalar(a.radius), paint);
 }
 
 class ScenePainterImpl final : public VectorPainter
@@ -876,6 +1016,8 @@ public:
                 sprite ? drawSpriteText(c, a, ch, sampling, 0, 0) : drawMaskText(c, a, ch);
             else if (a.type == QLatin1String("line") || a.type == QLatin1String("route"))
                 drawLine(c, a, ch, sprite);
+            else if (a.type == QLatin1String("circle"))
+                drawCircle(c, a, ch, sprite);
             else if (a.type == QLatin1String("rect"))
                 sprite ? drawSpriteRect(c, a, ch, 0, 0) : drawReplaceRect(c, a, ch);
             else if (a.hasBox)
@@ -1221,29 +1363,45 @@ QHash<QString, QRectF> sceneRestBoxes(const SceneRenderer &renderer)
 {
     QHash<QString, QRectF> boxes;
     const Channels rest;
-    for (const Actor &a : renderer.scene.actors) {
-        // As render.py rest_boxes: a hidden actor has none, a flattened group is one box and its
-        // children are inside it (their coordinates are the group's).
-        if (a.hidden || renderer.inFlatGroup(a))
+    const Scene &sc = renderer.scene;
+    for (const Actor &a : sc.actors) {
+        // As render.py rest_boxes: a hidden actor has none (Smart Keycaps), a flattened group is one
+        // box and its children are inside it. A plain group only moves its children by its "at"
+        // (lines, routes and circles are in group coordinates).
+        if (a.hidden || renderer.flatGroupOf(a))
             continue;
+        QPointF off;
+        for (const Actor *g = sc.actor(a.parent); g; g = sc.actor(g->parent))
+            off += g->groupAt;
         if (a.type == QLatin1String("group")) {
             if (a.flatten)
-                boxes.insert(a.id, QRectF(a.groupAt, QSizeF(a.groupW, a.groupH)));
-            continue;
-        }
-        if (a.type == QLatin1String("text")) {
-            boxes.insert(a.id, renderer.texts.value(a.id).ink);
+                boxes.insert(a.id, QRectF(a.groupAt + off, QSizeF(a.groupW, a.groupH)));
+        } else if (a.type == QLatin1String("text")) {
+            boxes.insert(a.id, renderer.texts.value(a.id).ink.translated(off));
         } else if (a.hasBox) {
-            boxes.insert(a.id, scene::currentBox(a, rest));
+            boxes.insert(a.id, scene::currentBox(a, rest).translated(off));
         } else if (a.type == QLatin1String("line") || a.type == QLatin1String("route")) {
             QList<QPointF> pts = a.type == QLatin1String("line") ? QList<QPointF>{a.from, a.to} : a.points;
             QRectF r(pts.first(), QSizeF(0, 0));
             for (const QPointF &p : pts)
                 r = r.united(QRectF(p, QSizeF(0, 0)));
-            boxes.insert(a.id, r.adjusted(-a.width, -a.width, a.width + 1, a.width + 1));
+            boxes.insert(a.id, r.adjusted(-a.width, -a.width, a.width + 1, a.width + 1).translated(off));
+        } else if (a.type == QLatin1String("circle")) {
+            const double r = a.radius + 2;
+            boxes.insert(a.id, QRectF(a.center + off - QPointF(r, r), QSizeF(2 * r + 1, 2 * r + 1)));
         }
     }
     return boxes;
+}
+
+QImage scenePreviewMatte(const scene::Scene &scene, QSize size)
+{
+    if (scene.previewKind == QLatin1String("solid")) {
+        QImage out(size, QImage::Format_RGB32);
+        out.fill(qRgb(scene.previewColor.r, scene.previewColor.g, scene.previewColor.b));
+        return out;
+    }
+    return sceneBaseMatte(size, scene.mixColor);
 }
 
 } // namespace drift::skia

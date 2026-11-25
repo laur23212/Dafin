@@ -47,25 +47,25 @@ Base: `origin/dafin-edition` (65561313) with `day10-fx-keycaps` (C9, Python refe
 
 ---
 
-# HANDOFF: C10 (progress, menu, anchors), branch day10-fx-smart-utilities
+# HANDOFF: C10n (native mirror of the C10 scenes), branch day10-fx-smart-utilities-native
 
-Base: day9-fx-scene-engine at 6dfbf71 = the C5 result (confirmed against Dafin_C5_SceneEngine_day9_1.zip: same tip hash). C5 itself is not on dafin-edition yet and its first full CI build is pending; this branch depends on it.
+Base: origin/dafin-edition (65561313, contains C5 6dfbf71) + merge of the C10 bundle
+(day10-fx-smart-utilities, a0d10d0). Push C10 first (its own branch/PR), then this one; if C10
+lands with another hash, rebase this branch's own commit onto the new dafin-edition.
 
-## Done (reference side, tested)
-- Scenes: 15_B, 14_A, 14_B, 11, 12_A, 12_B, 12B_C (tools/scene-ref/scenes). 150/150 frames identical to the Part6 scripts
-  (`test_parity.py`, needs the archives; 9 checks incl. 12B_C blank). 15_A also re-checked, 150/150.
-- Semantic tests: `tools/scene-ref/test_smart_utilities.py` (22) + `test_scene_ref.py` (22), CI job `scene-ref` in tests.yml (not yet run on CI).
-- Docs: docs/scene-titles.md "Progress, menu path and anchors (C10)"; DAFIN.md row added.
+## Done
+- Loader: ss, circle, fillGroup, fitBox, after, preview solid; refusals removed. `scene::resolveLayout`
+  mirrors Sprite2x.layout(). Dump identical to scene_core.py for all 9 scenes and param variants.
+- Painter: sprite1x text, group ss 3, centring on PIL textbbox, circle (calibrated vs cv2), solid matte,
+  linear glyph coverage (contrast 0, gamma 1).
+- Tests (tst_scenetitle): core / layout / native frames for the 7 scenes + 12B_C blank, semantic tests.
+- Local headless run (minimal CPU Skia at the pinned commit, Ubuntu 24.04, Qt 6.4): 39/39 functions
+  (sceneClipSurvivesSave not linked locally). Worst SSIM 0.976, worst shift 0.47 px.
 
-## NOT done: native C++ mirror (status NOT_RUN)
-Loader (`SceneTitle.cpp`) refuses `ss`, `fitBox`, `after`, `fillGroup` and the `circle` type on purpose. To mirror, in this order:
-1. `circle` actor + `ss` on text (ss=1 path: sprite `(box.w + 2*4, box.h + 2)`, pen `(bx-4, by-asc)`), group `ss` 2|3.
-2. `Sprite2x.layout()` of render.py: `fitBox` (w = ceil(ink/ss + 2*padX), max with min) then `after` (x = right edge + gap), resolved in `resolveConstraints`.
-3. `preview.background.kind:"solid"`, `mix:"trunc"` on circle, `fillGroup` insets.
-4. `core_values.py` dumps + `tests/data/scene-titles/<scene>/` frames + `tst_scenetitle.cpp` cases; native gate SSIM >= 0.97, 0.5 px.
-All pure 2D, so compatibility mode (OpenGL < 3.3) needs nothing new.
+## Status
+IMPLEMENTED_UNTESTED until CI "Tests on Linux" (SceneTitle) passes. If CI fails: bring the first errors,
+do not guess. Not creator-approved until a native export is reviewed.
 
-## Open creator decisions / assumptions
-- 15_B accent: 178 px track assumed (89 px at 4/8).
-- 14_A: gap 94 (+24 before the target card), unit gaps 71/73 in 14_B follow the approved frames.
-- 15_A for totalSteps != 5 never designed. No text wrapping. Anchor 12B_C has two fixed items.
+## Open creator decisions
+15_A for totalSteps != 5; 15_B 178 px track; 14_A gaps 94/+24; 14_B gaps 71/73; no text wrapping;
+12B_C two fixed items; motion-tracking binding not included.

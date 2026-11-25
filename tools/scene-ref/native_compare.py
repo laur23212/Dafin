@@ -40,8 +40,9 @@ class NativeJob(render.Job):
         return np.array(Image.open(p).convert('RGBA'))
 
     def direct_frame(self, i):
-        # The proofs' own compositing over BASE: uint8(clip(dst*(1-a) + src*a)), truncating.
-        bg = render.base_matte(self.sc.width, self.sc.height, self.r.mix_color).astype(np.float32)
+        # The proofs' own compositing over their matte (BASE or a solid colour):
+        # uint8(clip(dst*(1-a) + src*a)), truncating.
+        bg = render.matte_for(self.sc, self.r.mix_color).astype(np.float32)
         f = self.alpha_frame(i).astype(np.float32)
         a = f[:, :, 3:4] / 255.
         return np.uint8(np.clip(bg * (1 - a) + f[:, :, :3] * a, 0, 255))

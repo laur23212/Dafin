@@ -1,6 +1,8 @@
 // Dafin: Scene Titles (docs/scene-titles.md). The loader against tools/scene-ref/scene_core.py
-// value for value, timing and errors, and the native renderer against the reference renderer's
-// frames of the approved ports at the spec's gate (actor SSIM >= 0.97, position <= 0.5 px).
+// value for value, timing and errors; the measured layout (fitBox, after, fillGroup) against
+// render.py's; and the native renderer against the reference renderer's frames of the approved
+// ports (03b, 13, 13C, 14, 15 and the C10 frame sets) at the spec's gate (actor SSIM >= 0.97,
+// position <= 0.5 px).
 // Smart Keycaps (docs/scene-keycaps.md): phase A against keycaps.py exactly, phase B (laid out with
 // the painter's own measurement) against keycaps.layout within 0.5 px, the approved shortcut titles
 // at the same gate, a param edit that relays the keys out, and the errors that name a key.
@@ -14,6 +16,7 @@
 
 #include <QFile>
 #include <QImage>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QtTest>
 
@@ -92,6 +95,29 @@ QStringList geometry(const scene::Scene &sc)
     return out;
 }
 
+// The format of tools/scene-ref/core_values.py --layout: what Sprite2x.layout() resolves.
+QStringList layoutDump(const scene::Scene &sc)
+{
+    QStringList out;
+    char buf[512];
+    for (const scene::Actor &a : sc.actors) {
+        const QByteArray id = a.id.toUtf8();
+        if (a.type == QLatin1String("group")) {
+            std::snprintf(buf, sizeof buf, "group %s %.3f %.3f %.3f %.3f", id.constData(), a.groupAt.x(), a.groupAt.y(),
+                          a.groupW, a.groupH);
+            out << QString::fromUtf8(buf);
+        } else if (a.type == QLatin1String("text") && a.anchorKind == QLatin1String("baseline")) {
+            std::snprintf(buf, sizeof buf, "text %s %.3f %.3f", id.constData(), a.baseline.x(), a.baseline.y());
+            out << QString::fromUtf8(buf);
+        }
+        if (a.hasFillGroup) {
+            std::snprintf(buf, sizeof buf, "box %s %.3f %.3f %.3f %.3f", id.constData(), a.box[0], a.box[1], a.box[2], a.box[3]);
+            out << QString::fromUtf8(buf);
+        }
+    }
+    return out;
+}
+
 // One geometry line against the reference's: same actor and kind; a text's size, centring and
 // hidden flag exactly; every position and extent within 0.5 px. Empty when they agree.
 QString geometryMismatch(const QString &got, const QString &want)
@@ -116,6 +142,45 @@ QString geometryMismatch(const QString &got, const QString &want)
         }
     }
     return {};
+}
+
+QStringList readLines(const QString &name)
+{
+    QFile f(QStringLiteral(DRIFT_TEST_DATA_DIR "/scene-titles/") + name);
+    if (!f.open(QIODevice::ReadOnly))
+        return {};
+    return QString::fromUtf8(f.readAll()).split(QLatin1Char('\n'), Qt::SkipEmptyParts);
+}
+
+QJsonObject params(const char *json)
+{
+    return QJsonDocument::fromJson(QByteArray(json)).object();
+}
+
+// The document with one actor's key set (top-level actors and one level of group children).
+QJsonObject withActorKey(QJsonObject doc, const QString &id, const QString &key, const QJsonValue &value)
+{
+    QJsonArray actors = doc.value(QStringLiteral("actors")).toArray();
+    for (int i = 0; i < actors.size(); ++i) {
+        QJsonObject a = actors.at(i).toObject();
+        if (a.value(QStringLiteral("id")).toString() == id) {
+            a.insert(key, value);
+            actors.replace(i, a);
+            break;
+        }
+        QJsonArray kids = a.value(QStringLiteral("children")).toArray();
+        for (int k = 0; k < kids.size(); ++k) {
+            QJsonObject c = kids.at(k).toObject();
+            if (c.value(QStringLiteral("id")).toString() == id) {
+                c.insert(key, value);
+                kids.replace(k, c);
+                a.insert(QStringLiteral("children"), kids);
+                actors.replace(i, a);
+            }
+        }
+    }
+    doc.insert(QStringLiteral("actors"), actors);
+    return doc;
 }
 
 QImage overBase(const QImage &frame)
@@ -244,6 +309,21 @@ private slots:
         QTest::newRow("03b default") << scenePath("03b_LT_B_25") << QString() << QStringLiteral("core_03b_default.txt");
         // Smart Keycaps, phase A: no font is involved, so the expanded actors match exactly.
         keycapRows();
+        // C10: progress, menu path, anchors (tools/scene-ref/core_values.py, same format).
+        QTest::newRow("15B default") << scenePath("15_B_Definition_Card") << QString() << QStringLiteral("core_15_B_default.txt");
+        QTest::newRow("15B clamped") << scenePath("15_B_Definition_Card") << QStringLiteral(R"({"totalEntries":8,"entryIndex":40})")
+                                     << QStringLiteral("core_15_B_clamped.txt");
+        QTest::newRow("14A default") << scenePath("14_A_Menu_Path") << QString() << QStringLiteral("core_14_A_default.txt");
+        QTest::newRow("14A two") << scenePath("14_A_Menu_Path") << QStringLiteral(R"({"itemCount":2})") << QStringLiteral("core_14_A_two.txt");
+        QTest::newRow("14B default") << scenePath("14_B_Setting_Change") << QString() << QStringLiteral("core_14_B_default.txt");
+        QTest::newRow("14B no unit") << scenePath("14_B_Setting_Change") << QStringLiteral(R"({"unit":""})")
+                                     << QStringLiteral("core_14_B_nounit.txt");
+        QTest::newRow("11 default") << scenePath("11_AnchorNote_v4") << QString() << QStringLiteral("core_11_default.txt");
+        QTest::newRow("12A default") << scenePath("12_A_Anchor_Bracket") << QString() << QStringLiteral("core_12_A_default.txt");
+        QTest::newRow("12B default") << scenePath("12_B_Anchor_Measure") << QString() << QStringLiteral("core_12_B_default.txt");
+        QTest::newRow("12BC default") << scenePath("12B_C_Anchor_Index_Manual") << QString() << QStringLiteral("core_12B_C_default.txt");
+        QTest::newRow("12BC blank") << scenePath("12B_C_Anchor_Index_Manual") << QStringLiteral(R"({"badge1":"","badge2":""})")
+                                    << QStringLiteral("core_12B_C_blank.txt");
     }
 
 
@@ -330,6 +410,143 @@ private slots:
         QJsonObject wrong = step;
         wrong.insert(QStringLiteral("format"), QStringLiteral("dafin.title-template"));
         QVERIFY(!scene::loadScene(wrong, {}, &error));
+
+        // C10 fields: what the spec allows loads, anything else is refused with a reason.
+        const QJsonObject bracket = readJson(scenePath("12_A_Anchor_Bracket"));
+        QVERIFY2(scene::loadScene(bracket, {}, &error), qPrintable(error));
+        QVERIFY(!scene::loadScene(withActorKey(bracket, QStringLiteral("label"), QStringLiteral("ss"), 3), {}, &error));
+        QVERIFY(error.contains(QLatin1String("must be 1 or 2")));
+        const QJsonObject menu = readJson(scenePath("14_A_Menu_Path"));
+        QVERIFY(!scene::loadScene(withActorKey(menu, QStringLiteral("card1"), QStringLiteral("ss"), 4), {}, &error));
+        QVERIFY(error.contains(QLatin1String("must be 2 or 3")));
+        QVERIFY(!scene::loadScene(withActorKey(menu, QStringLiteral("card1"), QStringLiteral("flatten"), false), {}, &error));
+        QVERIFY(error.contains(QLatin1String("fitBox belongs on a flattened group")));
+        QVERIFY(!scene::loadScene(withActorKey(menu, QStringLiteral("card1"), QStringLiteral("fitBox"),
+                                               QJsonObject{{QStringLiteral("actor"), QStringLiteral("caption")}}),
+                                  {}, &error));
+        QVERIFY(error.contains(QLatin1String("text child")));
+        const QJsonObject setting = readJson(scenePath("14_B_Setting_Change"));
+        QVERIFY(!scene::loadScene(withActorKey(setting, QStringLiteral("currentUnit"), QStringLiteral("after"),
+                                               QJsonObject{{QStringLiteral("actor"), QStringLiteral("nope")}}),
+                                  {}, &error));
+        QVERIFY(error.contains(QLatin1String("after unknown actor")));
+        QVERIFY(!scene::loadScene(withActorKey(setting, QStringLiteral("rule"), QStringLiteral("after"),
+                                               QJsonObject{{QStringLiteral("actor"), QStringLiteral("title")}}),
+                                  {}, &error));
+        QVERIFY(error.contains(QLatin1String("groups and texts")));
+    }
+
+    // fitBox / after / fillGroup with the native font stack, against render.py's Sprite2x.layout()
+    // (tools/scene-ref/core_values.py --layout), value for value.
+    void layoutMatchesReference_data()
+    {
+        QTest::addColumn<QString>("scene");
+        QTest::addColumn<QString>("params");
+        QTest::addColumn<QString>("expected");
+        QTest::newRow("14A default") << scenePath("14_A_Menu_Path") << QString() << QStringLiteral("layout_14_A_default.txt");
+        QTest::newRow("14A long") << scenePath("14_A_Menu_Path")
+                                  << QStringLiteral(R"({"itemCount":5,"item2":"Export settings and more"})")
+                                  << QStringLiteral("layout_14_A_long.txt");
+        QTest::newRow("14B default") << scenePath("14_B_Setting_Change") << QString() << QStringLiteral("layout_14_B_default.txt");
+        QTest::newRow("14B long") << scenePath("14_B_Setting_Change")
+                                  << QStringLiteral(R"({"currentValue":"1080","newValue":"2160","unit":"PX"})")
+                                  << QStringLiteral("layout_14_B_long.txt");
+    }
+
+    void layoutMatchesReference()
+    {
+        QFETCH(QString, scene);
+        QFETCH(QString, params);
+        QFETCH(QString, expected);
+        const skia::SceneBuild build = skia::sceneRenderer(readJson(scene), QJsonDocument::fromJson(params.toUtf8()).object());
+        QVERIFY2(build.renderer, qPrintable(build.error));
+        const QStringList want = readLines(expected);
+        const QStringList got = layoutDump(skia::sceneOf(*build.renderer));
+        QVERIFY(!want.isEmpty());
+        QCOMPARE(got.size(), want.size());
+        for (int i = 0; i < want.size(); ++i)
+            QCOMPARE(got.at(i), want.at(i));
+    }
+
+    void menuCardsFollowTheirLabels()
+    {
+        const QJsonObject doc = readJson(scenePath("14_A_Menu_Path"));
+        const auto build = [&](const char *json) {
+            const skia::SceneBuild b = skia::sceneRenderer(doc, params(json));
+            return b.renderer ? skia::sceneOf(*b.renderer) : scene::Scene();
+        };
+        const scene::Scene def = build("{}");
+        // The approved geometry: 208 / 274 / 244 px cards at 341, 643 and 1035.
+        QCOMPARE(def.actor(QStringLiteral("card1"))->groupW, 208.0);
+        QCOMPARE(def.actor(QStringLiteral("card2"))->groupW, 274.0);
+        QCOMPARE(def.actor(QStringLiteral("card3"))->groupW, 244.0);
+        QCOMPARE(def.actor(QStringLiteral("card2"))->groupAt.x(), 643.0);
+        QCOMPARE(def.actor(QStringLiteral("card3"))->groupAt.x(), 1035.0);
+        // A long label widens its card and pushes the separator and the next card right.
+        const scene::Scene longer = build(R"({"item2":"A much longer menu entry"})");
+        QVERIFY(longer.actor(QStringLiteral("card2"))->groupW > 274.0);
+        QVERIFY(longer.actor(QStringLiteral("chev2"))->groupAt.x() > def.actor(QStringLiteral("chev2"))->groupAt.x());
+        QCOMPARE(longer.actor(QStringLiteral("card3"))->groupAt.x() - longer.actor(QStringLiteral("card2"))->groupAt.x(),
+                 longer.actor(QStringLiteral("card2"))->groupW + 118.0); // gap 94 + 24 before the destination
+        // The plate fills the fitted card.
+        QCOMPARE(longer.actor(QStringLiteral("card2Plate"))->box[2], longer.actor(QStringLiteral("card2"))->groupW - 3.0);
+        // Short labels keep the minimum; two items drop the third card and its separator.
+        QCOMPARE(build(R"({"item1":"A","item2":"B","item3":"C"})").actor(QStringLiteral("card2"))->groupW, 274.0);
+        const scene::Scene two = build(R"({"itemCount":2})");
+        QVERIFY(!two.actor(QStringLiteral("card3")) && !two.actor(QStringLiteral("chev2")));
+        QVERIFY(skia::sceneRenderer(doc, params(R"({"item2":""})")).renderer);
+    }
+
+    void unitFollowsTheValue()
+    {
+        const QJsonObject doc = readJson(scenePath("14_B_Setting_Change"));
+        const skia::SceneBuild a = skia::sceneRenderer(doc);
+        const skia::SceneBuild b = skia::sceneRenderer(doc, params(R"({"currentValue":"1080"})"));
+        QVERIFY(a.renderer && b.renderer);
+        const double ua = skia::sceneOf(*a.renderer).actor(QStringLiteral("currentUnit"))->baseline.x();
+        const double ub = skia::sceneOf(*b.renderer).actor(QStringLiteral("currentUnit"))->baseline.x();
+        QCOMPARE(ua, 544.0); // the approved frame: "30" at 347 + 71
+        QVERIFY(ub > ua + 50);
+        const skia::SceneBuild none = skia::sceneRenderer(doc, params(R"({"unit":""})"));
+        QVERIFY(none.renderer && !skia::sceneOf(*none.renderer).actor(QStringLiteral("currentUnit")));
+    }
+
+    void emptyBadgeIsAPlainRing()
+    {
+        const QJsonObject doc = readJson(scenePath("12B_C_Anchor_Index_Manual"));
+        const auto inside = [&](const char *json) {
+            const skia::SceneBuild b = skia::sceneRenderer(doc, params(json));
+            if (!b.renderer)
+                return -1;
+            const QImage img = skia::renderSceneFrame(b.renderer, 3.0);
+            int ink = 0;
+            for (int y = 380 - 12; y <= 380 + 12; ++y)
+                for (int x = 1310 - 12; x <= 1310 + 12; ++x)
+                    ink += qAlpha(img.pixel(x, y)) > 0;
+            // the ring itself is there either way
+            return qAlpha(img.pixel(1310 + 22, 380)) > 128 && qAlpha(img.pixel(1310, 380 - 22)) > 128 ? ink : -2;
+        };
+        QVERIFY(inside("{}") > 20);                         // "A" inside its ring
+        QCOMPARE(inside(R"({"badge1":"","badge2":""})"), 0); // plain ring
+        QVERIFY(inside(R"({"badge1":"","badge2":"B"})") == 0);
+        const skia::SceneBuild one = skia::sceneRenderer(doc, params(R"({"badge1":"X","badge2":""})"));
+        QVERIFY(one.renderer);
+        const scene::Scene &sc = skia::sceneOf(*one.renderer);
+        QVERIFY(sc.actor(QStringLiteral("badge1Text")) && !sc.actor(QStringLiteral("badge2Text")) && sc.actor(QStringLiteral("badge2")));
+    }
+
+    void definitionAccentIsShort()
+    {
+        const QJsonObject doc = readJson(scenePath("15_B_Definition_Card"));
+        const auto end = [&](const char *json) {
+            const std::optional<scene::Scene> sc = scene::loadScene(doc, params(json));
+            return sc ? sc->actor(QStringLiteral("accent"))->to.x() - 358.0 : -1.0;
+        };
+        QCOMPARE(end("{}"), 89.0); // 4/8 of the 178 px track
+        QCOMPARE(end(R"({"entryIndex":8,"totalEntries":8})"), 178.0);
+        QCOMPARE(end(R"({"entryIndex":99,"totalEntries":8})"), 178.0); // clamped, never a big bar
+        QCOMPARE(end(R"({"entryIndex":3,"totalEntries":5})"), 107.0);
+        QVERIFY(skia::sceneRenderer(doc).renderer); // loads natively: no new fields
     }
 
     void cadenceSamplesWithoutChangingLength()
@@ -397,36 +614,43 @@ private slots:
         QTest::addColumn<QString>("scene");
         QTest::addColumn<QString>("name");
         QTest::addColumn<QList<int>>("frames");
+        QTest::addColumn<QString>("params");
         const QList<int> ports{10, 20, 40, 65, 135};
-        QTest::newRow("15A") << scenePath("15_A_Step_Focus") << QStringLiteral("15_A_Step_Focus") << ports;
-        QTest::newRow("03b") << scenePath("03b_LT_B_25") << QStringLiteral("03b_LT_B_25") << ports;
+        QTest::newRow("15A") << scenePath("15_A_Step_Focus") << QStringLiteral("15_A_Step_Focus") << ports << QString();
+        QTest::newRow("03b") << scenePath("03b_LT_B_25") << QStringLiteral("03b_LT_B_25") << ports << QString();
         // The Stage03b/13/13C/14/15 ports (identical to their approved scripts on all 150 frames).
-        QTest::newRow("03b_LT_A_25") << scenePath("03b_LT_A_25") << QStringLiteral("03b_LT_A_25") << ports;
-        QTest::newRow("03b_LT_A_60") << scenePath("03b_LT_A_60") << QStringLiteral("03b_LT_A_60") << ports;
-        QTest::newRow("03b_LT_B_60") << scenePath("03b_LT_B_60") << QStringLiteral("03b_LT_B_60") << ports;
-        QTest::newRow("03b_LT_C_25_REV") << scenePath("03b_LT_C_25_REV") << QStringLiteral("03b_LT_C_25_REV") << ports;
-        QTest::newRow("03b_LT_C_60_REV") << scenePath("03b_LT_C_60_REV") << QStringLiteral("03b_LT_C_60_REV") << ports;
-        QTest::newRow("13_A_Shortcut_Keys") << scenePath("13_A_Shortcut_Keys") << QStringLiteral("13_A_Shortcut_Keys") << ports;
-        QTest::newRow("13_B_Source_Credit") << scenePath("13_B_Source_Credit") << QStringLiteral("13_B_Source_Credit") << ports;
-        QTest::newRow("13_C_Editorial_Checklist") << scenePath("13_C_Editorial_Checklist") << QStringLiteral("13_C_Editorial_Checklist") << ports;
-        QTest::newRow("13C_U1_Universal_Horizontal_Copy") << scenePath("13C_U1_Universal_Horizontal_Copy") << QStringLiteral("13C_U1_Universal_Horizontal_Copy") << ports;
-        QTest::newRow("13C_U2_Universal_Vertical_Paste") << scenePath("13C_U2_Universal_Vertical_Paste") << QStringLiteral("13C_U2_Universal_Vertical_Paste") << ports;
-        QTest::newRow("13C_U3_Mac_Dual_Names_Force_Quit") << scenePath("13C_U3_Mac_Dual_Names_Force_Quit") << QStringLiteral("13C_U3_Mac_Dual_Names_Force_Quit") << ports;
-        QTest::newRow("14_A_Menu_Path") << scenePath("14_A_Menu_Path") << QStringLiteral("14_A_Menu_Path") << ports;
-        QTest::newRow("14_B_Setting_Change") << scenePath("14_B_Setting_Change") << QStringLiteral("14_B_Setting_Change") << ports;
-        QTest::newRow("15_B_Definition_Card") << scenePath("15_B_Definition_Card") << QStringLiteral("15_B_Definition_Card") << ports;
-        QTest::newRow("15_C_Pro_Tip") << scenePath("15_C_Pro_Tip") << QStringLiteral("15_C_Pro_Tip") << ports;
+        QTest::newRow("03b_LT_A_25") << scenePath("03b_LT_A_25") << QStringLiteral("03b_LT_A_25") << ports << QString();
+        QTest::newRow("03b_LT_A_60") << scenePath("03b_LT_A_60") << QStringLiteral("03b_LT_A_60") << ports << QString();
+        QTest::newRow("03b_LT_B_60") << scenePath("03b_LT_B_60") << QStringLiteral("03b_LT_B_60") << ports << QString();
+        QTest::newRow("03b_LT_C_25_REV") << scenePath("03b_LT_C_25_REV") << QStringLiteral("03b_LT_C_25_REV") << ports << QString();
+        QTest::newRow("03b_LT_C_60_REV") << scenePath("03b_LT_C_60_REV") << QStringLiteral("03b_LT_C_60_REV") << ports << QString();
+        QTest::newRow("13_A_Shortcut_Keys") << scenePath("13_A_Shortcut_Keys") << QStringLiteral("13_A_Shortcut_Keys") << ports << QString();
+        QTest::newRow("13_B_Source_Credit") << scenePath("13_B_Source_Credit") << QStringLiteral("13_B_Source_Credit") << ports << QString();
+        QTest::newRow("13_C_Editorial_Checklist") << scenePath("13_C_Editorial_Checklist") << QStringLiteral("13_C_Editorial_Checklist") << ports << QString();
+        QTest::newRow("13C_U1_Universal_Horizontal_Copy") << scenePath("13C_U1_Universal_Horizontal_Copy") << QStringLiteral("13C_U1_Universal_Horizontal_Copy") << ports << QString();
+        QTest::newRow("13C_U2_Universal_Vertical_Paste") << scenePath("13C_U2_Universal_Vertical_Paste") << QStringLiteral("13C_U2_Universal_Vertical_Paste") << ports << QString();
+        QTest::newRow("13C_U3_Mac_Dual_Names_Force_Quit") << scenePath("13C_U3_Mac_Dual_Names_Force_Quit") << QStringLiteral("13C_U3_Mac_Dual_Names_Force_Quit") << ports << QString();
+        QTest::newRow("14_A_Menu_Path") << scenePath("14_A_Menu_Path") << QStringLiteral("14_A_Menu_Path") << ports << QString();
+        QTest::newRow("14_B_Setting_Change") << scenePath("14_B_Setting_Change") << QStringLiteral("14_B_Setting_Change") << ports << QString();
+        QTest::newRow("15_B_Definition_Card") << scenePath("15_B_Definition_Card") << QStringLiteral("15_B_Definition_Card") << ports << QString();
+        QTest::newRow("15_C_Pro_Tip") << scenePath("15_C_Pro_Tip") << QStringLiteral("15_C_Pro_Tip") << ports << QString();
         // Smart Keycaps: the approved shortcut titles, two entrance frames and two of the hold. The
         // reference renders them identical to the approved scripts (test_parity.py --keycaps13
         // --keycaps13c), and the U1/U2/U3 holds to the approved source holds.
         const QList<int> keys{25, 40, 75, 110};
-        QTest::newRow("13A") << scenePath("13_A_Shortcut_Keys") << QStringLiteral("13_A_Shortcut_Keys") << keys;
+        QTest::newRow("13A") << scenePath("13_A_Shortcut_Keys") << QStringLiteral("13_A_Shortcut_Keys") << keys << QString();
         QTest::newRow("13C U1") << scenePath("13C_U1_Universal_Horizontal_Copy")
-                                << QStringLiteral("13C_U1_Universal_Horizontal_Copy") << keys;
+                                << QStringLiteral("13C_U1_Universal_Horizontal_Copy") << keys << QString();
         QTest::newRow("13C U2") << scenePath("13C_U2_Universal_Vertical_Paste")
-                                << QStringLiteral("13C_U2_Universal_Vertical_Paste") << keys;
+                                << QStringLiteral("13C_U2_Universal_Vertical_Paste") << keys << QString();
         QTest::newRow("13C U3") << scenePath("13C_U3_Mac_Dual_Names_Force_Quit")
-                                << QStringLiteral("13C_U3_Mac_Dual_Names_Force_Quit") << keys;
+                                << QStringLiteral("13C_U3_Mac_Dual_Names_Force_Quit") << keys << QString();
+        // C10 (frames: render.py render <scene> --frames 10,20,40,65,135 --no-mp4 [--param ...]); 15_B,
+        // 14_A and 14_B are the port rows above, now on the C10 param scenes.
+        for (const char *n : {"11_AnchorNote_v4", "12_A_Anchor_Bracket", "12_B_Anchor_Measure", "12B_C_Anchor_Index_Manual"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
+        QTest::newRow("12B_C blank") << scenePath("12B_C_Anchor_Index_Manual") << QStringLiteral("12B_C_Anchor_Index_Manual_blank")
+                                     << ports << QStringLiteral(R"({"badge1":"","badge2":""})");
     }
 
     // Reference frames: tools/scene-ref/render.py render <scene> --frames <frames> --no-mp4.
@@ -436,7 +660,8 @@ private slots:
         QFETCH(QString, scene);
         QFETCH(QString, name);
         QFETCH(QList<int>, frames);
-        const skia::SceneBuild build = skia::sceneRenderer(readJson(scene));
+        QFETCH(QString, params);
+        const skia::SceneBuild build = skia::sceneRenderer(readJson(scene), QJsonDocument::fromJson(params.toUtf8()).object());
         QVERIFY2(build.renderer, qPrintable(build.error));
         const scene::Scene &sc = skia::sceneOf(*build.renderer);
         const QHash<QString, QRectF> boxes = skia::sceneRestBoxes(*build.renderer);

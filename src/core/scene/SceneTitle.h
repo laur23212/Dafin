@@ -62,13 +62,19 @@ struct Channels
 
 struct Actor
 {
-    QString id, role, type; // type: text rect roundRect line route ellipse ring group
+    QString id, role, type; // type: text rect roundRect line route ellipse ring circle group
     QString parent;         // id of the enclosing group, empty at top level
     QString keycapsBlock;   // the keycaps block that made this actor (docs/scene-keycaps.md), else empty
     bool hidden = false;    // "_hidden": not drawn (Smart Keycaps: a "+" that would start a wrapped row)
     bool snapTrunc = false; // "snap" (or "offsetSnap"): "trunc": the offsets are truncated to whole px, not rounded
     TimedBlock in, out;
     QStringList dependsOn;
+    // "ss", one field: text 1 (sprite1x, no reduction) or 2 (sprite2x); a flattened group's sprite factor
+    // 2 or 3 (the Mac keycaps, the 13C/14 tags; "supersample" is its older spelling on groups).
+    int ss = 2;
+    // "after": {"actor": id, "gap": n}: x = the target's right edge + gap (resolveLayout).
+    QString afterActor;
+    double afterGap = 0.0;
 
     // text
     QString text, font;
@@ -105,19 +111,29 @@ struct Actor
     bool wipeDown = false;  // "wipeDir": "down": the wipe grows the height instead of the width
     QStringList widthOf;
     double restWidth = -1.0; // resolved by resolveConstraints; < 0 = box width
+    // "fillGroup": [l, t, r, b]: the box is the enclosing flattened group's size minus these
+    // insets (resolveLayout writes it into `box` once the group's width is known).
+    bool hasFillGroup = false;
+    double fillGroup[4] = {0, 0, 0, 0};
 
-    // line / route
+    // line / route / circle
     QPointF from, to;
     QList<QPointF> points;
     double width = 1.0;
     int alpha = 255;        // line "alpha": its ink alpha in a flattened group (PIL replaces, it does not blend)
-    bool mixWith = false;
+    bool mixWith = false;   // opacityMode "mixWith" (direct RGB only; the alpha layer ignores it)
+    bool mixTrunc = false;  // "mix": "trunc" (circle, direct RGB only)
+
+    // circle (cv2.circle): integer centre and radius; disc when hasFill, else a ring of `width`
+    QPointF center;
 
     // group
     QPointF groupAt;
     double groupW = 0.0, groupH = 0.0;
     bool flatten = false;
-    int ss = 2;             // "ss" (or "supersample"): a flattened group's sprite factor (2; 3 for Mac keycaps, 13C/14 tags)
+    // "fitBox": {"actor": text child, "padX": n, "min": n} (flattened groups)
+    QString fitBoxActor;
+    double fitBoxPadX = 0.0, fitBoxMin = 0.0;
 
     bool isShapeBox() const { return hasBox; }
     double boxWidth() const { return restWidth >= 0.0 ? restWidth : box[2] - box[0]; }
@@ -147,6 +163,9 @@ struct Scene
     double cadence = 0.0; // 0 = "match"
     Profile profile = Profile::Sprite2x;
     Rgba mixColor{9, 12, 17, 255};
+    // preview.background: "base" (the Stage13+ gradient), "solid" (previewColor) or "video"
+    QString previewKind = QStringLiteral("base");
+    Rgba previewColor{9, 12, 17, 255};
     QHash<QString, FontSpec> fonts;
     QList<ParamSpec> params;
     QVariantMap values;    // resolved param values
@@ -188,6 +207,19 @@ using InkFn = std::function<std::optional<QRectF>(const Actor &text)>;
 // fitTo / widthOf: fills Actor::restWidth for every rect that has either. Must run again after
 // any text change (the painter does, whenever it is built for new values).
 bool resolveConstraints(Scene &scene, const InkFn &ink, QString *error = nullptr);
+// Measured layout (render.py Sprite2x.layout): "fitBox" widens a flattened group to its text
+// child's ink, then "after" puts a group or text right of its target, in dependency order, then
+// every "fillGroup" child gets its box from its group. Runs once per build, before the texts are
+// drawn (their pens move). Both callbacks measure at the font size × `ss`:
+//  - inkWidth: PIL's textbbox width (right − left), px at that scale;
+//  - advance:  PIL's getlength, px at that scale (the layout divides by ss and rounds half to even).
+struct LayoutFns
+{
+    std::function<std::optional<double>(const Actor &text, int ss)> inkWidth;
+    std::function<std::optional<double>(const Actor &text, int ss)> advance;
+};
+bool resolveLayout(Scene &scene, const LayoutFns &fns, QString *error = nullptr);
+
 // A box actor's box at time t: its rest width scaled by the wipe (the mask1x "current box").
 QRectF currentBox(const Actor &actor, const Channels &ch);
 

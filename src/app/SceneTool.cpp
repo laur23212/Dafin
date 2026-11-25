@@ -113,7 +113,9 @@ int runSceneTool(int argc, char *argv[])
 
     const QJsonObject bg = sc.raw.value(QStringLiteral("preview")).toObject().value(QStringLiteral("background")).toObject();
     const QString bgKind = bg.value(QStringLiteral("kind")).toString(QStringLiteral("base"));
-    const bool baseMatte = matte == QLatin1String("base") || (matte == QLatin1String("reference") && bgKind == QLatin1String("base"));
+    // "reference" draws the scene's own matte when it is a picture we make (BASE or a flat colour).
+    const bool baseMatte = matte == QLatin1String("base")
+                        || (matte == QLatin1String("reference") && (bgKind == QLatin1String("base") || bgKind == QLatin1String("solid")));
     QString note;
     if (matte == QLatin1String("reference") && !baseMatte)
         note = QStringLiteral("the %1 background is composited by tools/scene-ref/native_compare.py").arg(bgKind);
@@ -123,7 +125,9 @@ int runSceneTool(int argc, char *argv[])
         std::fprintf(stderr, "could not create %s\n", qPrintable(out));
         return 1;
     }
-    const QImage base = baseMatte ? skia::sceneBaseMatte(size, sc.mixColor) : QImage();
+    const QImage base = !baseMatte ? QImage()
+                      : matte == QLatin1String("reference") ? skia::scenePreviewMatte(sc, size)
+                                                            : skia::sceneBaseMatte(size, sc.mixColor);
     for (int i : std::as_const(list)) {
         const double t = scene::designTime(sc, duration, fps, i / fps);
         const QImage frame = skia::renderSceneFrame(build.renderer, t, size);

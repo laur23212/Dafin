@@ -904,12 +904,43 @@ struct Loader
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
             a.dependsOn << d.toString();
         const QString &t = a.type;
-        // Reference-renderer additions (docs/scene-titles.md, "Progress, menu path and anchors"): the
-        // native painter does not draw them yet, so say so instead of drawing a wrong frame.
-        for (const char *field : {"ss", "fitBox", "after", "fillGroup"})
-            if (r.contains(QLatin1String(field)))
-                fail(QStringLiteral("%1: '%2' is not drawn by the native renderer yet (reference renderer only)")
-                         .arg(a.id, QLatin1String(field)));
+        // docs/scene-titles.md, "Progress, menu path and anchors (C10)": ss, after, fitBox, fillGroup.
+        // One "ss" (text 1|2, flattened group 2|3); groups also accept the older "supersample".
+        const QString ssKey = r.contains(QStringLiteral("ss")) ? QStringLiteral("ss")
+                              : (t == QLatin1String("group") && r.contains(QStringLiteral("supersample")))
+                                  ? QStringLiteral("supersample")
+                                  : QString();
+        if (!ssKey.isEmpty()) {
+            const QJsonValue ssv = r.value(ssKey);
+            const int ss = ssv.isDouble() && ssv.toDouble() == std::floor(ssv.toDouble()) ? ssv.toInt() : 0;
+            if (t == QLatin1String("text")) {
+                if (ss != 1 && ss != 2)
+                    fail(QStringLiteral("%1: text \"ss\" must be 1 or 2").arg(a.id));
+                a.ss = ss;
+            } else if (t == QLatin1String("group")) {
+                if (ss != 2 && ss != 3)
+                    fail(QStringLiteral("%1: group \"%2\" must be 2 or 3").arg(a.id, ssKey));
+                a.ss = ss;
+            }
+        }
+        if (r.contains(QStringLiteral("after"))) {
+            const QJsonObject af = r.value(QStringLiteral("after")).toObject();
+            a.afterActor = af.value(QStringLiteral("actor")).toString();
+            if (a.afterActor.isEmpty())
+                fail(QStringLiteral("%1: after needs an actor").arg(a.id));
+            if (t != QLatin1String("group") && t != QLatin1String("text"))
+                fail(QStringLiteral("%1: after is for groups and texts").arg(a.id));
+            a.afterGap = af.contains(QStringLiteral("gap")) ? numberOf(af.value(QStringLiteral("gap")), a.id + QStringLiteral(": after.gap"))
+                                                            : 0.0;
+        }
+        if (r.contains(QStringLiteral("fillGroup"))) {
+            const QJsonArray ins = r.value(QStringLiteral("fillGroup")).toArray();
+            if (ins.size() != 4)
+                fail(QStringLiteral("%1: fillGroup must be [left, top, right, bottom]").arg(a.id));
+            a.hasFillGroup = true;
+            for (int i = 0; i < 4; ++i)
+                a.fillGroup[i] = numberOf(ins.at(i), a.id + QStringLiteral(": fillGroup"));
+        }
         const QJsonObject eff = r.value(QStringLiteral("effect")).toObject();
         const QString effType = eff.value(QStringLiteral("type")).toString();
         if (effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
@@ -972,10 +1003,11 @@ struct Loader
         } else if (t == QLatin1String("rect") || t == QLatin1String("roundRect") || t == QLatin1String("ellipse")
                    || t == QLatin1String("ring")) {
             const QJsonArray box = r.value(QStringLiteral("box")).toArray();
-            if (box.size() != 4)
+            // A fillGroup child takes its box from the group (resolveLayout); "box" is optional.
+            if (box.size() != 4 && !(a.hasFillGroup && box.isEmpty()))
                 fail(QStringLiteral("%1: box must be [x0, y0, x1, y1]").arg(a.id));
             a.hasBox = true;
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < 4 && i < box.size(); ++i)
                 a.box[i] = numberOf(box.at(i), a.id + QStringLiteral(": box"));
             a.radius = r.value(QStringLiteral("radius")).toDouble();
             if (t == QLatin1String("rect") || t == QLatin1String("ring")) {
@@ -1026,6 +1058,16 @@ struct Loader
             if (colorCarriesAlpha(jsonToValue(r.value(QStringLiteral("color"))), palette))
                 a.alpha = a.color.a;
             a.mixWith = r.value(QStringLiteral("opacityMode")).toString() == QLatin1String("mixWith");
+        } else if (t == QLatin1String("circle")) {
+            // cv2.circle takes ints: the reference truncates centre and radius (int()).
+            const QPointF c = pointOf(r.value(QStringLiteral("center")), a.id + QStringLiteral(": center"));
+            a.center = QPointF(std::trunc(c.x()), std::trunc(c.y()));
+            a.radius = std::trunc(numberOf(r.value(QStringLiteral("radius")), a.id + QStringLiteral(": radius")));
+            a.hasFill = !r.contains(QStringLiteral("fill")) || truthy(jsonToValue(r.value(QStringLiteral("fill"))));
+            a.width = r.contains(QStringLiteral("width")) ? numberOf(r.value(QStringLiteral("width")), a.id + QStringLiteral(": width")) : 1.0;
+            a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
+            a.mixWith = r.value(QStringLiteral("opacityMode")).toString() == QLatin1String("mixWith");
+            a.mixTrunc = r.value(QStringLiteral("mix")).toString() == QLatin1String("trunc");
         } else if (t == QLatin1String("route")) {
             for (const QJsonValue &p : r.value(QStringLiteral("points")).toArray())
                 a.points << pointOf(p, a.id + QStringLiteral(": points"));
@@ -1045,14 +1087,15 @@ struct Loader
             a.flatten = r.value(QStringLiteral("flatten")).toBool();
             if (a.flatten && !generated && (a.groupW <= 0 || a.groupH <= 0))
                 fail(QStringLiteral("%1: a flattened group needs size [w, h]").arg(a.id));
-            // "ss", or its older spelling "supersample" (the Stage13C/14 ports): one field.
-            const QString ssKey = r.contains(QStringLiteral("ss")) ? QStringLiteral("ss")
-                                  : r.contains(QStringLiteral("supersample")) ? QStringLiteral("supersample")
-                                                                               : QString();
-            if (!ssKey.isEmpty()) {
-                a.ss = int(numberOf(r.value(ssKey), a.id + QStringLiteral(": ") + ssKey));
-                if (a.ss < 1)
-                    fail(QStringLiteral("%1: %2 must be a whole number of at least 1").arg(a.id, ssKey));
+            if (r.contains(QStringLiteral("fitBox"))) {
+                if (!a.flatten)
+                    fail(QStringLiteral("%1: fitBox belongs on a flattened group").arg(a.id));
+                const QJsonObject fb = r.value(QStringLiteral("fitBox")).toObject();
+                a.fitBoxActor = fb.value(QStringLiteral("actor")).toString();
+                a.fitBoxPadX = fb.value(QStringLiteral("padX")).toDouble();
+                a.fitBoxMin = std::trunc(fb.value(QStringLiteral("min")).toDouble()); // int(min)
+                if (a.fitBoxActor.isEmpty())
+                    fail(QStringLiteral("%1: fitBox must name a text child of the group").arg(a.id));
             }
         }
         // Static alignment is resolved after sync, on the parsed actors.
@@ -1069,10 +1112,10 @@ struct Loader
         QVariantMap env = baseEnv();
         for (auto it = local.begin(); it != local.end(); ++it)
             env.insert(it.key(), it.value());
-        static const QSet<QString> types{QStringLiteral("text"),    QStringLiteral("rect"),  QStringLiteral("roundRect"),
-                                         QStringLiteral("line"),    QStringLiteral("route"), QStringLiteral("ellipse"),
-                                         QStringLiteral("ring"),    QStringLiteral("group"), QStringLiteral("repeat"),
-                                         QStringLiteral("keycaps")};
+        static const QSet<QString> types{QStringLiteral("text"),   QStringLiteral("rect"),   QStringLiteral("roundRect"),
+                                         QStringLiteral("line"),   QStringLiteral("route"),  QStringLiteral("ellipse"),
+                                         QStringLiteral("ring"),   QStringLiteral("circle"), QStringLiteral("group"),
+                                         QStringLiteral("repeat"), QStringLiteral("keycaps")};
         for (const QJsonValue &value : actors) {
             const QJsonObject a = value.toObject();
             const QString type = a.value(QStringLiteral("type")).toString();
@@ -1500,6 +1543,15 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
         if (!mixColor)
             fail(QStringLiteral("render.mixColor: bad colour"));
         sc.mixColor = *mixColor;
+        // The preview matte: BASE (default), a flat colour, or the proof's background video.
+        const QJsonObject bg = doc.value(QStringLiteral("preview")).toObject().value(QStringLiteral("background")).toObject();
+        sc.previewKind = bg.value(QStringLiteral("kind")).toString(QStringLiteral("base"));
+        if (sc.previewKind == QLatin1String("solid")) {
+            const std::optional<Rgba> c = parseColor(jsonToValue(bg.value(QStringLiteral("color"))), loader.palette);
+            if (!c)
+                fail(QStringLiteral("preview.background.color: bad colour"));
+            sc.previewColor = *c;
+        }
 
         loader.expand(doc.value(QStringLiteral("actors")).toArray(), {}, {});
         sc.keycaps = loader.m_keycaps;
@@ -1536,6 +1588,13 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             for (const QString &d : a.dependsOn)
                 if (!ids.contains(d))
                     fail(QStringLiteral("%1: dependsOn unknown actor '%2'").arg(a.id, d));
+            if (!a.fitBoxActor.isEmpty()) {
+                const Actor *kid = sc.actor(a.fitBoxActor);
+                if (!kid || kid->parent != a.id || kid->type != QLatin1String("text"))
+                    fail(QStringLiteral("%1: fitBox must name a text child of the group").arg(a.id));
+            }
+            if (!a.afterActor.isEmpty() && !ids.contains(a.afterActor))
+                fail(QStringLiteral("%1: after unknown actor '%2'").arg(a.id, a.afterActor));
             const QStringList targets = QStringList{a.clipActor, a.fitActor} + a.widthOf;
             for (const QString &t : targets)
                 if (!t.isEmpty() && !ids.contains(t))
@@ -1694,6 +1753,86 @@ bool resolveConstraints(Scene &scene, const InkFn &ink, QString *error)
                 a.restWidth = rest(a);
             else
                 a.restWidth = -1.0;
+        }
+    } catch (const Fail &f) {
+        if (error)
+            *error = f.message;
+        return false;
+    }
+    return true;
+}
+
+bool resolveLayout(Scene &scene, const LayoutFns &fns, QString *error)
+{
+    const auto roundHalfEven = [](double v) {
+        std::fesetround(FE_TONEAREST);
+        return std::nearbyint(v);
+    };
+    QSet<QString> done, busy;
+    // render.py right_edge: a text's pen x plus its advance (whole px); a sized group's x + width.
+    const auto rightEdge = [&](const Actor &t) -> double {
+        if (t.type == QLatin1String("text")) {
+            if (t.anchorKind != QLatin1String("baseline"))
+                fail(QStringLiteral("%1: has no width to place something after").arg(t.id));
+            const std::optional<double> len = fns.advance ? fns.advance(t, t.ss) : std::nullopt;
+            if (!len)
+                fail(QStringLiteral("%1: could not measure the text").arg(t.id));
+            return t.baseline.x() + roundHalfEven(*len / t.ss);
+        }
+        if (t.type == QLatin1String("group") && t.groupW > 0.0)
+            return t.groupAt.x() + t.groupW;
+        fail(QStringLiteral("%1: has no width to place something after").arg(t.id));
+    };
+    std::function<void(int)> visit = [&](int index) {
+        const QString id = scene.actors.at(index).id;
+        if (done.contains(id))
+            return;
+        if (busy.contains(id))
+            fail(QStringLiteral("%1: fitBox/after cycle").arg(id));
+        busy.insert(id);
+        if (!scene.actors.at(index).fitBoxActor.isEmpty()) {
+            Actor &g = scene.actors[index];
+            const Actor *kid = scene.actor(g.fitBoxActor);
+            const std::optional<double> ink = kid && fns.inkWidth ? fns.inkWidth(*kid, g.ss) : std::nullopt;
+            if (!ink)
+                fail(QStringLiteral("%1: could not measure %2").arg(g.id, g.fitBoxActor));
+            const double w = std::ceil(*ink / g.ss + 2.0 * g.fitBoxPadX);
+            g.groupW = qMax(g.fitBoxMin, w);
+        }
+        if (!scene.actors.at(index).afterActor.isEmpty()) {
+            const int ti = scene.indexOf(scene.actors.at(index).afterActor);
+            if (ti < 0)
+                fail(QStringLiteral("%1: after unknown actor '%2'").arg(id, scene.actors.at(index).afterActor));
+            visit(ti);
+            const double x = rightEdge(scene.actors.at(ti)) + scene.actors.at(index).afterGap;
+            Actor &a = scene.actors[index];
+            if (a.type == QLatin1String("group"))
+                a.groupAt.setX(x);
+            else if (a.type == QLatin1String("text") && a.anchorKind == QLatin1String("baseline"))
+                a.baseline.setX(x);
+            else
+                fail(QStringLiteral("%1: after is for groups and texts").arg(a.id));
+        }
+        busy.remove(id);
+        done.insert(id);
+    };
+    try {
+        for (int i = 0; i < scene.actors.size(); ++i)
+            visit(i);
+        // fillGroup: the box is the group's (fitted) size minus the insets.
+        for (Actor &a : scene.actors) {
+            if (!a.hasFillGroup)
+                continue;
+            const Actor *g = scene.actor(a.parent);
+            if (!g || !g->flatten) {
+                if (a.box[2] == 0.0 && a.box[3] == 0.0)
+                    fail(QStringLiteral("%1: fillGroup belongs inside a flattened group").arg(a.id));
+                continue; // the reference ignores it outside a flattened group and uses "box"
+            }
+            a.box[0] = a.fillGroup[0];
+            a.box[1] = a.fillGroup[1];
+            a.box[2] = g->groupW - a.fillGroup[2];
+            a.box[3] = g->groupH - a.fillGroup[3];
         }
     } catch (const Fail &f) {
         if (error)
