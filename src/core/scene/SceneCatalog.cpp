@@ -53,6 +53,14 @@ void SceneCatalog::ensureLoaded() const
     loadDir(QStringLiteral(":/scene-titles"), QStringLiteral("builtin"));
     if (const QString dir = installedDir(); !dir.isEmpty())
         loadDir(dir, QStringLiteral("installed"));
+    // Dafin: Filmora titles of several text elements converted from linked folders
+    // (FilmoraLibraryImporter), one <AppData>/linked-libraries/<key>/scene-titles per folder.
+    const QString base = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if (!base.isEmpty()) {
+        const QDir linked(QDir(base).filePath(QStringLiteral("linked-libraries")));
+        for (const QString &library : linked.entryList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name))
+            loadDir(linked.filePath(library + QStringLiteral("/scene-titles")), QStringLiteral("linked"));
+    }
 }
 
 QList<SceneEntry> SceneCatalog::entries() const

@@ -757,11 +757,14 @@ target_link_libraries(tst_diagnostics PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME Diagnostics COMMAND tst_diagnostics)
 
 # Dafin: linked Filmora effect folders — shader conversion, categories, packages written, rescans
-# that only redo what changed (made-up fixtures, no GUI, no GL).
+# that only redo what changed, Art titles and multi-element Scene Titles (made-up fixtures, no
+# GUI, no GL).
 qt_add_executable(tst_linkedlibraries
     tst_linkedlibraries.cpp
     ../src/engine/packages/linked/FilmoraLibraryImporter.cpp
-    ../src/engine/packages/linked/FilmoraTitleConverter.cpp)
+    ../src/engine/packages/linked/FilmoraTitleConverter.cpp
+    ../src/engine/packages/linked/FilmoraTextArt.cpp
+    ../src/core/scene/SceneTitle.cpp)
 target_include_directories(tst_linkedlibraries PRIVATE ../src)
 target_compile_definitions(tst_linkedlibraries PRIVATE DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(tst_linkedlibraries PRIVATE Qt6::Test Qt6::Core)

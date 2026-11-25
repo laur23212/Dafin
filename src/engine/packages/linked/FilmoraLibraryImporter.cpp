@@ -1,6 +1,8 @@
 #include "engine/packages/linked/FilmoraLibraryImporter.h"
 
+#include "engine/packages/linked/FilmoraTextArt.h"
 #include "engine/packages/linked/FilmoraTitleConverter.h"
+#include "core/scene/SceneTitle.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -36,6 +38,10 @@ namespace {
 // 8: shaders Dafin can't supply faithfully (own texture inputs, several unknown values or extra
 //    inputs) are refused with every cause named; a shader that fails to compile says what was
 //    assumed about it.
+// 8: Filmora Art titles (TextArt XML: <TextNode> with Face / Border / Shadow and extra Layer
+//    elements) become title templates with their ordered shading layers; folders holding only
+//    such a data.xml are found too; titles of several text elements become Scene Titles
+//    (scene-titles); every title says faithful / approximated / unsupported (titles-report.txt).
 constexpr int kImporterVersion = 8;
 
 // Failsafe caps: a folder that is not what it seems (a whole drive, a damaged file) must not
@@ -52,6 +58,7 @@ const QString kStickers = QStringLiteral("stickers");
 const QString kFonts = QStringLiteral("fonts");
 const QString kLooks = QStringLiteral("looks");
 const QString kTitles = QStringLiteral("text-styles"); // TitleTemplateCatalog reads <root>/text-styles/*.json
+const QString kScenes = QStringLiteral("scene-titles"); // SceneCatalog reads <root>/scene-titles/*.json
 
 // Filmora's resource types (resinfo.json "type").
 enum FilmoraType {
@@ -522,6 +529,7 @@ struct Record
     QStringList outputs; // package folders, relative to outRoot
     QJsonObject sticker; // a sticker's pack.json entry
     QJsonArray fonts;    // font faces it brings: [{file, family, legacyFamily, style, weight, italic, category}]
+    QString fidelity;    // titles: "faithful", "approximated" or "unsupported"
 
     QJsonObject toJson() const
     {
@@ -535,6 +543,8 @@ struct Record
             o.insert(QStringLiteral("sticker"), sticker);
         if (!fonts.isEmpty())
             o.insert(QStringLiteral("fonts"), fonts);
+        if (!fidelity.isEmpty())
+            o.insert(QStringLiteral("fidelity"), fidelity);
         return o;
     }
 
@@ -550,6 +560,7 @@ struct Record
             r.outputs.append(v.toString());
         r.sticker = o.value(QStringLiteral("sticker")).toObject();
         r.fonts = o.value(QStringLiteral("fonts")).toArray();
+        r.fidelity = o.value(QStringLiteral("fidelity")).toString();
         return r;
     }
 };
@@ -580,11 +591,18 @@ QString stampFor(const QString &itemOrFile)
 
 // Who an item is, wherever it sits: its Filmora id, or (without one) what its files are. The same
 // item copied twice into the folder has the same identity, and only the first is used.
+QString textArtXmlPath(const QString &itemDir);
+
 QString identityFor(const QJsonObject &info, int type, const QString &itemDir)
 {
     const qint64 id = info.value(QStringLiteral("id")).toVariant().toLongLong();
     if (id > 0)
         return QStringLiteral("fm:%1:%2").arg(type).arg(id);
+    // An Art title: by what its XML says (Filmora's presets often have files of the same size).
+    if (type == TypeTitle) {
+        if (const QString art = textArtXmlPath(itemDir); !art.isEmpty())
+            return QStringLiteral("art:") + hashOf(readSmall(art, 4 * kMaxSettingsFile), 16);
+    }
     QStringList files;
     QDirIterator it(QDir(itemDir).filePath(QStringLiteral("Data")), QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext() && files.size() < kMaxFilesPerItem) {
@@ -642,6 +660,18 @@ const QStringList kAudioSuffixes = {QStringLiteral("mp3"), QStringLiteral("wav")
 // `dataDir` is where the item's shader files are when not in its own Data/ (a variant folder).
 QString videoTitleMatte(const QString &itemDir);
 
+// The item's TextArt XML (Data/data.xml, or data.xml in the folder itself), or empty.
+QString textArtXmlPath(const QString &itemDir)
+{
+    for (const QString &rel : {QStringLiteral("Data/data.xml"), QStringLiteral("data.xml")}) {
+        const QString path = QDir(itemDir).filePath(rel);
+        QFile f(path);
+        if (f.size() <= 4 * kMaxSettingsFile && f.open(QIODevice::ReadOnly) && looksLikeTextArtXml(f.read(64 * 1024)))
+            return path;
+    }
+    return {};
+}
+
 int typeFromContent(const QString &itemDir, const QString &dataDir = {})
 {
     // A video title (colour video + _L0 matte) is a title, not a sticker of its colour video.
@@ -669,6 +699,8 @@ int typeFromContent(const QString &itemDir, const QString &dataDir = {})
         return TypeTitle;
     if (dataJson.isEmpty() && readSmall(data.filePath(QStringLiteral("data.xml")), 4 * kMaxSettingsFile).contains("CaptionData"))
         return TypeTitle; // an older title: its text lives in data.xml
+    if (dataJson.isEmpty() && !textArtXmlPath(itemDir).isEmpty())
+        return TypeTitle; // an Art title: one TextArt XML
     if (dataJson.contains("MotionAnimation") || dataJson.contains("effectChain"))
         return TypeTextAnimation;
     // Split screens come as one folder per aspect ratio (16_9, 9_16, ...).
@@ -735,7 +767,7 @@ int typeFromFolders(const QString &itemDir)
             return TypeElement;
         if (name.contains(QLatin1String("font")))
             return TypeFont;
-        if (name == QLatin1String("title") || name == QLatin1String("titles"))
+        if (name == QLatin1String("title") || name == QLatin1String("titles") || name == QLatin1String("textart"))
             return TypeTitle;
     }
     return filterXml.isEmpty() ? TypeUnknown : TypeEffect;
@@ -1106,13 +1138,17 @@ private:
         };
     }
 
-    // A Filmora title as a Dafin title template: <outRoot>/text-styles/fm-<id>.json.
+    // A Filmora title as a Dafin title template: <outRoot>/text-styles/fm-<id>.json, or, when it
+    // holds several text elements, a Scene Title: <outRoot>/scene-titles/fm-<id>.json. Every title
+    // gets a fidelity: faithful (all its settings carried over; not compared with Filmora's own
+    // frames), approximated (what is not is named) or unsupported (nothing made, and why).
     void convertTitle(const QString &itemDir, const QJsonObject &info, Record *r)
     {
         const QString name = englishTitle(info, itemDir);
         const bool hasFonts = !r->fonts.isEmpty();
         auto fail = [&](const QString &reason) {
             r->name = name;
+            r->fidelity = QStringLiteral("unsupported");
             r->skipReason = hasFonts ? reason + QStringLiteral(" (its fonts were added)") : reason;
         };
         // A video title: a colour video and its matte (<name>.mp4 and <name>_L0.mp4).
@@ -1120,7 +1156,72 @@ private:
             fail(QStringLiteral("Filmora video title (a video with a separate matte): not supported yet"));
             return;
         }
+
+        TitleContext context;
+        context.effect = m_effectLookup;
+        // The title names its font as Filmora shows it ("Paytone One Regular"); the files in its
+        // Font/ folder say what family that is installed under, and which file it is.
+        const QJsonArray fonts = r->fonts;
+        context.font = [fonts](const QString &fontName) -> std::optional<TitleFont> {
+            const QString wanted = fontName.simplified();
+            std::optional<TitleFont> prefix;
+            for (const QJsonValue &v : fonts) {
+                const QJsonObject f = v.toObject();
+                const QString family = f.value(QStringLiteral("family")).toString();
+                const QString legacy = f.value(QStringLiteral("legacyFamily")).toString();
+                const QString style = f.value(QStringLiteral("style")).toString();
+                const TitleFont face{family, f.value(QStringLiteral("weight")).toInt(400),
+                                     f.value(QStringLiteral("italic")).toBool(), f.value(QStringLiteral("file")).toString()};
+                for (const QString &candidate : {family + QLatin1Char(' ') + style, legacy + QLatin1Char(' ') + style,
+                                                 family, legacy}) {
+                    if (!candidate.trimmed().isEmpty()
+                        && candidate.simplified().compare(wanted, Qt::CaseInsensitive) == 0)
+                        return face;
+                }
+                if (!prefix && !family.isEmpty() && wanted.startsWith(family, Qt::CaseInsensitive))
+                    prefix = TitleFont{family, splitFontName(wanted).weight, splitFontName(wanted).italic, face.file};
+            }
+            return prefix;
+        };
+        const QString packageName = packageNameFor(info, itemDir);
+        const QString templateId = QStringLiteral("filmora.") + packageName.mid(3);
+        const QString category = categoryNames(info).value(0);
+
+        // An Art title (TextArt XML): its layers become the template's ordered shading layers.
         const QString dataPath = QDir(itemDir).filePath(QStringLiteral("Data/data.json"));
+        if (!QFileInfo::exists(dataPath)) {
+            if (const QString artPath = textArtXmlPath(itemDir); !artPath.isEmpty()) {
+                QString why;
+                const std::optional<TextArtStyle> art = readTextArtXml(readSmall(artPath, 4 * kMaxSettingsFile), &why);
+                if (!art) {
+                    fail(QStringLiteral("Filmora Art title: ") + why);
+                    return;
+                }
+                // Textures are only looked for in the item's own folder, by their plain file name.
+                const QString root = itemDir;
+                auto textureExists = [root](const QString &fileName) {
+                    QDirIterator it(root, QDir::Files, QDirIterator::Subdirectories);
+                    for (int n = 0; it.hasNext() && n < kMaxFilesPerItem; ++n) {
+                        if (QFileInfo(it.next()).fileName().compare(fileName, Qt::CaseInsensitive) == 0)
+                            return true;
+                    }
+                    return false;
+                };
+                const TextArtConversion conv = convertTextArt(*art, templateId, name, category, context, textureExists);
+                if (!conv.ok) {
+                    fail(QStringLiteral("Filmora Art title: ") + conv.error);
+                    return;
+                }
+                writeTitleOutput(kTitles, packageName, conv.templateJson, name, r, fail);
+                if (r->kind.isEmpty())
+                    return;
+                r->fidelity = conv.fidelity;
+                r->skipReason = conv.notes.isEmpty() ? QString()
+                                                     : QStringLiteral("Approximated Art title: ") + conv.notes.join(QStringLiteral("; "));
+                return;
+            }
+        }
+
         QByteArray data = readSmall(dataPath, 4 * kMaxSettingsFile);
         if (data.isEmpty() && !QFileInfo::exists(dataPath)) {
             // An older title keeps everything in Data/data.xml instead.
@@ -1143,52 +1244,48 @@ private:
             return;
         }
 
-        TitleContext context;
-        context.effect = m_effectLookup;
-        // The title names its font as Filmora shows it ("Paytone One Regular"); the files in its
-        // Font/ folder say what family that is installed under.
-        const QJsonArray fonts = r->fonts;
-        context.font = [fonts](const QString &fontName) -> std::optional<TitleFont> {
-            const QString wanted = fontName.simplified();
-            std::optional<TitleFont> prefix;
-            for (const QJsonValue &v : fonts) {
-                const QJsonObject f = v.toObject();
-                const QString family = f.value(QStringLiteral("family")).toString();
-                const QString legacy = f.value(QStringLiteral("legacyFamily")).toString();
-                const QString style = f.value(QStringLiteral("style")).toString();
-                const TitleFont face{family, f.value(QStringLiteral("weight")).toInt(400),
-                                     f.value(QStringLiteral("italic")).toBool()};
-                for (const QString &candidate : {family + QLatin1Char(' ') + style, legacy + QLatin1Char(' ') + style,
-                                                 family, legacy}) {
-                    if (!candidate.trimmed().isEmpty()
-                        && candidate.simplified().compare(wanted, Qt::CaseInsensitive) == 0)
-                        return face;
-                }
-                if (!prefix && !family.isEmpty() && wanted.startsWith(family, Qt::CaseInsensitive))
-                    prefix = TitleFont{family, splitFontName(wanted).weight, splitFontName(wanted).italic};
-            }
-            return prefix;
-        };
-
-        const QString packageName = packageNameFor(info, itemDir);
-        const TitleConversion title = convertFilmoraTitle(
-            data, QStringLiteral("filmora.") + packageName.mid(3), name, categoryNames(info).value(0), context);
+        const TitleConversion title = convertFilmoraTitle(data, templateId, name, category, context);
         if (!title.ok) {
             fail(QStringLiteral("Filmora title: ") + title.error);
             return;
         }
-        const QString rel = kTitles + QLatin1Char('/') + packageName + QStringLiteral(".json");
-        if (!writeJson(QDir(m_outRoot).filePath(rel), title.templateJson)) {
+        // Several text elements: a Scene Title keeps each where Filmora placed it. One that would
+        // not load falls back to the joined template.
+        if (!title.sceneJson.isEmpty()) {
+            QString sceneError;
+            if (drift::scene::loadScene(title.sceneJson, {}, &sceneError)) {
+                writeTitleOutput(kScenes, packageName, title.sceneJson, name, r, fail);
+                if (r->kind.isEmpty())
+                    return;
+                r->category = title.sceneJson.value(QStringLiteral("category")).toString();
+                r->fidelity = title.sceneLeftOut.isEmpty() ? QStringLiteral("faithful") : QStringLiteral("approximated");
+                r->skipReason = title.sceneLeftOut.isEmpty()
+                                    ? QString()
+                                    : QStringLiteral("Scene Title added without %1").arg(title.sceneLeftOut.join(QStringLiteral(", ")));
+                return;
+            }
+        }
+        writeTitleOutput(kTitles, packageName, title.templateJson, name, r, fail);
+        if (r->kind.isEmpty())
+            return;
+        r->fidelity = title.leftOut.isEmpty() ? QStringLiteral("faithful") : QStringLiteral("approximated");
+        r->skipReason = title.leftOut.isEmpty()
+                            ? QString()
+                            : QStringLiteral("Title added without %1").arg(title.leftOut.join(QStringLiteral(", ")));
+    }
+
+    void writeTitleOutput(const QString &kind, const QString &packageName, const QJsonObject &json, const QString &name,
+                          Record *r, const std::function<void(const QString &)> &fail)
+    {
+        const QString rel = kind + QLatin1Char('/') + packageName + QStringLiteral(".json");
+        if (!writeJson(QDir(m_outRoot).filePath(rel), json)) {
             fail(QStringLiteral("Could not save the converted copy (is the disk full?)"));
             return;
         }
         r->kind = QStringLiteral("title");
         r->name = name;
-        r->category = title.templateJson.value(QStringLiteral("category")).toString();
+        r->category = json.value(QStringLiteral("category")).toString();
         r->outputs.append(rel);
-        r->skipReason = title.leftOut.isEmpty()
-                            ? QString()
-                            : QStringLiteral("Title added without %1").arg(title.leftOut.join(QStringLiteral(", ")));
     }
 
 public:
@@ -1316,6 +1413,37 @@ struct FontFamilies
         entry.faces.append({font.value(QStringLiteral("file")).toString(), style, weight, italic});
     }
 };
+
+// <outRoot>/titles-report.txt: one line per Filmora title, its fidelity, name and what differs.
+// "faithful" means every setting in its file was carried over; none of them has been compared with
+// frames Filmora rendered, so it is not a claim of identical pixels.
+void writeTitlesReport(const QString &outRoot, const ImportReport &report)
+{
+    QStringList rows;
+    int counts[3] = {0, 0, 0};
+    for (const ImportedItem &item : report.items) {
+        if (item.fidelity.isEmpty())
+            continue;
+        const int k = item.fidelity == QLatin1String("faithful") ? 0 : item.fidelity == QLatin1String("approximated") ? 1 : 2;
+        ++counts[k];
+        rows.append(item.fidelity + QLatin1Char('\t') + item.name + QLatin1Char('\t')
+                    + QString(item.skipReason).replace(QLatin1Char('\n'), QLatin1Char(' ')));
+    }
+    const QString path = QDir(outRoot).filePath(QStringLiteral("titles-report.txt"));
+    if (rows.isEmpty()) {
+        QFile::remove(path);
+        return;
+    }
+    rows.sort(Qt::CaseInsensitive);
+    const QString head =
+        QStringLiteral("Filmora titles: %1 faithful, %2 approximated, %3 unsupported.\n"
+                       "faithful = every setting in its file carried over (not compared with Filmora's own frames); "
+                       "approximated = added, what differs is named; unsupported = not added, and why.\n\n")
+            .arg(counts[0])
+            .arg(counts[1])
+            .arg(counts[2]);
+    writeBytes(path, (head + rows.join(QLatin1Char('\n')) + QLatin1Char('\n')).toUtf8());
+}
 
 } // namespace
 
@@ -1717,6 +1845,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
     QStringList allFiles;
     QSet<QString> resinfoDirs;    // folders with a resinfo.json: Filmora items
     QSet<QString> shaderOnlyDirs; // folders with Data/filter.xml (and maybe no resinfo.json)
+    QSet<QString> artOnlyDirs;    // folders with a TextArt data.xml (an Art title copied on its own)
     bool capped = false;
     {
         QDirIterator it(source.absolutePath(), QDir::Files, QDirIterator::Subdirectories);
@@ -1733,6 +1862,12 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
             } else if (fi.fileName().compare(QLatin1String("filter.xml"), Qt::CaseInsensitive) == 0
                        && fi.absoluteDir().dirName().compare(QLatin1String("Data"), Qt::CaseInsensitive) == 0) {
                 shaderOnlyDirs.insert(QFileInfo(fi.absolutePath()).absolutePath());
+            } else if (fi.fileName().compare(QLatin1String("data.xml"), Qt::CaseInsensitive) == 0) {
+                const QString dir = fi.absoluteDir().dirName().compare(QLatin1String("Data"), Qt::CaseInsensitive) == 0
+                                        ? QFileInfo(fi.absolutePath()).absolutePath()
+                                        : fi.absolutePath();
+                if (!textArtXmlPath(dir).isEmpty())
+                    artOnlyDirs.insert(dir);
             }
         }
     }
@@ -1763,6 +1898,24 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
             itemDirSet.insert(dir);
         else
             variantData[owner].append(QDir(dir).filePath(QStringLiteral("Data")));
+    }
+    // An Art title's folder (TextArt/<style>/data.xml) is an item by itself, unless it sits inside
+    // a Filmora item, which reads it as its own.
+    for (const QString &dir : std::as_const(artOnlyDirs)) {
+        if (itemDirSet.contains(dir))
+            continue;
+        bool owned = false;
+        for (QString parent = QFileInfo(dir).absolutePath(); parent.size() >= rootPath.size();
+             parent = QFileInfo(parent).absolutePath()) {
+            if (resinfoDirs.contains(parent)) {
+                owned = true;
+                break;
+            }
+            if (parent == rootPath)
+                break;
+        }
+        if (!owned)
+            itemDirSet.insert(dir);
     }
     // "All" first (Filmora's full set), then by name, so the choice is the same on every scan.
     for (QStringList &dataDirs : variantData) {
@@ -1877,7 +2030,7 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
     };
 
     auto tally = [&](const Record &record, const QString &source) {
-        report.items.append({record.kind, record.name, record.category, source, record.skipReason});
+        report.items.append({record.kind, record.name, record.category, source, record.skipReason, record.fidelity});
         if (record.kind == QLatin1String("effect"))
             ++report.effects;
         else if (record.kind == QLatin1String("transition"))
@@ -2115,7 +2268,9 @@ ImportReport importFilmoraFolder(const QString &sourceRoot, const QString &outRo
                                      {QStringLiteral("source"), source.absolutePath()},
                                      {QStringLiteral("items"), newItems}});
 
-    for (const QString &kind : {kEffects, kTransitions, kStickers, kFonts, kLooks, kTitles}) {
+    writeTitlesReport(outRoot, report);
+
+    for (const QString &kind : {kEffects, kTransitions, kStickers, kFonts, kLooks, kTitles, kScenes}) {
         if (changed.contains(kind))
             report.changedKinds.append(kind);
     }

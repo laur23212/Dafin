@@ -458,6 +458,188 @@ QString dafinAnimationForId(const QString &filmoraId, const QString &slot, QJson
     return {};
 }
 
+namespace {
+
+// "#aarrggbb" -> [r, g, b, a] (a Scene Title colour).
+QJsonArray sceneRgba(const QString &argb)
+{
+    if (argb.size() != 9)
+        return QJsonArray{255, 255, 255, 255};
+    auto at = [&](int i) { return argb.mid(i, 2).toInt(nullptr, 16); };
+    return QJsonArray{at(3), at(5), at(7), at(1)};
+}
+
+// A title of several text elements as a Scene Title: each element a centred text in a flattened
+// group where Filmora placed it, its text a param (editable in the inspector), fading in and out.
+// Scene texts are one flat colour, so outlines, shadows, gradients and effects are named in
+// `leftOut`, not imitated.
+QJsonObject sceneForTexts(const QList<QPair<QJsonObject, QJsonObject>> &texts, const QJsonObject &root,
+                          const QString &id, const QString &label, const QString &category,
+                          const TitleContext &context, QStringList *leftOut)
+{
+    auto note = [&](const QString &s) {
+        if (!leftOut->contains(s))
+            leftOut->append(s);
+    };
+    double seconds = num(root.value(QStringLiteral("tlEnd"))) / kFilmoraTicksPerSecond;
+    if (seconds <= 0.0)
+        seconds = num(texts.first().first.value(QStringLiteral("tlEnd"))) / kFilmoraTicksPerSecond;
+    if (seconds < 1.0)
+        seconds = 6.0;
+    seconds = std::min(seconds, 60.0);
+    const double fade = std::min(0.4, seconds / 6.0);
+
+    QJsonObject fonts;
+    QHash<QString, QString> fontKeys; // file|weight -> key
+    QJsonArray params;
+    QJsonArray actors;
+    int n = 0;
+    for (const auto &t : texts) {
+        ++n;
+        const QJsonObject &clip = t.first;
+        const QJsonObject &script = t.second;
+        const QJsonObject textData = script.value(QStringLiteral("TextData")).toArray().at(0).toObject();
+        const QJsonObject basic = textData.value(QStringLiteral("Basic")).toObject();
+        QString text = script.value(QStringLiteral("Text")).toString();
+        if (text.trimmed().isEmpty())
+            text = textData.value(QStringLiteral("CharData")).toString();
+        text = text.remove(QLatin1Char('\r')).trimmed();
+        if (text.contains(QLatin1Char('\n'))) {
+            note(QStringLiteral("line breaks inside a text element (joined into one line)"));
+            text = text.simplified();
+        }
+
+        double viewHeight = 1080.0;
+        const QStringList view = script.value(QStringLiteral("ViewSize")).toString().split(QLatin1Char(':'));
+        if (view.size() == 2 && view.at(1).toDouble() > 0)
+            viewHeight = view.at(1).toDouble();
+        const int size = int(std::lround(qBound(8.0, num(basic.value(QStringLiteral("FontSize")), 64.0) * 1080.0 / viewHeight, 600.0)));
+
+        const QString fontName = basic.value(QStringLiteral("FontName")).toString().trimmed();
+        TitleFont font = splitFontName(fontName);
+        if (context.font) {
+            if (const std::optional<TitleFont> known = context.font(fontName))
+                font = *known;
+        }
+        if (num(basic.value(QStringLiteral("FontBold"))) > 0.5)
+            font.weight = std::max(font.weight, 700);
+        if (font.file.isEmpty()) {
+            note(QStringLiteral("the font %1 (not in the folder; %2 is used)")
+                     .arg(fontName.isEmpty() ? QStringLiteral("it names") : fontName, QLatin1String(kSceneFallbackFontFamily)));
+            font = TitleFont{QLatin1String(kSceneFallbackFontFamily), 600, false, QLatin1String(kSceneFallbackFontFile)};
+        }
+        if (font.italic || num(basic.value(QStringLiteral("FontItalic"))) > 0.5)
+            note(QStringLiteral("italic (Scene Titles draw the font file as it is)"));
+        const QString fontId = font.file + QLatin1Char('|') + QString::number(font.weight);
+        QString fontKey = fontKeys.value(fontId);
+        if (fontKey.isEmpty()) {
+            fontKey = QStringLiteral("f%1").arg(fontKeys.size() + 1);
+            fontKeys.insert(fontId, fontKey);
+            fonts.insert(fontKey, QJsonObject{{QStringLiteral("family"), font.family},
+                                              {QStringLiteral("weight"), qBound(100, font.weight, 900)},
+                                              {QStringLiteral("file"), font.file}});
+        }
+
+        const int alpha = alphaOf(basic, QStringLiteral("TextAlpha"));
+        const QJsonArray textColors = basic.value(QStringLiteral("TextColor")).toArray();
+        QString colour = filmoraColor(textColors.isEmpty() ? 0xffffff
+                                                           : qint64(num(textColors.at(0).toObject().value(QStringLiteral("Color")), 0xffffff)),
+                                      alpha);
+        QJsonObject g = gradientPaint(script.value(QStringLiteral("Gradient")).toObject(), alpha);
+        if (g.isEmpty())
+            g = gradientPaint(basic.value(QStringLiteral("Gradient")).toObject(), alpha);
+        if (!g.isEmpty()) {
+            colour = g.value(QStringLiteral("gradient")).toObject().value(QStringLiteral("stops")).toArray().at(0)
+                         .toObject().value(QStringLiteral("color")).toString(colour);
+            note(QStringLiteral("gradient fills (the first colour is used)"));
+        }
+        const QJsonObject border = textData.value(QStringLiteral("Border")).toObject();
+        if (num(border.value(QStringLiteral("Enable"))) > 0.5 && num(border.value(QStringLiteral("Size"))) > 0.0)
+            note(QStringLiteral("outlines"));
+        if (num(textData.value(QStringLiteral("Shadow")).toObject().value(QStringLiteral("Enable"))) > 0.5)
+            note(QStringLiteral("shadows"));
+        if (script.value(QStringLiteral("Texture")).toObject().value(QStringLiteral("Enable")).toInt() == 1)
+            note(QStringLiteral("texture fills"));
+        if (script.value(QStringLiteral("Background")).toObject().value(QStringLiteral("Enable")).toInt() == 1)
+            note(QStringLiteral("background boxes"));
+
+        double posX = 0.5;
+        double posY = 0.5;
+        for (const QJsonValue &chain : clip.value(QStringLiteral("effectChainList")).toArray()) {
+            for (const QJsonValue &e : chain.toObject().value(QStringLiteral("effectList")).toArray()) {
+                const QJsonObject eo = e.toObject();
+                const QString effectId = eo.value(QStringLiteral("id")).toString();
+                if (effectId == QLatin1String("video/effect/transform")) {
+                    const auto p = paramsOf(eo);
+                    posX = qBound(0.0, num(p.value(QStringLiteral("Position_x")), 0.5), 1.0);
+                    posY = qBound(0.0, num(p.value(QStringLiteral("Position_y")), 0.5), 1.0);
+                } else if (!effectId.startsWith(QLatin1String("video/effect/"))) {
+                    note(QStringLiteral("effects on the text"));
+                }
+            }
+        }
+        for (const char *slot : {"inAnimation", "outAnimation", "loopAnimation"}) {
+            if (!clip.value(QLatin1String(slot)).toObject().value(QStringLiteral("name")).toString().isEmpty())
+                note(QStringLiteral("animations (every element fades in and out)"));
+        }
+        if (!clip.value(QStringLiteral("animation")).toObject().value(QStringLiteral("name")).toString().isEmpty())
+            note(QStringLiteral("animations (every element fades in and out)"));
+
+        const QString param = QStringLiteral("text%1").arg(n);
+        params.append(QJsonObject{{QStringLiteral("id"), param},
+                                  {QStringLiteral("type"), QStringLiteral("text")},
+                                  {QStringLiteral("label"), QStringLiteral("Text %1").arg(n)},
+                                  {QStringLiteral("default"), text}});
+        const double cx = posX * 1920.0;
+        const double cy = posY * 1080.0;
+        const int h = int(std::ceil(size * 2.0));
+        actors.append(QJsonObject{
+            {QStringLiteral("id"), QStringLiteral("element%1").arg(n)},
+            {QStringLiteral("role"), n == 1 ? QStringLiteral("title") : QStringLiteral("text")},
+            {QStringLiteral("type"), QStringLiteral("group")},
+            {QStringLiteral("flatten"), true},
+            {QStringLiteral("at"), QJsonArray{std::round(cx - 960.0), std::round(cy - h / 2.0)}},
+            {QStringLiteral("size"), QJsonArray{1920, h}},
+            {QStringLiteral("in"), QJsonObject{{QStringLiteral("start"), 0.0},
+                                               {QStringLiteral("dur"), fade},
+                                               {QStringLiteral("from"), QJsonObject{{QStringLiteral("opacity"), 0}}}}},
+            {QStringLiteral("out"), QJsonObject{{QStringLiteral("start"), seconds - fade},
+                                                {QStringLiteral("dur"), fade},
+                                                {QStringLiteral("to"), QJsonObject{{QStringLiteral("opacity"), 0}}}}},
+            {QStringLiteral("children"),
+             QJsonArray{QJsonObject{{QStringLiteral("id"), QStringLiteral("element%1Text").arg(n)},
+                                    {QStringLiteral("role"), QStringLiteral("text")},
+                                    {QStringLiteral("type"), QStringLiteral("text")},
+                                    {QStringLiteral("text"), QLatin1Char('{') + param + QLatin1Char('}')},
+                                    {QStringLiteral("font"), fontKey},
+                                    {QStringLiteral("size"), size},
+                                    {QStringLiteral("color"), sceneRgba(colour)},
+                                    {QStringLiteral("align"), QJsonObject{{QStringLiteral("h"), QStringLiteral("center")},
+                                                                          {QStringLiteral("v"), QStringLiteral("center")}}}}}},
+        });
+    }
+    if (const int others = countOtherClips(root); others > 0)
+        note(others == 1 ? QStringLiteral("1 shape or picture layer") : QStringLiteral("%1 shape or picture layers").arg(others));
+    return QJsonObject{
+        {QStringLiteral("format"), QStringLiteral("dafin.scene-title")},
+        {QStringLiteral("version"), 1},
+        {QStringLiteral("id"), id},
+        {QStringLiteral("label"), label},
+        {QStringLiteral("category"), category.isEmpty() ? QStringLiteral("Filmora") : category},
+        {QStringLiteral("source"), QJsonObject{{QStringLiteral("origin"), QStringLiteral("linked Filmora folder")}}},
+        {QStringLiteral("canvas"), QJsonObject{{QStringLiteral("width"), 1920}, {QStringLiteral("height"), 1080}}},
+        {QStringLiteral("timing"), QJsonObject{{QStringLiteral("duration"), std::round(seconds * 100.0) / 100.0},
+                                               {QStringLiteral("fps"), 25},
+                                               {QStringLiteral("cadence"), QStringLiteral("match")}}},
+        {QStringLiteral("render"), QJsonObject{{QStringLiteral("profile"), QStringLiteral("sprite2x")}}},
+        {QStringLiteral("fonts"), fonts},
+        {QStringLiteral("params"), params},
+        {QStringLiteral("actors"), actors},
+    };
+}
+
+} // namespace
+
 TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &templateId,
                                     const QString &label, const QString &category,
                                     const TitleContext &context)
@@ -828,6 +1010,8 @@ TitleConversion convertFilmoraTitle(const QByteArray &dataJson, const QString &t
         t.insert(QStringLiteral("sourceDurationMs"), std::round(end / kFilmoraTicksPerSecond * 1000.0));
     out.templateJson = t;
     out.ok = true;
+    if (texts.size() > 1)
+        out.sceneJson = sceneForTexts(texts, root, templateId, label, category, context, &out.sceneLeftOut);
     return out;
 }
 

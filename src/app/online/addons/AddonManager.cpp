@@ -21,6 +21,7 @@
 #include "engine/packages/transitions/TransitionCatalog.h"
 #include "engine/packages/transitions/TransitionPackageLoader.h"
 #include "core/base/ZipArchive.h"
+#include "core/scene/SceneCatalog.h"
 #include "core/text/TextTemplate.h"
 
 #include <QDateTime>
@@ -1544,6 +1545,8 @@ void AddonManager::reloadForKinds(const QStringList &kinds)
             drift::reloadLookCatalog();
         else if (kind == QLatin1String("text-styles"))
             drift::TitleTemplateCatalog::instance().reload(); // Dafin: titles from linked folders
+        else if (kind == QLatin1String("scene-titles"))
+            drift::scene::SceneCatalog::instance().reload(); // Dafin: Scene Titles from linked folders
         else if (kind == QLatin1String(drift::ort::kRuntimeKind)
                  || kind == QLatin1String(drift::ort::kPluginEpKind)) {
             // Nothing to reload. But a runtime that has already been loaded stays loaded for the

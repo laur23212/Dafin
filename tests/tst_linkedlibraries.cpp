@@ -2,6 +2,8 @@
 // in Filmora's layout but with made-up content, so no Filmora asset is kept in the repository.
 #include "engine/packages/linked/FilmoraLibraryImporter.h"
 #include "engine/packages/linked/FilmoraTitleConverter.h"
+#include "engine/packages/linked/FilmoraTextArt.h"
+#include "core/scene/SceneTitle.h"
 
 #include <QDir>
 #include <QFile>
@@ -93,6 +95,12 @@ void copyFile(const QString &from, const QString &to)
 {
     QDir().mkpath(QFileInfo(to).absolutePath());
     QVERIFY2(QFile::copy(from, to), qPrintable(from));
+}
+
+QByteArray readFileBytes(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
 }
 
 QJsonObject readJson(const QString &path)
@@ -696,6 +704,227 @@ private slots:
         for (const ImportedItem &item : report.items)
             named = named || item.skipReason.contains(QStringLiteral("video title"));
         QVERIFY(named);
+    }
+
+    // A Filmora Art title (TextArt XML), made up for this test: a <TextNode> whose TextParam holds
+    // the text's own Face / Border / Shadow and whose ExternAttr holds extra Layer elements, each
+    // drawn at an offset. Colours are COLORREFs (0x00BBGGRR). Copied on its own (no resinfo.json),
+    // the way configs/TextArt/<style>/data.xml sits.
+    void filmoraArtTitleBecomesLayeredTitle()
+    {
+        QTemporaryDir source;
+        QTemporaryDir out;
+        const QDir src(source.path());
+        writeFile(src.filePath(QStringLiteral("TextArt/Stack Pop/data.xml")),
+                  "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+                  "<TextNode version=\"2.0\" Color=\"16777215\" FillMode=\"0\"><TextParam>"
+                  "<TextData CharSpace=\"0\"><CharData Title=\"POP\"/></TextData>"
+                  "<Font FontName=\"Lato Bold\" Size=\"90\" Bold=\"0\" Italic=\"0\"/>"
+                  "<Face Enable=\"1\" Color1=\"255\" Alpha=\"255\">"         // red
+                  "<Gradient Enable=\"0\"/>"
+                  "<Texture Enable=\"1\" TextureImagePath=\"%CaptionResourcePath%\\texture-image-{0001}.png\"/></Face>"
+                  "<Border Enable=\"1\" Color1=\"16711680\" Alpha=\"255\" Size=\"4\" BlurRadius=\"0\">" // blue
+                  "<Texture Enable=\"0\" TextureImagePath=\"..\\..\\secret.png\"/></Border>"
+                  "<Shadow Enable=\"1\" Color=\"0\" Alpha=\"128\" BlurRadius=\"6\" Distance=\"2\" Direction=\"3\"/>"
+                  "</TextParam><EffectParam><ExternAttr>"
+                  "<Layer id=\"1\" OffsetX=\"4\" OffsetY=\"4\"><Face Enable=\"1\" Alpha=\"255\">"
+                  "<Gradient Enable=\"1\" Angle=\"0\" GradType=\"0\">"
+                  "<ColorPos Color=\"65535\" Pos=\"0\"/><ColorPos Color=\"65280\" Pos=\"100\"/></Gradient></Face>"
+                  "<Border Enable=\"0\"/><Shadow Enable=\"0\"/><ColorList><Color/></ColorList></Layer>"
+                  "<Layer id=\"2\" OffsetX=\"8\" OffsetY=\"8\"><Face Enable=\"1\" Alpha=\"200\"/>"
+                  "<Border Enable=\"0\"/><Shadow Enable=\"0\"/></Layer>"
+                  "</ExternAttr></EffectParam></TextNode>");
+        // Faithful: every part it switches on is one Dafin draws.
+        writeFile(src.filePath(QStringLiteral("TextArt/Clean Line/data.xml")),
+                  "<TextNode version=\"2.0\" Color=\"16777215\"><TextParam>"
+                  "<TextData><CharData>LINE</CharData></TextData><Font FontName=\"Lato Bold\" Size=\"72\"/>"
+                  "<Face Enable=\"1\" Color1=\"16777215\" Alpha=\"255\"/>"
+                  "<Border Enable=\"1\" Color1=\"0\" Alpha=\"255\" Size=\"3\"/><Shadow Enable=\"0\"/>"
+                  "</TextParam><EffectParam/></TextNode>");
+        // Damaged: listed as unsupported, nothing made.
+        writeFile(src.filePath(QStringLiteral("TextArt/Broken/data.xml")),
+                  "<TextNode version=\"2.0\"><TextParam><Face Enable=\"1\" Color1=\"");
+        copyFile(repoFont(QStringLiteral("lato/Lato-Bold.ttf")), src.filePath(QStringLiteral("Fonts/Lato-Bold.ttf")));
+
+        const ImportReport report = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(report.titles, 2);
+        QVERIFY(report.changedKinds.contains(QStringLiteral("text-styles")));
+        QHash<QString, ImportedItem> byName;
+        for (const ImportedItem &i : report.items)
+            byName.insert(i.name, i);
+        QCOMPARE(byName.value(QStringLiteral("Stack Pop")).fidelity, QStringLiteral("approximated"));
+        QCOMPARE(byName.value(QStringLiteral("Clean Line")).fidelity, QStringLiteral("faithful"));
+        QVERIFY(byName.value(QStringLiteral("Clean Line")).skipReason.isEmpty());
+        QCOMPARE(byName.value(QStringLiteral("Broken")).fidelity, QStringLiteral("unsupported"));
+        QVERIFY(byName.value(QStringLiteral("Broken")).kind.isEmpty());
+
+        const ImportedItem pop = byName.value(QStringLiteral("Stack Pop"));
+        QCOMPARE(pop.kind, QStringLiteral("title"));
+        // The texture is named, never invented; the disabled one with an unsafe path is ignored.
+        QVERIFY(pop.skipReason.contains(QLatin1String("texture-image-{0001}.png is not in your folder")));
+        QVERIFY(!pop.skipReason.contains(QLatin1String("secret")));
+        QVERIFY(pop.skipReason.contains(QLatin1String("order of its 2 extra layers is not confirmed")));
+        QVERIFY(pop.skipReason.contains(QLatin1String("layer 2 has no colour of its own")));
+
+        QJsonObject t;
+        for (const QString &f : QDir(QDir(out.path()).filePath(QStringLiteral("text-styles"))).entryList({QStringLiteral("*.json")})) {
+            const QJsonObject j = readJson(QDir(out.path()).filePath(QStringLiteral("text-styles/") + f));
+            if (j.value(QStringLiteral("label")).toString() == QLatin1String("Stack Pop"))
+                t = j;
+        }
+        QVERIFY(!t.isEmpty());
+        QCOMPARE(t.value(QStringLiteral("sampleText")).toString(), QStringLiteral("POP"));
+        const QJsonObject style = t.value(QStringLiteral("style")).toObject();
+        QCOMPARE(style.value(QStringLiteral("fontFamily")).toString(), QStringLiteral("Lato"));
+        QCOMPARE(style.value(QStringLiteral("pixelSize")).toDouble(), 90.0);
+        QStringList ids;
+        QHash<QString, QJsonObject> layers;
+        for (const QJsonValue &v : style.value(QStringLiteral("layers")).toArray()) {
+            ids.append(v.toObject().value(QStringLiteral("id")).toString());
+            layers.insert(ids.last(), v.toObject());
+        }
+        // Back to front: the extra layers in file order, then the text's shadow, outline, fill.
+        QCOMPARE(ids, (QStringList{QStringLiteral("x1-fill"), QStringLiteral("x2-fill"), QStringLiteral("shadow"),
+                                   QStringLiteral("outline"), QStringLiteral("fill")}));
+        auto paint = [&](const QString &id) { return layers.value(id).value(QStringLiteral("paint")).toObject(); };
+        QCOMPARE(paint(QStringLiteral("fill")).value(QStringLiteral("color")).toString(), QStringLiteral("#ffff0000"));
+        QCOMPARE(paint(QStringLiteral("outline")).value(QStringLiteral("color")).toString(), QStringLiteral("#ff0000ff"));
+        QCOMPARE(layers.value(QStringLiteral("outline")).value(QStringLiteral("width")).toDouble(), 4.0);
+        QCOMPARE(layers.value(QStringLiteral("shadow")).value(QStringLiteral("opacity")).toDouble(), 128.0 / 255.0);
+        QCOMPARE(layers.value(QStringLiteral("shadow")).value(QStringLiteral("blur")).toDouble(), 6.0);
+        const QJsonArray stops = paint(QStringLiteral("x1-fill")).value(QStringLiteral("gradient")).toObject()
+                                     .value(QStringLiteral("stops")).toArray();
+        QCOMPARE(stops.size(), 2);
+        QCOMPARE(stops.at(0).toObject().value(QStringLiteral("color")).toString(), QStringLiteral("#ffffff00"));
+        QCOMPARE(stops.at(1).toObject().value(QStringLiteral("color")).toString(), QStringLiteral("#ff00ff00"));
+        QCOMPARE(stops.at(1).toObject().value(QStringLiteral("pos")).toDouble(), 1.0);
+        QCOMPARE(layers.value(QStringLiteral("x1-fill")).value(QStringLiteral("offsetX")).toDouble(), 4.0);
+        QCOMPARE(layers.value(QStringLiteral("x2-fill")).value(QStringLiteral("offsetY")).toDouble(), 8.0);
+        // Layer 2's own alpha, on the text's colour.
+        QCOMPARE(paint(QStringLiteral("x2-fill")).value(QStringLiteral("color")).toString(), QStringLiteral("#c8ff0000"));
+        QVERIFY(t.value(QStringLiteral("tags")).toArray().contains(QStringLiteral("approximated")));
+
+        // One line per title in the folder's report.
+        const QString txt = QString::fromUtf8(readFileBytes(QDir(out.path()).filePath(QStringLiteral("titles-report.txt"))));
+        QVERIFY(txt.contains(QLatin1String("1 faithful, 1 approximated, 1 unsupported")));
+        QVERIFY(txt.contains(QLatin1String("approximated\tStack Pop\t")));
+        QVERIFY(txt.contains(QLatin1String("faithful\tClean Line\t")));
+        QVERIFY(txt.contains(QLatin1String("unsupported\tBroken\tFilmora Art title: ")));
+    }
+
+    void artTitleReaderKeepsWhatTheFileSays()
+    {
+        // -1 is "not set": kept as written, drawn in the TextNode's colour and said so.
+        const QByteArray xml = "\xEF\xBB\xBF<TextNode version=\"2.0\" Color=\"65280\"><TextParam>"
+                               "<CharData Title=\"0041004200430000\"/><Face Enable=\"1\" Color1=\"-1\" Alpha=\"255\"/>"
+                               "<Mystery Enable=\"1\"/></TextParam></TextNode>";
+        QString error;
+        const std::optional<TextArtStyle> style = readTextArtXml(xml, &error);
+        QVERIFY2(style, qPrintable(error));
+        QCOMPARE(style->encoding, QStringLiteral("utf-8"));
+        QCOMPARE(style->text, QStringLiteral("ABC")); // UTF-16BE hex
+        QCOMPARE(style->base.face.attrs.str(QStringLiteral("Color1")), QStringLiteral("-1"));
+        QCOMPARE(style->unknownEnabled, QStringList{QStringLiteral("Mystery")});
+        const TextArtConversion c = convertTextArt(*style, QStringLiteral("filmora.t"), QStringLiteral("T"), QString());
+        QVERIFY(c.ok);
+        QCOMPARE(c.fidelity, QStringLiteral("approximated"));
+        QVERIFY(c.notes.join(QLatin1Char(' ')).contains(QLatin1String("-1")));
+        QVERIFY(c.notes.join(QLatin1Char(' ')).contains(QLatin1String("Mystery")));
+        const QJsonObject fill = c.templateJson.value(QStringLiteral("style")).toObject().value(QStringLiteral("layers"))
+                                     .toArray().last().toObject();
+        QCOMPARE(fill.value(QStringLiteral("paint")).toObject().value(QStringLiteral("color")).toString(),
+                 QStringLiteral("#ff00ff00"));
+
+        // GB18030 (not UTF-8): read when this Qt can decode it, else the text is dropped, not guessed.
+        const QByteArray gb = "<TextNode version=\"2.0\"><TextParam><CharData Title=\"\xD6\xD0\"/>"
+                              "<Face Enable=\"1\" Color1=\"0\"/></TextParam></TextNode>";
+        const std::optional<TextArtStyle> g = readTextArtXml(gb, &error);
+        QVERIFY2(g, qPrintable(error));
+        QCOMPARE(g->encoding, QStringLiteral("gb18030"));
+        if (g->textUnreadable)
+            QVERIFY(g->text.isEmpty());
+        else
+            QCOMPARE(g->text, QString(QChar(0x4e2d)));
+
+        // No DTDs; not a TextNode; texture paths that climb out.
+        QVERIFY(!readTextArtXml("<!DOCTYPE x [<!ENTITY a \"b\">]><TextNode><TextParam/></TextNode>"));
+        QVERIFY(!readTextArtXml("<Other><TextParam/></Other>"));
+        QCOMPARE(textArtTextureName(QStringLiteral("%CaptionResourcePath%\\a\\tex.png")), QStringLiteral("tex.png"));
+        QVERIFY(textArtTextureName(QStringLiteral("..\\..\\x.png")).isEmpty());
+        QVERIFY(textArtTextureName(QStringLiteral("C:\\x.png")).isEmpty());
+    }
+
+    // A Filmora title of several text elements becomes a Scene Title: one actor per element where
+    // Filmora placed it, its font file from the title's Font/ folder, its text editable.
+    void multiElementTitleBecomesSceneTitle()
+    {
+        QTemporaryDir source;
+        QTemporaryDir out;
+        const QDir src(source.path());
+        const QString title = src.filePath(QStringLiteral("title/1_Duo"));
+        writeTitleItem(title, 9300, QStringLiteral("Duo Lower"), QStringLiteral("MAIN"), QJsonArray{});
+        // A second element, higher up, in its own clip.
+        const QString dataPath = QDir(title).filePath(QStringLiteral("Data/data.json"));
+        QJsonObject data = readJson(dataPath);
+        QJsonObject sub = data.value(QStringLiteral("subTimeline")).toObject();
+        QJsonArray infos = sub.value(QStringLiteral("timelineInfos")).toArray();
+        QJsonObject info = infos.at(0).toObject();
+        QJsonArray tracks = info.value(QStringLiteral("trackInfos")).toArray();
+        QJsonObject track = tracks.at(0).toObject();
+        QJsonArray clips = track.value(QStringLiteral("clipList")).toArray();
+        QJsonObject second = clips.at(0).toObject();
+        QJsonObject script = QJsonDocument::fromJson(second.value(QStringLiteral("scriptBuf")).toString().toUtf8()).object();
+        script.insert(QStringLiteral("Text"), QStringLiteral("small {line}"));
+        second.insert(QStringLiteral("scriptBuf"), QString::fromUtf8(QJsonDocument(script).toJson(QJsonDocument::Compact)));
+        QJsonArray chain{QJsonObject{{QStringLiteral("id"), QStringLiteral("video/effect/transform")},
+                                     {QStringLiteral("paramList"),
+                                      QJsonArray{QJsonObject{{QStringLiteral("name"), QStringLiteral("Position_x")},
+                                                             {QStringLiteral("fxParam"), QJsonObject{{QStringLiteral("unValue"), 0.25}}}},
+                                                 QJsonObject{{QStringLiteral("name"), QStringLiteral("Position_y")},
+                                                             {QStringLiteral("fxParam"), QJsonObject{{QStringLiteral("unValue"), 0.2}}}}}}}};
+        second.insert(QStringLiteral("effectChainList"), QJsonArray{QJsonObject{{QStringLiteral("effectList"), chain}}});
+        clips.append(second);
+        track.insert(QStringLiteral("clipList"), clips);
+        tracks.replace(0, track);
+        info.insert(QStringLiteral("trackInfos"), tracks);
+        infos.replace(0, info);
+        sub.insert(QStringLiteral("timelineInfos"), infos);
+        data.insert(QStringLiteral("subTimeline"), sub);
+        writeFile(dataPath, QJsonDocument(data).toJson());
+        copyFile(repoFont(QStringLiteral("lato/Lato-Bold.ttf")), QDir(title).filePath(QStringLiteral("Font/1_Lato.ttf")));
+
+        const ImportReport report = importFilmoraFolder(source.path(), out.path());
+        QCOMPARE(report.titles, 1);
+        QVERIFY(report.changedKinds.contains(QStringLiteral("scene-titles")));
+        QVERIFY(!QFileInfo::exists(QDir(out.path()).filePath(QStringLiteral("text-styles/fm-9300.json"))));
+        const QJsonObject doc = readJson(QDir(out.path()).filePath(QStringLiteral("scene-titles/fm-9300.json")));
+        QVERIFY(drift::scene::isSceneDocument(doc));
+        QString error;
+        const std::optional<drift::scene::Scene> scene = drift::scene::loadScene(doc, {}, &error);
+        QVERIFY2(scene, qPrintable(error));
+        QCOMPARE(scene->id, QStringLiteral("filmora.9300"));
+        QCOMPARE(scene->duration, 5.0);
+        const drift::scene::Actor *main = scene->actor(QStringLiteral("element1Text"));
+        const drift::scene::Actor *small = scene->actor(QStringLiteral("element2Text"));
+        QVERIFY(main && small);
+        QCOMPARE(main->text, QStringLiteral("MAIN"));
+        QCOMPARE(small->text, QStringLiteral("small {line}")); // a param value is not a template
+        QCOMPARE(main->color, (drift::scene::Rgba{0x10, 0x20, 0x30, 255}));
+        QCOMPARE(main->size, 120.0);
+        const drift::scene::Actor *g2 = scene->actor(QStringLiteral("element2"));
+        QVERIFY(g2 && g2->flatten);
+        QCOMPARE(g2->groupAt.x(), 0.25 * 1920 - 960);
+        QVERIFY(scene->fonts.value(QStringLiteral("f1")).file.endsWith(QLatin1String("1_Lato.ttf")));
+        QVERIFY(QFileInfo(scene->fonts.value(QStringLiteral("f1")).file).isAbsolute());
+
+        for (const ImportedItem &i : report.items) {
+            if (i.kind != QLatin1String("title"))
+                continue;
+            QCOMPARE(i.fidelity, QStringLiteral("approximated"));
+            QVERIFY(i.skipReason.startsWith(QLatin1String("Scene Title added without")));
+            QVERIFY(i.skipReason.contains(QLatin1String("outlines")));
+            QVERIFY(i.skipReason.contains(QLatin1String("shadows")));
+        }
     }
 
     void filmoraTitleNamesMapToDafin()
