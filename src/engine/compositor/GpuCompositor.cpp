@@ -1665,7 +1665,10 @@ void fillBackground(GlRuntime &rt, QOpenGLExtraFunctions *gl, GlTarget &canvas, 
     gl->glViewport(0, 0, canvas.width, canvas.height);
     gl->glDisable(GL_BLEND);
     const QColor &c = scene.backgroundColor.isValid() ? scene.backgroundColor : QColor(Qt::black);
-    gl->glClearColor(float(c.redF()), float(c.greenF()), float(c.blueF()), float(c.alphaF()));
+    // The canvas is premultiplied, so a see-through colour is cleared premultiplied too; the
+    // straight colour would put RGB above alpha. Opaque colours are unchanged.
+    const float a = float(c.alphaF());
+    gl->glClearColor(float(c.redF()) * a, float(c.greenF()) * a, float(c.blueF()) * a, a);
     gl->glClear(GL_COLOR_BUFFER_BIT);
     canvas.fbo->release();
 
