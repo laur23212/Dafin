@@ -77,6 +77,12 @@ target_include_directories(tst_colorwheel PRIVATE ../src)
 target_link_libraries(tst_colorwheel PRIVATE Qt6::Test Qt6::Core Qt6::Gui)
 add_test(NAME ColorWheel COMMAND tst_colorwheel)
 
+# CPU (swscale) and GPU (NV12 shader) pick the same YUV->RGB matrix and range for tagged SDR frames.
+qt_add_executable(tst_yuvmatrix tst_yuvmatrix.cpp)
+target_include_directories(tst_yuvmatrix PRIVATE ../src)
+target_link_libraries(tst_yuvmatrix PRIVATE Qt6::Test Qt6::Core FFmpeg::FFmpeg)
+add_test(NAME YuvMatrix COMMAND tst_yuvmatrix)
+
 qt_add_executable(tst_pdfsource tst_pdfsource.cpp)
 target_include_directories(tst_pdfsource PRIVATE ../src)
 target_link_libraries(tst_pdfsource PRIVATE Qt6::Test driftcore)
