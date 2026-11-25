@@ -5,6 +5,7 @@
 #include "app/mcp/McpController.h"
 #include "core/project/Transcript.h"
 #include "core/edit/ProtectedRanges.h"
+#include "core/animation/SpeedRamp.h"
 #include "app/assistant/AssistantController.h"
 #include "app/assistant/LlmTransport.h"
 #include "app/assistant/ModelCatalog.h"
@@ -85,6 +86,8 @@ private slots:
     void sceneToolboxExposesSchemas();
     void sceneOpsRequireAnalysisFirst();
     void sceneWorkflowEndToEnd();
+    void sceneSeekFollowsTheClipsOwnMapping_data();
+    void sceneSeekFollowsTheClipsOwnMapping();
     void aiCapabilitiesReportsMissingModels();
     void audioTagToolsNeedTheirAddons();
     void audioTagToolsAnalyseImportedAudio();
@@ -3247,6 +3250,94 @@ void McpTest::sceneToolboxExposesSchemas()
     for (const QJsonValue &v : ai.value(QStringLiteral("tools")).toArray())
         aiNames.append(v.toObject().value(QStringLiteral("name")).toString());
     QVERIFY(aiNames.contains(QStringLiteral("ai_capabilities")));
+}
+
+void McpTest::sceneSeekFollowsTheClipsOwnMapping_data()
+{
+    // kind: plain, freeze, ramp (0.5x -> 4x) or montage (preset). want < 0: no closed form, checked
+    // by mapping the result forward through the clip instead.
+    QTest::addColumn<QString>("kind");
+    QTest::addColumn<double>("start");
+    QTest::addColumn<double>("srcIn");
+    QTest::addColumn<double>("srcOut");
+    QTest::addColumn<double>("speed");
+    QTest::addColumn<bool>("reverse");
+    QTest::addColumn<double>("scene");
+    QTest::addColumn<double>("want");
+    const QString plain = QStringLiteral("plain");
+    QTest::newRow("1x") << plain << 10.0 << 2.0 << 6.0 << 1.0 << false << 3.0 << 11.0;
+    QTest::newRow("2x") << plain << 10.0 << 0.0 << 8.0 << 2.0 << false << 5.0 << 12.5;
+    QTest::newRow("reverse") << plain << 10.0 << 0.0 << 4.0 << 1.0 << true << 1.0 << 13.0;
+    QTest::newRow("reverse 2x") << plain << 10.0 << 0.0 << 8.0 << 2.0 << true << 6.0 << 11.0;
+    // The second piece of a split: its own trim, its own timeline start.
+    QTest::newRow("split piece") << plain << 20.0 << 4.0 << 8.0 << 1.0 << false << 5.0 << 21.0;
+    QTest::newRow("split, scene before piece") << plain << 20.0 << 4.0 << 8.0 << 1.0 << false << 2.0 << 20.0;
+    // A freeze frame holds the moment it was made from, from its first frame.
+    QTest::newRow("freeze") << QStringLiteral("freeze") << 10.0 << 3.0 << 0.0 << 0.0 << false << 3.0 << 10.0;
+    QTest::newRow("ramp") << QStringLiteral("ramp") << 10.0 << 0.0 << 8.0 << 0.0 << false << 2.0 << -1.0;
+    QTest::newRow("ramp late") << QStringLiteral("ramp") << 10.0 << 0.0 << 8.0 << 0.0 << false << 6.5 << -1.0;
+    QTest::newRow("ramp reversed") << QStringLiteral("ramp") << 10.0 << 0.0 << 8.0 << 0.0 << true << 2.0 << -1.0;
+    QTest::newRow("montage") << QStringLiteral("montage") << 10.0 << 1.0 << 9.0 << 0.0 << false << 4.0 << -1.0;
+}
+
+// Stage 35: seekTo spread source time linearly over the clip and flipped reverse by hand, which is
+// only right at constant speed. Over a ramp a scene landed seconds away from where it plays. The
+// seek now uses the clip's own source -> clip-local mapping, as MCP's scene tools do.
+void McpTest::sceneSeekFollowsTheClipsOwnMapping()
+{
+    QFETCH(QString, kind);
+    QFETCH(double, start);
+    QFETCH(double, srcIn);
+    QFETCH(double, srcOut);
+    QFETCH(double, speed);
+    QFETCH(bool, reverse);
+    QFETCH(double, scene);
+    QFETCH(double, want);
+
+    drift::Clip clip;
+    clip.id = QStringLiteral("c");
+    clip.timelineStart = drift::secondsToUs(start);
+    if (kind == QLatin1String("freeze")) {
+        drift::makeFreezeFrame(clip, drift::secondsToUs(srcIn), drift::secondsToUs(2.0));
+        QVERIFY(drift::isFreezeFrameClip(clip));
+    } else {
+        clip.srcIn = drift::secondsToUs(srcIn);
+        clip.srcOut = drift::secondsToUs(srcOut);
+        clip.reverse = reverse;
+        if (kind == QLatin1String("ramp")) {
+            drift::SpeedPoint slow;
+            slow.pos = 0.0;
+            slow.speed = 0.5;
+            drift::SpeedPoint fast;
+            fast.pos = 1.0;
+            fast.speed = 4.0;
+            clip.speedCurve.setPoints({slow, fast});
+            clip.syncDurationFromSpeedCurve();
+        } else if (kind == QLatin1String("montage")) {
+            clip.speedCurve = drift::speedRampPresetCurve(QStringLiteral("montage"));
+            QVERIFY(clip.hasSpeedCurve());
+            clip.syncDurationFromSpeedCurve();
+        } else {
+            clip.speed = speed;
+            clip.timelineDuration = drift::TimeUs(std::llround(double(clip.srcOut - clip.srcIn) / speed));
+        }
+    }
+
+    const drift::TimeUs sourceUs = drift::secondsToUs(scene);
+    const drift::TimeUs at = SceneDetectController::sceneTimelineUs(clip, sourceUs);
+    QVERIFY2(at >= clip.timelineStart && at <= clip.timelineEnd(),
+             qPrintable(QStringLiteral("%1 s is outside the clip").arg(drift::usToSeconds(at))));
+
+    if (want >= 0.0) {
+        QVERIFY2(qAbs(at - drift::secondsToUs(want)) <= 1,
+                 qPrintable(QStringLiteral("landed at %1 s, want %2 s").arg(drift::usToSeconds(at)).arg(want)));
+        return;
+    }
+    // Ramps: playing the clip at the seek position shows the scene's first frame (within a ms).
+    const drift::TimeUs shown = clip.timelineToSourceUs(at);
+    QVERIFY2(qAbs(shown - sourceUs) <= 1000,
+             qPrintable(QStringLiteral("seek to %1 s shows source %2 s, want %3 s")
+                            .arg(drift::usToSeconds(at)).arg(drift::usToSeconds(shown)).arg(scene)));
 }
 
 void McpTest::sceneOpsRequireAnalysisFirst()

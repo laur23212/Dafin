@@ -60,21 +60,15 @@ void SceneDetectController::seekTo(int sceneIndex)
             const QVariantMap scene = m_scenes.at(sceneIndex).toMap();
             const drift::TimeUs sourceUs =
                 drift::secondsToUs(scene.value(QStringLiteral("sourceStart")).toDouble());
-            // Scenes are in source time. Speed and reverse mean the clip's own mapping is the
-            // only thing that knows where that lands on the timeline.
-            const drift::TimeUs span = clip.sourceSpanUs();
-            if (span <= 0)
-                return;
-            const double through = double(sourceUs - clip.srcIn) / double(span);
-            const drift::TimeUs at =
-                clip.timelineStart
-                + drift::TimeUs(qBound(0.0, through, 1.0) * double(clip.timelineDuration));
-            m_app->setPlayheadUs(clip.reverse ? clip.timelineStart + clip.timelineDuration
-                                             - (at - clip.timelineStart)
-                                       : at);
+            m_app->setPlayheadUs(sceneTimelineUs(clip, sourceUs));
             return;
         }
     }
+}
+
+drift::TimeUs SceneDetectController::sceneTimelineUs(const drift::Clip &clip, drift::TimeUs sourceUs)
+{
+    return clip.timelineStart + clip.sourceUsToClipLocalUs(sourceUs);
 }
 
 

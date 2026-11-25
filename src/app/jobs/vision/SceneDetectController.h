@@ -68,6 +68,11 @@ public:
     static QList<double> cutsInside(const QList<double> &times, double start, double end,
                                     double minGap);
 
+    // Where a scene starting at source time `sourceUs` lands on the timeline in `clip`: the clip's
+    // own source -> clip-local mapping, so speed ramps, reverse, trims and freeze frames agree with
+    // playback. The same mapping MCP's scene tools use. What seekTo moves the playhead to.
+    static drift::TimeUs sceneTimelineUs(const drift::Clip &clip, drift::TimeUs sourceUs);
+
     // Scans a file's range for callers that keep their own state (Source Lab): the scene list,
     // `detecting` and the progress above are left alone. Off the GUI thread; `progress` and `done`
     // are called back on it (`done` exactly once, with ok false when the scan failed or `cancel`
