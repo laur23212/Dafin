@@ -4,6 +4,7 @@
 #include "engine/encode/export/EncoderProbe.h"
 #include "engine/encode/export/HwEncodeFallback.h"
 #include "engine/encode/export/Nv12ExportQueue.h"
+#include "engine/diagnostics/BenchPhases.h"
 #include "engine/diagnostics/RouteStats.h"
 
 #include "engine/audio/AudioMixer.h"
@@ -2745,6 +2746,8 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
         // writes the encoder's surface straight from the compositor's GL textures. Everyone
         // else hands over nothing and pays for the system-memory round trip below.
         auto sendVideoAndAudio = [&](int64_t pts, AVFrame *ready = nullptr) -> bool {
+            // Dafin: `dafin --bench` timers (BenchPhases.h); free when the benchmark is off.
+            const drift::bench::Scope benchSend(drift::bench::Phase::ExportSend);
             AVFrame *encodeFrame = ready;
             if (!encodeFrame) {
                 applySdrBt709Tags(vframe);
@@ -2838,6 +2841,7 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
         static_assert(nq::Queue::kCapacity == GpuCompositor::kExportNv12Slots);
         nq::Hooks nv12Hooks;
         nv12Hooks.prepare = [&](const nq::Job &job, nq::Mode mode) -> bool {
+            const drift::bench::Scope benchCompose(drift::bench::Phase::ExportCompose);
             GpuScene scene;
             if (!compositor.buildSceneAt(job.timeUs, composeOptions, &scene)) {
                 scene = GpuScene{};
@@ -2858,7 +2862,10 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
                 error = QStringLiteral("Could not allocate a hardware frame");
                 return nq::Outcome::Fatal;
             }
-            if (!GpuCompositor::finishExportNv12ToCuda(job.slot, hwframe)) {
+            drift::bench::Stopwatch benchCuda(drift::bench::Phase::ExportCudaCopy);
+            const bool cudaCopied = GpuCompositor::finishExportNv12ToCuda(job.slot, hwframe);
+            benchCuda.stop();
+            if (!cudaCopied) {
                 av_frame_unref(hwframe);
                 drift::routes::noteFallback(drift::routes::Fallback::ExportCudaCopyFailed);
                 return nq::Outcome::CopyFailed;
@@ -2940,6 +2947,7 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
                 continue;
             }
 
+            drift::bench::Stopwatch benchCpu(drift::bench::Phase::ExportCpuCompose);
             QImage img = renderAtOutput ? compositor.compositeAt(t, composeOptions) : compositor.compositeAt(t);
             collectDecodeProblems(t);
             if (img.isNull()) {
@@ -2972,6 +2980,7 @@ bool Exporter::runDirect(const drift::Project &project, const ExportSettings &se
                 const int srcStride[4] = {static_cast<int>(img.bytesPerLine()), 0, 0, 0};
                 sws_scale(sws, srcData, srcStride, 0, canvasH, vframe->data, vframe->linesize);
             }
+            benchCpu.stop();
             if (!sendVideoAndAudio(i))
                 goto cleanup;
             drift::routes::countEncode(drift::routes::EncodeRoute::CpuSwscale);

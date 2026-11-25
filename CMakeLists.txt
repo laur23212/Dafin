@@ -1030,6 +1030,10 @@ add_library(driftengine STATIC
     src/engine/encode/export/Nv12ExportQueue.cpp
     src/engine/diagnostics/RouteStats.h
     src/engine/diagnostics/RouteStats.cpp
+    src/engine/diagnostics/BenchPhases.h
+    src/engine/diagnostics/BenchPhases.cpp
+    src/engine/diagnostics/BenchStats.h
+    src/engine/diagnostics/BenchStats.cpp
     src/engine/encode/export/EncoderProbe.h
     src/engine/encode/export/EncoderProbe.cpp
     src/engine/encode/export/SegmentedExport.h
@@ -1748,6 +1752,8 @@ if(NOT ANDROID AND NOT EMSCRIPTEN)
         src/app/SceneTool.cpp
         src/app/workers/ExportWorker.h
         src/app/workers/ExportWorker.cpp
+        src/app/workers/BenchTool.h
+        src/app/workers/BenchTool.cpp
     )
     target_sources(driftapp PRIVATE
         src/app/mcp/transport/McpStdio.h
@@ -3523,7 +3529,7 @@ if(NOT _dafin_sha STREQUAL "")
     endif()
 endif()
 set_property(SOURCE src/app/StartupSplash.cpp src/app/platform/CrashReport_win.cpp
-             src/app/platform/CrashReport_posix.cpp APPEND PROPERTY
+             src/app/platform/CrashReport_posix.cpp src/app/workers/BenchTool.cpp APPEND PROPERTY
              COMPILE_DEFINITIONS DAFIN_BUILD_LABEL="${DAFIN_BUILD_LABEL}")
 
 if(DRIFT_PCH)

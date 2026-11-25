@@ -88,6 +88,15 @@ target_include_directories(tst_routestats PRIVATE ../src)
 target_link_libraries(tst_routestats PRIVATE Qt6::Test Qt6::Core)
 add_test(NAME RouteStats COMMAND tst_routestats)
 
+# Dafin: `dafin --bench` statistics, go/stop rules and phase timers (pure logic, C1).
+qt_add_executable(tst_benchstats
+    tst_benchstats.cpp
+    ../src/engine/diagnostics/BenchStats.cpp
+    ../src/engine/diagnostics/BenchPhases.cpp)
+target_include_directories(tst_benchstats PRIVATE ../src)
+target_link_libraries(tst_benchstats PRIVATE Qt6::Test Qt6::Core)
+add_test(NAME BenchStats COMMAND tst_benchstats)
+
 qt_add_executable(tst_trackeroverlay tst_trackeroverlay.cpp)
 target_include_directories(tst_trackeroverlay PRIVATE ../src)
 target_link_libraries(tst_trackeroverlay PRIVATE Qt6::Test Qt6::Core Qt6::Gui)

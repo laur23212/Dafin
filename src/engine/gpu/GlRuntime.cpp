@@ -1,4 +1,5 @@
 #include "engine/gpu/GlRuntime.h"
+#include "engine/diagnostics/BenchPhases.h"
 #include "engine/diagnostics/RouteStats.h"
 #include "engine/gpu/PresentClaims.h"
 #include "engine/EngineTuning.h"
@@ -719,6 +720,8 @@ bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource 
         *why = QStringLiteral("%1 returned CUDA error %2").arg(QLatin1String(call)).arg(rc);
         return false;
     };
+    // Dafin: `dafin --bench` only; free when the benchmark is off.
+    const drift::bench::Scope benchImport(drift::bench::Phase::PreviewCudaImport);
 
     CUgraphicsResource resources[2] = {yRes, uvRes};
     CUresult rc = api.cuGraphicsMapResources(2, resources, stream);
@@ -754,6 +757,7 @@ bool copyCudaNv12ToTextures(CudaGlApi &api, CUstream stream, CUgraphicsResource 
     // one stream per frame, against a full hardware-transfer download plus PBO upload if this
     // path is not taken.
     if (ok) {
+        const drift::bench::Scope benchSync(drift::bench::Phase::PreviewCudaSync);
         rc = api.cuStreamSynchronize(stream);
         if (rc != kCuSuccess)
             ok = fail("cuStreamSynchronize", rc);
@@ -1931,8 +1935,11 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
         return false;
 
     if (s.fence) {
-        const GLenum wait =
-            gl->glClientWaitSync(s.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
+        GLenum wait = GL_WAIT_FAILED;
+        {
+            const drift::bench::Scope benchWait(drift::bench::Phase::ExportFenceWait);
+            wait = gl->glClientWaitSync(s.fence, GL_SYNC_FLUSH_COMMANDS_BIT, GLuint64(1'000'000'000));
+        }
         gl->glDeleteSync(s.fence);
         s.fence = nullptr;
         // A timeout means the readback may not have finished, so the buffer may still hold the
@@ -1943,6 +1950,7 @@ bool GlRuntime::mapNv12Slot(int slot, uint8_t *y, int yStride, uint8_t *uv, int 
         }
     }
 
+    const drift::bench::Scope benchCopy(drift::bench::Phase::ExportHostCopy);
     const GLsizeiptr yBytes = GLsizeiptr(width) * height;
     gl->glBindBuffer(GL_PIXEL_PACK_BUFFER, s.pbo);
     auto *mapped = static_cast<const uint8_t *>(

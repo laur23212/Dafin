@@ -23,6 +23,7 @@
 #include "app/TemplateTool.h"
 #include "app/SceneTool.h"
 #include "app/workers/ExportWorker.h"
+#include "app/workers/BenchTool.h"
 #include "app/mcp/transport/McpStdio.h"
 #endif
 #include "app/online/addons/AddonManager.h"
@@ -613,6 +614,12 @@ int main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
         if (qstrcmp(argv[i], "--export-worker") == 0)
             return drift::worker::runExportWorker(argc, argv);
+        // Dafin: the CUDA benchmark (BenchTool.h, docs/cuda-benchmark.md). --bench-run is one of
+        // its measured runs, started by --bench; like the export worker, the driver reports a crash.
+        if (qstrcmp(argv[i], "--bench-run") == 0)
+            return drift::worker::runBenchChild(argc, argv);
+        if (qstrcmp(argv[i], "--bench") == 0)
+            return drift::worker::runBenchTool(argc, argv);
     }
 #endif
     // Dafin: `dafin --crash-dialog <report>` is the window a crashed Linux Dafin starts about itself
