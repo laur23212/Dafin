@@ -33,27 +33,78 @@ inline AVPixelFormat swsSourceFormat(AVPixelFormat fmt)
     }
 }
 
+// The YUV→RGB matrix a frame's colorspace tag selects. One mapping for both decode paths, so the
+// CPU (swscale) and the GPU (NV12 shader in GlRuntime) can't pick different matrices for the same
+// frame: swsColorspaceFromFrame() and yuvMatrixCoefficients() both start from here. SDR only.
+// BT.2020 NCL and CL both land on the NCL matrix: swscale has no constant-luminance mode, and a
+// true CL conversion needs the transfer function, which belongs with the HDR work. Untagged
+// frames stay BT.709, Drift's SDR default.
+enum class YuvMatrix { Bt709, Bt601, Smpte240M, Fcc, Bt2020 };
+
+inline YuvMatrix yuvMatrixFromColorspace(int colorspace)
+{
+    switch (colorspace) {
+    case AVCOL_SPC_BT470BG:
+    case AVCOL_SPC_SMPTE170M:
+        return YuvMatrix::Bt601;
+    case AVCOL_SPC_SMPTE240M:
+        return YuvMatrix::Smpte240M;
+    case AVCOL_SPC_FCC:
+        return YuvMatrix::Fcc;
+    case AVCOL_SPC_BT2020_NCL:
+    case AVCOL_SPC_BT2020_CL:
+        return YuvMatrix::Bt2020;
+    case AVCOL_SPC_BT709:
+    case AVCOL_SPC_UNSPECIFIED:
+    default:
+        return YuvMatrix::Bt709;
+    }
+}
+
 inline int swsColorspaceFromFrame(const AVFrame *frame)
 {
     if (!frame)
         return SWS_CS_ITU709;
-    switch (frame->colorspace) {
-    case AVCOL_SPC_BT470BG:
-    case AVCOL_SPC_SMPTE170M:
+    switch (yuvMatrixFromColorspace(frame->colorspace)) {
+    case YuvMatrix::Bt601:
         return SWS_CS_ITU601;
-    case AVCOL_SPC_SMPTE240M:
+    case YuvMatrix::Smpte240M:
         return SWS_CS_SMPTE240M;
-    case AVCOL_SPC_FCC:
+    case YuvMatrix::Fcc:
         return SWS_CS_FCC;
-    case AVCOL_SPC_BT709:
-    case AVCOL_SPC_BT2020_NCL:
-    case AVCOL_SPC_BT2020_CL:
-        return SWS_CS_ITU709;
-    case AVCOL_SPC_UNSPECIFIED:
-    default:
-        // Drift's SDR pipeline defaults to BT.709 when the bitstream is untagged.
-        return SWS_CS_ITU709;
+    case YuvMatrix::Bt2020:
+        return SWS_CS_BT2020;
+    case YuvMatrix::Bt709:
+        break;
     }
+    return SWS_CS_ITU709;
+}
+
+// Row-major 3x3 for the GPU shader: rgb = m * (Y, Cb, Cr) after range expansion (Y in 0..1,
+// Cb/Cr in -0.5..0.5). Same matrices swscale uses for the same YuvMatrix.
+inline void yuvMatrixCoefficients(YuvMatrix matrix, float m[9])
+{
+    // {Cr→R, Cb→G, Cr→G, Cb→B}
+    float c[4] = {1.5748f, -0.1873f, -0.4681f, 1.8556f}; // BT.709
+    switch (matrix) {
+    case YuvMatrix::Bt601:
+        c[0] = 1.402f; c[1] = -0.344f; c[2] = -0.714f; c[3] = 1.772f;
+        break;
+    case YuvMatrix::Smpte240M:
+        c[0] = 1.576f; c[1] = -0.2266f; c[2] = -0.4766f; c[3] = 1.826f;
+        break;
+    case YuvMatrix::Fcc:
+        c[0] = 1.4f; c[1] = -0.3319f; c[2] = -0.7119f; c[3] = 1.78f;
+        break;
+    case YuvMatrix::Bt2020:
+        c[0] = 1.4746f; c[1] = -0.1646f; c[2] = -0.5714f; c[3] = 1.8814f;
+        break;
+    case YuvMatrix::Bt709:
+        break;
+    }
+    const float out[9] = {1.f, 0.f, c[0], 1.f, c[1], c[2], 1.f, c[3], 0.f};
+    for (int i = 0; i < 9; ++i)
+        m[i] = out[i];
 }
 
 // Tells an existing scaler the source's actual sample range — recovered from color_range

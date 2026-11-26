@@ -142,6 +142,11 @@ qt_add_executable(tst_hdrexport tst_hdrexport.cpp)
 target_include_directories(tst_hdrexport PRIVATE ../src)
 target_link_libraries(tst_hdrexport PRIVATE Qt6::Test Qt6::Core Qt6::Gui driftengine)
 add_test(NAME HdrExport COMMAND tst_hdrexport)
+# CPU (swscale) and GPU (NV12 shader) pick the same YUV->RGB matrix and range for tagged SDR frames.
+qt_add_executable(tst_yuvmatrix tst_yuvmatrix.cpp)
+target_include_directories(tst_yuvmatrix PRIVATE ../src)
+target_link_libraries(tst_yuvmatrix PRIVATE Qt6::Test Qt6::Core FFmpeg::FFmpeg)
+add_test(NAME YuvMatrix COMMAND tst_yuvmatrix)
 
 qt_add_executable(tst_pdfsource tst_pdfsource.cpp)
 target_include_directories(tst_pdfsource PRIVATE ../src)

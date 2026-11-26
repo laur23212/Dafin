@@ -494,26 +494,10 @@ constexpr float kQuad[] = {
 
 QMatrix3x3 yuvToRgbMatrix(int colorspace)
 {
-    // Row-major, multiplies vec3(Y, Cb, Cr) after range expansion.
-    float m[9] = {1.f, 0.f, 1.5748f, 1.f, -0.1873f, -0.4681f, 1.f, 1.8556f, 0.f};
-    switch (colorspace) {
-    case AVCOL_SPC_BT470BG:
-    case AVCOL_SPC_SMPTE170M:
-        m[2] = 1.402f;
-        m[4] = -0.344f;
-        m[5] = -0.714f;
-        m[7] = 1.772f;
-        break;
-    case AVCOL_SPC_BT2020_NCL:
-    case AVCOL_SPC_BT2020_CL:
-        m[2] = 1.4746f;
-        m[4] = -0.1646f;
-        m[5] = -0.5714f;
-        m[7] = 1.8814f;
-        break;
-    default:
-        break;
-    }
+    // Row-major, multiplies vec3(Y, Cb, Cr) after range expansion. The matrix choice and its
+    // coefficients live in SwsColorRange.h, shared with the swscale (CPU) decode paths.
+    float m[9];
+    drift::yuvMatrixCoefficients(drift::yuvMatrixFromColorspace(colorspace), m);
     return QMatrix3x3(m);
 }
 
