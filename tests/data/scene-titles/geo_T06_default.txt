@@ -1,0 +1,16 @@
+geo keysMacos.a0c0k0 group at=312.000000,629.000000 size=170.000000,132.000000
+geo keysMacos.a0c0k0.plate box box=3.000000,3.000000,166.000000,128.000000
+geo keysMacos.a0c0k0.shine line from=17.000000,6.000000 to=153.000000,6.000000
+geo keysMacos.a0c0k0.text text size=56.000000 baseline=60.166667,47.000000 center=0 dy=0.000000 hidden=0
+geo keysMacos.a0c0k0.text2 text size=22.000000 baseline=29.000000,105.666667 center=0 dy=0.000000 hidden=0
+geo keysMacos.a0c0p1 text size=39.000000 baseline=508.000000,692.500000 center=0 dy=0.000000 hidden=0
+geo keysMacos.a0c0k1 group at=565.000000,629.000000 size=224.000000,132.000000
+geo keysMacos.a0c0k1.plate box box=3.000000,3.000000,220.000000,128.000000
+geo keysMacos.a0c0k1.shine line from=17.000000,6.000000 to=207.000000,6.000000
+geo keysMacos.a0c0k1.text text size=56.000000 baseline=89.166667,57.333333 center=0 dy=0.000000 hidden=0
+geo keysMacos.a0c0k1.text2 text size=22.000000 baseline=29.333333,105.666667 center=0 dy=0.000000 hidden=0
+geo keysMacos.a0c0p2 text size=39.000000 baseline=815.000000,692.500000 center=0 dy=0.000000 hidden=0
+geo keysMacos.a0c0k2 group at=872.000000,629.000000 size=128.000000,105.000000
+geo keysMacos.a0c0k2.plate box box=3.000000,3.000000,124.000000,101.000000
+geo keysMacos.a0c0k2.shine line from=17.000000,6.000000 to=111.000000,6.000000
+geo keysMacos.a0c0k2.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0

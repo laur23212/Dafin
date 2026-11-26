@@ -8,6 +8,7 @@ any encoding. Needs the scripts from the design archive (not in the repo):
                             [--stage13 <folder with frozen_stage13_approved_renderer_reference.py>]
                             [--stage14 <.../Stage14_TutorialUtility_Delta_v6.1.2/source>]
                             [--stage13c <folder with render_stage13C_universal_shortcut.py>]
+                            [--keycaps13 <Stage13_PracticalOverlays .../source> --keycaps13c <Stage13C .../source>]
 
 Exit code 0 only if every compared frame is identical. Skips an example whose script is not given.
 """
@@ -173,6 +174,66 @@ def check_stage13_primitives(src: Path):
     return {'example': 'stage13 primitives', 'frames': 0, 'mismatched': [k for k, v in res.items() if not v], 'checked': sorted(res)}
 
 
+def patched_module(path: Path, name: str, swaps: dict):
+    """An original script with its absolute font paths swapped for ours (the scripts are never edited on disk)."""
+    src = path.read_text(encoding='utf-8')
+    for a, b in swaps.items():
+        src = src.replace(a, b)
+    spec = importlib.util.spec_from_loader(name, loader=None)
+    m = importlib.util.module_from_spec(spec)
+    sys.modules[name] = m
+    m.__file__ = str(path)
+    exec(compile(src, str(path), 'exec'), m.__dict__)
+    return m
+
+
+NOTO = '/usr/share/fonts/truetype/noto'
+SYMBOLS = NOTO + '/NotoSansSymbols2-Regular.ttf'
+
+
+def check_keycaps13(src: Path, frames, font_dir: Path):
+    """Smart Keycaps at default values against Stage13 A (13_A_Shortcut_Keys)."""
+    m = patched_module(src / 'render_stage13_practical_overlays.py', 'stage13_a_original', {NOTO: str(font_dir)})
+    sc = core.load_scene(HERE / 'scenes' / '13_A_Shortcut_Keys.scene.json')
+    job = render.Job(sc, font_dirs=[font_dir])
+    bad = []
+    for i in frames:
+        mx, n = diff(m.frame(m.scene_a, i / 25), job.direct_frame(i))
+        if mx:
+            bad.append({'frame': i, 'max': mx, 'pixels': n})
+    return {'example': '13_A_Shortcut_Keys (Smart Keycaps)', 'frames': len(frames), 'mismatched': bad}
+
+
+def check_keycaps13c(src: Path, frames, font_dir: Path, symbols: Path | None):
+    """Smart Keycaps at default values against Stage13C U1/U2/U3. The Mac keys need NotoSansSymbols2:
+    pass --symbols with the proof's file; without it a stand-in draws BOTH sides (mechanics only)."""
+    stand_in = symbols is None
+    sym = str(symbols) if symbols else '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
+    swaps = {SYMBOLS: sym, NOTO: str(font_dir)}
+    frozen = src / 'original_render_stage13_v6_0_4_FROZEN_COPY.py'
+    patched = Path(__import__('tempfile').mkdtemp()) / frozen.name
+    patched.write_text(frozen.read_text(encoding='utf-8').replace(NOTO, str(font_dir)), encoding='utf-8')
+    m = patched_module(src / 'render_stage13C_universal_shortcut.py', 'stage13c_original',
+                       {**swaps, "Path(__file__).resolve().parent/'original_render_stage13_v6_0_4_FROZEN_COPY.py'": f"Path({str(patched)!r})"})
+    res = []
+    for case, asset in (('U1_Universal_Horizontal_Copy', '13C_U1_Universal_Horizontal_Copy'),
+                        ('U2_Universal_Vertical_Paste', '13C_U2_Universal_Vertical_Paste'),
+                        ('U3_Mac_Dual_Names_Force_Quit', '13C_U3_Mac_Dual_Names_Force_Quit')):
+        raw = json.loads((HERE / 'scenes' / f'{asset}.scene.json').read_text(encoding='utf-8'))
+        if stand_in:
+            raw['fonts']['symbols'] = {'family': 'DejaVu Sans (stand-in)', 'file': sym}
+        job = render.Job(core.load_scene(raw), font_dirs=[font_dir])
+        ref = m.UniversalScene(case)
+        bad = []
+        for i in frames:
+            mx, n = diff(ref.frame(i / 25), job.direct_frame(i))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        res.append({'example': asset + (' [stand-in symbol font: mechanics only]' if stand_in else ''),
+                    'frames': len(frames), 'mismatched': bad})
+    return res
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--stage15', type=Path)
@@ -181,6 +242,10 @@ def main():
     ap.add_argument('--stage03b-crev', type=Path, help='folder with C_25fps_refined_source.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
+    ap.add_argument('--keycaps13', type=Path, help='Stage13_PracticalOverlays .../source (render_stage13_practical_overlays.py)')
+    ap.add_argument('--keycaps13c', type=Path, help='Stage13C_UniversalShortcut .../source (render_stage13C_universal_shortcut.py + frozen copy)')
+    ap.add_argument('--font-dir', type=Path, default=HERE.parent.parent / 'scene-fonts')
+    ap.add_argument('--symbols', type=Path, help='the proofs\' NotoSansSymbols2-Regular.ttf')
     ap.add_argument('--frames', default='all')
     o = ap.parse_args()
     frames = list(range(150)) if o.frames == 'all' else [int(v) for v in o.frames.split(',')]
@@ -201,6 +266,10 @@ def main():
     if o.stage13:
         res.append(check_stage13_primitives(o.stage13))
         res.extend(check_stage13_scenes(o.stage13, frames))
+    if o.keycaps13:
+        res.append(check_keycaps13(o.keycaps13, frames, o.font_dir))
+    if o.keycaps13c:
+        res.extend(check_keycaps13c(o.keycaps13c, frames, o.font_dir, o.symbols))
     print(json.dumps(res, indent=1))
     return 1 if any(r['mismatched'] for r in res) or not res else 0
 

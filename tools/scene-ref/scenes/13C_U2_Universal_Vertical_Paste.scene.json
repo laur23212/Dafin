@@ -1,14 +1,14 @@
 {
  "format": "dafin.scene-title",
  "version": 1,
- "id": "dafin.instructional.universal-shortcut-paste",
- "label": "Universal Shortcut — Paste (stacked)",
- "category": "Instructional Titles",
+ "id": "dafin.shortcut.13c-u2-universal-vertical-paste",
+ "label": "Universal Shortcut, stacked",
+ "category": "Keyboard Shortcuts",
  "source": {
   "asset": "13C_U2_Universal_Vertical_Paste",
   "sha256": "6ef1419afcfa5819581501b3fb4d7ef003a095f298ccb164deafa9dce4aa3245",
-  "script": "Dafin Stage13C :: render_stage13C_universal_shortcut.py U2_Universal_Vertical_Paste",
-  "status": "ART_APPROVED_NATIVE_PENDING"
+  "script": "Dafin_TitleDesign_Part6_Stage13C_UniversalShortcut_Delta_v6.0.6 :: source/render_stage13C_universal_shortcut.py UniversalScene",
+  "status": "ART_APPROVED_BY_CREATOR_STAGE13C_NOT_DAFIN_NATIVE"
  },
  "canvas": {
   "width": 1920,
@@ -43,30 +43,28 @@
    243,
    240
   ],
-  "MINT": [
-   123,
-   209,
-   192
-  ],
-  "MUTED": [
+  "SOFT": [
    165,
    177,
    187
   ],
-  "MAC_LINE": [
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SILVER": [
    184,
    194,
    200
+  ],
+  "FAINT": [
+   58,
+   69,
+   74
   ]
  },
  "fonts": {
-  "regular": {
-   "family": "Noto Sans Display",
-   "weight": 400,
-   "file": "NotoSansDisplay-Regular.ttf",
-   "package": "fonts-noto-core 20201225-2",
-   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
-  },
   "semi": {
    "family": "Noto Sans Display",
    "weight": 600,
@@ -74,7 +72,14 @@
    "package": "fonts-noto-extra 20201225-2",
    "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
   },
-  "symbol": {
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "symbols": {
    "family": "Noto Sans Symbols 2",
    "weight": 400,
    "file": "NotoSansSymbols2-Regular.ttf",
@@ -93,13 +98,19 @@
    "id": "title",
    "type": "text",
    "default": "Lipește",
-   "label": "Action"
+   "label": "Title"
   },
   {
-   "id": "note",
+   "id": "shortcutWindows",
    "type": "text",
-   "default": "Denumirea tastei poate fi afișată sub simbol.",
-   "label": "Note"
+   "default": "Ctrl+V",
+   "label": "Windows / Linux shortcut"
+  },
+  {
+   "id": "shortcutMac",
+   "type": "text",
+   "default": "Command+V",
+   "label": "macOS shortcut"
   }
  ],
  "actors": [
@@ -110,7 +121,7 @@
    "text": "{eyebrow}",
    "font": "semi",
    "size": 25,
-   "color": "MINT",
+   "color": "AQUA",
    "at": {
     "baseline": [
      355.0,
@@ -133,8 +144,7 @@
     "to": {
      "opacity": 0
     }
-   },
-   "optional": true
+   }
   },
   {
    "id": "title",
@@ -170,7 +180,7 @@
   },
   {
    "id": "rule",
-   "role": "divider",
+   "role": "rule",
    "type": "line",
    "from": [
     350,
@@ -181,7 +191,7 @@
     367
    ],
    "width": 1,
-   "color": "MUTED",
+   "color": "SOFT",
    "in": {
     "start": 0.55,
     "dur": 0.6,
@@ -200,13 +210,13 @@
    }
   },
   {
-   "id": "platform1",
+   "id": "labelWindows",
    "role": "platformLabel",
    "type": "text",
    "text": "WINDOWS / LINUX",
    "font": "semi",
    "size": 25,
-   "color": "MINT",
+   "color": "AQUA",
    "at": {
     "baseline": [
      357.0,
@@ -231,13 +241,13 @@
    }
   },
   {
-   "id": "platform2",
+   "id": "labelMac",
    "role": "platformLabel",
    "type": "text",
    "text": "macOS",
    "font": "semi",
    "size": 25,
-   "color": "MAC_LINE",
+   "color": "SILVER",
    "at": {
     "baseline": [
      357.0,
@@ -245,7 +255,7 @@
     ]
    },
    "in": {
-    "start": 0.88,
+    "start": 0.8799999999999999,
     "dur": 0.37,
     "ease": "smoothstep",
     "from": {
@@ -262,400 +272,106 @@
    }
   },
   {
-   "id": "g1key1",
-   "role": "key",
-   "type": "group",
-   "flatten": true,
+   "id": "keysWindows",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "windows",
+   "skin": "classic-pc",
+   "labelPolicy": "names",
    "at": [
     350,
     505
    ],
-   "size": [
-    188,
-    107
-   ],
-   "in": {
-    "start": 0.91,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
+   "shortcut": "{shortcutWindows}",
+   "flow": {
+    "gap": 32,
+    "plusDx": 16,
+    "plusDy": "center"
    },
-   "out": {
-    "start": 4.72,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
+   "sep": {
+    "size": 41
    },
-   "keyName": "ctrl",
-   "keyFamily": "pc",
-   "children": [
-    {
-     "id": "g1key1Cap",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      185,
-      104
-     ],
-     "radius": 14,
-     "fill": [
-      23,
-      32,
-      39,
-      244
-     ],
-     "strokeColor": "MINT",
-     "stroke": 2
-    },
-    {
-     "id": "g1key1Label",
-     "type": "text",
-     "text": "CTRL",
-     "font": "semi",
-     "size": 43,
-     "color": "WHITE",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
+   "timing": {
+    "key": {
+     "start": 0.91,
+     "keyStep": 0.17,
+     "in": {
+      "dur": 0.4,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.72,
+      "dur": 0.3
      }
-    }
-   ]
-  },
-  {
-   "id": "g1plus1",
-   "role": "joiner",
-   "type": "text",
-   "text": "+",
-   "font": "regular",
-   "size": 41,
-   "color": "MUTED",
-   "at": {
-    "baseline": [
-     561.0,
-     570.5
-    ]
-   },
-   "in": {
-    "start": 1.08,
-    "dur": 0.38,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.75,
-    "dur": 0.28,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
+    },
+    "sep": {
+     "rel": "left",
+     "off": 0.17,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.75,
+      "dur": 0.28
+     }
     }
    }
   },
   {
-   "id": "g1key2",
-   "role": "key",
-   "type": "group",
-   "flatten": true,
-   "at": [
-    606,
-    505
-   ],
-   "size": [
-    118,
-    107
-   ],
-   "in": {
-    "start": 1.08,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
-   },
-   "out": {
-    "start": 4.72,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "keyName": "v",
-   "keyFamily": "pc",
-   "children": [
-    {
-     "id": "g1key2Cap",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      115,
-      104
-     ],
-     "radius": 14,
-     "fill": [
-      23,
-      32,
-      39,
-      244
-     ],
-     "strokeColor": "MINT",
-     "stroke": 2
-    },
-    {
-     "id": "g1key2Label",
-     "type": "text",
-     "text": "V",
-     "font": "semi",
-     "size": 43,
-     "color": "WHITE",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
-  },
-  {
-   "id": "g2key1",
-   "role": "key",
-   "type": "group",
-   "flatten": true,
+   "id": "keysMac",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "macos",
+   "skin": "classic-mac",
+   "labelPolicy": "glyphPlusNames",
    "at": [
     350,
     744
    ],
-   "size": [
-    258,
-    132
-   ],
-   "in": {
-    "start": 1.42,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
+   "shortcut": "{shortcutMac}",
+   "flow": {
+    "gap": 32,
+    "plusDx": 16,
+    "plusDy": "center"
    },
-   "out": {
-    "start": 4.72,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
+   "sep": {
+    "size": 41
    },
-   "keyName": "command",
-   "keyFamily": "mac",
-   "supersample": 3,
-   "children": [
-    {
-     "id": "g2key1Cap",
-     "type": "roundRect",
-     "box": [
-      3,
-      3,
-      254,
-      128
-     ],
-     "radius": 20,
-     "fill": [
-      38,
-      44,
-      51,
-      254
-     ],
-     "strokeColor": "MAC_LINE",
-     "stroke": 2
-    },
-    {
-     "id": "g2key1Shine",
-     "type": "line",
-     "from": [
-      18,
-      6
-     ],
-     "to": [
-      240,
-      6
-     ],
-     "color": [
-      223,
-      229,
-      231
-     ],
-     "alpha": 46,
-     "width": 1
-    },
-    {
-     "id": "g2key1Label",
-     "type": "text",
-     "text": "⌘",
-     "font": "symbol",
-     "size": 53,
-     "color": "WHITE",
-     "align": {
-      "h": "center",
-      "v": "top",
-      "top": 15
+   "timing": {
+    "key": {
+     "start": 1.42,
+     "keyStep": 0.17,
+     "in": {
+      "dur": 0.4,
+      "dy": 14
+     },
+     "out": {
+      "start": 4.72,
+      "dur": 0.3
      }
     },
-    {
-     "id": "g2key1Name",
-     "type": "text",
-     "text": "Command / Cmd",
-     "font": "regular",
-     "size": 25,
-     "color": [
-      210,
-      218,
-      223
-     ],
-     "align": {
-      "h": "center",
-      "v": "top",
-      "top": 91
+    "sep": {
+     "rel": "left",
+     "off": 0.17,
+     "in": {
+      "dur": 0.38
+     },
+     "out": {
+      "start": 4.75,
+      "dur": 0.28
      }
     }
-   ]
-  },
-  {
-   "id": "g2plus1",
-   "role": "joiner",
-   "type": "text",
-   "text": "+",
-   "font": "regular",
-   "size": 41,
-   "color": "MUTED",
-   "at": {
-    "baseline": [
-     631.0,
-     822.5
-    ]
    },
-   "in": {
-    "start": 1.59,
-    "dur": 0.38,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.75,
-    "dur": 0.28,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "g2key2",
-   "role": "key",
-   "type": "group",
-   "flatten": true,
-   "at": [
-    676,
-    744
-   ],
-   "size": [
-    122,
-    132
-   ],
-   "in": {
-    "start": 1.59,
-    "dur": 0.4,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 14
-    }
-   },
-   "out": {
-    "start": 4.72,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "keyName": "v",
-   "keyFamily": "mac",
-   "supersample": 3,
-   "children": [
-    {
-     "id": "g2key2Cap",
-     "type": "roundRect",
-     "box": [
-      3,
-      3,
-      118,
-      128
-     ],
-     "radius": 20,
-     "fill": [
-      38,
-      44,
-      51,
-      254
-     ],
-     "strokeColor": "MAC_LINE",
-     "stroke": 2
-    },
-    {
-     "id": "g2key2Shine",
-     "type": "line",
-     "from": [
-      18,
-      6
-     ],
-     "to": [
-      104,
-      6
-     ],
-     "color": [
-      223,
-      229,
-      231
-     ],
-     "alpha": 46,
-     "width": 1
-    },
-    {
-     "id": "g2key2Label",
-     "type": "text",
-     "text": "V",
-     "font": "semi",
-     "size": 43,
-     "color": "WHITE",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
+   "height": 132
   },
   {
    "id": "note",
-   "role": "description",
+   "role": "note",
    "type": "text",
-   "text": "{note}",
+   "text": "Denumirea tastei poate fi afișată sub simbol.",
    "font": "regular",
    "size": 25,
-   "color": "MUTED",
+   "color": "SOFT",
    "at": {
     "baseline": [
      357.0,
@@ -677,8 +393,7 @@
     "to": {
      "opacity": 0
     }
-   },
-   "optional": true
+   }
   }
  ]
 }

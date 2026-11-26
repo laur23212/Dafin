@@ -1,5 +1,7 @@
 #include "core/scene/SceneTitle.h"
 
+#include "core/scene/SceneKeycaps.h"
+
 #include <QCryptographicHash>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -861,18 +863,24 @@ struct Loader
         return env;
     }
 
-    void parseActor(const QJsonObject &r, const QString &parent, const QVariantMap &env)
+    // `generated`: an actor phase A of Smart Keycaps made (docs/scene-keycaps.md). Its text is final
+    // (no slots), and its group sizes and positions are zeros until phase B lays it out.
+    void parseActor(const QJsonObject &r, const QString &parent, const QVariantMap &env, bool generated = false)
     {
         Actor a;
         a.id = r.value(QStringLiteral("id")).toString();
         a.type = r.value(QStringLiteral("type")).toString();
         a.role = r.value(QStringLiteral("role")).toString();
         a.parent = parent;
+        a.keycapsBlock = r.value(QStringLiteral("_kc")).toString();
+        a.hidden = r.value(QStringLiteral("_hidden")).toBool();
+        // "snap": "trunc" (Smart Keycaps) and its older spelling "offsetSnap" (the Stage13 ports): the
+        // actor's offsets move by whole px toward zero, as int() did in the Stage13 scripts.
         const QString snapMode = r.value(QStringLiteral("offsetSnap")).toString();
-        if (snapMode == QLatin1String("trunc"))
-            a.truncOffsets = true;
-        else if (!snapMode.isEmpty() && snapMode != QLatin1String("round"))
+        if (!snapMode.isEmpty() && snapMode != QLatin1String("round") && snapMode != QLatin1String("trunc"))
             fail(QStringLiteral("%1: offsetSnap must be \"round\" or \"trunc\"").arg(a.id));
+        a.snapTrunc = r.value(QStringLiteral("snap")).toString() == QLatin1String("trunc")
+                      || snapMode == QLatin1String("trunc");
         a.in = blockOf(r.value(QStringLiteral("in")), true, a.id);
         a.out = blockOf(r.value(QStringLiteral("out")), false, a.id);
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
@@ -887,7 +895,8 @@ struct Loader
                      .arg(a.id, effType));
 
         if (t == QLatin1String("text")) {
-            a.text = formatTextOrFail(r.value(QStringLiteral("text")).toString(), env);
+            a.text = generated ? r.value(QStringLiteral("text")).toString()
+                               : formatTextOrFail(r.value(QStringLiteral("text")).toString(), env);
             a.font = r.value(QStringLiteral("font")).toString();
             if (!sc.fonts.contains(a.font))
                 fail(QStringLiteral("%1: unknown font key '%2'").arg(a.id, a.font));
@@ -1003,8 +1012,17 @@ struct Loader
                 a.groupH = size.at(1).toDouble();
             }
             a.flatten = r.value(QStringLiteral("flatten")).toBool();
-            if (a.flatten && (a.groupW <= 0 || a.groupH <= 0))
+            if (a.flatten && !generated && (a.groupW <= 0 || a.groupH <= 0))
                 fail(QStringLiteral("%1: a flattened group needs size [w, h]").arg(a.id));
+            // "ss", or its older spelling "supersample" (the Stage13C/14 ports): one field.
+            const QString ssKey = r.contains(QStringLiteral("ss")) ? QStringLiteral("ss")
+                                  : r.contains(QStringLiteral("supersample")) ? QStringLiteral("supersample")
+                                                                               : QString();
+            if (!ssKey.isEmpty()) {
+                a.ss = int(numberOf(r.value(ssKey), a.id + QStringLiteral(": ") + ssKey));
+                if (a.ss < 1)
+                    fail(QStringLiteral("%1: %2 must be a whole number of at least 1").arg(a.id, ssKey));
+            }
         }
         // Static alignment is resolved after sync, on the parsed actors.
         const QJsonObject align = r.value(QStringLiteral("align")).toObject();
@@ -1022,7 +1040,8 @@ struct Loader
             env.insert(it.key(), it.value());
         static const QSet<QString> types{QStringLiteral("text"),    QStringLiteral("rect"),  QStringLiteral("roundRect"),
                                          QStringLiteral("line"),    QStringLiteral("route"), QStringLiteral("ellipse"),
-                                         QStringLiteral("ring"),    QStringLiteral("group"), QStringLiteral("repeat")};
+                                         QStringLiteral("ring"),    QStringLiteral("group"), QStringLiteral("repeat"),
+                                         QStringLiteral("keycaps")};
         for (const QJsonValue &value : actors) {
             const QJsonObject a = value.toObject();
             const QString type = a.value(QStringLiteral("type")).toString();
@@ -1060,6 +1079,28 @@ struct Loader
                     sub.insert(QStringLiteral("id"), formatTextOrFail(sub.value(QStringLiteral("id")).toString(), localEnv));
                     expand(QJsonArray{sub}, inner, parent);
                 }
+                continue;
+            }
+            if (type == QLatin1String("keycaps")) { // phase A of Smart Keycaps (docs/scene-keycaps.md)
+                if (!parent.isEmpty())
+                    fail(QStringLiteral("%1: a keycaps block cannot sit inside a group").arg(id));
+                QJsonObject r = subst(a, env).toObject();
+                for (const char *k : {"shortcut", "labelPolicy", "orWord", "thenWord"}) // text slots: params bind here
+                    if (r.value(QLatin1String(k)).isString())
+                        r.insert(QLatin1String(k), formatTextOrFail(r.value(QLatin1String(k)).toString(), env));
+                if (r.value(QStringLiteral("label")).isObject() && !r.value(QStringLiteral("label")).toObject().isEmpty()) {
+                    QJsonObject label = r.value(QStringLiteral("label")).toObject();
+                    label.insert(QStringLiteral("text"), formatTextOrFail(label.value(QStringLiteral("text")).toString(), env));
+                    r.insert(QStringLiteral("label"), label);
+                }
+                if (!m_keycaps)
+                    m_keycaps = std::make_shared<KeycapsPlan>();
+                QList<QJsonObject> made;
+                QString error;
+                if (!expandKeycaps(r, made, *m_keycaps, &error))
+                    fail(error);
+                for (const QJsonObject &g : std::as_const(made))
+                    parseActor(g, g.value(QStringLiteral("_parent")).toString(), env, true);
                 continue;
             }
             const QJsonObject r = subst(a, env).toObject();
@@ -1164,6 +1205,7 @@ struct Loader
 
     QHash<QString, QJsonObject> m_align;
     QHash<QString, QString> m_sync;
+    std::shared_ptr<KeycapsPlan> m_keycaps;
 };
 
 double phase(double t, const TimedBlock &b)
@@ -1429,6 +1471,7 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
         sc.mixColor = *mixColor;
 
         loader.expand(doc.value(QStringLiteral("actors")).toArray(), {}, {});
+        sc.keycaps = loader.m_keycaps;
 
         // sync: take in/out from another actor (resolved actors, as the reference does).
         for (int self = 0; self < sc.actors.size(); ++self) {

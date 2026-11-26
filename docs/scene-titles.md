@@ -180,7 +180,7 @@ Fields common to every actor:
 |---|---|
 | `id` | Unique, semantic (`title`, `strapMain`, `segment{i}`). Saved projects and inspector fields refer to it. |
 | `role` | What the actor is for (`title`, `eyebrow`, `carrier`, `accent`, `progressSegment`…), for the inspector and for templates that share an engine |
-| `type` | `text` `rect` `roundRect` `line` `route` `ellipse` `ring` `group` `repeat` |
+| `type` | `text` `rect` `roundRect` `line` `route` `ellipse` `ring` `group` `repeat` `keycaps` |
 | `optional` | May be switched off (`enabled: false`, or an expression). Switching off an actor that is not optional is an error. |
 | `dependsOn` | Actors this one measures or clips against. They must exist. Native: they are updated together, in one undo step. |
 | `sync` | Copy `in`/`out` from another actor (for example, a text that must never outlive its strap) |
@@ -199,7 +199,8 @@ Fields of each type:
 | `route` | `points` (polyline traced by `progress`), `width`, `color` |
 | `ellipse` | `box`, `fill`, `strokeColor`, `stroke` |
 | `ring` | `box`, `color`, `stroke` (outline only) |
-| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. `supersample` (default 2) is the factor the group is drawn at before the Lanczos reduction: the Stage13C/14 keys and menu tags were drawn at 3×. A child text may also use `align: {"h":"center","v":"top","top":15}` (its ink top at that group y), as the Stage13C Mac keys stack a symbol over its name. |
+| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. `ss` (default 2) is the factor the group is drawn at before the Lanczos reduction (the Stage13C/14 keys and menu tags, and the Mac keycaps, use 3); `supersample` is an older spelling of the same field, read the same way. A child text may also use `align: {"h":"center","v":"top","top":15}` (its ink top at that group y), as the Stage13C Mac keys stack a symbol over its name. `snap: "trunc"` truncates the actor's offsets to whole px instead of rounding them (the Stage13 keycaps' `int()`); `offsetSnap: "trunc"` is an older spelling of the same field (`offsetSnap` also accepts `"round"`, the default). |
+| `keycaps` | Generator for keyboard shortcuts, expanded into groups and texts at load (phase A) and laid out once text can be measured (phase B). Reference renderer and native (`core/scene/SceneKeycaps.*`). See `docs/scene-keycaps.md`. |
 | `repeat` | `count` (number or expression), `as` (variable name, default `i`), `actor` (a template whose fields may be `{"expr": …}`, with an id like `segment{i}`) |
 
 ## Constraints

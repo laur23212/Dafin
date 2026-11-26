@@ -1,0 +1,11 @@
+geo keys.a0c0k0 group at=347.000000,568.000000 size=213.000000,107.000000
+geo keys.a0c0k0.plate box box=2.000000,2.000000,210.000000,104.000000
+geo keys.a0c0k0.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keys.a0c0p1 text size=43.000000 baseline=575.000000,619.000000 center=0 dy=0.000000 hidden=0
+geo keys.a0c0k1 group at=617.000000,568.000000 size=250.000000,107.000000
+geo keys.a0c0k1.plate box box=2.000000,2.000000,247.000000,104.000000
+geo keys.a0c0k1.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0
+geo keys.a0c0p2 text size=43.000000 baseline=896.000000,619.000000 center=0 dy=0.000000 hidden=0
+geo keys.a0c0k2 group at=940.000000,568.000000 size=112.000000,107.000000
+geo keys.a0c0k2.plate box box=2.000000,2.000000,109.000000,104.000000
+geo keys.a0c0k2.text text size=43.000000 baseline=0.000000,0.000000 center=1 dy=-2.000000 hidden=0

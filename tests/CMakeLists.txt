@@ -421,6 +421,22 @@ if(DRIFT_WITH_SKIA)
     target_compile_definitions(tst_scenetitle PRIVATE DRIFT_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
         DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
     add_test(NAME SceneTitle COMMAND tst_scenetitle)
+
+    # Dafin: the Python reference of Scene Titles and Smart Keycaps (docs/scene-keycaps.md). Headless; it only
+    # needs numpy, Pillow and OpenCV, so it is registered only where this Python has them.
+    find_program(DAFIN_SCENE_PYTHON NAMES python3 python)
+    if(DAFIN_SCENE_PYTHON)
+        execute_process(COMMAND "${DAFIN_SCENE_PYTHON}" -I -c "import numpy, PIL, cv2"
+            RESULT_VARIABLE _dafin_scene_py_rc OUTPUT_QUIET ERROR_QUIET)
+        if(_dafin_scene_py_rc EQUAL 0)
+            add_test(NAME SceneRefPython
+                COMMAND "${DAFIN_SCENE_PYTHON}" -I "${CMAKE_SOURCE_DIR}/tools/scene-ref/test_scene_ref.py")
+            add_test(NAME SmartKeycapsPython
+                COMMAND "${DAFIN_SCENE_PYTHON}" -I "${CMAKE_SOURCE_DIR}/tools/scene-ref/test_keycaps.py")
+        else()
+            message(STATUS "Dafin: numpy/Pillow/OpenCV not found for ${DAFIN_SCENE_PYTHON}; scene-ref Python tests not registered")
+        endif()
+    endif()
 endif()
 
 qt_add_executable(tst_mcp

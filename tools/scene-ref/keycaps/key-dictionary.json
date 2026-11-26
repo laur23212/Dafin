@@ -1,0 +1,518 @@
+{
+  "format": "dafin.keycap-dictionary",
+  "version": 1,
+  "note": "Key identities, platform legends and keycap skins of the Smart Keycaps generator (docs/scene-keycaps.md). Read by tools/scene-ref/keycaps.py and, from the Qt resources, by src/core/scene/SceneKeycaps.cpp: one file, two readers.",
+  "joiners": {
+    "then": "THEN",
+    "or": "OR"
+  },
+  "keys": {
+    "control": {
+      "aliases": [
+        "ctrl",
+        "control",
+        "⌃"
+      ],
+      "pc": "CTRL",
+      "w": 170,
+      "mac": {
+        "glyph": "⌃",
+        "plain": "Control",
+        "dual": "Control / Ctrl"
+      }
+    },
+    "alt": {
+      "aliases": [
+        "alt",
+        "option",
+        "opt",
+        "⌥"
+      ],
+      "pc": "ALT",
+      "w": 145,
+      "mac": {
+        "glyph": "⌥",
+        "plain": "Option",
+        "dual": "Option / Alt"
+      },
+      "note": "Option is the Alt key of a Mac keyboard: one identity, two legends."
+    },
+    "shift": {
+      "aliases": [
+        "shift",
+        "⇧"
+      ],
+      "pc": "SHIFT",
+      "w": 218,
+      "mac": {
+        "glyph": "⇧",
+        "plain": "Shift",
+        "dual": "Shift"
+      }
+    },
+    "command": {
+      "aliases": [
+        "command",
+        "cmd",
+        "⌘"
+      ],
+      "pc": null,
+      "w": 184,
+      "mac": {
+        "glyph": "⌘",
+        "plain": "Command",
+        "dual": "Command / Cmd"
+      },
+      "note": "Never an alias of alt, never printed on a PC block."
+    },
+    "super": {
+      "aliases": [
+        "win",
+        "windows",
+        "super"
+      ],
+      "pc": "WIN",
+      "w": 185,
+      "mac": null,
+      "note": "The Windows key has no Mac counterpart in this dictionary."
+    },
+    "mod": {
+      "aliases": [
+        "mod"
+      ],
+      "neutral": {
+        "windows": "control",
+        "macos": "command"
+      },
+      "note": "Platform-neutral primary modifier: Ctrl on Windows/Linux, Command on macOS."
+    },
+    "escape": {
+      "aliases": [
+        "esc",
+        "escape"
+      ],
+      "pc": "ESC",
+      "w": 121,
+      "mac": {
+        "plain": "Esc"
+      }
+    },
+    "enter": {
+      "aliases": [
+        "enter"
+      ],
+      "pc": "ENTER",
+      "w": 214,
+      "mac": {
+        "plain": "Enter"
+      }
+    },
+    "return": {
+      "aliases": [
+        "return"
+      ],
+      "pc": "RETURN",
+      "w": 218,
+      "mac": {
+        "plain": "Return"
+      }
+    },
+    "backspace": {
+      "aliases": [
+        "backspace"
+      ],
+      "pc": "BACKSPACE",
+      "w": 276,
+      "mac": {
+        "plain": "Delete"
+      }
+    },
+    "delete": {
+      "aliases": [
+        "delete",
+        "del"
+      ],
+      "pc": "DELETE",
+      "w": 225,
+      "mac": null,
+      "note": "Forward delete: not printed on most Mac keyboards, so no Mac legend is invented."
+    },
+    "capslock": {
+      "aliases": [
+        "capslock",
+        "caps"
+      ],
+      "pc": "CAPS LOCK",
+      "w": 247,
+      "mac": {
+        "plain": "Caps Lock"
+      }
+    },
+    "tab": {
+      "aliases": [
+        "tab"
+      ],
+      "pc": "TAB",
+      "w": 188,
+      "mac": {
+        "plain": "Tab"
+      }
+    },
+    "space": {
+      "aliases": [
+        "space",
+        "spacebar"
+      ],
+      "pc": "SPACE",
+      "w": 395,
+      "wide": true,
+      "mac": {
+        "plain": "Space"
+      }
+    },
+    "fn": {
+      "aliases": [
+        "fn"
+      ],
+      "pc": "FN",
+      "w": 117,
+      "mac": {
+        "plain": "fn"
+      }
+    },
+    "arrowleft": {
+      "aliases": [
+        "left",
+        "arrowleft"
+      ],
+      "pc": "←",
+      "w": 135,
+      "mac": {
+        "plain": "←"
+      }
+    },
+    "arrowright": {
+      "aliases": [
+        "right",
+        "arrowright"
+      ],
+      "pc": "→",
+      "w": 135,
+      "mac": {
+        "plain": "→"
+      }
+    },
+    "arrowup": {
+      "aliases": [
+        "up",
+        "arrowup"
+      ],
+      "pc": "↑",
+      "w": 135,
+      "mac": {
+        "plain": "↑"
+      }
+    },
+    "arrowdown": {
+      "aliases": [
+        "down",
+        "arrowdown"
+      ],
+      "pc": "↓",
+      "w": 135,
+      "mac": {
+        "plain": "↓"
+      }
+    },
+    "comma": {
+      "aliases": [
+        "comma"
+      ],
+      "pc": ",",
+      "w": 108,
+      "mac": {
+        "plain": ","
+      }
+    },
+    "period": {
+      "aliases": [
+        "period"
+      ],
+      "pc": ".",
+      "w": 108,
+      "mac": {
+        "plain": "."
+      }
+    },
+    "plus": {
+      "aliases": [
+        "plus"
+      ],
+      "pc": "+",
+      "w": 108,
+      "mac": {
+        "plain": "+"
+      }
+    },
+    "minus": {
+      "aliases": [
+        "minus"
+      ],
+      "pc": "-",
+      "w": 108,
+      "mac": {
+        "plain": "-"
+      }
+    },
+    "equals": {
+      "aliases": [
+        "equals"
+      ],
+      "pc": "=",
+      "w": 108,
+      "mac": {
+        "plain": "="
+      }
+    },
+    "slash": {
+      "aliases": [
+        "slash"
+      ],
+      "pc": "/",
+      "w": 108,
+      "mac": {
+        "plain": "/"
+      }
+    },
+    "backslash": {
+      "aliases": [
+        "backslash"
+      ],
+      "pc": "\\",
+      "w": 108,
+      "mac": {
+        "plain": "\\"
+      }
+    }
+  },
+  "skins": {
+    "classic-pc": {
+      "note": "Stage13 A Shortcut Keys (keycap_sprite) and the PC keys of Stage13C. Width: the Stage13C formula.",
+      "ss": 2,
+      "height": 107,
+      "pad": 2,
+      "radius": 14,
+      "fill": [
+        23,
+        32,
+        39,
+        244
+      ],
+      "stroke": "AQUA",
+      "strokeWidth": 2,
+      "textColor": "WHITE",
+      "primary": {
+        "font": "semi",
+        "size": 43,
+        "symbolFont": "symbols",
+        "symbolSize": 53,
+        "dy": -2
+      },
+      "dual": null,
+      "shine": null,
+      "width": {
+        "model": "ink",
+        "font": "semi",
+        "size": 43,
+        "pad": 90,
+        "min": 114,
+        "even": true
+      },
+      "sep": {
+        "font": "regular",
+        "size": 43,
+        "color": "SOFT"
+      }
+    },
+    "classic-mac": {
+      "note": "Stage13C Apple-family keys: neutral brushed fill, 3x sprite, optional second line.",
+      "ss": 3,
+      "height": 107,
+      "dualHeight": 132,
+      "pad": 3,
+      "radius": 20,
+      "fill": [
+        38,
+        44,
+        51,
+        254
+      ],
+      "stroke": [
+        184,
+        194,
+        200
+      ],
+      "strokeWidth": 2,
+      "textColor": "WHITE",
+      "primary": {
+        "font": "semi",
+        "size": 43,
+        "symbolFont": "symbols",
+        "symbolSize": 53,
+        "dy": -2
+      },
+      "dual": {
+        "top": 15,
+        "primarySize": 39,
+        "symbolSize": 53,
+        "secondaryFont": "regular",
+        "secondarySize": 25,
+        "secondaryBottom": 41,
+        "secondaryColor": [
+          210,
+          218,
+          223
+        ]
+      },
+      "shine": {
+        "inset": 18,
+        "y": 6,
+        "color": [
+          223,
+          229,
+          231,
+          46
+        ],
+        "width": 1
+      },
+      "width": {
+        "model": "inkMac",
+        "min": 122,
+        "dualPad": 70,
+        "dualFont": "regular",
+        "dualSize": 25,
+        "space": 360,
+        "even": true
+      },
+      "sep": {
+        "font": "regular",
+        "size": 41,
+        "color": "SOFT"
+      }
+    },
+    "smart-pc": {
+      "note": "Stage13F Smart template keys (semantic widths, 3x sprite).",
+      "ss": 3,
+      "height": 105,
+      "pad": 3,
+      "radius": 14,
+      "fill": [
+        23,
+        32,
+        39,
+        244
+      ],
+      "stroke": "AQUA",
+      "strokeWidth": 2,
+      "textColor": "WHITE",
+      "primary": {
+        "font": "semi",
+        "size": 43,
+        "longSize": 34,
+        "longFrom": 8,
+        "symbolFont": "symbols",
+        "symbolSize": 56,
+        "dy": -2
+      },
+      "dual": null,
+      "shine": null,
+      "width": {
+        "model": "semantic",
+        "default": 108,
+        "font": "semi",
+        "textPad": 64,
+        "dualPad": 58,
+        "dualFont": "regular",
+        "dualSize": 22,
+        "min": 108,
+        "even": true
+      },
+      "sep": {
+        "font": "regular",
+        "size": 39,
+        "color": "SOFT"
+      }
+    },
+    "smart-mac": {
+      "note": "Stage13F Smart template keys, Apple family.",
+      "ss": 3,
+      "height": 105,
+      "dualHeight": 132,
+      "pad": 3,
+      "radius": 20,
+      "fill": [
+        34,
+        42,
+        49,
+        253
+      ],
+      "stroke": [
+        184,
+        194,
+        200
+      ],
+      "strokeWidth": 2,
+      "textColor": "WHITE",
+      "primary": {
+        "font": "semi",
+        "size": 43,
+        "longSize": 34,
+        "longFrom": 8,
+        "symbolFont": "symbols",
+        "symbolSize": 56,
+        "dy": -2
+      },
+      "dual": {
+        "top": 17,
+        "primarySize": 43,
+        "symbolSize": 56,
+        "secondaryFont": "regular",
+        "secondarySize": 22,
+        "secondaryBottom": 43,
+        "secondaryColor": [
+          210,
+          218,
+          223
+        ]
+      },
+      "shine": {
+        "inset": 17,
+        "y": 6,
+        "color": [
+          221,
+          228,
+          233,
+          54
+        ],
+        "width": 1
+      },
+      "width": {
+        "model": "semantic",
+        "default": 108,
+        "font": "semi",
+        "textPad": 64,
+        "dualPad": 58,
+        "dualFont": "regular",
+        "dualSize": 22,
+        "min": 108,
+        "even": true,
+        "plainCommandMin": 218
+      },
+      "sep": {
+        "font": "regular",
+        "size": 39,
+        "color": "SOFT"
+      }
+    }
+  }
+}

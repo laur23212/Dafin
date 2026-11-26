@@ -1,14 +1,14 @@
 {
  "format": "dafin.scene-title",
  "version": 1,
- "id": "dafin.instructional.shortcut-keys",
+ "id": "dafin.shortcut.13a-shortcut-keys",
  "label": "Shortcut Keys",
- "category": "Instructional Titles",
+ "category": "Keyboard Shortcuts",
  "source": {
   "asset": "13_A_Shortcut_Keys",
   "sha256": "19055804163e2a13fe4dd6c7c5d2cbd10a9d2a1451fb804d54433dab2fbe110f",
-  "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/frozen_stage13_approved_renderer_reference.py scene_a",
-  "status": "ART_APPROVED_NATIVE_PENDING"
+  "script": "Dafin_TitleDesign_Part6_Stage13_PracticalOverlays_Delta_v6.0.4 :: source/render_stage13_practical_overlays.py scene_a",
+  "status": "ART_APPROVED_PROFESSIONAL_WITH_DYNAMIC_KEY_COLLECTION_REQUIREMENT"
  },
  "canvas": {
   "width": 1920,
@@ -38,7 +38,7 @@
    12,
    17
   ],
-  "OFF": [
+  "WHITE": [
    242,
    243,
    240
@@ -53,66 +53,59 @@
    209,
    192
   ],
-  "SAND": [
-   207,
-   181,
-   145
+  "SILVER": [
+   184,
+   194,
+   200
+  ],
+  "FAINT": [
+   58,
+   69,
+   74
   ]
  },
  "fonts": {
-  "regular": {
-   "family": "Noto Sans Display",
-   "weight": 400,
-   "file": "NotoSansDisplay-Regular.ttf",
-   "package": "fonts-noto-core 20201225-2",
-   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
-  },
   "semi": {
    "family": "Noto Sans Display",
    "weight": 600,
    "file": "NotoSansDisplay-SemiBold.ttf",
    "package": "fonts-noto-extra 20201225-2",
    "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
   }
  },
  "params": [
   {
-   "id": "caption",
+   "id": "eyebrow",
    "type": "text",
    "default": "COMANDĂ RAPIDĂ",
-   "label": "Caption"
+   "label": "Eyebrow"
   },
   {
    "id": "title",
    "type": "text",
    "default": "Salvează ca…",
-   "label": "Action"
+   "label": "Title"
   },
   {
-   "id": "key1",
+   "id": "shortcut",
    "type": "text",
-   "default": "CTRL",
-   "label": "Key 1"
-  },
-  {
-   "id": "key2",
-   "type": "text",
-   "default": "SHIFT",
-   "label": "Key 2"
-  },
-  {
-   "id": "key3",
-   "type": "text",
-   "default": "S",
-   "label": "Key 3"
+   "default": "Ctrl+Shift+S",
+   "label": "Shortcut"
   }
  ],
  "actors": [
   {
-   "id": "caption",
+   "id": "eyebrow",
    "role": "eyebrow",
    "type": "text",
-   "text": "{caption}",
+   "text": "{eyebrow}",
    "font": "semi",
    "size": 25,
    "color": "AQUA",
@@ -122,7 +115,6 @@
      369.0
     ]
    },
-   "optional": true,
    "in": {
     "start": 0.18,
     "dur": 0.32,
@@ -148,7 +140,7 @@
    "text": "{title}",
    "font": "semi",
    "size": 70,
-   "color": "OFF",
+   "color": "WHITE",
    "at": {
     "baseline": [
      345.0,
@@ -175,7 +167,7 @@
   },
   {
    "id": "rule",
-   "role": "divider",
+   "role": "rule",
    "type": "line",
    "from": [
     347,
@@ -205,262 +197,77 @@
    }
   },
   {
-   "id": "key1",
-   "role": "keycap",
-   "type": "group",
-   "flatten": true,
+   "id": "keys",
+   "role": "shortcut",
+   "type": "keycaps",
+   "platform": "windows",
+   "skin": "classic-pc",
+   "labelPolicy": "names",
    "at": [
     347,
     568
    ],
-   "size": [
-    213,
-    107
-   ],
-   "offsetSnap": "trunc",
-   "in": {
-    "start": 0.85,
-    "dur": 0.38,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 18
-    }
+   "shortcut": "{shortcut}",
+   "sep": {
+    "size": 43
    },
-   "out": {
-    "start": 4.9,
-    "dur": 0.26,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "children": [
-    {
-     "id": "key1Cap",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      210,
-      104
+   "lock": {
+    "keys": [
+     "control",
+     "shift",
+     "s"
+    ],
+    "x": [
+     347,
+     617,
+     940
+    ],
+    "w": [
+     213,
+     250,
+     112
+    ],
+    "sep": [
+     [
+      568,
+      585
      ],
-     "radius": 14,
-     "fill": [
-      23,
-      32,
-      39,
-      244
-     ],
-     "strokeColor": "AQUA",
-     "stroke": 2
-    },
-    {
-     "id": "key1Label",
-     "type": "text",
-     "text": "{key1}",
-     "font": "semi",
-     "size": 43,
-     "color": "OFF",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
-  },
-  {
-   "id": "key2",
-   "role": "keycap",
-   "type": "group",
-   "flatten": true,
-   "at": [
-    617,
-    568
-   ],
-   "size": [
-    250,
-    107
-   ],
-   "offsetSnap": "trunc",
-   "in": {
-    "start": 1.15,
-    "dur": 0.38,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 18
-    }
-   },
-   "out": {
-    "start": 4.78,
-    "dur": 0.26,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "children": [
-    {
-     "id": "key2Cap",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      247,
-      104
-     ],
-     "radius": 14,
-     "fill": [
-      23,
-      32,
-      39,
-      244
-     ],
-     "strokeColor": "AQUA",
-     "stroke": 2
-    },
-    {
-     "id": "key2Label",
-     "type": "text",
-     "text": "{key2}",
-     "font": "semi",
-     "size": 43,
-     "color": "OFF",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
-  },
-  {
-   "id": "key3",
-   "role": "keycap",
-   "type": "group",
-   "flatten": true,
-   "at": [
-    940,
-    568
-   ],
-   "size": [
-    112,
-    107
-   ],
-   "offsetSnap": "trunc",
-   "in": {
-    "start": 1.45,
-    "dur": 0.38,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0,
-     "dy": 18
-    }
-   },
-   "out": {
-    "start": 4.66,
-    "dur": 0.26,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   },
-   "children": [
-    {
-     "id": "key3Cap",
-     "type": "roundRect",
-     "box": [
-      2,
-      2,
-      109,
-      104
-     ],
-     "radius": 14,
-     "fill": [
-      23,
-      32,
-      39,
-      244
-     ],
-     "strokeColor": "AQUA",
-     "stroke": 2
-    },
-    {
-     "id": "key3Label",
-     "type": "text",
-     "text": "{key3}",
-     "font": "semi",
-     "size": 43,
-     "color": "OFF",
-     "align": {
-      "h": "center",
-      "v": "center",
-      "dy": -2
-     }
-    }
-   ]
-  },
-  {
-   "id": "plus1",
-   "role": "joiner",
-   "type": "text",
-   "text": "+",
-   "font": "regular",
-   "size": 43,
-   "color": "SOFT",
-   "at": {
-    "baseline": [
-     575.0,
-     619.0
+     [
+      889,
+      585
+     ]
     ]
    },
-   "in": {
-    "start": 1.05,
-    "dur": 0.32,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.75,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
-    }
-   }
-  },
-  {
-   "id": "plus2",
-   "role": "joiner",
-   "type": "text",
-   "text": "+",
-   "font": "regular",
-   "size": 43,
-   "color": "SOFT",
-   "at": {
-    "baseline": [
-     896.0,
-     619.0
-    ]
-   },
-   "in": {
-    "start": 1.33,
-    "dur": 0.32,
-    "ease": "smoothstep",
-    "from": {
-     "opacity": 0
-    }
-   },
-   "out": {
-    "start": 4.75,
-    "dur": 0.3,
-    "ease": "smoothstep",
-    "to": {
-     "opacity": 0
+   "timing": {
+    "key": {
+     "start": 0.85,
+     "keyStep": 0.3,
+     "in": {
+      "dur": 0.38,
+      "dy": 18,
+      "snap": "trunc"
+     },
+     "out": {
+      "start": 4.66,
+      "revStep": 0.12,
+      "dur": 0.26
+     }
+    },
+    "sep": {
+     "list": [
+      1.05,
+      1.33
+     ],
+     "listFor": 3,
+     "rel": "mid",
+     "off": 0.04,
+     "in": {
+      "dur": 0.32
+     },
+     "out": {
+      "start": 4.75,
+      "dur": 0.3
+     }
     }
    }
   }
