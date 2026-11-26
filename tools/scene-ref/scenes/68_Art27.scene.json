@@ -1,0 +1,73 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.favourite.art27",
+ "label": "Art 27",
+ "category": "Favourites",
+ "source": {
+  "asset": "68_Art27",
+  "sha256": "972a2ec54b9811b86ca97386918e5c7201d27f11446f7179d0603be128b649b3",
+  "script": "drafts/d68_Art27.py (renderer 9b8d5d9a37a5)",
+  "status": "RECONSTRUCTED_APPROX; RECREATION_REVIEW_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 5.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "Montserrat-ExtraBoldItalic.ttf",
+   "sha256": "0336d05365d450e7baf8e336428daeb0571d63da843312d1703c96015c0afbec",
+   "package": "the creator's Filmora title 68_Art27 (OFL)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "ART",
+   "label": "Text"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "title",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "art27"
+   }
+  }
+ ]
+}

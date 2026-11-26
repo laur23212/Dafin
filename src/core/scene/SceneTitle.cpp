@@ -1028,6 +1028,35 @@ struct Loader
         } else if (goldKinds.contains(effType)) {
             fail(QStringLiteral("%1: effect %2 needs the gold1x profile").arg(a.id, effType));
         }
+        // draft1x: the Stage 54–67 library and the favourite Filmora styles (docs/scene-titles.md
+        // "draft1x", the same list as draftKinds() in SceneDraftEffects.h); "secondary" takes params
+        static const QSet<QString> draftKinds{
+            QStringLiteral("art30"), QStringLiteral("art27"), QStringLiteral("milestone"),
+            QStringLiteral("keyphrase"), QStringLiteral("linebreak"), QStringLiteral("pullquote"),
+            QStringLiteral("switchword"), QStringLiteral("nameplate"), QStringLiteral("checklist"),
+            QStringLiteral("section"), QStringLiteral("dualcaption"), QStringLiteral("sidenote"),
+            QStringLiteral("redact"), QStringLiteral("progress"), QStringLiteral("focal"), QStringLiteral("credit"),
+            QStringLiteral("pricepoint"), QStringLiteral("bracket"), QStringLiteral("horizon"),
+            QStringLiteral("echo"), QStringLiteral("dateline"), QStringLiteral("capsule"), QStringLiteral("dropcap"),
+            QStringLiteral("interpose"), QStringLiteral("reanchor"), QStringLiteral("between"),
+            QStringLiteral("gloss"), QStringLiteral("waypoint"), QStringLiteral("pinpoint"),
+            QStringLiteral("signpost"), QStringLiteral("parallel"), QStringLiteral("cutline"),
+            QStringLiteral("focuslist"), QStringLiteral("compose"), QStringLiteral("lumen"), QStringLiteral("stack"),
+            QStringLiteral("footnote"), QStringLiteral("baseline"), QStringLiteral("underscore"),
+            QStringLiteral("ratio"), QStringLiteral("shutter"), QStringLiteral("delta"), QStringLiteral("compare"),
+            QStringLiteral("duration"), QStringLiteral("share"), QStringLiteral("turn"), QStringLiteral("wash"),
+            QStringLiteral("total"), QStringLiteral("labelshift"), QStringLiteral("relay"),
+            QStringLiteral("radiance"), QStringLiteral("countdown"), QStringLiteral("rulefit"),
+            QStringLiteral("matchword"), QStringLiteral("revision"), QStringLiteral("convert"),
+            QStringLiteral("trail")};
+        if (sc.profile == Profile::Draft1x && t == QLatin1String("text")) {
+            if (!draftKinds.contains(effType))
+                fail(QStringLiteral("%1: draft1x needs a known effect, not '%2'").arg(a.id, effType));
+            a.effect = eff;
+            if (a.effect.contains(QStringLiteral("secondary")))
+                a.effect.insert(QStringLiteral("secondary"),
+                                formatTextOrFail(a.effect.value(QStringLiteral("secondary")).toString(), env));
+        }
         if (reservedEffect && sc.profile == Profile::Fx1x)
             a.effect = eff;
         else if (reservedEffect)
@@ -1680,6 +1709,8 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Fx1x;
         else if (profile == QLatin1String("gold1x"))
             sc.profile = Profile::Gold1x;
+        else if (profile == QLatin1String("draft1x"))
+            sc.profile = Profile::Draft1x;
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
         sc.supersample = render.contains(QStringLiteral("ss")) ? render.value(QStringLiteral("ss")).toInt() : 1;

@@ -24,7 +24,7 @@ struct KeycapsPlan; // core/scene/SceneKeycaps.h
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
 
-enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x, Fx1x, Gold1x };
+enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x, Fx1x, Gold1x, Draft1x };
 
 struct Rgba
 {

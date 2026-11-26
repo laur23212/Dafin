@@ -438,6 +438,38 @@ def check_later(src: Path, frames):
     return out
 
 
+def check_drafts(src: Path, frames):
+    """draft1x (the Stage 54–67 library and the favourite styles): the reference runs the frozen
+    scripts in drafts/; this checks it against each source package's archived lossless
+    output/alpha.mkv (decoded with ffmpeg). `src` holds the unpacked <asset>_<NAME>_v<N> folders.
+    RGB under alpha 0 is not compared (it carries no colour)."""
+    import subprocess
+    out = []
+    for p in sorted((HERE / 'scenes').glob('*.scene.json')):
+        sc = core.load_scene(p)
+        if sc.profile != 'draft1x':
+            continue
+        asset = sc.raw['source']['asset']
+        mkv = next(src.glob(f'{asset}_*/*/output/alpha.mkv'), None)
+        if mkv is None:
+            out.append({'example': p.stem, 'missing': 'alpha.mkv'})
+            continue
+        raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', str(mkv), '-f', 'rawvideo', '-pix_fmt', 'rgba', '-'],
+                             capture_output=True, check=True).stdout
+        want = np.frombuffer(raw, np.uint8).reshape(-1, sc.height, sc.width, 4)
+        r = render.make_renderer(sc)
+        bad = []
+        fs = [i for i in frames if i < len(want)]
+        for i in fs:
+            got = np.asarray(r.draw(i / 25)).astype(np.int32)
+            d = np.abs(got - want[i].astype(np.int32))
+            d[(got[..., 3] == 0) & (want[i][..., 3] == 0)] = 0
+            if d.max():
+                bad.append({'frame': i, 'max': int(d.max()), 'pixels': int((d.max(axis=2) > 0).sum())})
+        out.append({'example': p.stem.replace('.scene', ''), 'frames': len(fs), 'mismatched': bad})
+    return out
+
+
 def check_chapters_v4(src: Path, frames):
     """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
     as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
@@ -633,6 +665,7 @@ def main():
     ap.add_argument('--stage10', type=Path, help='folder with render_stage10.py')
     ap.add_argument('--golden', type=Path, help='the Golden18 folder (25A … 30C, each with source/render_stageNN.py)')
     ap.add_argument('--later', type=Path, help='the B2 later-stages folder (32A … 49A, each with source/render_stageNN*.py)')
+    ap.add_argument('--drafts', type=Path, help='the unpacked Stage 54–69 source packages (<asset>_<NAME>_v<N>/…/output/alpha.mkv)')
     ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
@@ -669,6 +702,8 @@ def main():
         res.extend(check_golden(o.golden, frames))
     if o.later:
         res.extend(check_later(o.later, frames))
+    if o.drafts:
+        res.extend(check_drafts(o.drafts, frames))
     if o.chapters_v4:
         res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:

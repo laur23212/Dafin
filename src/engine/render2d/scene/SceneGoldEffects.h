@@ -33,8 +33,9 @@ public:
     virtual TextBox bbox(const QString &font, int px, const QString &text) const = 0;
     virtual double length(const QString &font, int px, const QString &text) const = 0; // getlength
     virtual int ascender(const QString &font, int px) const = 0; // PIL's anchor 'la' offset to the baseline
-    // ImageDraw.text((x, y), text, fill=255, anchor='ls') into an 8-bit mask
-    virtual void draw(M8 &into, const QString &font, int px, const QString &text, double x, double y) const = 0;
+    // ImageDraw.text((x, y), text, fill=255, anchor='ls', stroke_width=stroke) into an 8-bit mask
+    // (the stroke as FreeType's stroker draws it for PIL: round joins, the outline grown by `stroke`)
+    virtual void draw(M8 &into, const QString &font, int px, const QString &text, double x, double y, int stroke = 0) const = 0;
 };
 
 class GoldEffect
