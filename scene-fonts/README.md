@@ -31,7 +31,7 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
 | NotoSansDisplay-SemiCondensedMedium.ttf | 1d1ab248177e1fd53daf9f481215e27ddf948578b8d99c51962de399f7a77e96 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
 | FreeSerif.ttf | c57bf5de095af4e070c2acb5bce634316409ed4203b5098f4fdadb691dc7b3d2 | fonts-freefont-ttf 20211204+svn4273-2 (Stage03b A); GPL-3+ with the font exception, `COPYING-FreeFont.txt` |
 
-The last two are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),
+`NotoSerif-SemiBoldItalic.ttf` and `InterDisplay-Regular.otf` are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),
 whose original script and font are lost (`FONT_UNKNOWN`); they are the closest installed files, not the original.
 
 Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
