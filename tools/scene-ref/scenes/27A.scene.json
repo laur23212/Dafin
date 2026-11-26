@@ -1,0 +1,134 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.spectra",
+ "label": "Spectra",
+ "category": "Golden Run",
+ "source": {
+  "asset": "27A",
+  "sha256": "a50fc3b28c0d88e8bd318a187d07fb81bc388594133886e5c551b1202e3d32c8",
+  "script": "render_stage27.py :: scene_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-SemiBoldItalic.ttf",
+   "sha256": "a526accf800873339a9568f16a30229a05070cb9a31825011c3819e99c98532a",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "SPECTRA",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 320,
+   "color": [
+    235,
+    238,
+    235
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "spectralInk",
+    "tracking": -1,
+    "maxWidth": 1540,
+    "dy": -15,
+    "reveal": [
+     0.19,
+     0.84
+    ],
+    "out": [
+     4.58,
+     0.58
+    ],
+    "travel": [
+     0.33,
+     2.2
+    ],
+    "pass": [
+     -0.2,
+     1.42,
+     0.18
+    ],
+    "bands": [
+     [
+      0.75,
+      0.62
+     ],
+     [
+      0.12,
+      0.59
+     ],
+     [
+      -0.72,
+      0.65
+     ]
+    ],
+    "tints": [
+     [
+      -44,
+      -1,
+      20
+     ],
+     [
+      -55,
+      13,
+      0
+     ],
+     [
+      16,
+      -39,
+      -26
+     ]
+    ],
+    "edge": [
+     90,
+     45,
+     42
+    ],
+    "rise": [
+     0.17,
+     1.06,
+     14
+    ]
+   }
+  }
+ ]
+}

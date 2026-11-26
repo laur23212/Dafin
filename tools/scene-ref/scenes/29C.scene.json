@@ -1,0 +1,87 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.coalesce",
+ "label": "Coalesce",
+ "category": "Golden Run",
+ "source": {
+  "asset": "29C",
+  "sha256": "5d5d19ab0ee4f1d5503309fd0fbdeac0bd8a8b9de5d5692349d51e9e538bdcb2",
+  "script": "render_stage29.py :: scene_c",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "COALESCE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "black",
+   "size": 303,
+   "color": [
+    239,
+    241,
+    244
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "particleCoalesce",
+    "maxWidth": 1480,
+    "tracking": 4,
+    "dy": 5,
+    "seed": 1009,
+    "count": 2600,
+    "radius": [
+     110,
+     290
+    ],
+    "squash": 0.65,
+    "shade": [
+     178,
+     252
+    ]
+   }
+  }
+ ]
+}

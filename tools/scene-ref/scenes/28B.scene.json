@@ -1,0 +1,88 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.aperture",
+ "label": "Aperture",
+ "category": "Golden Run",
+ "source": {
+  "asset": "28B",
+  "sha256": "c3dd699fdc6fdba030d728400e7c420e4cdb4e49024133180803e3879f77ba2b",
+  "script": "render_stage28.py :: scene_b",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "APERTURE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "black",
+   "size": 310,
+   "color": [
+    238,
+    244,
+    242
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "counterRelease",
+    "maxWidth": 1550,
+    "tracking": 1,
+    "open": [
+     0.62,
+     0.8,
+     0.13
+    ],
+    "in": [
+     0.11,
+     0.38
+    ],
+    "out": [
+     4.67,
+     0.5
+    ]
+   }
+  }
+ ]
+}

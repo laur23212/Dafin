@@ -1,0 +1,98 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.incline",
+ "label": "Incline",
+ "category": "Golden Run",
+ "source": {
+  "asset": "28A",
+  "sha256": "01639e88cb607a3d53c80b2c543249045ab0547619a8e63762600e200a773e42",
+  "script": "render_stage28.py :: scene_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "reg": {
+   "file": "NotoSerifDisplay-Medium.ttf",
+   "sha256": "ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "ital": {
+   "file": "NotoSerifDisplay-MediumItalic.ttf",
+   "sha256": "862ef9d1adc931b504f5c35f39a7fe25ba25397f22f680ba3d07704a9664e12e",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "INCLINE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "reg",
+   "size": 320,
+   "color": [
+    235,
+    237,
+    238
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "slantMorph",
+    "fontTo": "ital",
+    "maxWidth": 1550,
+    "dy": 8,
+    "morph": [
+     0.5,
+     1.35
+    ],
+    "in": [
+     0.14,
+     0.45
+    ],
+    "out": [
+     4.65,
+     0.56
+    ],
+    "colorTo": [
+     240,
+     236,
+     231
+    ]
+   }
+  }
+ ]
+}

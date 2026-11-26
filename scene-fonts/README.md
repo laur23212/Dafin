@@ -45,6 +45,15 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the P
 | NotoSansDisplay-SemiCondensedBold.ttf | 7b2e466a506a2f6ce6ee807dd97fc157acc11d5c7c88dcb4c7af5729ae427906 | fonts-noto-extra 20201225-2 (Stage09 Split Motion C1) |
 | NotoSerifDisplay-SemiBold.ttf | 74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40 | fonts-noto-extra 20201225-2 (Stage11 Phrase Reflow) |
 | NotoSansDisplay-Light.ttf | b2938eecdbdacbbcc9fab3641268d02afb0c0896335ab12331793195de019197 | fonts-noto-extra 20201225-2 (Stage10 Typography Morph) |
+| InterDisplay-ExtraBold.otf | 7f233cb770bedfb0e4d1d5bada87dade7505513b020ca4b1ae2566fa358263b4 | fonts-inter 4.0+ds-1 (Golden 25A, 26A) |
+| InterDisplay-Black.otf | c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8 | fonts-inter 4.0+ds-1 (Golden 25A, 26B, 27B, 28B, 28C, 29A, 29C, 30B) |
+| NotoSerifDisplay-BoldItalic.ttf | d3c055380d05e41732096c337226afe96640e7eaeaf7d1294556545b95ccc123 | fonts-noto-extra 20201225-2 (Golden 25B) |
+| NotoSerifDisplay-ExtraLight.ttf | 492dccca49ec4cfe08eb99fa911003be314dc6373f6aaf1285861724f17b5c3b | fonts-noto-extra 20201225-2 (Golden 26C) |
+| NotoSerifDisplay-Bold.ttf | 8666c2488e681a31670f9fc0b5d59fa4f21f2a0664a76876fe49ebd832f673c7 | fonts-noto-extra 20201225-2 (Golden 26C) |
+| NotoSerifDisplay-SemiBoldItalic.ttf | a526accf800873339a9568f16a30229a05070cb9a31825011c3819e99c98532a | fonts-noto-extra 20201225-2 (Golden 27A) |
+| NotoSerifDisplay-Italic.ttf | 96ad3a5588b1d6e564589d236b8fa1839e8169a6b87a055340c36b87904e93e0 | fonts-noto-extra 20201225-2 (Golden 27C) |
+| NotoSerifDisplay-MediumItalic.ttf | 862ef9d1adc931b504f5c35f39a7fe25ba25397f22f680ba3d07704a9664e12e | fonts-noto-extra 20201225-2 (Golden 28A) |
+| NotoSerifDisplay-Regular.ttf | bcdc596729c24044e28c54815ecbe6004f83b10169a49a51160b22f59116249f | fonts-noto-extra 20201225-2 (Golden 30A) |
 | Lato-Heavy.ttf | 4ce7ec20cd9c391b271b4149ad8cf5a71301d98965403f14fc5530d017146dbb | fonts-lato 2.015-1 (OFL) |
 
 `NotoSerif-SemiBoldItalic.ttf` and `InterDisplay-Regular.otf` are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),

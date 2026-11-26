@@ -1007,6 +1007,23 @@ struct Loader
         const QString effType = eff.value(QStringLiteral("type")).toString();
         const bool reservedEffect = effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
                                     || effType == QLatin1String("focusMix");
+        // gold1x: the Golden Run 18 (docs/scene-titles.md "gold1x"); its "to" text takes params
+        static const QSet<QString> goldKinds{
+            QStringLiteral("contourMorph"), QStringLiteral("elasticWarp"), QStringLiteral("arcToBaseline"),
+            QStringLiteral("perspectivePlane"), QStringLiteral("widthBloom"), QStringLiteral("weightMorph"),
+            QStringLiteral("spectralInk"), QStringLiteral("glyphPivot"), QStringLiteral("mirrorUnfold"),
+            QStringLiteral("slantMorph"), QStringLiteral("counterRelease"), QStringLiteral("inverseTransit"),
+            QStringLiteral("depthCast"), QStringLiteral("pleatUnfold"), QStringLiteral("particleCoalesce"),
+            QStringLiteral("contourTrace"), QStringLiteral("characterReel"), QStringLiteral("isolineCollapse")};
+        if (sc.profile == Profile::Gold1x && t == QLatin1String("text")) {
+            if (!goldKinds.contains(effType))
+                fail(QStringLiteral("%1: gold1x needs a known effect, not '%2'").arg(a.id, effType));
+            a.effect = eff;
+            if (a.effect.contains(QStringLiteral("to")))
+                a.effect.insert(QStringLiteral("to"), formatTextOrFail(a.effect.value(QStringLiteral("to")).toString(), env));
+        } else if (goldKinds.contains(effType)) {
+            fail(QStringLiteral("%1: effect %2 needs the gold1x profile").arg(a.id, effType));
+        }
         if (reservedEffect && sc.profile == Profile::Fx1x)
             a.effect = eff;
         else if (reservedEffect)
@@ -1657,6 +1674,8 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Cov1x;
         else if (profile == QLatin1String("fx1x"))
             sc.profile = Profile::Fx1x;
+        else if (profile == QLatin1String("gold1x"))
+            sc.profile = Profile::Gold1x;
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
         sc.supersample = render.contains(QStringLiteral("ss")) ? render.value(QStringLiteral("ss")).toInt() : 1;

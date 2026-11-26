@@ -1,6 +1,7 @@
 #include "engine/render2d/scene/ScenePainter.h"
 
 #include "core/scene/SceneKeycaps.h"
+#include "engine/render2d/scene/SceneGoldEffects.h"
 #include "engine/render2d/text/fonts/SkiaFonts.h"
 
 #include "include/core/SkBitmap.h"
@@ -1064,6 +1065,40 @@ double fxEase(const QJsonObject &e, const char *k, double t)
                : x * x * (3.0 - 2.0 * x);
 }
 
+// gold1x: the Golden Run effects' text, drawn as PIL drew it (basic layout on hb-ft's 26.6 grid).
+class SkiaGoldText : public scene::gold::GoldText
+{
+public:
+    explicit SkiaGoldText(QHash<QString, sk_sp<SkTypeface>> faces) : faces_(std::move(faces)) {}
+    bool has(const QString &font) const override { return faces_.value(font) != nullptr; }
+    scene::gold::TextBox bbox(const QString &font, int px, const QString &text) const override
+    {
+        const PilBox b = pilBBox(pixelFont(faces_.value(font), px), text);
+        return {b.left, b.top, b.right, b.bottom};
+    }
+    double length(const QString &font, int px, const QString &text) const override
+    {
+        return pilAdvance(pixelFont(faces_.value(font), px), text);
+    }
+    void draw(scene::gold::M8 &into, const QString &font, int px, const QString &text, double x, double y) const override
+    {
+        if (into.empty() || !faces_.value(font))
+            return;
+        const SkBitmap bm = coverage(basicLayout(pixelFont(faces_.value(font), px), text), {SkScalar(x), SkScalar(y)},
+                                     SkIRect::MakeWH(into.w, into.h));
+        for (int j = 0; j < bm.height() && j < into.h; ++j) {
+            const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, j));
+            for (int i = 0; i < bm.width() && i < into.w; ++i) {
+                const int o = into.at(i, j), v = row[i];
+                into.at(i, j) = quint8(o + (255 - o) * v / 255); // fill 255 over what is there
+            }
+        }
+    }
+
+private:
+    QHash<QString, sk_sp<SkTypeface>> faces_;
+};
+
 // PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
 // coordinates. Width 1 is a thin line.
 void pilLine(SkCanvas &c, double ax, double ay, double bx, double by, double width, SkColor color)
@@ -1094,6 +1129,8 @@ public:
     QHash<QString, QSizeF> trackedSprites; // Stage08: the sprite size the centring uses
     QHash<QString, CovMap> covs;           // cov1x: each actor's coverage on the design grid
     QHash<QString, FxArt> fx;              // fx1x: the Stage10 effects' masks and fields
+    QHash<QString, std::shared_ptr<const scene::gold::GoldEffect>> gold; // gold1x: one per text actor
+    QHash<QString, SkIRect> goldBoxes;     // gold1x: where each effect has ink at rest (frame 65)
 
     void build(const QStringList &dirs, QString *error)
     {
@@ -1148,6 +1185,35 @@ public:
             };
             if (!scene::resolveLayout(scene, fns, error))
                 return;
+        }
+        if (scene.profile == Profile::Gold1x) {
+            const SkiaGoldText gt(faces);
+            for (const Actor &a : std::as_const(scene.actors)) {
+                if (a.type != QLatin1String("text") || a.effect.isEmpty())
+                    continue;
+                scene::gold::GoldActor ga;
+                ga.font = a.font;
+                ga.size = int(a.size);
+                ga.text = a.text;
+                ga.color[0] = a.color.r;
+                ga.color[1] = a.color.g;
+                ga.color[2] = a.color.b;
+                ga.effect = a.effect;
+                std::shared_ptr<const scene::gold::GoldEffect> effect = scene::gold::makeGoldEffect(gt, ga);
+                if (!effect)
+                    continue;
+                scene::gold::Frame rest;
+                effect->draw(rest, 2.6);
+                SkIRect box = SkIRect::MakeEmpty();
+                for (int y = 0; y < scene::gold::FH; ++y)
+                    for (int x = 0; x < scene::gold::FW; ++x) {
+                        const quint8 *p = rest.px(x, y);
+                        if (qMax(p[0], qMax(p[1], p[2])) > 8)
+                            box.join(SkIRect::MakeXYWH(x, y, 1, 1));
+                    }
+                goldBoxes.insert(a.id, box.isEmpty() ? SkIRect::MakeWH(scene.width, scene.height) : box.makeOutset(20, 20));
+                gold.insert(a.id, effect);
+            }
         }
         if (scene.profile == Profile::Fx1x) {
             for (const Actor &a : std::as_const(scene.actors)) {
@@ -1219,7 +1285,8 @@ public:
             }
         }
         for (const Actor &a : std::as_const(scene.actors)) {
-            if (a.type != QLatin1String("text") || scene.profile == Profile::Cov1x || scene.profile == Profile::Fx1x)
+            if (a.type != QLatin1String("text") || scene.profile == Profile::Cov1x || scene.profile == Profile::Fx1x
+                || scene.profile == Profile::Gold1x)
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
             if (scene.profile == Profile::Pil1x && a.spriteChapter) {
@@ -1511,6 +1578,11 @@ public:
             c.restore();
             return;
         }
+        if (sc.profile == Profile::Gold1x) {
+            paintGold(c, sampling);
+            c.restore();
+            return;
+        }
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
             if (a.hidden) // Smart Keycaps: a "+" that would start a wrapped row
@@ -1543,6 +1615,47 @@ public:
     }
 
 private:
+    // gold1x (Golden Run 18): every effect lights a black frame as the proofs did; the frame is
+    // keyed on black (alpha = the brightest channel, colour = frame / alpha).
+    void paintGold(SkCanvas &c, const SkSamplingOptions &sampling) const
+    {
+        const Scene &sc = r->scene;
+        scene::gold::Frame f;
+        bool any = false;
+        for (const Actor &a : sc.actors) {
+            const auto it = r->gold.constFind(a.id);
+            if (it == r->gold.constEnd())
+                continue;
+            (*it)->draw(f, t);
+            any = true;
+        }
+        if (!any)
+            return;
+        SkIRect ink = SkIRect::MakeEmpty();
+        for (int y = 0; y < scene::gold::FH; ++y)
+            for (int x = 0; x < scene::gold::FW; ++x) {
+                const quint8 *p = f.px(x, y);
+                if (p[0] | p[1] | p[2])
+                    ink.join(SkIRect::MakeXYWH(x, y, 1, 1));
+            }
+        if (ink.isEmpty())
+            return;
+        SkBitmap bm;
+        bm.allocPixels(SkImageInfo::Make(ink.width(), ink.height(), kRGBA_8888_SkColorType, kUnpremul_SkAlphaType));
+        for (int y = 0; y < ink.height(); ++y) {
+            auto *row = static_cast<quint8 *>(bm.getAddr(0, y));
+            for (int x = 0; x < ink.width(); ++x) {
+                const quint8 *p = f.px(ink.left() + x, ink.top() + y);
+                const int a = qMax(int(p[0]), qMax(int(p[1]), int(p[2])));
+                for (int k = 0; k < 3; ++k)
+                    row[x * 4 + k] = a > 0 ? quint8(qMin(255, p[k] * 255 / a)) : 0;
+                row[x * 4 + 3] = quint8(a);
+            }
+        }
+        bm.setImmutable();
+        c.drawImage(bm.asImage(), SkScalar(ink.left()), SkScalar(ink.top()), sampling, nullptr);
+    }
+
     // fx1x (Stage10): each effect as render_stage10.py mixed it, composited into one layer
     // (colour·(1 − a) + ink·a in order; the light's halo as a warm layer under the text).
     void paintFx(SkCanvas &c, const SkSamplingOptions &sampling) const
@@ -2370,6 +2483,9 @@ std::shared_ptr<const VectorPainter> makeScenePainter(std::shared_ptr<const Scen
     for (const TimedBlock *ew : {&renderer->scene.exitWipe, &renderer->scene.exitSlide})
         if (ew->present)
             mix(ew->dur <= 0.0 ? (designT >= ew->start ? 1.0 : 0.0) : ew->ease((designT - ew->start) / ew->dur));
+    // fx1x and gold1x effects keep their own timing, outside the channels: every time is its own frame.
+    if (renderer->scene.profile == Profile::Fx1x || renderer->scene.profile == Profile::Gold1x)
+        mix(designT);
     // A counter's value moves while its channels may rest.
     for (const Actor &a : renderer->scene.actors)
         if (a.hasCounter)
@@ -2446,6 +2562,11 @@ QHash<QString, QRectF> sceneRestBoxes(const SceneRenderer &renderer)
         QPointF off;
         for (const Actor *g = sc.actor(a.parent); g; g = sc.actor(g->parent))
             off += g->groupAt;
+        if (renderer.goldBoxes.contains(a.id)) { // gold1x: where the effect has ink at rest
+            const SkIRect c = renderer.goldBoxes.value(a.id);
+            boxes.insert(a.id, QRectF(c.left(), c.top(), c.width(), c.height()));
+            continue;
+        }
         if (renderer.fx.contains(a.id)) { // fx1x: the effect's area
             const SkIRect c = renderer.fx.value(a.id).rect;
             boxes.insert(a.id, QRectF(c.left(), c.top(), c.width(), c.height()));

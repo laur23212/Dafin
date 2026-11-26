@@ -362,6 +362,33 @@ def check_stage10(src: Path, frames):
     return out
 
 
+def check_golden(src: Path, frames):
+    """The Golden Run 18 (render_stage25.py … render_stage30.py scene_a/b/c, gold1x straight into
+    the scripts' black frame). `src` is the Golden18 folder with 25A … 30C/source. TEST-ONLY
+    adapter: each script runs from a temporary copy with its output folder moved there (they make
+    their folders on import)."""
+    import tempfile, re
+    out = []
+    for stage in range(25, 31):
+        tmp = Path(tempfile.mkdtemp())
+        code = (src / f'{stage}A' / 'source' / f'render_stage{stage}.py').read_text()
+        code = re.sub(r"ROOT\s*=\s*['\"][^'\"]*['\"]", f"ROOT={str(tmp)!r}", code, count=1)
+        (tmp / f'golden{stage}.py').write_text(code)
+        m = load_module(tmp / f'golden{stage}.py', f'golden_stage{stage}')
+        for k in 'ABC':
+            name = f'{stage}{k}'
+            r = render.make_renderer(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+            bad = []
+            for i in frames:
+                got = np.zeros((1080, 1920, 3), np.uint8)
+                r.draw_direct(got, i / 25)
+                mx, n = diff(m.SCENES[k][1](i / 25), got)
+                if mx:
+                    bad.append({'frame': i, 'max': mx, 'pixels': n})
+            out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_chapters_v4(src: Path, frames):
     """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
     as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
@@ -555,6 +582,7 @@ def main():
     ap.add_argument('--stage09', type=Path, help='folder with reference_render_stage09.py, render_stage09_refinements.py, render.py (B7)')
     ap.add_argument('--stage11', type=Path, help='folder with render_stage11.py')
     ap.add_argument('--stage10', type=Path, help='folder with render_stage10.py')
+    ap.add_argument('--golden', type=Path, help='the Golden18 folder (25A … 30C, each with source/render_stageNN.py)')
     ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
@@ -587,6 +615,8 @@ def main():
         res.extend(check_stage11(o.stage11, frames))
     if o.stage10:
         res.extend(check_stage10(o.stage10, frames))
+    if o.golden:
+        res.extend(check_golden(o.golden, frames))
     if o.chapters_v4:
         res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:

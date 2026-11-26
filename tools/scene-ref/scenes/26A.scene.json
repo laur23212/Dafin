@@ -1,0 +1,100 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.beyond",
+ "label": "Beyond",
+ "category": "Golden Run",
+ "source": {
+  "asset": "26A",
+  "sha256": "bc9cd85a3cde8610eba6a809942799a5bf5b619798eb69132a042f3e70256696",
+  "script": "render_stage26.py :: scene_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "heavy": {
+   "file": "InterDisplay-ExtraBold.otf",
+   "sha256": "7f233cb770bedfb0e4d1d5bada87dade7505513b020ca4b1ae2566fa358263b4",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "BEYOND",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "heavy",
+   "size": 328,
+   "color": [
+    236,
+    242,
+    244
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "perspectivePlane",
+    "maxWidth": 1540,
+    "dy": 20,
+    "swing": [
+     0.25,
+     1.55
+    ],
+    "in": [
+     0.12,
+     0.37
+    ],
+    "out": [
+     4.65,
+     0.67
+    ],
+    "corners": [
+     -80,
+     155,
+     55,
+     50,
+     90,
+     90
+    ],
+    "colorFrom": [
+     192,
+     230,
+     230
+    ]
+   }
+  }
+ ]
+}

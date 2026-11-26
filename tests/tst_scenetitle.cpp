@@ -651,6 +651,9 @@ private slots:
             QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
         QTest::newRow("12B_C blank") << scenePath("12B_C_Anchor_Index_Manual") << QStringLiteral("12B_C_Anchor_Index_Manual_blank")
                                      << ports << QStringLiteral(R"({"badge1":"","badge2":""})");
+        // Golden Run 18 (gold1x; identical to render_stage25.py … render_stage30.py on all 150 frames).
+        for (const char *n : {"25A", "25B", "25C", "26A", "26B", "26C", "27A", "27B", "27C", "28A", "28B", "28C", "29A", "29B", "29C", "30A", "30B", "30C"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
         // Batch 1 ports, Part5 Stage05 to Stage11 (identical to their scripts on all 150 frames).
         QTest::newRow("05_TutorialStep") << scenePath("05_TutorialStep") << QStringLiteral("05_TutorialStep") << ports << QString();
         QTest::newRow("05_PrecisionCallout") << scenePath("05_PrecisionCallout") << QStringLiteral("05_PrecisionCallout") << ports << QString();

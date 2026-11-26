@@ -1353,8 +1353,13 @@ class Fx1x:
         return Image.fromarray(np.dstack([rgb, a]).astype(np.uint8), 'RGBA')
 
 
+def _gold(sc, font_dirs=()):
+    import golden
+    return golden.Gold1x(sc, lambda key: font_path(sc, key, font_dirs))
+
+
 def make_renderer(sc, font_dirs=()):
-    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x,
+    return {'gold1x': _gold, 'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x,
             'fx1x': Fx1x}[sc.profile](sc, font_dirs)
 
 

@@ -1,0 +1,106 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.pivot",
+ "label": "Pivot",
+ "category": "Golden Run",
+ "source": {
+  "asset": "27B",
+  "sha256": "208d6778887b0c755e7ae4a7b1529bf891f2d99ff3f2731cbfce00f2ab233021",
+  "script": "render_stage27.py :: scene_b",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "PIVOT",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "black",
+   "size": 450,
+   "color": [
+    244,
+    246,
+    241
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "glyphPivot",
+    "glyphPad": 54,
+    "y": 378,
+    "turn": [
+     0.16,
+     0.76,
+     0.135
+    ],
+    "angle": [
+     -34,
+     29
+    ],
+    "shift": [
+     -70,
+     64
+    ],
+    "pad": 120,
+    "nudge": [
+     8,
+     10
+    ],
+    "in": [
+     0,
+     0.31
+    ],
+    "out": [
+     4.62,
+     0.45
+    ],
+    "colorFrom": [
+     143,
+     188,
+     214
+    ]
+   }
+  }
+ ]
+}

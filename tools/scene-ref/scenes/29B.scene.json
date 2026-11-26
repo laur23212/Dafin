@@ -1,0 +1,96 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.unfold",
+ "label": "Unfold",
+ "category": "Golden Run",
+ "source": {
+  "asset": "29B",
+  "sha256": "1e6942ca583af539fae5e2abbbbbf9777a39ce6e0c482730ef17c491236d3eab",
+  "script": "render_stage29.py :: scene_b",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-Medium.ttf",
+   "sha256": "ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "UNFOLD",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 312,
+   "color": [
+    247,
+    239,
+    225
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "pleatUnfold",
+    "maxWidth": 1580,
+    "tracking": 5,
+    "visible": [
+     0.12,
+     5.55
+    ],
+    "open": [
+     0.16,
+     1.4
+    ],
+    "close": [
+     4.58,
+     0.84
+    ],
+    "from": 0.16,
+    "in": [
+     0.13,
+     0.28
+    ],
+    "out": [
+     5.12,
+     0.38
+    ]
+   }
+  }
+ ]
+}
