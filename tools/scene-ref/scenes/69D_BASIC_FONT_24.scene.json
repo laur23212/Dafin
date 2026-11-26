@@ -1,0 +1,80 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.favourite.basic24",
+ "label": "Basic Font 24",
+ "category": "Favourites",
+ "source": {
+  "asset": "69D_BASIC_FONT_24",
+  "sha256": "b1b2274c27f84a10a29b8906512b486c1faf66cc1025fd9453e6188824c5bfd8",
+  "script": "drafts/69/render.py :: 69D_BASIC_FONT_24 (renderer d46b53e860ef)",
+  "status": "RECONSTRUCTED_APPROX; RECREATION_REVIEW_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 5.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "Merriweather-BlackItalic.ttf",
+   "sha256": "1e0e3b15b0667c8e7eca1ee84d3a4b1d9791b47abe3b28d06e678a8c15a91482",
+   "package": "the creator's Filmora title 69D_BASIC_FONT_24 (unmodified)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "Simple layout",
+   "label": "Text"
+  },
+  {
+   "id": "secondary",
+   "type": "text",
+   "default": "Perfect clean Modern     serif font.",
+   "label": "Second line"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "title",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "basic24",
+    "secondary": "{secondary}"
+   }
+  }
+ ]
+}

@@ -1031,11 +1031,13 @@ struct Loader
         // draft1x: the Stage 54–67 library and the favourite Filmora styles (docs/scene-titles.md
         // "draft1x", the same list as draftKinds() in SceneDraftEffects.h); "secondary" takes params
         static const QSet<QString> draftKinds{
-            QStringLiteral("art30"), QStringLiteral("art27"), QStringLiteral("milestone"),
-            QStringLiteral("keyphrase"), QStringLiteral("linebreak"), QStringLiteral("pullquote"),
-            QStringLiteral("switchword"), QStringLiteral("nameplate"), QStringLiteral("checklist"),
-            QStringLiteral("section"), QStringLiteral("dualcaption"), QStringLiteral("sidenote"),
-            QStringLiteral("redact"), QStringLiteral("progress"), QStringLiteral("focal"), QStringLiteral("credit"),
+            QStringLiteral("art30"), QStringLiteral("art27"), QStringLiteral("milestone"), QStringLiteral("art33"),
+            QStringLiteral("film03"), QStringLiteral("clean14"), QStringLiteral("lower22"),
+            QStringLiteral("basic24"), QStringLiteral("oldtexture"), QStringLiteral("keyphrase"),
+            QStringLiteral("linebreak"), QStringLiteral("pullquote"), QStringLiteral("switchword"),
+            QStringLiteral("nameplate"), QStringLiteral("checklist"), QStringLiteral("section"),
+            QStringLiteral("dualcaption"), QStringLiteral("sidenote"), QStringLiteral("redact"),
+            QStringLiteral("progress"), QStringLiteral("focal"), QStringLiteral("credit"),
             QStringLiteral("pricepoint"), QStringLiteral("bracket"), QStringLiteral("horizon"),
             QStringLiteral("echo"), QStringLiteral("dateline"), QStringLiteral("capsule"), QStringLiteral("dropcap"),
             QStringLiteral("interpose"), QStringLiteral("reanchor"), QStringLiteral("between"),

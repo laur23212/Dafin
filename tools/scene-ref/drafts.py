@@ -35,10 +35,28 @@ KINDS = {
 }
 # The creator's favourite Filmora styles, rebuilt from their thumbnails (RECONSTRUCTED_APPROX):
 # static, render(font_bytes, text) -> (RGBA image, metrics).
-FAVOURITES = {'art30': '68_Art30', 'art27': '68_Art27'}
+FAVOURITES = {'art30': '68_Art30', 'art27': '68_Art27', 'art33': '68_Art33'}
+# Stage 69: one shared script (drafts/69/render.py) that picks its title by its folder name, with
+# the measured graphic geometry in drafts/<ID>_v1/inputs/. Scene(font, sha, text, sub).frame(n).
+STAGE69 = {'film03': '69A_FILM_FRAME_03', 'clean14': '69B_CLEAN_TITLE_14', 'lower22': '69C_LOWER_THIRDS_22',
+           'basic24': '69D_BASIC_FONT_24', 'oldtexture': '69E_OLD_TEXTURE'}
+
+
+def load_stage69(asset_id):
+    import sys
+    src = HERE / 'drafts' / '69' / 'render.py'
+    if str(src.parent) not in sys.path:
+        sys.path.insert(0, str(src.parent))  # its romanian.py
+    m = type(sys)(f'stage69_{asset_id}')
+    m.__file__ = str(HERE / 'drafts' / f'{asset_id}_v1' / 'render' / 'render.py')  # ROOT, and so ID, from here
+    exec(compile(src.read_text(), m.__file__, 'exec'), m.__dict__)
+    return m
 
 
 def load_script(asset):
+    import sys
+    if str(HERE / 'drafts' / '69') not in sys.path:
+        sys.path.insert(0, str(HERE / 'drafts' / '69'))  # romanian.py (Art 33 builds its Romanian glyphs with it)
     path = HERE / 'drafts' / f'd{asset}.py'
     spec = importlib.util.spec_from_file_location(f'draft_{asset}', path)
     m = importlib.util.module_from_spec(spec)
@@ -63,6 +81,9 @@ class Draft1x:
         self.items = []
         for a in sc.actors:
             e = a.get('effect') or {}
+            if a['type'] == 'text' and e.get('type') in STAGE69:
+                self.items.append(self.stage69(a, e, find_font))
+                continue
             if a['type'] == 'text' and e.get('type') in FAVOURITES:
                 self.items.append(self.favourite(a, e, find_font))
                 continue
@@ -92,6 +113,29 @@ class Draft1x:
         data = Path(find_font(spec['file'], spec['sha256'])).read_bytes()
         im, _ = m.render(data, a['text'])
         return (lambda t: im), None, {}
+
+    def stage69(self, a, e, find_font):
+        m = load_stage69(STAGE69[e['type']])
+        spec = self.sc.raw['fonts'][a['font']]
+        data = Path(find_font(spec['file'], spec['sha256'])).read_bytes()
+        sub = core.format_text(e['secondary'], a.get('_env') or {}) if 'secondary' in e else ''
+        text = a['text']
+        s = m.Scene(data, spec['sha256'], text, sub, any(c in m.TARGET for c in text + sub))
+        cfg, cache = m.CFG, {}
+
+        def render(t):
+            # As the script's encode loop: 69E is one still (its frame 70); the others hold their
+            # first hold frame through the hold (69C keeps drawing, it types).
+            n = int(round(t * m.FPS))
+            if m.ID == '69E_OLD_TEXTURE':
+                n = 70
+            elif m.ID != '69C_LOWER_THIRDS_22' and cfg['hold'][0] <= n <= cfg['hold'][1]:
+                n = cfg['hold'][0]
+            if n not in cache:
+                cache.clear()
+                cache[n] = s.frame(n)
+            return cache[n]
+        return render, None, {}
 
     def frame(self, t):
         out = Image.new('RGBA', (self.sc.width, self.sc.height))

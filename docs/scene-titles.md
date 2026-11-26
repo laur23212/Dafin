@@ -397,6 +397,17 @@ lossless `output/alpha.mkv`). A scene has one text actor whose `effect.type` nam
 editable strings; a string equal to the script's default is passed as "not given", as the
 script's command line does (57A Switchword draws its default with two different words). The
 scripts written after Stage 60 froze their hold on its first hold frame, and so does draft1x.
+
+The Stage 69 favourites (Film Frame 03, Clean Title 14, Lower Thirds 22, Basic Font 24, Old Texture)
+share one script, `drafts/69/render.py`, which picks its title by its folder name and reads the
+measured graphic from `drafts/<ID>_v1/inputs/` (per-frame polygons for 69A/69B, the Lottie path for
+69C); the scene carries the same data in `effect.graphic` / `effect.lottie` for the native side.
+Old Texture's grain is numpy's `default_rng(6805).normal(0, 7)`, rebuilt bit for bit
+(`SceneNumpyNormal.h`: the ziggurat with numpy's tables). Romanian letters a font lacks (Rubik Mono
+One, Source Han Sans, Fugaz One, Koulen) are built by `drafts/69/romanian.py` in memory for the
+reference only; natively those fonts still miss them, as the handoff's Romanian addendum expects
+(a prototype recipe, not a font to ship). PIL's FreeType auto-hints a TrueType font without
+bytecode (Fugaz One), so draft1x forces Skia's auto-hinter for such a font too.
 (Natively the hold is drawn, not frozen: every script's hold starts where its motion ends, so the
 two agree, at every cadence.)
 
@@ -416,8 +427,8 @@ corner circles (within a few edge pixels of Pillow's pieslices) and the 3× supe
 (line_layer) are anti-aliased polylines with round joins. Text strokes (Art 27) use FreeType's
 round-joined stroker, as PIL does. The fonts are the exact files: the Inter 4.1 release in
 `scene-fonts/inter-4.1/` and the Filmora titles' own fonts in `scene-fonts/filmora/`. Against the
-reference, with FreeType + HarfBuzz standing in for Skia (`gold_check/compare_draft.py`), all 57
-have SSIM ≥ 0.993 over their ink on black and on grey (50 of them 1.000), and so do the smart
+reference, with FreeType + HarfBuzz standing in for Skia (`gold_check/compare_draft.py`), all 63
+have SSIM ≥ 0.987 over their ink on black and on grey (54 of them 1.000), and so do the smart
 titles with other inputs (0 %, 100 %, a fall, a midnight wrap, a decimal distance) and Romanian text.
 
 ### cov1x (Chapter A v4 / B v4, RECONSTRUCTED_APPROX)

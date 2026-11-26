@@ -66,6 +66,11 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the P
 | inter-4.1/InterDisplay-Regular.otf | 35c1f7437dd6d63f4e60a49144df4b4e4edc190e13ffc1e54b86083747fe3acf | Inter 4.1 release (github.com/rsms/inter, Inter-4.1.zip extras/otf; Stage 54–67 library) |
 | filmora/Baloo2-Bold.ttf | 31a2115ea92ea3ae2c5d3cec385be100fcf076c6507ff3ec60722ddfff884b91 | the creator's Filmora title 1_Art_Title_30 (Art 30), unmodified (OFL) |
 | filmora/Montserrat-ExtraBoldItalic.ttf | 0336d05365d450e7baf8e336428daeb0571d63da843312d1703c96015c0afbec | the creator's Filmora title 1_Art_Title_27 (Art 27), unmodified (OFL) |
+| filmora/RubikMonoOne-Regular.ttf | 09711b5ef181d57e357932e47f1dbd0aa0db66f0e6a8e1693ca96d849d9a298a | the creator's Filmora title 1_Art_Title_33 (Art 33), unmodified (OFL) |
+| filmora/FugazOne-Regular.ttf | 14fd5becce8b0ae987e44b3f9fa9e3e6c87463e9585ac15db6c8271462068a62 | the creator's Filmora title 1_Clean_Title_Design_Title_14, unmodified (OFL) |
+| filmora/Merriweather-BlackItalic.ttf | 1e0e3b15b0667c8e7eca1ee84d3a4b1d9791b47abe3b28d06e678a8c15a91482 | the creator's Filmora title 1_Basic_Font_Title_24, unmodified (OFL) |
+| filmora/Koulen-Regular.ttf | 9d037a49fc1cbf0668502ba5f1951fdf7ab579e2d732d0c85173731827650dc8 | the creator's Filmora title 1_Old_Texture_Text, unmodified (OFL) |
+| filmora/SourceHanSansCN-Bold.otf | 97e5eff6dd208ccb814726458c8c7ab4b59327c62b9ee8df3440e7e835209ab9 | the creator's Filmora title 1_1_Film_Frame_Title_03 (思源黑体 CN Bold), unmodified (Apache-2.0) |
 
 `NotoSerif-SemiBoldItalic.ttf` and `InterDisplay-Regular.otf` are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),
 whose original script and font are lost (`FONT_UNKNOWN`); they are the closest installed files, not the original.
