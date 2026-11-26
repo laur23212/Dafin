@@ -384,6 +384,42 @@ first like cv2.findContours. Text follows PIL to the pixel: advances on hb-ft's 
 ImageDraw.text does. Run against the reference with FreeType + HarfBuzz text standing in for Skia,
 all 29 scenes have SSIM ≥ 0.988 on frames 10–135 (26 of them 1.000).
 
+### draft1x (the Stage 54–67 library and the favourite Filmora styles)
+
+The library titles of Stages 54–67 (DESIGN_DRAFT, creator verdict PASS_EXTERNAL_MP4) and the
+creator's favourite Filmora styles rebuilt from their thumbnails (RECONSTRUCTED_APPROX: Art 30,
+Art 27, …) were drawn by small Pillow scripts that stack straight-alpha RGBA layers. Their frozen
+renderers are kept verbatim in `tools/scene-ref/drafts/d<asset>.py`; the reference
+(`tools/scene-ref/drafts.py`) runs them, so the default scene is the approved MP4 frame for frame
+(`test_parity.py --drafts <unpacked source packages>` checks every frame against each package's
+lossless `output/alpha.mkv`). A scene has one text actor whose `effect.type` names the title
+(`keyphrase`, `switchword`, … `art30`, `art27`) and whose text, plus `effect.secondary`, are the two
+editable strings; a string equal to the script's default is passed as "not given", as the
+script's command line does (57A Switchword draws its default with two different words). The
+scripts written after Stage 60 froze their hold on its first hold frame, and so does draft1x.
+(Natively the hold is drawn, not frozen: every script's hold starts where its motion ends, so the
+two agree, at every cadence.)
+
+The smart titles read their one input from `secondary` and compute the rest, as their scripts do:
+63C Ratio a percentage `72` (0…100, number and bar), 64A Delta `old,new` (the change in %), 64B
+Compare `Name,value;Name,value` (one shared maximum), 64C Duration `HH:MM,HH:MM` (wraps past
+midnight, `+1d`), 64D Share `A,B,percent` (the complement), 65C Total `Label,value;Label,value`
+(the sum counts up), 66C Countdown `1`…`4` seconds (ring and digits on one clock), 67C Convert a
+distance in km (miles to 0.1, half up). An input the script would refuse draws nothing.
+
+Native (`engine/render2d/scene/SceneDraftOps.h`, `SceneDraftEffects.h`) runs each script's steps
+with its numbers: alpha_composite with Pillow's integer arithmetic, the paste() alpha table,
+crops and clips, text tiles (RAQM layout as the scripts asked for: HarfBuzz's default features,
+plus `tnum` for 54B's digits, written as the font key `bold+tnum`), GaussianBlur as Pillow's three
+box passes, Max/MinFilter, Image.blend, the PERSPECTIVE transform with Pillow's bicubic (65A Turn). Two steps are modelled: rounded rectangles test pixel centres against the
+corner circles (within a few edge pixels of Pillow's pieslices) and the 3× supersampled lines
+(line_layer) are anti-aliased polylines with round joins. Text strokes (Art 27) use FreeType's
+round-joined stroker, as PIL does. The fonts are the exact files: the Inter 4.1 release in
+`scene-fonts/inter-4.1/` and the Filmora titles' own fonts in `scene-fonts/filmora/`. Against the
+reference, with FreeType + HarfBuzz standing in for Skia (`gold_check/compare_draft.py`), all 57
+have SSIM ≥ 0.993 over their ink on black and on grey (50 of them 1.000), and so do the smart
+titles with other inputs (0 %, 100 %, a fall, a midnight wrap, a decimal distance) and Romanian text.
+
 ### cov1x (Chapter A v4 / B v4, RECONSTRUCTED_APPROX)
 
 The original v4 scripts are SOURCE_MISSING; the reference is `dafin_chapters_v4_recon.py`, rebuilt
@@ -465,6 +501,7 @@ composite); the alpha layer is solved from a render over black and over white. N
   | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
   | 25A … 30C, the Golden Run 18 (gold1x into the scripts' black frame) | 150/150 frames identical |
   | 32A … 49A, the later stages (gold1x into the scripts' black frame) | 150/150 frames identical |
+  | draft1x library and favourites vs each package's archived alpha.mkv | every frame identical |
   | 10_TypographyMorph, 10_MaskedLightReveal, 10_PrecisionFocus (fx1x over the script's backgrounds) | 150/150 frames identical |
   | 11_ArcResolve, 11_PhraseReflow (pil1x over the script's gradients) | 150/150 frames identical |
   | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |

@@ -1,0 +1,73 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.favourite.art30",
+ "label": "Art 30",
+ "category": "Favourites",
+ "source": {
+  "asset": "68_Art30",
+  "sha256": "d5b30f687fe78f18dc9de8f559b4dec0e4d25d568983543a309b1d2584efc990",
+  "script": "drafts/d68_Art30.py (renderer 57fff7962a61)",
+  "status": "RECONSTRUCTED_APPROX; RECREATION_REVIEW_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 5.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "Baloo2-Bold.ttf",
+   "sha256": "31a2115ea92ea3ae2c5d3cec385be100fcf076c6507ff3ec60722ddfff884b91",
+   "package": "the creator's Filmora title 68_Art30 (OFL)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "ART",
+   "label": "Text"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "title",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "art30"
+   }
+  }
+ ]
+}

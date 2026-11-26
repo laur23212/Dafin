@@ -1,0 +1,85 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.library.horizon",
+ "label": "Horizon",
+ "category": "Library",
+ "source": {
+  "asset": "59A",
+  "sha256": "852dfec8037d53fd67da5cc8606bcad81b14ca0159d5751647381226ceb3465d",
+  "script": "drafts/d59A.py (renderer eee20299729c)",
+  "status": "DESIGN_DRAFT; creator verdict PASS_EXTERNAL_MP4"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "9a17712bbd6da13b7ce9beb056d19fe15648799a11d5c35f8086a1270a0d13b2",
+   "package": "Inter 4.1 (github.com/rsms/inter v4.1, extras/otf)"
+  },
+  "serif": {
+   "file": "NotoSerif-Regular.ttf",
+   "sha256": "9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f",
+   "package": "fonts-noto-core"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "A new perspective",
+   "label": "Text"
+  },
+  {
+   "id": "secondary",
+   "type": "text",
+   "default": "CHAPTER 01",
+   "label": "Second line"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "medium",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "horizon",
+    "secondary": "{secondary}"
+   }
+  }
+ ]
+}

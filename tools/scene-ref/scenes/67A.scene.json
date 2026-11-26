@@ -1,0 +1,85 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.library.matchword",
+ "label": "Matchword",
+ "category": "Library",
+ "source": {
+  "asset": "67A",
+  "sha256": "e425a79aa151ea116c877232ed0a54f597c29d7ee15ad1cb43a8bbd2fb3d462c",
+  "script": "drafts/d67A.py (renderer 4a29bc75ec6d)",
+  "status": "DESIGN_DRAFT; creator verdict PASS_EXTERNAL_MP4"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "regular": {
+   "file": "InterDisplay-Regular.otf",
+   "sha256": "35c1f7437dd6d63f4e60a49144df4b4e4edc190e13ffc1e54b86083747fe3acf",
+   "package": "Inter 4.1 (github.com/rsms/inter v4.1, extras/otf)"
+  },
+  "serif": {
+   "file": "NotoSerif-Regular.ttf",
+   "sha256": "9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f",
+   "package": "fonts-noto-core"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "Make room for",
+   "label": "Text"
+  },
+  {
+   "id": "secondary",
+   "type": "text",
+   "default": "Find your own",
+   "label": "Second line"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "regular",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "matchword",
+    "secondary": "{secondary}"
+   }
+  }
+ ]
+}

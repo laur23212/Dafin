@@ -1,6 +1,7 @@
 #include "engine/render2d/scene/ScenePainter.h"
 
 #include "core/scene/SceneKeycaps.h"
+#include "engine/render2d/scene/SceneDraftEffects.h"
 #include "engine/render2d/scene/SceneGoldEffects.h"
 #include "engine/render2d/text/fonts/SkiaFonts.h"
 
@@ -380,7 +381,7 @@ qint64 quantizeLikeHbFt(GlyphRun &r, const SkFont &shapedWith, SkScalar atX, qin
 // those features are off. mask1x is RAQM: HarfBuzz's default features.
 // letterSpacing draws one character at a time, as the proofs did.
 std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, double letterSpacing, bool ligatures,
-                                   double *advance = nullptr)
+                                   double *advance = nullptr, const QStringList &extraFeatures = {})
 {
     static const sk_sp<SkUnicode> unicode = SkUnicodes::ICU::Make();
     static QMutex mutex; // one shaper, not thread-safe
@@ -407,6 +408,9 @@ std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, doub
         if (!ligatures)
             for (const char *tag : {"liga", "clig", "calt", "rlig", "dlig"})
                 features.push_back({SkSetFourByteTag(tag[0], tag[1], tag[2], tag[3]), 0, 0, n});
+        for (const QString &f : extraFeatures) // features=['tnum'], …: on over the whole text
+            if (f.size() == 4)
+                features.push_back({SkSetFourByteTag(char(f[0].unicode()), char(f[1].unicode()), char(f[2].unicode()), char(f[3].unicode())), 1, 0, n});
         shaper->shape(utf8.constData(), n, fonts, bidi, *script, language, features.data(), features.size(), 1e9f, &h);
         qint64 pen26 = 0;
         for (GlyphRun &r : h.runs) {
@@ -432,6 +436,19 @@ std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, doub
 std::vector<GlyphRun> basicLayout(const SkFont &font, const QString &text, double *advance = nullptr)
 {
     return shapedLayout(font, text, 0.0, false, advance);
+}
+
+// Which layout PIL used: basic (no ligatures or contextual alternates), or RAQM (HarfBuzz's
+// defaults, plus any features the script asked for).
+struct PilLayout
+{
+    bool raqm = false;
+    QStringList features;
+};
+
+std::vector<GlyphRun> pilLayout(const SkFont &font, const QString &text, const PilLayout &l, double *advance = nullptr)
+{
+    return l.raqm ? shapedLayout(font, text, 0.0, true, advance, l.features) : basicLayout(font, text, advance);
 }
 
 // PIL's textbbox / getbbox of a basic layout, pen at 0 and the baseline at 0 (anchor "ls"): the
@@ -465,18 +482,18 @@ double quantisedPens(const std::vector<GlyphRun> &runs, double end, std::vector<
     return x.empty() ? end : q;
 }
 
-double pilAdvance(const SkFont &font, const QString &text)
+double pilAdvance(const SkFont &font, const QString &text, const PilLayout &l = {})
 {
     double end = 0.0;
-    const std::vector<GlyphRun> runs = basicLayout(font, text, &end);
+    const std::vector<GlyphRun> runs = pilLayout(font, text, l, &end);
     return quantisedPens(runs, end, nullptr);
 }
 
-PilBox pilBBox(const SkFont &font, const QString &text)
+PilBox pilBBox(const SkFont &font, const QString &text, const PilLayout &l = {})
 {
     PilBox box;
     double end = 0.0;
-    const std::vector<GlyphRun> runs = basicLayout(font, text, &end);
+    const std::vector<GlyphRun> runs = pilLayout(font, text, l, &end);
     std::vector<double> pens;
     box.advance = quantisedPens(runs, end, &pens);
     SkRect u = SkRect::MakeEmpty();
@@ -514,7 +531,7 @@ int pilAscender(const SkFont &font)
 
 // Coverage of a glyph layout drawn with its pen at `origin` on an A8 surface the size of `bounds`
 // (integer px). Pen positions are put on whole pixels (FreeType's PIXEL()), as PIL does.
-SkBitmap coverage(const std::vector<GlyphRun> &runs, SkPoint origin, const SkIRect &bounds)
+SkBitmap coverage(const std::vector<GlyphRun> &runs, SkPoint origin, const SkIRect &bounds, int stroke = 0)
 {
     SkBitmap bm;
     bm.allocPixels(SkImageInfo::MakeA8(qMax(1, bounds.width()), qMax(1, bounds.height())));
@@ -528,6 +545,12 @@ SkBitmap coverage(const std::vector<GlyphRun> &runs, SkPoint origin, const SkIRe
     SkPaint paint;
     paint.setAntiAlias(true);
     paint.setColor(SK_ColorBLACK);
+    if (stroke > 0) { // PIL's stroke_width: FreeType's stroker, round joins, the fill included
+        paint.setStyle(SkPaint::kStrokeAndFill_Style);
+        paint.setStrokeWidth(SkScalar(2 * stroke));
+        paint.setStrokeJoin(SkPaint::kRound_Join);
+        paint.setStrokeCap(SkPaint::kRound_Cap);
+    }
     for (const GlyphRun &r : runs) {
         std::vector<SkPoint> pos(r.pos.size());
         for (size_t i = 0; i < pos.size(); ++i)
@@ -1069,26 +1092,28 @@ double fxEase(const QJsonObject &e, const char *k, double t)
 class SkiaGoldText : public scene::gold::GoldText
 {
 public:
-    explicit SkiaGoldText(QHash<QString, sk_sp<SkTypeface>> faces) : faces_(std::move(faces)) {}
-    bool has(const QString &font) const override { return faces_.value(font) != nullptr; }
+    // raqm: the draft1x scripts opened their fonts with layout_engine=RAQM; a font key may end in
+    // "+tnum" (and so on) for features=['tnum'].
+    explicit SkiaGoldText(QHash<QString, sk_sp<SkTypeface>> faces, bool raqm = false) : faces_(std::move(faces)), raqm_(raqm) {}
+    bool has(const QString &font) const override { return face(font) != nullptr; }
     scene::gold::TextBox bbox(const QString &font, int px, const QString &text) const override
     {
-        const PilBox b = pilBBox(pixelFont(faces_.value(font), px), text);
+        const PilBox b = pilBBox(pixelFont(face(font), px), text, layout(font));
         return {b.left, b.top, b.right, b.bottom};
     }
     double length(const QString &font, int px, const QString &text) const override
     {
-        return pilAdvance(pixelFont(faces_.value(font), px), text);
+        return pilAdvance(pixelFont(face(font), px), text, layout(font));
     }
-    int ascender(const QString &font, int px) const override { return pilAscender(pixelFont(faces_.value(font), px)); }
-    void draw(scene::gold::M8 &into, const QString &font, int px, const QString &text, double x, double y) const override
+    int ascender(const QString &font, int px) const override { return pilAscender(pixelFont(face(font), px)); }
+    void draw(scene::gold::M8 &into, const QString &font, int px, const QString &text, double x, double y, int stroke) const override
     {
-        if (into.empty() || !faces_.value(font))
+        if (into.empty() || !face(font))
             return;
         // PIL puts the pen on whole pixels with x half up but y half down (100.5 draws at 100).
         y = std::ceil(y - 0.5);
-        const SkBitmap bm = coverage(basicLayout(pixelFont(faces_.value(font), px), text), {SkScalar(x), SkScalar(y)},
-                                     SkIRect::MakeWH(into.w, into.h));
+        const SkBitmap bm = coverage(pilLayout(pixelFont(face(font), px), text, layout(font)), {SkScalar(x), SkScalar(y)},
+                                     SkIRect::MakeWH(into.w, into.h), stroke);
         for (int j = 0; j < bm.height() && j < into.h; ++j) {
             const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, j));
             for (int i = 0; i < bm.width() && i < into.w; ++i) {
@@ -1099,7 +1124,16 @@ public:
     }
 
 private:
+    sk_sp<SkTypeface> face(const QString &font) const { return faces_.value(font.section(QLatin1Char('+'), 0, 0)); }
+    PilLayout layout(const QString &font) const
+    {
+        PilLayout l;
+        l.raqm = raqm_;
+        l.features = font.split(QLatin1Char('+')).mid(1);
+        return l;
+    }
     QHash<QString, sk_sp<SkTypeface>> faces_;
+    bool raqm_ = false;
 };
 
 // PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
@@ -1134,6 +1168,7 @@ public:
     QHash<QString, FxArt> fx;              // fx1x: the Stage10 effects' masks and fields
     QHash<QString, std::shared_ptr<const scene::gold::GoldEffect>> gold; // gold1x: one per text actor
     QHash<QString, SkIRect> goldBoxes;     // gold1x: where each effect has ink at rest (frame 65)
+    QHash<QString, std::shared_ptr<const scene::draft::DraftEffect>> draft; // draft1x: one per text actor
 
     void build(const QStringList &dirs, QString *error)
     {
@@ -1218,6 +1253,31 @@ public:
                 gold.insert(a.id, effect);
             }
         }
+        if (scene.profile == Profile::Draft1x) {
+            const SkiaGoldText gt(faces, true);
+            for (const Actor &a : std::as_const(scene.actors)) {
+                if (a.type != QLatin1String("text") || a.effect.isEmpty())
+                    continue;
+                scene::draft::DraftActor da;
+                da.kind = a.effect.value(QStringLiteral("type")).toString();
+                da.font = a.font;
+                da.text = a.text;
+                if (a.effect.contains(QStringLiteral("secondary")))
+                    da.secondary = a.effect.value(QStringLiteral("secondary")).toString();
+                std::shared_ptr<const scene::draft::DraftEffect> effect = scene::draft::makeDraftEffect(gt, da);
+                if (!effect)
+                    continue;
+                scene::draft::Rgba rest(scene::draft::FW, scene::draft::FH);
+                effect->draw(rest, effect->timeFor(2.6));
+                SkIRect box = SkIRect::MakeEmpty();
+                for (int y = 0; y < rest.h; ++y)
+                    for (int x = 0; x < rest.w; ++x)
+                        if (rest.px(x, y)[3] > 8)
+                            box.join(SkIRect::MakeXYWH(x, y, 1, 1));
+                goldBoxes.insert(a.id, box.isEmpty() ? SkIRect::MakeWH(scene.width, scene.height) : box.makeOutset(20, 20));
+                draft.insert(a.id, effect);
+            }
+        }
         if (scene.profile == Profile::Fx1x) {
             for (const Actor &a : std::as_const(scene.actors)) {
                 if (a.type != QLatin1String("text") || a.effect.isEmpty())
@@ -1289,7 +1349,7 @@ public:
         }
         for (const Actor &a : std::as_const(scene.actors)) {
             if (a.type != QLatin1String("text") || scene.profile == Profile::Cov1x || scene.profile == Profile::Fx1x
-                || scene.profile == Profile::Gold1x)
+                || scene.profile == Profile::Gold1x || scene.profile == Profile::Draft1x)
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
             if (scene.profile == Profile::Pil1x && a.spriteChapter) {
@@ -1586,6 +1646,11 @@ public:
             c.restore();
             return;
         }
+        if (sc.profile == Profile::Draft1x) {
+            paintDraft(c, sampling);
+            c.restore();
+            return;
+        }
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
             if (a.hidden) // Smart Keycaps: a "+" that would start a wrapped row
@@ -1618,6 +1683,36 @@ public:
     }
 
 private:
+    // draft1x: the scripts' straight-alpha RGBA frame, effect over effect.
+    void paintDraft(SkCanvas &c, const SkSamplingOptions &sampling) const
+    {
+        const Scene &sc = r->scene;
+        scene::draft::Rgba f(scene::draft::FW, scene::draft::FH);
+        bool any = false;
+        for (const Actor &a : sc.actors) {
+            const auto it = r->draft.constFind(a.id);
+            if (it == r->draft.constEnd())
+                continue;
+            (*it)->draw(f, (*it)->timeFor(t));
+            any = true;
+        }
+        if (!any)
+            return;
+        SkIRect ink = SkIRect::MakeEmpty();
+        for (int y = 0; y < f.h; ++y)
+            for (int x = 0; x < f.w; ++x)
+                if (f.px(x, y)[3])
+                    ink.join(SkIRect::MakeXYWH(x, y, 1, 1));
+        if (ink.isEmpty())
+            return;
+        SkBitmap bm;
+        bm.allocPixels(SkImageInfo::Make(ink.width(), ink.height(), kRGBA_8888_SkColorType, kUnpremul_SkAlphaType));
+        for (int y = 0; y < ink.height(); ++y)
+            std::memcpy(bm.getAddr(0, y), f.px(ink.left(), ink.top() + y), size_t(ink.width()) * 4);
+        bm.setImmutable();
+        c.drawImage(bm.asImage(), SkScalar(ink.left()), SkScalar(ink.top()), sampling, nullptr);
+    }
+
     // gold1x (Golden Run 18): every effect lights a black frame as the proofs did; the frame is
     // keyed on black (alpha = the brightest channel, colour = frame / alpha).
     void paintGold(SkCanvas &c, const SkSamplingOptions &sampling) const
@@ -2487,7 +2582,8 @@ std::shared_ptr<const VectorPainter> makeScenePainter(std::shared_ptr<const Scen
         if (ew->present)
             mix(ew->dur <= 0.0 ? (designT >= ew->start ? 1.0 : 0.0) : ew->ease((designT - ew->start) / ew->dur));
     // fx1x and gold1x effects keep their own timing, outside the channels: every time is its own frame.
-    if (renderer->scene.profile == Profile::Fx1x || renderer->scene.profile == Profile::Gold1x)
+    if (renderer->scene.profile == Profile::Fx1x || renderer->scene.profile == Profile::Gold1x
+        || renderer->scene.profile == Profile::Draft1x)
         mix(designT);
     // A counter's value moves while its channels may rest.
     for (const Actor &a : renderer->scene.actors)

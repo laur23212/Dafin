@@ -1,0 +1,85 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.library.progress",
+ "label": "Progress",
+ "category": "Library",
+ "source": {
+  "asset": "58B",
+  "sha256": "8f9360f2e44cead3f6a02c2e73d23a418680665bcfb9507581723f49e1a23ea3",
+  "script": "drafts/d58B.py (renderer a055ef4d7462)",
+  "status": "DESIGN_DRAFT; creator verdict PASS_EXTERNAL_MP4"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "9a17712bbd6da13b7ce9beb056d19fe15648799a11d5c35f8086a1270a0d13b2",
+   "package": "Inter 4.1 (github.com/rsms/inter v4.1, extras/otf)"
+  },
+  "serif": {
+   "file": "NotoSerif-Regular.ttf",
+   "sha256": "9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f",
+   "package": "fonts-noto-core"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "Find your direction",
+   "label": "Text"
+  },
+  {
+   "id": "secondary",
+   "type": "text",
+   "default": "THE CREATIVE PROCESS",
+   "label": "Second line"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "medium",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "progress",
+    "secondary": "{secondary}"
+   }
+  }
+ ]
+}

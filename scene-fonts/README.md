@@ -6,6 +6,11 @@ Fonts). A scene names each file with its sha256, and the native renderer
 the same name elsewhere can be different cuts: `title-fonts/noto-serif/NotoSerif-Regular.ttf` is
 cut from the variable font and draws the "02" of Step Focus differently.
 
+Two subfolders hold other cuts under the same family names: `inter-4.1/` (the Inter 4.1 release the
+Stage 54–67 library was drawn with; the root InterDisplay files are Debian's 4.0) and `filmora/` (the
+fonts of the creator's own Filmora titles, unmodified). Both renderers look through subfolders and
+pick a file by its sha256, so a scene gets exactly its cut.
+
 They are kept apart from `title-fonts/` on purpose: FontCatalog lists everything in `title-fonts/`,
 and a second "Noto Serif" there would clash with the one the ChatGPT titles use. The build copies
 this folder to `<appDir>/scene-fonts` (`Contents/Resources/scene-fonts` on macOS); the installers
@@ -56,6 +61,11 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the P
 | NotoSerifDisplay-MediumItalic.ttf | 862ef9d1adc931b504f5c35f39a7fe25ba25397f22f680ba3d07704a9664e12e | fonts-noto-extra 20201225-2 (Golden 28A) |
 | NotoSerifDisplay-Regular.ttf | bcdc596729c24044e28c54815ecbe6004f83b10169a49a51160b22f59116249f | fonts-noto-extra 20201225-2 (Golden 30A) |
 | Lato-Heavy.ttf | 4ce7ec20cd9c391b271b4149ad8cf5a71301d98965403f14fc5530d017146dbb | fonts-lato 2.015-1 (OFL) |
+| inter-4.1/InterDisplay-Bold.otf | d7a7394984bbb3bc3c3e507a6618d34e006c94f27c7105d0ef4376667aeaf4ee | Inter 4.1 release (github.com/rsms/inter, Inter-4.1.zip extras/otf; Stage 54–67 library) |
+| inter-4.1/InterDisplay-Medium.otf | 9a17712bbd6da13b7ce9beb056d19fe15648799a11d5c35f8086a1270a0d13b2 | Inter 4.1 release (github.com/rsms/inter, Inter-4.1.zip extras/otf; Stage 54–67 library) |
+| inter-4.1/InterDisplay-Regular.otf | 35c1f7437dd6d63f4e60a49144df4b4e4edc190e13ffc1e54b86083747fe3acf | Inter 4.1 release (github.com/rsms/inter, Inter-4.1.zip extras/otf; Stage 54–67 library) |
+| filmora/Baloo2-Bold.ttf | 31a2115ea92ea3ae2c5d3cec385be100fcf076c6507ff3ec60722ddfff884b91 | the creator's Filmora title 1_Art_Title_30 (Art 30), unmodified (OFL) |
+| filmora/Montserrat-ExtraBoldItalic.ttf | 0336d05365d450e7baf8e336428daeb0571d63da843312d1703c96015c0afbec | the creator's Filmora title 1_Art_Title_27 (Art 27), unmodified (OFL) |
 
 `NotoSerif-SemiBoldItalic.ttf` and `InterDisplay-Regular.otf` are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),
 whose original script and font are lost (`FONT_UNKNOWN`); they are the closest installed files, not the original.

@@ -1,0 +1,85 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.library.pinpoint",
+ "label": "Pinpoint",
+ "category": "Library",
+ "source": {
+  "asset": "56D",
+  "sha256": "c7a623a3a422f6894369a6d953b96bfa07433e7b87bb57b4c77bcf78e222cc45",
+  "script": "drafts/d56D.py (renderer 15a77003b3c4)",
+  "status": "DESIGN_DRAFT; creator verdict PASS_EXTERNAL_MP4"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "bold": {
+   "file": "InterDisplay-Bold.otf",
+   "sha256": "d7a7394984bbb3bc3c3e507a6618d34e006c94f27c7105d0ef4376667aeaf4ee",
+   "package": "Inter 4.1 (github.com/rsms/inter v4.1, extras/otf)"
+  },
+  "regular": {
+   "file": "InterDisplay-Regular.otf",
+   "sha256": "35c1f7437dd6d63f4e60a49144df4b4e4edc190e13ffc1e54b86083747fe3acf",
+   "package": "Inter 4.1 (github.com/rsms/inter v4.1, extras/otf)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "Optical stabilization",
+   "label": "Text"
+  },
+  {
+   "id": "secondary",
+   "type": "text",
+   "default": "Reduce unwanted camera movement",
+   "label": "Second line"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "bold",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "pinpoint",
+    "secondary": "{secondary}"
+   }
+  }
+ ]
+}

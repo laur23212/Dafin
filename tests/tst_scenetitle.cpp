@@ -657,6 +657,16 @@ private slots:
         // The later Golden Run stages (gold1x; identical to their scripts on all 150 frames).
         for (const char *n : {"32A", "32B", "33A", "33B", "34A", "34B", "35A", "35B", "39A", "48A", "49A"})
             QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
+        // draft1x: the Stage 54–67 library (the frozen scripts in tools/scene-ref/drafts/).
+        for (const char *n : {"54B", "55A", "55B", "56A", "56B", "56D", "57A", "57B", "57C", "57D", "57E", "57F", "58A",
+                            "58B", "58C", "58D", "58E", "58F", "59A", "59C", "59D", "59E", "59F", "60A", "60C", "60D",
+                            "61A", "61B", "61C", "61D", "61E", "62A", "62B", "62C", "62D", "63A", "63B", "63C", "63D",
+                            "64A", "64B", "64C", "64D", "65A", "65B", "65C", "65D", "66A", "66B", "66C", "66D", "67A",
+                            "67B", "67C", "67D"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
+        // draft1x: the favourite Filmora styles (static, 5 s).
+        for (const char *n : {"68_Art27", "68_Art30"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << QList<int>{10, 40, 100} << QString();
         // Batch 1 ports, Part5 Stage05 to Stage11 (identical to their scripts on all 150 frames).
         QTest::newRow("05_TutorialStep") << scenePath("05_TutorialStep") << QStringLiteral("05_TutorialStep") << ports << QString();
         QTest::newRow("05_PrecisionCallout") << scenePath("05_PrecisionCallout") << QStringLiteral("05_PrecisionCallout") << ports << QString();

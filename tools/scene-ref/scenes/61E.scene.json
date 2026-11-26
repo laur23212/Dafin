@@ -1,0 +1,80 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.library.focuslist",
+ "label": "Focuslist",
+ "category": "Library",
+ "source": {
+  "asset": "61E",
+  "sha256": "7470b75928c12ea438edecbcedd6dcfd0d9aa57618d540fa159142bf00987b52",
+  "script": "drafts/d61E.py (renderer dfe0dab9eea5)",
+  "status": "DESIGN_DRAFT; creator verdict PASS_EXTERNAL_MP4"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "9a17712bbd6da13b7ce9beb056d19fe15648799a11d5c35f8086a1270a0d13b2",
+   "package": "Inter 4.1 (github.com/rsms/inter v4.1, extras/otf)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "Plan with intention",
+   "label": "Text"
+  },
+  {
+   "id": "secondary",
+   "type": "text",
+   "default": "Create with clarity",
+   "label": "Second line"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "medium",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "focuslist",
+    "secondary": "{secondary}"
+   }
+  }
+ ]
+}

@@ -1358,8 +1358,14 @@ def _gold(sc, font_dirs=()):
     return golden.Gold1x(sc, lambda key: font_path(sc, key, font_dirs))
 
 
+def _draft(sc, font_dirs=()):
+    import drafts
+    dirs = tuple(str(d) for d in (*font_dirs, *FONT_DIRS))
+    return drafts.Draft1x(sc, lambda name, sha: next((p for p in _font_index(dirs).get(name, []) if _sha256(p) == sha), None))
+
+
 def make_renderer(sc, font_dirs=()):
-    return {'gold1x': _gold, 'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x,
+    return {'draft1x': _draft, 'gold1x': _gold, 'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x,
             'fx1x': Fx1x}[sc.profile](sc, font_dirs)
 
 
