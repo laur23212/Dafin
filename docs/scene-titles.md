@@ -307,6 +307,18 @@ Source: `render_stage05.py` and its siblings.
 - Scene `exitWipe: {"start", "dur", "ease", "left", "right"}` closes the whole title: everything
   right of `round(right − (right − left)·p)` is removed; at p = 1 nothing is left. It counts as an
   exit for the hold.
+- Stage06 settings (`render`): `minOpacity` 0.002, `minReveal` 0.002, `fullOpacity` 0.999,
+  `alphaTable: "trunc"` (`int(a·p)`), `skipEmptyRects` (its `pane()` drew nothing when x1 ≤ x0).
+  `wipeSnap: "round"` (`x0 + round(w·p)`); a line with `progressSnap: "round"` ends at
+  `base + round((to.x − base)·p)` (`progressBase`, default `from.x`).
+- `pin` (Stage06 Location): `center`, `radius`, `stem`, `dotRadius`, `stroke`, `ringColor`,
+  `dotColor`, `stemColor`. Ring radius `round(radius·scale)`, a fixed dot, a stem of
+  `round(stem·scale)` below the ring: one editable motif.
+- A text `counter: {"start", "dur", "ease", "to"}` shows `str(round(to·phase))` (Stage06 Metric),
+  with `at: {"right": x, "top": y}` keeping the sprite's right edge fixed.
+- Scene `exitSlide: {"start", "dur", "ease", "rect": [x, y, w, h], "distance", "hold"}`: Stage06's
+  rigid exit. The title as it stood at `hold`, cropped to `rect`, slides down by
+  `round(distance·p)`, cut at the frame's bottom edge; at p = 1 nothing is left.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
   slide on another). Reveal channels multiply across blocks; offsets add.
 
@@ -363,6 +375,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 03b_LT_A_25, 03b_LT_C_25_REV | 150/150 frames identical |
   | 03b_LT_B_60, 03b_LT_C_60_REV | 360/360 frames identical |
   | 05_TutorialStep, 05_PrecisionCallout, 05_PullQuote (pil1x, over a test plate: the proofs' photo is missing) | 150/150 frames identical |
+  | 06_Metric, 06_Location (pil1x, over a test plate) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the

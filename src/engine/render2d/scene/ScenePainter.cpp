@@ -593,7 +593,21 @@ public:
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
             if (scene.profile == Profile::Pil1x) {
-                texts.insert(a.id, pilText(pixelFont(tf, int(a.size)), a.text, a.baseline));
+                const SkFont f1 = pixelFont(tf, int(a.size));
+                // at.right/top: the script's sprite (ink + 8 px padding) has its right edge and top
+                // there, whatever the text is (the Stage06 counter).
+                const auto place = [&a](TextArt art) {
+                    if (!a.anchorRight)
+                        return art;
+                    const QPointF o(a.anchorRightX - 8 - art.ink.width(), a.anchorTopY + 8);
+                    art.ink.moveTopLeft(o);
+                    art.origin = o;
+                    return art;
+                };
+                texts.insert(a.id, place(pilText(f1, a.text, a.baseline)));
+                if (a.hasCounter)
+                    for (int n = 0; n <= a.counterTo; ++n)
+                        texts.insert(a.id + QLatin1Char('#') + QString::number(n), place(pilText(f1, QString::number(n), a.baseline)));
                 continue;
             }
             if (scene.profile == Profile::Sprite2x || inFlatGroup(a)) {
@@ -809,7 +823,7 @@ private:
         return ch.dy;
     }
 
-    bool pilVisible(const Actor &a) const
+    bool pilVisible(const Actor &a, double t) const
     {
         const Scene &sc = r->scene;
         for (const Actor *node = &a; node; node = node->parent.isEmpty() ? nullptr : sc.actor(node->parent)) {
@@ -827,6 +841,31 @@ private:
     void paintPil(SkCanvas &c) const
     {
         const Scene &sc = r->scene;
+        if (sc.exitSlide.present && t >= sc.exitSlide.start) {
+            // Stage06 rigid exit: the title as it stood at `hold`, cropped, slides down whole.
+            const TimedBlock &s = sc.exitSlide;
+            if (t >= s.start + s.dur)
+                return;
+            const double p = s.dur <= 0.0 ? 1.0 : s.ease((t - s.start) / s.dur);
+            const double dy = roundHalfEven(sc.exitSlideDistance * p);
+            const double x = sc.exitSlideRect[0], y = sc.exitSlideRect[1], w = sc.exitSlideRect[2], h = sc.exitSlideRect[3];
+            const double vis = qBound(0.0, double(sc.height) - (y + dy), h);
+            if (vis <= 0.0)
+                return;
+            c.save();
+            c.translate(0, SkScalar(dy));
+            c.clipRect(SkRect::MakeXYWH(SkScalar(x), SkScalar(y), SkScalar(w), SkScalar(vis)));
+            paintPilAt(c, sc.exitSlideHold);
+            c.restore();
+            return;
+        }
+        paintPilAt(c, t);
+    }
+
+    void paintPilAt(SkCanvas &c, double at) const
+    {
+        const Scene &sc = r->scene;
+        const double t = at; // the frame's own time, or the exitSlide's frozen hold
         double limit = -1.0;
         if (sc.exitWipe.present) {
             const TimedBlock &w = sc.exitWipe;
@@ -844,30 +883,39 @@ private:
             if (parent && parent->pane)
                 continue; // drawn with its pane
             const bool group = a.type == QLatin1String("group");
-            if ((group && !a.pane) || !pilVisible(a))
+            if ((group && !a.pane) || !pilVisible(a, t))
                 continue;
             if (group) {
                 c.saveLayer(nullptr, nullptr);
                 for (const Actor &k : sc.actors)
-                    if (k.parent == a.id && pilVisible(k))
+                    if (k.parent == a.id && pilVisible(k, t))
                         drawPilShape(c, k, scene::drawChannels(sc, k, t, nullptr));
                 c.restore();
                 continue;
             }
             const Channels ch = scene::drawChannels(sc, a, t, nullptr);
             if (a.type == QLatin1String("text"))
-                drawPilText(c, a, ch);
+                drawPilText(c, a, ch, t);
             else
                 drawPilShape(c, a, ch);
         }
         c.restore();
     }
 
-    void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch) const
+    void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch, double t) const
     {
-        const TextArt art = r->texts.value(a.id);
+        const Scene &sc = r->scene;
+        QString key = a.id;
+        if (a.hasCounter) {
+            const TimedBlock &k = a.counter;
+            const double p = k.dur <= 0.0 ? (t >= k.start ? 1.0 : 0.0) : k.ease((t - k.start) / k.dur);
+            key += QLatin1Char('#') + QString::number(qBound(0, int(roundHalfEven(a.counterTo * p)), a.counterTo));
+        }
+        const TextArt art = r->texts.value(key);
         const double op = qBound(0.0, ch.opacity, 1.0);
-        if (!art.image || op < 0.001)
+        if (!art.image || op < sc.minOpacity || (sc.minOpacity > 0.001 && op <= sc.minOpacity))
+            return;
+        if (!a.reveal.isEmpty() && sc.minReveal > 0.0 && ch.wipe <= sc.minReveal)
             return;
         const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
         c.save();
@@ -899,8 +947,12 @@ private:
             const double w = x1 - x0, h = y1 - y0;
             if (a.wipeSnapInt1)
                 x1 = x0 + qMax(1.0, std::trunc(w * ch.wipe));
+            else if (a.wipeSnapRound)
+                x1 = x0 + roundHalfEven(w * ch.wipe);
             else if (ch.wipe != 1.0)
                 x1 = x0 + w * ch.wipe;
+            if (r->scene.skipEmptyRects && (x1 <= x0 || y1 <= y0))
+                return;
             if (ch.vscale != 1.0) {
                 const double trim = h * (1.0 - ch.vscale) / 2.0;
                 y0 += trim;
@@ -917,7 +969,10 @@ private:
         } else if (tp == QLatin1String("line")) {
             double ax = a.from.x(), ay = a.from.y(), bx = a.to.x(), by = a.to.y();
             const double p = ch.progress, v = ch.vscale;
-            if (a.collapseEnds) {
+            if (a.progressSnapRound) {
+                const double base = a.hasProgressBase ? a.progressBase : ax;
+                bx = base + roundHalfEven((bx - base) * p);
+            } else if (a.collapseEnds) {
                 const double L = by - ay;
                 ay += L * (1.0 - v) / 2.0;
                 by -= L * (1.0 - v) / 2.0;
@@ -943,6 +998,19 @@ private:
                 pilLine(c, q0.x(), q0.y(), q1.x(), q1.y(), a.width, skColor(a.color, ch.opacity));
                 start += wgt;
             }
+        } else if (tp == QLatin1String("pin")) {
+            const double rad = roundHalfEven(a.circleRadius * ch.scale);
+            const double cx = a.center.x(), cy = a.center.y();
+            SkPaint paint;
+            paint.setAntiAlias(false);
+            const SkRect ring = SkRect::MakeLTRB(SkScalar(cx - rad), SkScalar(cy - rad), SkScalar(cx + rad + 1), SkScalar(cy + rad + 1));
+            SkRRect outer = SkRRect::MakeOval(ring), inner;
+            outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+            paint.setColor(skColor(a.ringColor, ch.opacity));
+            c.drawDRRect(outer, inner, paint);
+            paint.setColor(skColor(a.dotColor, ch.opacity));
+            c.drawOval(SkRect::MakeLTRB(SkScalar(cx - a.pinDot), SkScalar(cy - a.pinDot), SkScalar(cx + a.pinDot + 1), SkScalar(cy + a.pinDot + 1)), paint);
+            pilLine(c, cx, cy + rad, cx, cy + rad + roundHalfEven(a.pinStem * ch.scale), a.stroke, skColor(a.stemColor, ch.opacity));
         } else if (tp == QLatin1String("ellipse") || tp == QLatin1String("ring")) {
             SkRect bb;
             if (a.hasCenter) {
@@ -1212,9 +1280,13 @@ std::shared_ptr<const VectorPainter> makeScenePainter(std::shared_ptr<const Scen
             mix(v);
     }
     // The pil1x exit wipe moves while every actor rests: it must change the key too.
-    const TimedBlock &ew = renderer->scene.exitWipe;
-    if (ew.present)
-        mix(ew.dur <= 0.0 ? (designT >= ew.start ? 1.0 : 0.0) : ew.ease((designT - ew.start) / ew.dur));
+    for (const TimedBlock *ew : {&renderer->scene.exitWipe, &renderer->scene.exitSlide})
+        if (ew->present)
+            mix(ew->dur <= 0.0 ? (designT >= ew->start ? 1.0 : 0.0) : ew->ease((designT - ew->start) / ew->dur));
+    // A counter's value moves while its channels may rest.
+    for (const Actor &a : renderer->scene.actors)
+        if (a.hasCounter)
+            mix(a.counter.dur <= 0.0 ? (designT >= a.counter.start ? 1.0 : 0.0) : a.counter.ease((designT - a.counter.start) / a.counter.dur));
     p->key = h ? h : 1;
     p->r = std::move(renderer);
     return p;

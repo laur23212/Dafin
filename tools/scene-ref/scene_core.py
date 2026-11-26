@@ -17,7 +17,7 @@ from typing import Any
 
 FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
-ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat'}
+ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat', 'pin'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
 PROFILES = {'sprite2x', 'mask1x', 'pil1x'}
 
@@ -436,9 +436,9 @@ def scene_events(sc: Scene):
             ins.append(float(b['start']) + float(b.get('dur', 0)))
         for b in blocks(a.get('out')):
             outs.append(float(b['start']))
-    ew = sc.raw.get('exitWipe')
-    if ew:  # a scene-wide closing wipe is an exit too
-        outs.append(float(ew['start']))
+    for key in ('exitWipe', 'exitSlide'):  # scene-wide exits count too
+        if sc.raw.get(key):
+            outs.append(float(sc.raw[key]['start']))
     D0 = sc.design_duration
     hold_start = max(ins) if ins else 0.0
     hold_end = min(outs) if outs else D0

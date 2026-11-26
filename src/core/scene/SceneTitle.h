@@ -76,6 +76,19 @@ struct Actor
     QPointF center;
     double circleRadius = 0.0;
     bool pane = false;         // group: children drawn into one layer, composited once
+    bool wipeSnapRound = false;     // rect: x1 = x0 + round(w·wipe) (Stage06)
+    bool progressSnapRound = false; // line: end.x = base + round((to.x - base)·progress) (Stage06)
+    double progressBase = 0.0;
+    bool hasProgressBase = false;
+    // text "counter": the text is str(round(to·phase)) (Stage06 Metric), its sprite right-anchored
+    bool hasCounter = false;
+    TimedBlock counter;
+    int counterTo = 0;
+    bool anchorRight = false;  // at: {"right": x, "top": y}: the PIL sprite's right edge and top
+    double anchorRightX = 0.0, anchorTopY = 0.0;
+    // pin (Stage06 Location): ring (radius·scale), dot, stem (stem·scale) below the ring
+    double pinStem = 0.0, pinDot = 4.0;
+    Rgba ringColor, dotColor, stemColor;
     bool truncOffsets = false; // "offsetSnap": "trunc" — the Stage13 keycaps snapped dy with int()
 
     // text
@@ -161,6 +174,13 @@ struct Scene
     // exitWipe: the whole title is cut from the right as it closes (pil1x Stage05)
     TimedBlock exitWipe;
     double exitWipeLeft = 0.0, exitWipeRight = 0.0;
+    // exitSlide (Stage06): the title as it stood at `hold`, cropped to rect, slides down by distance
+    TimedBlock exitSlide;
+    double exitSlideRect[4] = {0, 0, 0, 0}; // x, y, w, h
+    double exitSlideDistance = 0.0, exitSlideHold = 0.0;
+    // pil1x render options (render.minOpacity, minReveal, fullOpacity, alphaTable, skipEmptyRects)
+    double minOpacity = 0.001, minReveal = 0.0, fullOpacity = 1.0;
+    bool alphaTrunc = false, skipEmptyRects = false;
 
     const Actor *actor(const QString &id) const;
     int indexOf(const QString &id) const;

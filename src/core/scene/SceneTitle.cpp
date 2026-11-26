@@ -904,6 +904,7 @@ struct Loader
         if (!a.reveal.isEmpty() && a.reveal != QLatin1String("x") && a.reveal != QLatin1String("y"))
             fail(QStringLiteral("%1: reveal must be \"x\" or \"y\"").arg(a.id));
         a.wipeSnapInt1 = r.value(QStringLiteral("wipeSnap")).toString() == QLatin1String("int1");
+        a.wipeSnapRound = r.value(QStringLiteral("wipeSnap")).toString() == QLatin1String("round");
         a.collapseEnds = r.value(QStringLiteral("collapse")).toString() == QLatin1String("ends");
         for (const QJsonValue &w : r.value(QStringLiteral("segmentWeights")).toArray())
             a.segmentWeights << w.toDouble();
@@ -930,11 +931,26 @@ struct Loader
             const QJsonObject at = r.value(QStringLiteral("at")).toObject();
             if (at.contains(QStringLiteral("baseline"))) {
                 a.baseline = pointOf(at.value(QStringLiteral("baseline")), a.id + QStringLiteral(": at"));
+            } else if (at.contains(QStringLiteral("right"))) {
+                a.anchorRight = true;
+                a.anchorRightX = numberOf(at.value(QStringLiteral("right")), a.id + QStringLiteral(": at.right"));
+                a.anchorTopY = numberOf(at.value(QStringLiteral("top")), a.id + QStringLiteral(": at.top"));
             } else if (at.contains(QStringLiteral("sprite")) || at.contains(QStringLiteral("lt"))) {
                 a.anchorKind = at.contains(QStringLiteral("sprite")) ? QStringLiteral("sprite") : QStringLiteral("lt");
                 a.anchorPoint = pointOf(at.value(a.anchorKind), a.id + QStringLiteral(": at"));
             } else if (parent.isEmpty() || !r.value(QStringLiteral("align")).toObject().contains(QStringLiteral("h"))) {
                 fail(QStringLiteral("%1: text needs at.baseline").arg(a.id));
+            }
+            const QJsonObject counter = r.value(QStringLiteral("counter")).toObject();
+            if (!counter.isEmpty()) {
+                a.hasCounter = true;
+                a.counter.present = true;
+                a.counter.start = numberOf(counter.value(QStringLiteral("start")), a.id + QStringLiteral(": counter.start"));
+                a.counter.dur = numberOf(counter.value(QStringLiteral("dur")), a.id + QStringLiteral(": counter.dur"));
+                a.counter.ease = easeOf(counter.value(QStringLiteral("ease")), a.id);
+                a.counterTo = int(numberOf(counter.value(QStringLiteral("to")), a.id + QStringLiteral(": counter.to")));
+                if (a.counterTo < 0 || a.counterTo > 100000)
+                    fail(QStringLiteral("%1: counter.to must be 0…100000").arg(a.id));
             }
             const QJsonObject clip = r.value(QStringLiteral("clipTo")).toObject();
             if (!clip.isEmpty()) {
@@ -1030,6 +1046,11 @@ struct Loader
             a.width = r.contains(QStringLiteral("width")) ? r.value(QStringLiteral("width")).toDouble() : 1.0;
             a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
             a.mixWith = r.value(QStringLiteral("opacityMode")).toString() == QLatin1String("mixWith");
+            a.progressSnapRound = r.value(QStringLiteral("progressSnap")).toString() == QLatin1String("round");
+            if (r.contains(QStringLiteral("progressBase"))) {
+                a.hasProgressBase = true;
+                a.progressBase = r.value(QStringLiteral("progressBase")).toDouble();
+            }
         } else if (t == QLatin1String("route")) {
             for (const QJsonValue &p : r.value(QStringLiteral("points")).toArray())
                 a.points << pointOf(p, a.id + QStringLiteral(": points"));
@@ -1037,6 +1058,21 @@ struct Loader
                 fail(QStringLiteral("%1: a route needs at least two points").arg(a.id));
             a.width = r.contains(QStringLiteral("width")) ? r.value(QStringLiteral("width")).toDouble() : 1.0;
             a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
+        } else if (t == QLatin1String("pin")) {
+            a.center = pointOf(r.value(QStringLiteral("center")), a.id + QStringLiteral(": center"));
+            a.hasCenter = true;
+            a.circleRadius = numberOf(r.value(QStringLiteral("radius")), a.id + QStringLiteral(": radius"));
+            a.pinStem = numberOf(r.value(QStringLiteral("stem")), a.id + QStringLiteral(": stem"));
+            a.pinDot = r.contains(QStringLiteral("dotRadius")) ? r.value(QStringLiteral("dotRadius")).toDouble() : 4.0;
+            a.stroke = r.contains(QStringLiteral("stroke")) ? r.value(QStringLiteral("stroke")).toDouble() : 3.0;
+            a.ringColor = colorOf(r.value(QStringLiteral("ringColor")), palette, a.id);
+            a.dotColor = colorOf(r.value(QStringLiteral("dotColor")), palette, a.id);
+            a.stemColor = colorOf(r.value(QStringLiteral("stemColor")), palette, a.id);
+            a.hasBox = true;
+            a.box[0] = a.center.x() - a.circleRadius;
+            a.box[1] = a.center.y() - a.circleRadius;
+            a.box[2] = a.center.x() + a.circleRadius;
+            a.box[3] = a.center.y() + a.circleRadius + a.pinStem;
         } else if (t == QLatin1String("group")) {
             const QJsonArray at = r.value(QStringLiteral("at")).toArray();
             if (at.size() == 2)
@@ -1066,7 +1102,8 @@ struct Loader
             env.insert(it.key(), it.value());
         static const QSet<QString> types{QStringLiteral("text"),    QStringLiteral("rect"),  QStringLiteral("roundRect"),
                                          QStringLiteral("line"),    QStringLiteral("route"), QStringLiteral("ellipse"),
-                                         QStringLiteral("ring"),    QStringLiteral("group"), QStringLiteral("repeat")};
+                                         QStringLiteral("ring"),    QStringLiteral("group"), QStringLiteral("repeat"),
+                                         QStringLiteral("pin")};
         for (const QJsonValue &value : actors) {
             const QJsonObject a = value.toObject();
             const QString type = a.value(QStringLiteral("type")).toString();
@@ -1398,6 +1435,11 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Mask1x;
         else if (profile == QLatin1String("pil1x"))
             sc.profile = Profile::Pil1x;
+        sc.minOpacity = render.contains(QStringLiteral("minOpacity")) ? render.value(QStringLiteral("minOpacity")).toDouble() : 0.001;
+        sc.minReveal = render.value(QStringLiteral("minReveal")).toDouble();
+        sc.fullOpacity = render.contains(QStringLiteral("fullOpacity")) ? render.value(QStringLiteral("fullOpacity")).toDouble() : 1.0;
+        sc.alphaTrunc = render.value(QStringLiteral("alphaTable")).toString() == QLatin1String("trunc");
+        sc.skipEmptyRects = render.value(QStringLiteral("skipEmptyRects")).toBool();
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
 
@@ -1541,6 +1583,23 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
                 he = anyOut ? qMin(he, b.start) : b.start;
                 anyOut = true;
             }
+        }
+        // A scene-wide exitSlide is an exit too.
+        const QJsonObject es = doc.value(QStringLiteral("exitSlide")).toObject();
+        if (!es.isEmpty()) {
+            sc.exitSlide.present = true;
+            sc.exitSlide.start = numberOf(es.value(QStringLiteral("start")), QStringLiteral("exitSlide: start"));
+            sc.exitSlide.dur = numberOf(es.value(QStringLiteral("dur")), QStringLiteral("exitSlide: dur"));
+            sc.exitSlide.ease = easeOf(es.value(QStringLiteral("ease")), QStringLiteral("exitSlide"));
+            const QJsonArray rect = es.value(QStringLiteral("rect")).toArray();
+            if (rect.size() != 4)
+                fail(QStringLiteral("exitSlide.rect must be [x, y, w, h]"));
+            for (int i = 0; i < 4; ++i)
+                sc.exitSlideRect[i] = rect.at(i).toDouble();
+            sc.exitSlideDistance = numberOf(es.value(QStringLiteral("distance")), QStringLiteral("exitSlide: distance"));
+            sc.exitSlideHold = numberOf(es.value(QStringLiteral("hold")), QStringLiteral("exitSlide: hold"));
+            he = anyOut ? qMin(he, sc.exitSlide.start) : sc.exitSlide.start;
+            anyOut = true;
         }
         // A scene-wide exitWipe is an exit too.
         const QJsonObject ew = doc.value(QStringLiteral("exitWipe")).toObject();

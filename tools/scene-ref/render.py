@@ -550,6 +550,13 @@ class Pil1x:
         self.by_id = {a['id']: a for a in sc.actors}
         self.cache = {}
         self.mix_color = core.parse_color(sc.raw.get('render', {}).get('mixColor', [9, 12, 17]), sc.palette)
+        r = sc.raw.get('render', {})
+        # Stage05 composite_sprite vs Stage06 put(): thresholds and the opacity table differ.
+        self.min_opacity = float(r.get('minOpacity', 0.001))   # skip at or below (Stage06: <= .002)
+        self.min_reveal = float(r.get('minReveal', 0.0))       # Stage06: reveal <= .002 skips
+        self.full_opacity = float(r.get('fullOpacity', 1.0))   # table applied below this (Stage06 .999)
+        self.alpha_trunc = r.get('alphaTable') == 'trunc'      # int(a·p) instead of round
+        self.skip_empty = bool(r.get('skipEmptyRects'))        # pane(): x1 <= x0 or y1 <= y0 draws nothing
 
     def font(self, key, size):
         return _truetype(font_path(self.sc, key, self.font_dirs), int(size), False)
@@ -558,19 +565,29 @@ class Pil1x:
         c = core.parse_color(a[key], self.sc.palette)
         return tuple(c) if len(c) == 4 else (*c, 255)
 
-    def sprite(self, a):
-        key = ('sprite', a['id'], a['text'], a['font'], a['size'], json.dumps(a['at']))
+    def sprite(self, a, text=None):
+        text = a['text'] if text is None else text
+        key = ('sprite', a['id'], text, a['font'], a['size'], json.dumps(a['at']))
         if key not in self.cache:
             f = self.font(a['font'], a['size'])
             d = ImageDraw.Draw(Image.new('RGBA', (20, 20)))
-            b = d.textbbox((0, 0), a['text'], font=f)
+            b = d.textbbox((0, 0), text, font=f)
             px = py = self.PAD
-            im = Image.new('RGBA', (b[2] - b[0] + px * 2, b[3] - b[1] + py * 2), (0, 0, 0, 0))
-            ImageDraw.Draw(im).text((px - b[0], py - b[1]), a['text'], font=f, fill=self.rgba(a))
-            bx, by = a['at']['baseline']
-            xy = (bx - px + b[0], by - f.getmetrics()[0] - py + b[1])
-            self.cache[key] = (im, xy)
+            im = Image.new('RGBA', (max(1, b[2] - b[0] + px * 2), max(1, b[3] - b[1] + py * 2)), (0, 0, 0, 0))
+            ImageDraw.Draw(im).text((px - b[0], py - b[1]), text, font=f, fill=self.rgba(a))
+            if 'right' in a['at']:  # Stage06 counter: the sprite's right edge is fixed
+                x = a['at']['right'] - im.width
+                y = a['at']['top']
+            else:
+                bx, by = a['at']['baseline']
+                x, y = bx - px + b[0], by - f.getmetrics()[0] - py + b[1]
+            self.cache[key] = (im, (x, y))
         return self.cache[key]
+
+    def counter_text(self, a, t):
+        """counter: {start, dur, ease, to}: the text is str(round(to·phase)) (Stage06 Metric)."""
+        c = a['counter']
+        return str(round(c['to'] * core.phase(t, float(c['start']), float(c['dur']), c.get('ease'))))
 
     # -- visibility -------------------------------------------------------------------------
     def chan(self, a, t):
@@ -614,7 +631,7 @@ class Pil1x:
                 continue
             ch = self.chan(a, t)
             if a['type'] == 'text':
-                self.draw_text(c, a, ch)
+                self.draw_text(c, a, ch, self.counter_text(a, t) if a.get('counter') else None)
             elif a['type'] == 'group':
                 pane = Image.new('RGBA', (W, H), (0, 0, 0, 0))
                 d = ImageDraw.Draw(pane)
@@ -626,6 +643,19 @@ class Pil1x:
                 pane = Image.new('RGBA', (W, H), (0, 0, 0, 0))
                 self.draw_shape(ImageDraw.Draw(pane), a, ch)
                 c.alpha_composite(pane)
+        es = self.sc.raw.get('exitSlide')
+        if es and t >= float(es['start']):
+            # Stage06 rigid exit: the title as it stood at `hold`, cropped to `rect`, slides down.
+            if t >= float(es['start']) + float(es['dur']):
+                return before
+            x, y, w, h = es['rect']
+            frozen = self.draw(float(es['hold']), canvas if canvas is not None else None).crop((x, y, x + w, y + h))
+            dy = round(es['distance'] * core.phase(t, float(es['start']), float(es['dur']), es.get('ease')))
+            out = before.copy()
+            vis = max(0, min(h, self.sc.height - (y + dy)))
+            if vis > 0:
+                out.alpha_composite(frozen.crop((0, 0, w, vis)), (x, y + dy))
+            return out
         ew = self.sc.raw.get('exitWipe')
         if ew:
             p = core.phase(t, float(ew['start']), float(ew['dur']), ew.get('ease'))
@@ -638,16 +668,16 @@ class Pil1x:
                 c = Image.composite(c, before, m)
         return c
 
-    def draw_text(self, c, a, ch):
-        im, (x, y) = self.sprite(a)
+    def draw_text(self, c, a, ch, text=None):
+        im, (x, y) = self.sprite(a, text)
         op = max(0.0, min(1.0, ch['opacity']))
-        if op < 0.001:
+        if op < self.min_opacity or (self.min_opacity > 0.001 and op <= self.min_opacity):
             return
         alpha = im.getchannel('A')
         rev = a.get('reveal')
         if rev:
             v = max(0.0, min(1.0, ch['wipe']))
-            if v == 0:
+            if v == 0 or (self.min_reveal and ch['wipe'] <= self.min_reveal):
                 return
             m = Image.new('L', im.size, 0)
             md = ImageDraw.Draw(m)
@@ -656,8 +686,11 @@ class Pil1x:
             else:
                 md.rectangle((0, im.height - max(0, round(im.height * v)), im.width, im.height), fill=255)
             alpha = ImageChops.multiply(alpha, m)
-        if op < 1:
-            alpha = alpha.point(lambda p: max(0, min(255, round(p * op))))
+        if op < self.full_opacity:
+            if self.alpha_trunc:
+                alpha = alpha.point(lambda p: int(p * op))
+            else:
+                alpha = alpha.point(lambda p: max(0, min(255, round(p * op))))
         src = im.copy(); src.putalpha(alpha)
         c.alpha_composite(src, (round(x + ch['dx']), round(y + ch['dy'])))
 
@@ -672,12 +705,16 @@ class Pil1x:
             w, h = x1 - x0, y1 - y0
             if a.get('wipeSnap') == 'int1':  # Stage05 A: x0 + max(1, int(w·p))
                 x1 = x0 + max(1, int(w * ch['wipe']))
+            elif a.get('wipeSnap') == 'round':  # Stage06: x0 + round(w·p)
+                x1 = x0 + round(w * ch['wipe'])
             elif ch['wipe'] != 1:
                 x1 = x0 + w * ch['wipe']
             if ch['vscale'] != 1:  # collapse to the vertical centre
                 trim = h * (1 - ch['vscale']) / 2
                 y0, y1 = y0 + trim, y1 - trim
             fill = self.ink(a, ch, 'fill' if tp == 'roundRect' else 'color')
+            if self.skip_empty and (x1 <= x0 or y1 <= y0):
+                return
             if a.get('radius'):
                 d.rounded_rectangle((x0, y0, x1, y1), radius=a['radius'], fill=fill)
             else:
@@ -688,6 +725,9 @@ class Pil1x:
             if a.get('collapse') == 'ends':  # Stage05 A: y0+43+L(1-v)/2 … y1-43-L(1-v)/2
                 L = by - ay
                 ay, by = ay + L * (1 - v) / 2, by - L * (1 - v) / 2
+            elif a.get('progressSnap') == 'round':  # Stage06: horizontal, end = base + round(L·p)
+                base = a.get('progressBase', ax)
+                bx = base + round((bx - base) * p)
             elif p != 1 or v != 1:  # Stage05 C: y + (L·p)(1-v)/2 … y + (L·p)(1+v)/2
                 L = by - ay
                 ay, by = ay + (L * p) * (1 - v) / 2, ay + (L * p) * (1 + v) / 2
@@ -706,6 +746,14 @@ class Pil1x:
                     break
                 d.line((*q0, *q1), fill=fill, width=int(a.get('width', 1)))
                 start += wgt
+        elif tp == 'pin':  # Stage06 Location: ring, dot and stem, one scaled motif
+            cx, cy = a['center']
+            s = ch['scale']
+            r = round(a['radius'] * s)
+            d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=self.ink(a, ch, 'ringColor'), width=int(a.get('stroke', 3)))
+            dr = a.get('dotRadius', 4)
+            d.ellipse((cx - dr, cy - dr, cx + dr, cy + dr), fill=self.ink(a, ch, 'dotColor'))
+            d.line((cx, cy + r, cx, cy + r + round(a['stem'] * s)), fill=self.ink(a, ch, 'stemColor'), width=int(a.get('stroke', 3)))
         elif tp in ('ellipse', 'ring'):
             cx, cy = a['center']
             r = round(a['radius'] * ch['scale'])
