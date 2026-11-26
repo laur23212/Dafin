@@ -866,6 +866,11 @@ struct Loader
         a.type = r.value(QStringLiteral("type")).toString();
         a.role = r.value(QStringLiteral("role")).toString();
         a.parent = parent;
+        const QString snapMode = r.value(QStringLiteral("offsetSnap")).toString();
+        if (snapMode == QLatin1String("trunc"))
+            a.truncOffsets = true;
+        else if (!snapMode.isEmpty() && snapMode != QLatin1String("round"))
+            fail(QStringLiteral("%1: offsetSnap must be \"round\" or \"trunc\"").arg(a.id));
         a.in = blockOf(r.value(QStringLiteral("in")), true, a.id);
         a.out = blockOf(r.value(QStringLiteral("out")), false, a.id);
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
@@ -908,6 +913,11 @@ struct Loader
                 && al.value(QStringLiteral("v")).toString() == QLatin1String("center")) {
                 a.centerInGroup = true;
                 a.centerDy = al.value(QStringLiteral("dy")).toDouble();
+            } else if (al.value(QStringLiteral("h")).toString() == QLatin1String("center")
+                       && al.value(QStringLiteral("v")).toString() == QLatin1String("top")) {
+                a.centerInGroup = true;
+                a.alignTop = true;
+                a.centerTop = al.value(QStringLiteral("top")).toDouble();
             }
         } else if (t == QLatin1String("rect") || t == QLatin1String("roundRect") || t == QLatin1String("ellipse")
                    || t == QLatin1String("ring")) {

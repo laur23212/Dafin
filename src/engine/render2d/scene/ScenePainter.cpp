@@ -565,7 +565,8 @@ public:
                     ink.offset(b.left(), b.top());
                     const double gw = g ? g->groupW : 0, gh = g ? g->groupH : 0;
                     pen = QPointF(((gw * kSS - ink.width()) / 2.0 - ink.left()) / kSS,
-                                  ((gh * kSS - ink.height()) / 2.0 - ink.top()) / kSS + a.centerDy);
+                                  a.alignTop ? (a.centerTop * kSS - ink.top()) / kSS
+                                             : ((gh * kSS - ink.height()) / 2.0 - ink.top()) / kSS + a.centerDy);
                 }
                 texts.insert(a.id, spriteText(f2, a.text, a.color, pen));
             } else {
@@ -601,6 +602,13 @@ public:
 };
 
 namespace {
+
+// An actor with "offsetSnap": "trunc" moves by whole pixels toward zero, as int() did in the
+// Stage13 scripts; everything else is rounded half to even where it lands.
+double offsetOf(const Actor &a, double v)
+{
+    return a.truncOffsets ? std::trunc(v) : v;
+}
 
 void drawLine(SkCanvas &c, const Actor &a, const Channels &ch, bool snap)
 {
@@ -738,8 +746,8 @@ private:
         const TextArt art = r->texts.value(a.id);
         if (!art.image || ch.opacity <= 0.0 || ch.wipe <= 0.0)
             return;
-        const double x = roundHalfEven(art.origin.x() + ch.dx) + ox;
-        const double y = roundHalfEven(art.origin.y() + ch.dy) + oy;
+        const double x = roundHalfEven(art.origin.x() + offsetOf(a, ch.dx)) + ox;
+        const double y = roundHalfEven(art.origin.y() + offsetOf(a, ch.dy)) + oy;
         c.save();
         const int limit = int(roundHalfEven(art.image->width() * qMin(1.0, ch.wipe)));
         c.clipRect(SkRect::MakeXYWH(SkScalar(x), SkScalar(y), SkScalar(limit), SkScalar(art.image->height())));
@@ -811,7 +819,7 @@ private:
         if (ch.opacity <= 0.0 || ch.wipe <= 0.0)
             return;
         const double w = std::trunc(a.boxWidth() + 1), h = std::trunc(a.box[3] - a.box[1] + 1);
-        const double x = roundHalfEven(a.box[0] + ch.dx) + ox, y = roundHalfEven(a.box[1] + ch.dy) + oy;
+        const double x = roundHalfEven(a.box[0] + offsetOf(a, ch.dx)) + ox, y = roundHalfEven(a.box[1] + offsetOf(a, ch.dy)) + oy;
         const double limit = roundHalfEven(w * qMin(1.0, ch.wipe));
         SkPaint paint;
         paint.setColor(skColor(a.fill, qMin(1.0, ch.opacity)));
@@ -841,7 +849,7 @@ private:
     {
         if (ch.opacity <= 0.0 || ch.wipe <= 0.0)
             return;
-        const double x = roundHalfEven(g.groupAt.x() + ch.dx), y = roundHalfEven(g.groupAt.y() + ch.dy);
+        const double x = roundHalfEven(g.groupAt.x() + offsetOf(g, ch.dx)), y = roundHalfEven(g.groupAt.y() + offsetOf(g, ch.dy));
         c.save();
         c.clipRect(SkRect::MakeXYWH(SkScalar(x), SkScalar(y), SkScalar(roundHalfEven(g.groupW * qMin(1.0, ch.wipe))),
                                     SkScalar(g.groupH)));

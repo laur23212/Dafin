@@ -241,7 +241,7 @@ class Sprite2x:
     def group_sprite(self, g, children):
         key = ('group', g['id'], json.dumps([{k: v for k, v in c.items() if not k.startswith('_')} for c in children], sort_keys=True, default=str))
         if key not in self.cache:
-            f = SS
+            f = int(g.get('supersample', SS))  # Stage14's tags were drawn at 3x
             gw, gh = g['size']
             im = Image.new('RGBA', (gw * f, gh * f))
             d = ImageDraw.Draw(im)
@@ -249,13 +249,18 @@ class Sprite2x:
                 if 'in' in c or 'out' in c:
                     raise SceneError(f'{c["id"]}: children of a flattened group cannot animate on their own')
                 if c['type'] == 'text':
-                    fo = self.font(c['font'], c['size'])
+                    fo = _truetype(font_path(self.sc, c['font'], self.font_dirs), int(c['size']) * f, False)
                     al = c.get('align', {})
                     if al.get('h') == 'center' and al.get('v') == 'center':
                         bb = d.textbbox((0, 0), c['text'], font=fo)
                         tx = (gw * f - (bb[2] - bb[0])) / 2 - bb[0]
                         ty = (gh * f - (bb[3] - bb[1])) / 2 - bb[1] + al.get('dy', 0) * f
                         d.text((tx, ty), c['text'], font=fo, fill=_rgba(self.color(c)))
+                    elif al.get('h') == 'center' and al.get('v') == 'top':
+                        # Ink top at `top` (group px): the Stage13C Mac keys' symbol and name rows.
+                        bb = d.textbbox((0, 0), c['text'], font=fo)
+                        tx = (gw * f - (bb[2] - bb[0])) / 2 - bb[0]
+                        d.text((tx, al['top'] * f - bb[1]), c['text'], font=fo, fill=_rgba(self.color(c)))
                     else:
                         bx, by = c['at']['baseline']
                         d.text((bx * f, by * f), c['text'], font=fo, fill=_rgba(self.color(c)), anchor='ls')
@@ -331,7 +336,10 @@ class Sprite2x:
     def _draw(self, a, ch, canvas, acc):
         if ch['scale'] != 1:
             raise SceneError(f'{a["id"]}: scale is not implemented in the sprite2x profile yet')
-        dx, dy = self._snap(ch['dx']), self._snap(ch['dy'])
+        if a.get('offsetSnap') == 'trunc':  # Stage13 keycaps: dy=int(...)
+            dx, dy = int(ch['dx']), int(ch['dy'])
+        else:
+            dx, dy = self._snap(ch['dx']), self._snap(ch['dy'])
         t = a['type']
         if t in ('text', 'rect', 'roundRect', 'ellipse', 'ring', 'group'):
             if t == 'text':

@@ -63,6 +63,7 @@ struct Actor
     QString parent;         // id of the enclosing group, empty at top level
     TimedBlock in, out;
     QStringList dependsOn;
+    bool truncOffsets = false; // "offsetSnap": "trunc" — the Stage13 keycaps snapped dy with int()
 
     // text
     QString text, font;
@@ -77,6 +78,8 @@ struct Actor
     // flattened-group child alignment ("align": {"h":"center","v":"center","dy":..})
     bool centerInGroup = false;
     double centerDy = 0.0;
+    bool alignTop = false;  // "v": "top": the ink top sits at centerTop (group px)
+    double centerTop = 0.0;
 
     // box shapes
     bool hasBox = false;

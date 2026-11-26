@@ -185,6 +185,7 @@ Fields common to every actor:
 | `sync` | Copy `in`/`out` from another actor (for example, a text that must never outlive its strap) |
 | `in`, `out` | Timing, as above |
 | `align` | Static constraint, see Constraints |
+| `offsetSnap` | `"round"` (default, half to even) or `"trunc"`: how `dx`/`dy` snap to whole pixels. The Stage13 keycaps moved by `int(18·(1−p))`, which is `trunc`. |
 
 Fields of each type:
 
@@ -197,7 +198,7 @@ Fields of each type:
 | `route` | `points` (polyline traced by `progress`), `width`, `color` |
 | `ellipse` | `box`, `fill`, `strokeColor`, `stroke` |
 | `ring` | `box`, `color`, `stroke` (outline only) |
-| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. |
+| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. `supersample` (default 2) is the factor the group is drawn at before the Lanczos reduction: the Stage13C/14 keys and menu tags were drawn at 3×. A child text may also use `align: {"h":"center","v":"top","top":15}` (its ink top at that group y), as the Stage13C Mac keys stack a symbol over its name. |
 | `repeat` | `count` (number or expression), `as` (variable name, default `i`), `actor` (a template whose fields may be `{"expr": …}`, with an id like `segment{i}`) |
 
 ## Constraints
@@ -328,6 +329,10 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   |---|---|
   | 15_A_Step_Focus | 150/150 frames identical |
   | 03b_LT_B_25 | 150/150 frames identical |
+  | 15_B_Definition_Card, 15_C_Pro_Tip | 150/150 frames identical |
+  | 14_A_Menu_Path, 14_B_Setting_Change | 150/150 frames identical |
+  | 13_A_Shortcut_Keys, 13_B_Source_Credit, 13_C_Editorial_Checklist | 150/150 frames identical |
+  | 13C_U1/U2/U3 (Universal and macOS shortcuts) | 150/150 frames identical |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the
   frozen helpers.

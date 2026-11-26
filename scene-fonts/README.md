@@ -21,6 +21,7 @@ All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open
 | NotoSerif-Regular.ttf | 9d7583b7dc9e812afd32a14280c5cac3160012efe50c8d08938f4fea266ff67f | fonts-noto-core 20201225-2 |
 | InterDisplay-SemiBold.otf | 12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f | fonts-inter 4.0+ds-1 |
 | Inter-Regular.otf | be6d709dcb730ddaf050cbdae6fe89bd56d5d14dc66885639bbf6f06bd03521b | fonts-inter 4.0+ds-1 |
+| NotoSansSymbols2-Regular.ttf | 876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688 | fonts-noto-core 20201225-2 (the ⌘ ⌥ keys of Stage13C) |
 
 Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
 reserved effects, which v1 refuses.

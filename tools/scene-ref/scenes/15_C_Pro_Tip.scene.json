@@ -1,0 +1,314 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.instructional.pro-tip",
+ "label": "Pro Tip",
+ "category": "Instructional Titles",
+ "source": {
+  "asset": "15_C_Pro_Tip",
+  "sha256": "3284d3163ea688ed31935f7dca69cf575c26e87af2006d2dc033312ebac839cf",
+  "script": "Dafin_TitleDesign_Part6_Stage15_InstructionalTitles_Delta_v6.1.6 :: source/render_stage15.py scene_c",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "WHITE": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ]
+ },
+ "fonts": {
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "PRO TIP",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Preview at 100%",
+   "label": "Title"
+  },
+  {
+   "id": "description",
+   "type": "text",
+   "default": "Inspect fine edges before exporting.",
+   "label": "Description"
+  }
+ ],
+ "actors": [
+  {
+   "id": "card",
+   "role": "carrierMotion",
+   "type": "group",
+   "at": [
+    0,
+    0
+   ],
+   "in": {
+    "start": 0.3,
+    "dur": 0.45,
+    "ease": "smoothstep",
+    "from": {
+     "dy": 18
+    }
+   },
+   "children": [
+    {
+     "id": "plate",
+     "role": "carrier",
+     "type": "group",
+     "flatten": true,
+     "at": [
+      382,
+      703
+     ],
+     "size": [
+      1112,
+      217
+     ],
+     "in": {
+      "start": 0.3,
+      "dur": 0.45,
+      "ease": "smoothstep",
+      "from": {
+       "opacity": 0
+      }
+     },
+     "out": {
+      "start": 4.78,
+      "dur": 0.37,
+      "ease": "smoothstep",
+      "to": {
+       "opacity": 0
+      }
+     },
+     "children": [
+      {
+       "id": "plateBody",
+       "type": "roundRect",
+       "box": [
+        2,
+        2,
+        1109,
+        214
+       ],
+       "radius": 22,
+       "fill": [
+        27,
+        36,
+        44,
+        245
+       ],
+       "strokeColor": [
+        80,
+        99,
+        107,
+        232
+       ],
+       "stroke": 2
+      },
+      {
+       "id": "plateLip",
+       "type": "line",
+       "from": [
+        28,
+        8
+       ],
+       "to": [
+        1084,
+        8
+       ],
+       "color": [
+        171,
+        188,
+        190
+       ],
+       "alpha": 52,
+       "width": 2
+      }
+     ]
+    },
+    {
+     "id": "stripe",
+     "role": "accent",
+     "type": "rect",
+     "box": [
+      419,
+      746,
+      422,
+      869
+     ],
+     "color": "AQUA",
+     "in": {
+      "start": 0.52,
+      "dur": 0.39,
+      "ease": "smoothstep",
+      "from": {
+       "opacity": 0
+      }
+     },
+     "out": {
+      "start": 4.74,
+      "dur": 0.32,
+      "ease": "smoothstep",
+      "to": {
+       "opacity": 0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "semi",
+   "size": 27,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     464.0,
+     763.0
+    ]
+   },
+   "in": {
+    "start": 0.63,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 9
+    }
+   },
+   "out": {
+    "start": 4.74,
+    "dur": 0.31,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 59,
+   "color": "WHITE",
+   "at": {
+    "baseline": [
+     459.0,
+     831.5
+    ]
+   },
+   "in": {
+    "start": 0.84,
+    "dur": 0.48,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 11
+    }
+   },
+   "out": {
+    "start": 4.73,
+    "dur": 0.33,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "description",
+   "role": "description",
+   "type": "text",
+   "text": "{description}",
+   "font": "regular",
+   "size": 32,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     465.0,
+     896.5
+    ]
+   },
+   "optional": true,
+   "in": {
+    "start": 1.2,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 8
+    }
+   },
+   "out": {
+    "start": 4.68,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  }
+ ]
+}

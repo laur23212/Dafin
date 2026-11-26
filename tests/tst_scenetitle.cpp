@@ -217,6 +217,20 @@ private slots:
         QVERIFY(!scene::loadScene(reserved, {}, &error));
         QVERIFY(error.contains(QLatin1String("reserved")));
 
+        // offsetSnap is "round" (default) or "trunc" (the Stage13 keycaps), nothing else.
+        QJsonObject snapped = step;
+        actors = snapped.value(QStringLiteral("actors")).toArray();
+        first = actors.at(0).toObject();
+        first.insert(QStringLiteral("offsetSnap"), QStringLiteral("floor"));
+        actors.replace(0, first);
+        snapped.insert(QStringLiteral("actors"), actors);
+        QVERIFY(!scene::loadScene(snapped, {}, &error));
+        QVERIFY(error.contains(QLatin1String("offsetSnap")));
+        first.insert(QStringLiteral("offsetSnap"), QStringLiteral("trunc"));
+        actors.replace(0, first);
+        snapped.insert(QStringLiteral("actors"), actors);
+        QVERIFY2(scene::loadScene(snapped, {}, &error), qPrintable(error));
+
         QJsonObject disabled = step;
         actors = disabled.value(QStringLiteral("actors")).toArray();
         first = actors.at(0).toObject();
@@ -297,6 +311,16 @@ private slots:
         QTest::addColumn<QString>("name");
         QTest::newRow("15A") << scenePath("15_A_Step_Focus") << QStringLiteral("15_A_Step_Focus");
         QTest::newRow("03b") << scenePath("03b_LT_B_25") << QStringLiteral("03b_LT_B_25");
+        QTest::newRow("13_A_Shortcut_Keys") << scenePath("13_A_Shortcut_Keys") << QStringLiteral("13_A_Shortcut_Keys");
+        QTest::newRow("13_B_Source_Credit") << scenePath("13_B_Source_Credit") << QStringLiteral("13_B_Source_Credit");
+        QTest::newRow("13_C_Editorial_Checklist") << scenePath("13_C_Editorial_Checklist") << QStringLiteral("13_C_Editorial_Checklist");
+        QTest::newRow("13C_U1_Universal_Horizontal_Copy") << scenePath("13C_U1_Universal_Horizontal_Copy") << QStringLiteral("13C_U1_Universal_Horizontal_Copy");
+        QTest::newRow("13C_U2_Universal_Vertical_Paste") << scenePath("13C_U2_Universal_Vertical_Paste") << QStringLiteral("13C_U2_Universal_Vertical_Paste");
+        QTest::newRow("13C_U3_Mac_Dual_Names_Force_Quit") << scenePath("13C_U3_Mac_Dual_Names_Force_Quit") << QStringLiteral("13C_U3_Mac_Dual_Names_Force_Quit");
+        QTest::newRow("14_A_Menu_Path") << scenePath("14_A_Menu_Path") << QStringLiteral("14_A_Menu_Path");
+        QTest::newRow("14_B_Setting_Change") << scenePath("14_B_Setting_Change") << QStringLiteral("14_B_Setting_Change");
+        QTest::newRow("15_B_Definition_Card") << scenePath("15_B_Definition_Card") << QStringLiteral("15_B_Definition_Card");
+        QTest::newRow("15_C_Pro_Tip") << scenePath("15_C_Pro_Tip") << QStringLiteral("15_C_Pro_Tip");
     }
 
     // Reference frames: tools/scene-ref/render.py render <scene> --frames 10,20,40,65,135 --no-mp4.

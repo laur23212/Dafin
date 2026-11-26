@@ -6,6 +6,8 @@ any encoding. Needs the scripts from the design archive (not in the repo):
                             --stage03b <.../Stage03b_Alternative_LowerThird_Families_v1/source>
 
                             [--stage13 <folder with frozen_stage13_approved_renderer_reference.py>]
+                            [--stage14 <.../Stage14_TutorialUtility_Delta_v6.1.2/source>]
+                            [--stage13c <folder with render_stage13C_universal_shortcut.py>]
 
 Exit code 0 only if every compared frame is identical. Skips an example whose script is not given.
 """
@@ -28,6 +30,7 @@ import scene_core as core  # noqa: E402
 def load_module(path: Path, name: str):
     spec = importlib.util.spec_from_file_location(name, str(path))
     m = importlib.util.module_from_spec(spec)
+    sys.modules[name] = m  # Stage13C's dataclasses look their module up
     spec.loader.exec_module(m)
     return m
 
@@ -37,18 +40,44 @@ def diff(a, b):
     return int(d.max()), int((d > 0).sum())
 
 
-def check_stage15(src: Path, frames):
-    m = load_module(src / 'render_stage15.py', 'stage15_original')
-    sc = core.load_scene(HERE / 'scenes' / '15_A_Step_Focus.scene.json')
-    job = render.Job(sc)
+def check_direct(name, draw, frames):
+    """`draw(i)` = the original script's opaque frame i; the port's direct frame must equal it."""
+    job = render.Job(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
     bad = []
     for i in frames:
-        a = m.frame(m.scene_a, i / 25)
-        b = job.direct_frame(i)
-        mx, n = diff(a, b)
+        mx, n = diff(draw(i), job.direct_frame(i))
         if mx:
             bad.append({'frame': i, 'max': mx, 'pixels': n})
-    return {'example': '15_A_Step_Focus', 'frames': len(frames), 'mismatched': bad}
+    return {'example': name, 'frames': len(frames), 'mismatched': bad}
+
+
+def check_stage15(src: Path, frames):
+    m = load_module(src / 'render_stage15.py', 'stage15_original')
+    return [check_direct(name, lambda i, f=fn: m.frame(f, i / 25), frames)
+            for name, fn in (('15_A_Step_Focus', m.scene_a), ('15_B_Definition_Card', m.scene_b), ('15_C_Pro_Tip', m.scene_c))]
+
+
+def check_stage14(src: Path, frames):
+    m = load_module(src / 'render_stage14.py', 'stage14_original')
+    return [check_direct(name, lambda i, f=fn: m.frame(f, i / 25), frames)
+            for name, fn in (('14_A_Menu_Path', m.scene_a), ('14_B_Setting_Change', m.scene_b))]
+
+
+def check_stage13_scenes(src: Path, frames):
+    b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_scenes')
+    return [check_direct(name, lambda i, f=fn: b.frame(f, i / 25), frames)
+            for name, fn in (('13_A_Shortcut_Keys', b.scene_a), ('13_B_Source_Credit', b.scene_b),
+                             ('13_C_Editorial_Checklist', b.scene_c))]
+
+
+def check_stage13c(src: Path, frames):
+    """Folder with render_stage13C_universal_shortcut.py and its original_render_stage13_v6_0_4_FROZEN_COPY.py."""
+    m = load_module(src / 'render_stage13C_universal_shortcut.py', 'stage13c_original')
+    out = []
+    for case in ('U1_Universal_Horizontal_Copy', 'U2_Universal_Vertical_Paste', 'U3_Mac_Dual_Names_Force_Quit'):
+        u = m.UniversalScene(case)
+        out.append(check_direct('13C_' + case, lambda i, u=u: u.frame(i / 25), frames))
+    return out
 
 
 def check_stage03b(src: Path, frames):
@@ -113,16 +142,23 @@ def main():
     ap.add_argument('--stage15', type=Path)
     ap.add_argument('--stage03b', type=Path)
     ap.add_argument('--stage13', type=Path, help='folder with frozen_stage13_approved_renderer_reference.py')
+    ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
+    ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--frames', default='all')
     o = ap.parse_args()
     frames = list(range(150)) if o.frames == 'all' else [int(v) for v in o.frames.split(',')]
     res = []
     if o.stage15:
-        res.append(check_stage15(o.stage15, frames))
+        res.extend(check_stage15(o.stage15, frames))
+    if o.stage14:
+        res.extend(check_stage14(o.stage14, frames))
+    if o.stage13c:
+        res.extend(check_stage13c(o.stage13c, frames))
     if o.stage03b:
         res.append(check_stage03b(o.stage03b, frames))
     if o.stage13:
         res.append(check_stage13_primitives(o.stage13))
+        res.extend(check_stage13_scenes(o.stage13, frames))
     print(json.dumps(res, indent=1))
     return 1 if any(r['mismatched'] for r in res) or not res else 0
 

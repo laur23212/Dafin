@@ -1,0 +1,468 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.instructional.shortcut-keys",
+ "label": "Shortcut Keys",
+ "category": "Instructional Titles",
+ "source": {
+  "asset": "13_A_Shortcut_Keys",
+  "sha256": "19055804163e2a13fe4dd6c7c5d2cbd10a9d2a1451fb804d54433dab2fbe110f",
+  "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/frozen_stage13_approved_renderer_reference.py scene_a",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "OFF": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SAND": [
+   207,
+   181,
+   145
+  ]
+ },
+ "fonts": {
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  }
+ },
+ "params": [
+  {
+   "id": "caption",
+   "type": "text",
+   "default": "COMANDĂ RAPIDĂ",
+   "label": "Caption"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Salvează ca…",
+   "label": "Action"
+  },
+  {
+   "id": "key1",
+   "type": "text",
+   "default": "CTRL",
+   "label": "Key 1"
+  },
+  {
+   "id": "key2",
+   "type": "text",
+   "default": "SHIFT",
+   "label": "Key 2"
+  },
+  {
+   "id": "key3",
+   "type": "text",
+   "default": "S",
+   "label": "Key 3"
+  }
+ ],
+ "actors": [
+  {
+   "id": "caption",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{caption}",
+   "font": "semi",
+   "size": 25,
+   "color": "AQUA",
+   "at": {
+    "baseline": [
+     354.0,
+     369.0
+    ]
+   },
+   "optional": true,
+   "in": {
+    "start": 0.18,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 10
+    }
+   },
+   "out": {
+    "start": 4.65,
+    "dur": 0.25,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 70,
+   "color": "OFF",
+   "at": {
+    "baseline": [
+     345.0,
+     463.0
+    ]
+   },
+   "in": {
+    "start": 0.3,
+    "dur": 0.48,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 13
+    }
+   },
+   "out": {
+    "start": 4.68,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    347,
+    513
+   ],
+   "to": [
+    1381,
+    513
+   ],
+   "width": 1,
+   "color": "SOFT",
+   "in": {
+    "start": 0.52,
+    "dur": 0.55,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.93,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "key1",
+   "role": "keycap",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    347,
+    568
+   ],
+   "size": [
+    213,
+    107
+   ],
+   "offsetSnap": "trunc",
+   "in": {
+    "start": 0.85,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 18
+    }
+   },
+   "out": {
+    "start": 4.9,
+    "dur": 0.26,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "key1Cap",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      210,
+      104
+     ],
+     "radius": 14,
+     "fill": [
+      23,
+      32,
+      39,
+      244
+     ],
+     "strokeColor": "AQUA",
+     "stroke": 2
+    },
+    {
+     "id": "key1Label",
+     "type": "text",
+     "text": "{key1}",
+     "font": "semi",
+     "size": 43,
+     "color": "OFF",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "key2",
+   "role": "keycap",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    617,
+    568
+   ],
+   "size": [
+    250,
+    107
+   ],
+   "offsetSnap": "trunc",
+   "in": {
+    "start": 1.15,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 18
+    }
+   },
+   "out": {
+    "start": 4.78,
+    "dur": 0.26,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "key2Cap",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      247,
+      104
+     ],
+     "radius": 14,
+     "fill": [
+      23,
+      32,
+      39,
+      244
+     ],
+     "strokeColor": "AQUA",
+     "stroke": 2
+    },
+    {
+     "id": "key2Label",
+     "type": "text",
+     "text": "{key2}",
+     "font": "semi",
+     "size": 43,
+     "color": "OFF",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "key3",
+   "role": "keycap",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    940,
+    568
+   ],
+   "size": [
+    112,
+    107
+   ],
+   "offsetSnap": "trunc",
+   "in": {
+    "start": 1.45,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 18
+    }
+   },
+   "out": {
+    "start": 4.66,
+    "dur": 0.26,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "key3Cap",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      109,
+      104
+     ],
+     "radius": 14,
+     "fill": [
+      23,
+      32,
+      39,
+      244
+     ],
+     "strokeColor": "AQUA",
+     "stroke": 2
+    },
+    {
+     "id": "key3Label",
+     "type": "text",
+     "text": "{key3}",
+     "font": "semi",
+     "size": 43,
+     "color": "OFF",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "plus1",
+   "role": "joiner",
+   "type": "text",
+   "text": "+",
+   "font": "regular",
+   "size": 43,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     575.0,
+     619.0
+    ]
+   },
+   "in": {
+    "start": 1.05,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.75,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "plus2",
+   "role": "joiner",
+   "type": "text",
+   "text": "+",
+   "font": "regular",
+   "size": 43,
+   "color": "SOFT",
+   "at": {
+    "baseline": [
+     896.0,
+     619.0
+    ]
+   },
+   "in": {
+    "start": 1.33,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.75,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  }
+ ]
+}
