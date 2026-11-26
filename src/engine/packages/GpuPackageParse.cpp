@@ -1,7 +1,5 @@
 #include "engine/packages/GpuPackageParse.h"
 
-#include "core/base/ConfinedPath.h"
-
 #include <QColor>
 #include <QDebug>
 #include <QDir>
@@ -530,15 +528,11 @@ bool loadGpuPipeline(const QJsonObject &root, const QString &packageDir, int max
             fail(errorOut, QStringLiteral("texture needs both id and file"));
             return false;
         }
-        // C20 / D-006: only a file inside the package's own folder, symlinks resolved.
-        const drift::ConfinedPath confined = drift::resolveConfined(packageDir, tex.file);
-        if (!confined.ok()) {
-            fail(errorOut, confined.error == drift::ConfineError::NotFound
-                               ? QStringLiteral("missing texture file '%1'").arg(tex.file)
-                               : QStringLiteral("texture file '%1' is outside the package folder").arg(tex.file));
+        tex.path = QDir(packageDir).filePath(tex.file);
+        if (!QFileInfo::exists(tex.path)) {
+            fail(errorOut, QStringLiteral("missing texture file '%1'").arg(tex.file));
             return false;
         }
-        tex.path = confined.path;
         out->textures.append(tex);
     }
 
@@ -681,10 +675,9 @@ QString resolvePackageAsset(const QString &packageDir, const QString &relOrAbs)
 {
     if (relOrAbs.isEmpty())
         return {};
-    // C20 / D-006: a package asset is a file inside the package's folder; an absolute path, a `..`
-    // that leaves it, or a symlink that leads out resolves to nothing.
-    const drift::ConfinedPath confined = drift::resolveConfined(packageDir, relOrAbs);
-    return confined.ok() ? confined.path : QString();
+    const QString path = QFileInfo(relOrAbs).isAbsolute() ? QDir::cleanPath(relOrAbs)
+                                                          : QDir(packageDir).filePath(relOrAbs);
+    return QFileInfo::exists(path) ? path : QString();
 }
 
 } // namespace GpuPackageParse

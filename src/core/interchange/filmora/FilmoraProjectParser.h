@@ -1,6 +1,5 @@
 #pragma once
 
-#include "core/interchange/CancelToken.h"
 #include "core/interchange/ImportedTimeline.h"
 
 #include <QString>
@@ -24,9 +23,7 @@
 // transitions, stickers and Filmora's AI tools are Filmora's own and are skipped and counted.
 namespace drift::interchange::filmora {
 
-// `cancel` is polled while the archive is read and between clips; when it is set the result is
-// empty and *error is "cancelled".
-std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error = nullptr, CancelPtr cancel = {});
+std::optional<ImportedTimeline> parse(const QString &wfpPath, QString *error = nullptr);
 
 // Local path from what Filmora writes ("file:/C:/Users/…", "file:///home/…", percent-encoded).
 QString localPathFromFilmora(const QString &uriOrPath);

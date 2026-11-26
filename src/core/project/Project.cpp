@@ -1332,8 +1332,6 @@ Project Project::fromJson(const QJsonObject &object, QString *errorOut)
 
     project.setName(object.value(QStringLiteral("projectName")).toString(QStringLiteral("Untitled Project")));
     project.setFps(object.value(QStringLiteral("fps")).toInt(30));
-    project.setExactFrameRate(object.value(QStringLiteral("fpsNum")).toInt(0),
-                              object.value(QStringLiteral("fpsDen")).toInt(0));
     project.setResolution(object.value(QStringLiteral("width")).toInt(1920),
                           object.value(QStringLiteral("height")).toInt(1080));
     project.setSampleRate(object.value(QStringLiteral("sampleRate")).toInt(48000));
@@ -1670,12 +1668,6 @@ QJsonObject Project::toJson(bool includeTranscripts) const
         {QStringLiteral("bookmarks"), bookmarksArray},
         {QStringLiteral("background"), backgroundToJson(m_background)},
     };
-    // Written only when set, so a project without it is byte-for-byte what older builds wrote and
-    // older builds read a project with it unchanged (they ignore the two keys).
-    if (hasExactFrameRate()) {
-        root.insert(QStringLiteral("fpsNum"), m_fpsNum);
-        root.insert(QStringLiteral("fpsDen"), m_fpsDen);
-    }
     if (!sequencesArray.isEmpty())
         root.insert(QStringLiteral("sequences"), sequencesArray);
     if (!m_openSequenceTabs.isEmpty())

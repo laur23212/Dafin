@@ -3,8 +3,7 @@ import QtQuick.Controls.Basic
 import Drift
 
 // Modal for the whole of a project open: nothing else may touch the document until the load
-// lands or fails. Only a Filmora import can be cancelled (it reads on a worker thread and
-// applies once, at the end, so cancelling leaves the open project untouched).
+// lands or fails, and there is no cancel.
 ThemedDialog {
     id: root
 
@@ -40,14 +39,6 @@ ThemedDialog {
             wrapMode: Text.WordWrap
             text: qsTr("Unpacking project media…")
             visible: EditorState.projectFile.projectLoadProgress > 0
-        }
-
-        ThemedButton {
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: EditorState.projectFile.importCancellable
-            text: qsTr("Cancel")
-            variant: "secondary"
-            onClicked: EditorState.projectFile.cancelOtherEditorImport()
         }
     }
 }

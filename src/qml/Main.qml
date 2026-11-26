@@ -364,7 +364,7 @@ ApplicationWindow {
         }
         const modals = [shellSwitchDialogLoader.item, aboutDialogLoader.item, helpDialogLoader.item, debugInfoDialogLoader.item,
                         settingsDialogLoader.item, imageViewerDialogLoader.item, pasteAttributesDialogLoader.item, updateDialogLoader.item,
-                        missingAddonsDialogLoader.item, missingMediaDialogLoader.item, importRelinkDialogLoader.item,
+                        missingAddonsDialogLoader.item, missingMediaDialogLoader.item,
                         projectSetupDialogLoader.item, layoutChooserDialogLoader.item,
                         languageChooserDialogLoader.item, recoveryDialogLoader.item,
                         resumeExportDialogLoader.item,
@@ -585,13 +585,6 @@ ApplicationWindow {
         id: missingMediaDialogLoader
         sourceComponent: Component {
             MissingMediaDialog { }
-        }
-    }
-
-    LazyLoader {
-        id: importRelinkDialogLoader
-        sourceComponent: Component {
-            ImportRelinkDialog { }
         }
     }
 
@@ -1677,11 +1670,6 @@ ApplicationWindow {
 
         function onMissingAddons(addons) {
             missingAddonsDialogLoader.ensure().openFor(addons)
-        }
-
-        // Dafin: a Filmora import will not guess between different files of the same name.
-        function onImportRelinkQuestions(questions) {
-            importRelinkDialogLoader.ensure().openFor(questions)
         }
 
         function onMissingMediaFound(count) {

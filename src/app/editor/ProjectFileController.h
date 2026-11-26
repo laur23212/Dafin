@@ -1,7 +1,6 @@
 #pragma once
 
 #include "core/edit/commands/ProjectCommands.h"
-#include "core/interchange/CancelToken.h"
 #include "core/project/Project.h"
 #include "engine/project/ProjectBundle.h"
 
@@ -20,10 +19,6 @@
 
 #include <memory>
 #include <optional>
-
-namespace drift::interchange {
-struct ImportOutcome;
-}
 
 class QTimer;
 class AppController;
@@ -49,8 +44,6 @@ class ProjectFileController : public QObject
     // (consumeStartupProject, restoreLastSessionIfEnabled) is just as visible as one QML
     // started itself; nothing else may replace the document while this is true.
     Q_PROPERTY(bool projectLoadPending READ projectLoadPending NOTIFY projectLoadPendingChanged)
-    // True while the pending load is a Filmora import, the one load that can be cancelled.
-    Q_PROPERTY(bool importCancellable READ importCancellable NOTIFY projectLoadPendingChanged)
     // Fraction of embedded media unpacked; 0 while the load has no measurable work.
     Q_PROPERTY(double projectLoadProgress READ projectLoadProgress NOTIFY projectLoadProgressChanged)
     Q_PROPERTY(bool hasUnsavedChanges READ hasUnsavedChanges NOTIFY dirtyChanged)
@@ -92,7 +85,6 @@ public:
     bool collectingMedia() const { return m_collectingMedia; }
     double collectMediaProgress() const { return m_collectMediaProgress; }
     bool projectLoadPending() const { return m_projectLoadPending; }
-    bool importCancellable() const { return m_projectLoadPending && m_importActive; }
     double projectLoadProgress() const { return m_projectLoadProgress; }
     bool hasUnsavedChanges() const { return m_dirty; }
     QString currentProjectPath() const { return m_currentProjectPath; }
@@ -129,16 +121,7 @@ public:
     // mapping sequences, video/audio tracks, clips, in/out trimming, and media assets.
     Q_INVOKABLE void loadPremiereProject(const QUrl &url);
     // Dafin: a Filmora project (.wfp), opened as an untitled Dafin project.
-    // It is read, searched for its media and laid out on a worker thread (the window stays alive),
-    // and applied once, whole, when that finishes; cancelling or failing leaves the open project
-    // exactly as it was.
     Q_INVOKABLE void loadFilmoraProject(const QUrl &url);
-    // Cancels the Filmora import that is reading, or the one waiting for answers (the dialog
-    // closed). No effect when none is running.
-    Q_INVOKABLE void cancelOtherEditorImport();
-    // The answers to importRelinkQuestions: { <key>: "<chosen file>" }, an empty file meaning
-    // "leave that clip unlinked". Runs the import again with them.
-    Q_INVOKABLE void answerImportRelinkQuestions(const QVariantMap &choices);
     // Unpacks and imports a Motion Graphics Template (.mogrt), extracting assets and mapping
     // editable text, colors, and media overlays onto the timeline and media library.
     Q_INVOKABLE void importMogrt(const QUrl &url);
@@ -259,11 +242,6 @@ signals:
     // MCP close_project / new_project / load_project: show or leave the start screen. GUI only; the
     // headless app has no start screen and ignores it.
     void startScreenRequested(bool visible);
-    // Dafin: a Filmora import found media files whose name matches several different files and
-    // will not guess. Each entry: key, clipName, candidates[ {path, folder, sizeBytes, durationUs,
-    // checked} ]. QML (ImportRelinkDialog) answers with answerImportRelinkQuestions() or
-    // cancelOtherEditorImport().
-    void importRelinkQuestions(const QVariantList &questions);
 
 private:
     // Bracket every loadProject()/loadProjectJson()/restoreAutosave() call, sync or async, success or
@@ -275,9 +253,6 @@ private:
     // Premiere Pro (.prproj) and Filmora (.wfp) projects through core/interchange; format is
     // "premiere" or "filmora".
     void loadOtherEditorProject(const QUrl &url, const QString &format);
-    // The Filmora import worker and what happens when it ends (GUI thread).
-    void startFilmoraImport(const QString &path, const QHash<QString, QString> &choices);
-    void finishFilmoraImport(int generation, const std::shared_ptr<drift::interchange::ImportOutcome> &outcome);
     void finishProjectLoad(bool ok, const QString &message);
     // What the load worker hands back to the GUI thread. Defined in the .cpp: it holds an
     // AppController::ParsedProject, and this header only forward-declares AppController.
@@ -344,12 +319,6 @@ private:
     double m_collectMediaProgress = 0.0;
     QAtomicInt m_collectMediaCancel = 0;
     int m_loadGeneration = 0; // bumped per loadProject; stale extracts are dropped
-    // The Filmora import in flight: its cancel flag, its file, and whether it is waiting for answers.
-    drift::interchange::CancelPtr m_importCancel;
-    QString m_importPath;
-    bool m_importWaitingForAnswers = false;
-    bool m_importActive = false; // loadFilmoraProject began a load that has not finished
-    QFuture<void> m_importFuture;
     bool m_projectLoadPending = false;
     double m_projectLoadProgress = 0.0;
 
