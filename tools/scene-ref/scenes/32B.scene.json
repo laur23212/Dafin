@@ -1,0 +1,74 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.sovereign",
+ "label": "Sovereign Glyph Torsion",
+ "category": "Golden Run",
+ "source": {
+  "asset": "32B",
+  "sha256": "2321c84057e688bba142e907c23e7d24609b9778b2288d65af04442027107e94",
+  "script": "render_stage32.py (v6.3.28) :: effect_b",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-MediumItalic.ttf",
+   "sha256": "862ef9d1adc931b504f5c35f39a7fe25ba25397f22f680ba3d07704a9664e12e",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "SOVEREIGN",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 212,
+   "color": [
+    236,
+    237,
+    240
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "glyphTorsion",
+    "tracking": 2
+   }
+  }
+ ]
+}

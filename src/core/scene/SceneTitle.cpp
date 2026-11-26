@@ -525,6 +525,11 @@ private:
                 return args[0].toString().trimmed().toDouble();
             return num(args[0]);
         }
+        if (name == QLatin1String("sin") || name == QLatin1String("cos")) {
+            need(1);
+            const double x = num(args[0]);
+            return name == QLatin1String("sin") ? std::sin(x) : std::cos(x);
+        }
         if (name == QLatin1String("floor") || name == QLatin1String("ceil")) {
             need(1);
             const double x = num(args[0]);
@@ -544,7 +549,8 @@ private:
             ++m_pos;
             static const QSet<QString> funcs{QStringLiteral("min"), QStringLiteral("max"), QStringLiteral("abs"),
                                              QStringLiteral("round"), QStringLiteral("int"), QStringLiteral("float"),
-                                             QStringLiteral("floor"), QStringLiteral("ceil")};
+                                             QStringLiteral("floor"), QStringLiteral("ceil"), QStringLiteral("sin"),
+                                             QStringLiteral("cos")};
             if (isOp("(")) {
                 if (!funcs.contains(t.text))
                     bad();
@@ -803,6 +809,8 @@ Ease easeOf(const QJsonValue &v, const QString &what)
         e.kind = Ease::OutQuart;
     else if (s == QLatin1String("smootherstep"))
         e.kind = Ease::Smootherstep;
+    else if (s == QLatin1String("easeInCubic"))
+        e.kind = Ease::InCubic;
     else {
         static const QRegularExpression re(QStringLiteral(R"(^cubic-bezier\(([^)]*)\)$)"));
         const QRegularExpressionMatch m = re.match(QString(s).remove(QLatin1Char(' ')));
@@ -821,7 +829,8 @@ Ease easeOf(const QJsonValue &v, const QString &what)
 const QSet<QString> &channelNames()
 {
     static const QSet<QString> names{QStringLiteral("opacity"), QStringLiteral("wipe"), QStringLiteral("progress"),
-                                     QStringLiteral("scale"), QStringLiteral("dx"), QStringLiteral("dy")};
+                                     QStringLiteral("scale"), QStringLiteral("dx"), QStringLiteral("dy"),
+                                     QStringLiteral("vscale")};
     return names;
 }
 
@@ -835,6 +844,17 @@ TimedBlock blockOf(const QJsonValue &v, bool isIn, const QString &actorId)
     b.start = numberOf(o.value(QStringLiteral("start")), actorId + QStringLiteral(": start"));
     b.dur = o.contains(QStringLiteral("dur")) ? numberOf(o.value(QStringLiteral("dur")), actorId + QStringLiteral(": dur")) : 0.0;
     b.ease = easeOf(o.value(QStringLiteral("ease")), actorId);
+    const QJsonObject clock = o.value(QStringLiteral("clock")).toObject();
+    if (!clock.isEmpty()) {
+        b.clockActor = clock.value(QStringLiteral("actor")).toString();
+        b.clockChannel = clock.value(QStringLiteral("channel")).toString();
+        if (b.clockActor.isEmpty() || !channelNames().contains(b.clockChannel))
+            fail(QStringLiteral("%1: clock needs an actor and a channel").arg(actorId));
+    }
+    if (o.contains(QStringLiteral("delay")))
+        b.delay = numberOf(o.value(QStringLiteral("delay")), actorId + QStringLiteral(": delay"));
+    if (isIn && o.contains(QStringLiteral("arc")))
+        b.arc = numberOf(o.value(QStringLiteral("arc")), actorId + QStringLiteral(": arc"));
     const QString key = isIn ? QStringLiteral("from") : QStringLiteral("to");
     const QJsonObject vals = o.contains(key) ? o.value(key).toObject()
                                              : QJsonObject{{QStringLiteral("opacity"), 0}};
@@ -899,8 +919,43 @@ struct Loader
             fail(QStringLiteral("%1: offsetSnap must be \"round\" or \"trunc\"").arg(a.id));
         a.snapTrunc = r.value(QStringLiteral("snap")).toString() == QLatin1String("trunc")
                       || snapMode == QLatin1String("trunc");
-        a.in = blockOf(r.value(QStringLiteral("in")), true, a.id);
-        a.out = blockOf(r.value(QStringLiteral("out")), false, a.id);
+        const auto blocksOf = [&](const QJsonValue &v, bool isIn, TimedBlock &first, QList<TimedBlock> &more) {
+            if (v.isArray()) {
+                const QJsonArray arr = v.toArray();
+                for (int i = 0; i < arr.size(); ++i) {
+                    const TimedBlock b = blockOf(arr.at(i), isIn, a.id);
+                    if (i == 0)
+                        first = b;
+                    else
+                        more.append(b);
+                }
+            } else {
+                first = blockOf(v, isIn, a.id);
+            }
+        };
+        blocksOf(r.value(QStringLiteral("in")), true, a.in, a.inMore);
+        blocksOf(r.value(QStringLiteral("out")), false, a.out, a.outMore);
+        for (const QJsonValue &cv : r.value(QStringLiteral("visibleWhen")).toArray()) {
+            const QJsonObject co = cv.toObject();
+            Actor::Condition cond;
+            cond.actor = co.value(QStringLiteral("actor")).toString();
+            cond.channel = co.value(QStringLiteral("channel")).toString();
+            cond.gt = co.value(QStringLiteral("gt")).toDouble();
+            if (!channelNames().contains(cond.channel))
+                fail(QStringLiteral("%1: visibleWhen on unknown channel '%2'").arg(a.id, cond.channel));
+            a.visibleWhen.append(cond);
+        }
+        a.reveal = r.value(QStringLiteral("reveal")).toString();
+        if (!a.reveal.isEmpty() && a.reveal != QLatin1String("x") && a.reveal != QLatin1String("y"))
+            fail(QStringLiteral("%1: reveal must be \"x\" or \"y\"").arg(a.id));
+        a.wipeSnapInt1 = r.value(QStringLiteral("wipeSnap")).toString() == QLatin1String("int1");
+        a.wipeSnapRound = r.value(QStringLiteral("wipeSnap")).toString() == QLatin1String("round");
+        a.collapseEnds = r.value(QStringLiteral("collapse")).toString() == QLatin1String("ends");
+        for (const QJsonValue &w : r.value(QStringLiteral("segmentWeights")).toArray())
+            a.segmentWeights << w.toDouble();
+        a.pane = r.value(QStringLiteral("pane")).toBool();
+        a.drawDirect = r.value(QStringLiteral("draw")).toString() == QLatin1String("direct");
+        a.layerBase = r.value(QStringLiteral("layer")).toString() == QLatin1String("base");
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
             a.dependsOn << d.toString();
         const QString &t = a.type;
@@ -913,7 +968,12 @@ struct Loader
         if (!ssKey.isEmpty()) {
             const QJsonValue ssv = r.value(ssKey);
             const int ss = ssv.isDouble() && ssv.toDouble() == std::floor(ssv.toDouble()) ? ssv.toInt() : 0;
-            if (t == QLatin1String("text")) {
+            if (t == QLatin1String("text") && sc.profile == Profile::Cov1x) {
+                // cov1x: the text's supersampling factor, over the scene's render.ss
+                if (ss < 1 || ss > 4)
+                    fail(QStringLiteral("%1: cov1x text \"ss\" must be 1…4").arg(a.id));
+                a.ss = ss;
+            } else if (t == QLatin1String("text")) {
                 if (ss != 1 && ss != 2)
                     fail(QStringLiteral("%1: text \"ss\" must be 1 or 2").arg(a.id));
                 a.ss = ss;
@@ -923,6 +983,8 @@ struct Loader
                 a.ss = ss;
             }
         }
+        if (t == QLatin1String("text") && sc.profile == Profile::Cov1x && ssKey.isEmpty())
+            a.ss = 0; // cov1x: no "ss" of its own, the scene's render.ss
         if (r.contains(QStringLiteral("after"))) {
             const QJsonObject af = r.value(QStringLiteral("after")).toObject();
             a.afterActor = af.value(QStringLiteral("actor")).toString();
@@ -943,12 +1005,59 @@ struct Loader
         }
         const QJsonObject eff = r.value(QStringLiteral("effect")).toObject();
         const QString effType = eff.value(QStringLiteral("type")).toString();
-        if (effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
-            || effType == QLatin1String("focusMix"))
+        const bool reservedEffect = effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
+                                    || effType == QLatin1String("focusMix");
+        // gold1x: the Golden Run 18 (docs/scene-titles.md "gold1x"); its "to" text takes params
+        static const QSet<QString> goldKinds{
+            QStringLiteral("contourMorph"), QStringLiteral("elasticWarp"), QStringLiteral("arcToBaseline"),
+            QStringLiteral("perspectivePlane"), QStringLiteral("widthBloom"), QStringLiteral("weightMorph"),
+            QStringLiteral("spectralInk"), QStringLiteral("glyphPivot"), QStringLiteral("mirrorUnfold"),
+            QStringLiteral("slantMorph"), QStringLiteral("counterRelease"), QStringLiteral("inverseTransit"),
+            QStringLiteral("depthCast"), QStringLiteral("pleatUnfold"), QStringLiteral("particleCoalesce"),
+            QStringLiteral("contourTrace"), QStringLiteral("characterReel"), QStringLiteral("isolineCollapse"),
+            QStringLiteral("splitRegister"), QStringLiteral("glyphTorsion"), QStringLiteral("imprintPress"),
+            QStringLiteral("pairKerning"), QStringLiteral("solidExtract"), QStringLiteral("printRegister"),
+            QStringLiteral("tidalInk"), QStringLiteral("hatchEngrave"), QStringLiteral("gridReflow"),
+            QStringLiteral("rippleWave"), QStringLiteral("signalWave")};
+        if (sc.profile == Profile::Gold1x && t == QLatin1String("text")) {
+            if (!goldKinds.contains(effType))
+                fail(QStringLiteral("%1: gold1x needs a known effect, not '%2'").arg(a.id, effType));
+            a.effect = eff;
+            if (a.effect.contains(QStringLiteral("to")))
+                a.effect.insert(QStringLiteral("to"), formatTextOrFail(a.effect.value(QStringLiteral("to")).toString(), env));
+        } else if (goldKinds.contains(effType)) {
+            fail(QStringLiteral("%1: effect %2 needs the gold1x profile").arg(a.id, effType));
+        }
+        if (reservedEffect && sc.profile == Profile::Fx1x)
+            a.effect = eff;
+        else if (reservedEffect)
             fail(QStringLiteral("%1: effect %2 is reserved for a later version (docs/scene-titles.md, Stage10); "
                                 "ask for the extension")
                      .arg(a.id, effType));
 
+        a.spritePad = r.contains(QStringLiteral("spritePad")) ? r.value(QStringLiteral("spritePad")).toDouble() : 8.0;
+        const QJsonObject row = r.value(QStringLiteral("row")).toObject();
+        if (!row.isEmpty()) {
+            a.hasRow = true;
+            a.rowGap = row.value(QStringLiteral("gap")).toDouble();
+            a.rowWidth = numberOf(row.value(QStringLiteral("width")), a.id + QStringLiteral(": row.width"));
+            a.rowBaseline = numberOf(row.value(QStringLiteral("baseline")), a.id + QStringLiteral(": row.baseline"));
+            a.rowRoundLeft = row.contains(QStringLiteral("roundLeft")) ? row.value(QStringLiteral("roundLeft")).toBool() : true;
+            if (row.contains(QStringLiteral("enter"))) {
+                QJsonObject e = row.value(QStringLiteral("enter")).toObject();
+                e.insert(QStringLiteral("from"), QJsonObject{{QStringLiteral("dx"), 0}});
+                a.rowEnter = blockOf(e, true, a.id + QStringLiteral(": row.enter"));
+            }
+        }
+        a.covAlpha = r.contains(QStringLiteral("alpha")) && sc.profile == Profile::Cov1x ? r.value(QStringLiteral("alpha")).toDouble() : 1.0;
+        const QJsonArray wr = r.value(QStringLiteral("wipeRange")).toArray();
+        if (r.contains(QStringLiteral("wipeRange"))) {
+            if (wr.size() != 2)
+                fail(QStringLiteral("%1: wipeRange must be [x0, x1]").arg(a.id));
+            a.hasWipeRange = true;
+            a.wipeRange[0] = wr.at(0).toDouble();
+            a.wipeRange[1] = wr.at(1).toDouble();
+        }
         if (t == QLatin1String("text")) {
             a.text = generated ? r.value(QStringLiteral("text")).toString()
                                : formatTextOrFail(r.value(QStringLiteral("text")).toString(), env);
@@ -961,11 +1070,42 @@ struct Loader
             const QJsonObject at = r.value(QStringLiteral("at")).toObject();
             if (at.contains(QStringLiteral("baseline"))) {
                 a.baseline = pointOf(at.value(QStringLiteral("baseline")), a.id + QStringLiteral(": at"));
+            } else if (at.contains(QStringLiteral("left"))) {
+                a.anchorLeft = true;
+                a.anchorLeftX = numberOf(at.value(QStringLiteral("left")), a.id + QStringLiteral(": at.left"));
+                a.anchorTopY = numberOf(at.value(QStringLiteral("top")), a.id + QStringLiteral(": at.top"));
+            } else if (at.contains(QStringLiteral("ascender"))) {
+                a.anchorAscender = true;
+                a.ascender = pointOf(at.value(QStringLiteral("ascender")), a.id + QStringLiteral(": at.ascender"));
+                a.baseline = a.ascender;
+            } else if (at.contains(QStringLiteral("center"))) {
+                a.anchorCenter = true;
+                a.centerAt = pointOf(at.value(QStringLiteral("center")), a.id + QStringLiteral(": at.center"));
+            } else if (at.contains(QStringLiteral("right"))) {
+                a.anchorRight = true;
+                a.anchorRightX = numberOf(at.value(QStringLiteral("right")), a.id + QStringLiteral(": at.right"));
+                a.anchorTopY = numberOf(at.value(QStringLiteral("top")), a.id + QStringLiteral(": at.top"));
             } else if (at.contains(QStringLiteral("sprite")) || at.contains(QStringLiteral("lt"))) {
                 a.anchorKind = at.contains(QStringLiteral("sprite")) ? QStringLiteral("sprite") : QStringLiteral("lt");
                 a.anchorPoint = pointOf(at.value(a.anchorKind), a.id + QStringLiteral(": at"));
             } else if (parent.isEmpty() || !r.value(QStringLiteral("align")).toObject().contains(QStringLiteral("h"))) {
                 fail(QStringLiteral("%1: text needs at.baseline").arg(a.id));
+            }
+            a.spriteChapter = r.value(QStringLiteral("sprite")).toString() == QLatin1String("chapter");
+            if (r.contains(QStringLiteral("tracking"))) {
+                a.tracked = true;
+                a.tracking = r.value(QStringLiteral("tracking")).toDouble();
+            }
+            const QJsonObject counter = r.value(QStringLiteral("counter")).toObject();
+            if (!counter.isEmpty()) {
+                a.hasCounter = true;
+                a.counter.present = true;
+                a.counter.start = numberOf(counter.value(QStringLiteral("start")), a.id + QStringLiteral(": counter.start"));
+                a.counter.dur = numberOf(counter.value(QStringLiteral("dur")), a.id + QStringLiteral(": counter.dur"));
+                a.counter.ease = easeOf(counter.value(QStringLiteral("ease")), a.id);
+                a.counterTo = int(numberOf(counter.value(QStringLiteral("to")), a.id + QStringLiteral(": counter.to")));
+                if (a.counterTo < 0 || a.counterTo > 100000)
+                    fail(QStringLiteral("%1: counter.to must be 0…100000").arg(a.id));
             }
             const QJsonObject clip = r.value(QStringLiteral("clipTo")).toObject();
             if (!clip.isEmpty()) {
@@ -1003,14 +1143,30 @@ struct Loader
         } else if (t == QLatin1String("rect") || t == QLatin1String("roundRect") || t == QLatin1String("ellipse")
                    || t == QLatin1String("ring")) {
             const QJsonArray box = r.value(QStringLiteral("box")).toArray();
-            // A fillGroup child takes its box from the group (resolveLayout); "box" is optional.
-            if (box.size() != 4 && !(a.hasFillGroup && box.isEmpty()))
-                fail(QStringLiteral("%1: box must be [x0, y0, x1, y1]").arg(a.id));
+            if (r.contains(QStringLiteral("center")) && (t == QLatin1String("ellipse") || t == QLatin1String("ring"))) {
+                a.hasCenter = true;
+                a.center = pointOf(r.value(QStringLiteral("center")), a.id + QStringLiteral(": center"));
+                a.circleRadius = numberOf(r.value(QStringLiteral("radius")), a.id + QStringLiteral(": radius"));
+                a.box[0] = a.center.x() - a.circleRadius;
+                a.box[1] = a.center.y() - a.circleRadius;
+                a.box[2] = a.center.x() + a.circleRadius;
+                a.box[3] = a.center.y() + a.circleRadius;
+            } else {
+                // A fillGroup child takes its box from the group (resolveLayout); "box" is optional.
+                if (box.size() != 4 && !(a.hasFillGroup && box.isEmpty()))
+                    fail(QStringLiteral("%1: box must be [x0, y0, x1, y1]").arg(a.id));
+                for (int i = 0; i < 4 && i < box.size(); ++i)
+                    a.box[i] = numberOf(box.at(i), a.id + QStringLiteral(": box"));
+            }
             a.hasBox = true;
-            for (int i = 0; i < 4 && i < box.size(); ++i)
-                a.box[i] = numberOf(box.at(i), a.id + QStringLiteral(": box"));
-            a.radius = r.value(QStringLiteral("radius")).toDouble();
-            if (t == QLatin1String("rect") || t == QLatin1String("ring")) {
+            if (!a.hasCenter)
+                a.radius = r.value(QStringLiteral("radius")).toDouble();
+            if (t == QLatin1String("rect") && !r.contains(QStringLiteral("color")) && r.contains(QStringLiteral("strokeColor"))) {
+                // an outline-only rect (Stage07 C's frame lines)
+                a.hasStroke = true;
+                a.strokeColor = colorOf(r.value(QStringLiteral("strokeColor")), palette, a.id);
+                a.stroke = r.contains(QStringLiteral("stroke")) ? r.value(QStringLiteral("stroke")).toDouble() : 1.0;
+            } else if (t == QLatin1String("rect") || t == QLatin1String("ring")) {
                 a.hasFill = t == QLatin1String("rect");
                 a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
                 a.fill = a.color;
@@ -1068,6 +1224,11 @@ struct Loader
             a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
             a.mixWith = r.value(QStringLiteral("opacityMode")).toString() == QLatin1String("mixWith");
             a.mixTrunc = r.value(QStringLiteral("mix")).toString() == QLatin1String("trunc");
+            a.progressSnapRound = r.value(QStringLiteral("progressSnap")).toString() == QLatin1String("round");
+            if (r.contains(QStringLiteral("progressBase"))) {
+                a.hasProgressBase = true;
+                a.progressBase = r.value(QStringLiteral("progressBase")).toDouble();
+            }
         } else if (t == QLatin1String("route")) {
             for (const QJsonValue &p : r.value(QStringLiteral("points")).toArray())
                 a.points << pointOf(p, a.id + QStringLiteral(": points"));
@@ -1075,6 +1236,21 @@ struct Loader
                 fail(QStringLiteral("%1: a route needs at least two points").arg(a.id));
             a.width = r.contains(QStringLiteral("width")) ? r.value(QStringLiteral("width")).toDouble() : 1.0;
             a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
+        } else if (t == QLatin1String("pin")) {
+            a.center = pointOf(r.value(QStringLiteral("center")), a.id + QStringLiteral(": center"));
+            a.hasCenter = true;
+            a.circleRadius = numberOf(r.value(QStringLiteral("radius")), a.id + QStringLiteral(": radius"));
+            a.pinStem = numberOf(r.value(QStringLiteral("stem")), a.id + QStringLiteral(": stem"));
+            a.pinDot = r.contains(QStringLiteral("dotRadius")) ? r.value(QStringLiteral("dotRadius")).toDouble() : 4.0;
+            a.stroke = r.contains(QStringLiteral("stroke")) ? r.value(QStringLiteral("stroke")).toDouble() : 3.0;
+            a.ringColor = colorOf(r.value(QStringLiteral("ringColor")), palette, a.id);
+            a.dotColor = colorOf(r.value(QStringLiteral("dotColor")), palette, a.id);
+            a.stemColor = colorOf(r.value(QStringLiteral("stemColor")), palette, a.id);
+            a.hasBox = true;
+            a.box[0] = a.center.x() - a.circleRadius;
+            a.box[1] = a.center.y() - a.circleRadius;
+            a.box[2] = a.center.x() + a.circleRadius;
+            a.box[3] = a.center.y() + a.circleRadius + a.pinStem;
         } else if (t == QLatin1String("group")) {
             const QJsonArray at = r.value(QStringLiteral("at")).toArray();
             if (at.size() == 2)
@@ -1115,7 +1291,7 @@ struct Loader
         static const QSet<QString> types{QStringLiteral("text"),   QStringLiteral("rect"),   QStringLiteral("roundRect"),
                                          QStringLiteral("line"),   QStringLiteral("route"),  QStringLiteral("ellipse"),
                                          QStringLiteral("ring"),   QStringLiteral("circle"), QStringLiteral("group"),
-                                         QStringLiteral("repeat"), QStringLiteral("keycaps")};
+                                         QStringLiteral("repeat"), QStringLiteral("keycaps"), QStringLiteral("pin")};
         for (const QJsonValue &value : actors) {
             const QJsonObject a = value.toObject();
             const QString type = a.value(QStringLiteral("type")).toString();
@@ -1135,6 +1311,28 @@ struct Loader
             if (!enabled) {
                 if (!a.value(QStringLiteral("optional")).toBool())
                     fail(QStringLiteral("actor %1 is disabled but not optional").arg(id));
+                continue;
+            }
+            if (type == QLatin1String("repeat") && a.contains(QStringLiteral("over"))) {
+                // one copy per character of the formatted text (Stage11 Arc Resolve)
+                const QString over = formatTextOrFail(a.value(QStringLiteral("over")).toString(), env);
+                const QString var = a.value(QStringLiteral("as")).toString(QStringLiteral("i"));
+                const QString cvar = a.value(QStringLiteral("char")).toString(QStringLiteral("c"));
+                qlonglong i = 0;
+                for (int k = 0; k < over.size(); ++k, ++i) {
+                    const int len = (over.at(k).isHighSurrogate() && k + 1 < over.size()) ? 2 : 1;
+                    const QString ch = over.mid(k, len);
+                    k += len - 1;
+                    QJsonObject sub = a.value(QStringLiteral("actor")).toObject();
+                    QVariantMap inner = local;
+                    inner.insert(var, i);
+                    inner.insert(cvar, ch);
+                    QVariantMap localEnv = env;
+                    localEnv.insert(var, i);
+                    localEnv.insert(cvar, ch);
+                    sub.insert(QStringLiteral("id"), formatTextOrFail(sub.value(QStringLiteral("id")).toString(), localEnv));
+                    expand(QJsonArray{sub}, inner, parent);
+                }
                 continue;
             }
             if (type == QLatin1String("repeat")) {
@@ -1284,6 +1482,10 @@ struct Loader
 
 double phase(double t, const TimedBlock &b)
 {
+    if (b.delay != 0.0) { // ((t − start) − delay) / dur, as the Arc Resolve stagger was written
+        const double x = (t - b.start) - b.delay;
+        return b.dur <= 0.0 ? (x >= 0.0 ? 1.0 : 0.0) : b.ease(x / b.dur);
+    }
     if (b.dur <= 0.0)
         return t >= b.start ? 1.0 : 0.0;
     return b.ease((t - b.start) / b.dur);
@@ -1309,6 +1511,8 @@ double Ease::operator()(double u) const
     }
     case Smootherstep: // same operation order as the Stage03b C revision's ease5
         return u * u * u * (u * (6.0 * u - 15.0) + 10.0);
+    case InCubic:
+        return u * u * u;
     case Bezier:
         if (u == 0.0 || u == 1.0)
             return u;
@@ -1468,8 +1672,28 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Sprite2x;
         else if (profile == QLatin1String("mask1x"))
             sc.profile = Profile::Mask1x;
+        else if (profile == QLatin1String("pil1x"))
+            sc.profile = Profile::Pil1x;
+        else if (profile == QLatin1String("cov1x"))
+            sc.profile = Profile::Cov1x;
+        else if (profile == QLatin1String("fx1x"))
+            sc.profile = Profile::Fx1x;
+        else if (profile == QLatin1String("gold1x"))
+            sc.profile = Profile::Gold1x;
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
+        sc.supersample = render.contains(QStringLiteral("ss")) ? render.value(QStringLiteral("ss")).toInt() : 1;
+        if (sc.supersample < 1 || sc.supersample > 4)
+            fail(QStringLiteral("render.ss must be 1…4"));
+        sc.minOpacity = render.contains(QStringLiteral("minOpacity")) ? render.value(QStringLiteral("minOpacity")).toDouble() : 0.001;
+        sc.minReveal = render.value(QStringLiteral("minReveal")).toDouble();
+        sc.fullOpacity = render.contains(QStringLiteral("fullOpacity")) ? render.value(QStringLiteral("fullOpacity")).toDouble() : 1.0;
+        sc.alphaTrunc = render.value(QStringLiteral("alphaTable")).toString() == QLatin1String("trunc");
+        sc.skipEmptyRects = render.value(QStringLiteral("skipEmptyRects")).toBool();
+        sc.fullReveal = render.contains(QStringLiteral("fullReveal")) ? render.value(QStringLiteral("fullReveal")).toDouble() : 1.0;
+        sc.revealCrop = render.value(QStringLiteral("revealMode")).toString() == QLatin1String("crop");
+        sc.skipAtThreshold = render.value(QStringLiteral("skipCompare")).toString(sc.minOpacity > 0.001 ? QStringLiteral("le") : QStringLiteral("lt"))
+                             == QLatin1String("le");
 
         const QJsonObject fonts = doc.value(QStringLiteral("fonts")).toObject();
         for (auto it = fonts.begin(); it != fonts.end(); ++it) {
@@ -1564,10 +1788,14 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             const int other = sc.indexOf(it.value());
             if (other < 0)
                 fail(QStringLiteral("%1: sync with unknown actor '%2'").arg(it.key(), it.value()));
-            if (sc.actors.at(other).in.present)
+            if (sc.actors.at(other).in.present) {
                 sc.actors[self].in = sc.actors.at(other).in;
-            if (sc.actors.at(other).out.present)
+                sc.actors[self].inMore = sc.actors.at(other).inMore;
+            }
+            if (sc.actors.at(other).out.present) {
                 sc.actors[self].out = sc.actors.at(other).out;
+                sc.actors[self].outMore = sc.actors.at(other).outMore;
+            }
         }
         QSet<QString> done, busy;
         for (int i = 0; i < sc.actors.size(); ++i)
@@ -1609,14 +1837,56 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
         double hs = 0.0, he = sc.duration;
         bool anyIn = false, anyOut = false;
         for (const Actor &a : std::as_const(sc.actors)) {
-            if (a.in.present) {
-                hs = anyIn ? qMax(hs, a.in.start + a.in.dur) : a.in.start + a.in.dur;
+            QList<TimedBlock> ins{a.in}, outs{a.out};
+            ins += a.inMore;
+            outs += a.outMore;
+            for (const TimedBlock &b : std::as_const(ins)) {
+                if (!b.present)
+                    continue;
+                hs = anyIn ? qMax(hs, b.start + b.dur) : b.start + b.dur;
                 anyIn = true;
             }
-            if (a.out.present) {
-                he = anyOut ? qMin(he, a.out.start) : a.out.start;
+            for (const TimedBlock &b : std::as_const(outs)) {
+                if (!b.present)
+                    continue;
+                he = anyOut ? qMin(he, b.start) : b.start;
                 anyOut = true;
             }
+        }
+        // A scene-wide exitSlide is an exit too.
+        const QJsonObject es = doc.value(QStringLiteral("exitSlide")).toObject();
+        if (!es.isEmpty()) {
+            sc.exitSlide.present = true;
+            sc.exitSlide.start = numberOf(es.value(QStringLiteral("start")), QStringLiteral("exitSlide: start"));
+            sc.exitSlide.dur = numberOf(es.value(QStringLiteral("dur")), QStringLiteral("exitSlide: dur"));
+            sc.exitSlide.ease = easeOf(es.value(QStringLiteral("ease")), QStringLiteral("exitSlide"));
+            const QJsonArray rect = es.value(QStringLiteral("rect")).toArray();
+            if (rect.size() != 4)
+                fail(QStringLiteral("exitSlide.rect must be [x, y, w, h]"));
+            for (int i = 0; i < 4; ++i)
+                sc.exitSlideRect[i] = rect.at(i).toDouble();
+            sc.exitSlideDistance = numberOf(es.value(QStringLiteral("distance")), QStringLiteral("exitSlide: distance"));
+            sc.exitSlideHold = numberOf(es.value(QStringLiteral("hold")), QStringLiteral("exitSlide: hold"));
+            he = anyOut ? qMin(he, sc.exitSlide.start) : sc.exitSlide.start;
+            anyOut = true;
+        }
+        // A scene-wide exitWipe is an exit too.
+        const QJsonObject ew = doc.value(QStringLiteral("exitWipe")).toObject();
+        if (!ew.isEmpty()) {
+            sc.exitWipe.present = true;
+            sc.exitWipe.start = numberOf(ew.value(QStringLiteral("start")), QStringLiteral("exitWipe: start"));
+            sc.exitWipe.dur = numberOf(ew.value(QStringLiteral("dur")), QStringLiteral("exitWipe: dur"));
+            sc.exitWipe.ease = easeOf(ew.value(QStringLiteral("ease")), QStringLiteral("exitWipe"));
+            sc.exitWipeMode = ew.value(QStringLiteral("mode")).toString(QStringLiteral("span"));
+            if (sc.exitWipeMode == QLatin1String("span")) {
+                sc.exitWipeLeft = numberOf(ew.value(QStringLiteral("left")), QStringLiteral("exitWipe: left"));
+                sc.exitWipeRight = numberOf(ew.value(QStringLiteral("right")), QStringLiteral("exitWipe: right"));
+            } else if (sc.exitWipeMode != QLatin1String("right") && sc.exitWipeMode != QLatin1String("left")
+                       && sc.exitWipeMode != QLatin1String("top")) {
+                fail(QStringLiteral("exitWipe.mode must be span, right, left or top"));
+            }
+            he = anyOut ? qMin(he, sc.exitWipe.start) : sc.exitWipe.start;
+            anyOut = true;
         }
         if (he < hs)
             fail(QStringLiteral("exits start (%1s) before the last entrance ends (%2s)").arg(pyFloatStr(he), pyFloatStr(hs)));
@@ -1630,18 +1900,21 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
     return sc;
 }
 
-Channels channels(const Actor &actor, double t)
+namespace {
+Channels channelsWith(const Actor &actor, double t, const std::function<double(const QString &, const QString &)> &clock)
 {
     Channels ch;
     const auto apply = [&](const TimedBlock &b, bool isIn) {
         if (!b.present)
             return;
-        const double p = phase(t, b);
+        const double tb = b.clockActor.isEmpty() || !clock ? t : clock(b.clockActor, b.clockChannel);
+        const double p = phase(tb, b);
         for (const auto &[k, v] : b.values) {
             double *reveal = k == QLatin1String("opacity") ? &ch.opacity
                            : k == QLatin1String("wipe")    ? &ch.wipe
                            : k == QLatin1String("progress") ? &ch.progress
                            : k == QLatin1String("scale")   ? &ch.scale
+                           : k == QLatin1String("vscale")  ? &ch.vscale
                                                             : nullptr;
             if (reveal) {
                 *reveal *= isIn ? v + (1.0 - v) * p : 1.0 - (1.0 - v) * p;
@@ -1650,15 +1923,49 @@ Channels channels(const Actor &actor, double t)
                 *off += isIn ? v * (1.0 - p) : v * p;
             }
         }
+        if (isIn && b.arc != 0.0)
+            ch.dy += b.arc * std::sin(3.14159265358979323846 * p) * (1.0 - p);
     };
     apply(actor.in, true);
+    for (const TimedBlock &b : actor.inMore)
+        apply(b, true);
     apply(actor.out, false);
+    for (const TimedBlock &b : actor.outMore)
+        apply(b, false);
     return ch;
+}
+
+double channelByName(const Channels &ch, const QString &name)
+{
+    if (name == QLatin1String("opacity"))
+        return ch.opacity;
+    if (name == QLatin1String("wipe"))
+        return ch.wipe;
+    if (name == QLatin1String("progress"))
+        return ch.progress;
+    if (name == QLatin1String("scale"))
+        return ch.scale;
+    if (name == QLatin1String("vscale"))
+        return ch.vscale;
+    if (name == QLatin1String("dx"))
+        return ch.dx;
+    return ch.dy;
+}
+} // namespace
+
+Channels channels(const Actor &actor, double t)
+{
+    return channelsWith(actor, t, {});
 }
 
 Channels drawChannels(const Scene &scene, const Actor &actor, double t, bool *skip)
 {
-    Channels ch = channels(actor, t);
+    // A clock-timed block (Stage07 answer tag) runs on another actor's drawn channel.
+    const auto clock = [&scene, t](const QString &id, const QString &name) -> double {
+        const Actor *other = scene.actor(id);
+        return other ? channelByName(drawChannels(scene, *other, t, nullptr), name) : 1.0;
+    };
+    Channels ch = channelsWith(actor, t, clock);
     if (skip)
         *skip = false;
     QString p = actor.parent;
@@ -1676,6 +1983,7 @@ Channels drawChannels(const Scene &scene, const Actor &actor, double t, bool *sk
         ch.wipe *= gc.wipe;
         ch.progress *= gc.progress;
         ch.scale *= gc.scale;
+        ch.vscale *= gc.vscale;
         ch.dx += gc.dx + g->groupAt.x();
         ch.dy += gc.dy + g->groupAt.y();
         p = g->parent;

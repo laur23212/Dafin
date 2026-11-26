@@ -1,0 +1,101 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.revolve",
+ "label": "Revolve",
+ "category": "Golden Run",
+ "source": {
+  "asset": "25C",
+  "sha256": "037f2860652dc7ec5ecb0e85d78b83e2b7fffb4fb160e22d14b6dbf0ad7130e3",
+  "script": "render_stage25.py :: scene_c",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "REVOLVE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "sans",
+   "size": 274,
+   "color": [
+    235,
+    240,
+    246
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "arcToBaseline",
+    "tracking": 16,
+    "baseline": 646,
+    "cell": 560,
+    "arcScale": 0.84,
+    "arcHeight": 180,
+    "arcTilt": 9,
+    "angle": 13,
+    "land": [
+     0.39,
+     0.98,
+     0.056
+    ],
+    "rise": [
+     4.56,
+     0.38,
+     0.045
+    ],
+    "riseBy": 62,
+    "in": [
+     0.09,
+     0.28,
+     0.028
+    ],
+    "out": [
+     4.6,
+     0.38,
+     0.044
+    ]
+   }
+  }
+ ]
+}

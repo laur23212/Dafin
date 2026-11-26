@@ -1,0 +1,359 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.practical.metric-highlight",
+ "label": "Metric Highlight",
+ "category": "Data Titles",
+ "source": {
+  "asset": "06_Metric",
+  "sha256": "aaa40b1ba72d2d953fddf30a564521e96554de06b32622561cdfb70e0c766e56",
+  "script": "Dafin_Part5_Stage06 :: render_stage06.py",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.002,
+  "minReveal": 0.002,
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc",
+  "skipEmptyRects": true
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitSlide": {
+  "start": 4.96,
+  "dur": 0.56,
+  "ease": "smoothstep",
+  "rect": [
+   1208,
+   244,
+   634,
+   570
+  ],
+  "distance": 960,
+  "hold": 4.92
+ },
+ "fonts": {
+  "sans_regular": {
+   "file": "NotoSansDisplay-Regular.ttf",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac",
+   "package": "fonts-noto-core 20201225-2"
+  },
+  "sans_semibold": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "inter_medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "inter_semibold": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "DATE CHEIE",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "label",
+   "type": "text",
+   "default": "EFICIENȚĂ",
+   "label": "Label"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Indicator demonstrativ",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "panel",
+   "role": "carrier",
+   "type": "roundRect",
+   "box": [
+    1208,
+    244,
+    1842,
+    814
+   ],
+   "radius": 5,
+   "fill": [
+    17,
+    26,
+    34,
+    255
+   ],
+   "wipeSnap": "round",
+   "in": {
+    "start": 0.12,
+    "dur": 0.66,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.002
+    }
+   ]
+  },
+  {
+   "id": "stripe",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    1208,
+    244,
+    1213,
+    814
+   ],
+   "color": [
+    160,
+    206,
+    207,
+    245
+   ],
+   "wipeSnap": "round",
+   "in": {
+    "start": 0.12,
+    "dur": 0.66,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "panel",
+     "channel": "wipe",
+     "gt": 0.002
+    }
+   ]
+  },
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "inter_semibold",
+   "size": 25,
+   "color": [
+    158,
+    199,
+    202,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1266,
+     318
+    ]
+   },
+   "in": {
+    "start": 0.12,
+    "dur": 0.66,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "value",
+   "role": "metric",
+   "type": "text",
+   "text": "87",
+   "font": "sans_semibold",
+   "size": 177,
+   "color": [
+    249,
+    249,
+    246,
+    255
+   ],
+   "at": {
+    "right": 1647,
+    "top": 375
+   },
+   "counter": {
+    "start": 0.55,
+    "dur": 1.05,
+    "ease": "easeOutCubic",
+    "to": 87
+   },
+   "in": {
+    "start": 0.45,
+    "dur": 0.49999999999999994,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "unit",
+   "role": "unit",
+   "type": "text",
+   "text": "%",
+   "font": "sans_regular",
+   "size": 106,
+   "color": [
+    225,
+    236,
+    235,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1664,
+     517
+    ]
+   },
+   "in": {
+    "start": 0.52,
+    "dur": 0.6099999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    1258,
+    604
+   ],
+   "to": [
+    1795,
+    604
+   ],
+   "progressSnap": "round",
+   "progressBase": 1257,
+   "width": 2,
+   "color": [
+    112,
+    151,
+    156,
+    190
+   ],
+   "in": {
+    "start": 0.91,
+    "dur": 0.5099999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "progress": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "progress",
+     "gt": 0.002
+    }
+   ]
+  },
+  {
+   "id": "label",
+   "role": "title",
+   "type": "text",
+   "text": "{label}",
+   "font": "sans_semibold",
+   "size": 51,
+   "color": [
+    249,
+    249,
+    246,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1264,
+     687
+    ]
+   },
+   "in": {
+    "start": 0.91,
+    "dur": 0.5099999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "reveal": "x"
+  },
+  {
+   "id": "subtitle",
+   "role": "description",
+   "type": "text",
+   "text": "{subtitle}",
+   "font": "inter_medium",
+   "size": 27,
+   "color": [
+    218,
+    227,
+    228,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1266,
+     743
+    ]
+   },
+   "in": [
+    {
+     "start": 1.25,
+     "dur": 0.3899999999999999,
+     "ease": "easeOutCubic",
+     "from": {
+      "opacity": 0
+     }
+    },
+    {
+     "start": 1.2,
+     "dur": 0.43999999999999995,
+     "ease": "easeOutCubic",
+     "from": {
+      "wipe": 0
+     }
+    }
+   ],
+   "reveal": "x",
+   "optional": true
+  }
+ ]
+}

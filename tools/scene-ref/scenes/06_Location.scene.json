@@ -1,0 +1,384 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.practical.location-identifier",
+ "label": "Location Identifier",
+ "category": "Location Titles",
+ "source": {
+  "asset": "06_Location",
+  "sha256": "9d207ac76faee1eb9b4fb44591fb009c91b41cbd560ececd15ce635efcb497f5",
+  "script": "Dafin_Part5_Stage06 :: render_stage06.py",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.002,
+  "minReveal": 0.002,
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc",
+  "skipEmptyRects": true
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitSlide": {
+  "start": 4.96,
+  "dur": 0.56,
+  "ease": "smoothstep",
+  "rect": [
+   1168,
+   666,
+   674,
+   288
+  ],
+  "distance": 510,
+  "hold": 4.92
+ },
+ "fonts": {
+  "sans_semibold": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "inter_medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "inter_semibold": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "serif": {
+   "file": "NotoSerifDisplay-Medium.ttf",
+   "sha256": "ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "LOCUL FILMĂRII",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "city",
+   "type": "text",
+   "default": "Cluj-Napoca",
+   "label": "Place"
+  },
+  {
+   "id": "country",
+   "type": "text",
+   "default": "ROMÂNIA",
+   "label": "Country"
+  },
+  {
+   "id": "time",
+   "type": "text",
+   "default": "DIMINEAȚA   /   06:30",
+   "label": "Time"
+  }
+ ],
+ "actors": [
+  {
+   "id": "panel",
+   "role": "carrier",
+   "type": "roundRect",
+   "box": [
+    1168,
+    666,
+    1842,
+    954
+   ],
+   "radius": 3,
+   "fill": [
+    14,
+    23,
+    31,
+    255
+   ],
+   "wipeSnap": "round",
+   "in": {
+    "start": 0.12,
+    "dur": 0.66,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.005
+    }
+   ]
+  },
+  {
+   "id": "stripe",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    1168,
+    666,
+    1173,
+    954
+   ],
+   "color": [
+    158,
+    195,
+    194,
+    245
+   ],
+   "wipeSnap": "round",
+   "in": {
+    "start": 0.12,
+    "dur": 0.66,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "panel",
+     "channel": "wipe",
+     "gt": 0.005
+    }
+   ]
+  },
+  {
+   "id": "pin",
+   "role": "icon",
+   "type": "pin",
+   "center": [
+    1223,
+    733
+   ],
+   "radius": 16,
+   "stem": 17,
+   "dotRadius": 4,
+   "stroke": 3,
+   "ringColor": [
+    194,
+    218,
+    219,
+    220
+   ],
+   "dotColor": [
+    195,
+    223,
+    224,
+    235
+   ],
+   "stemColor": [
+    194,
+    218,
+    219,
+    205
+   ],
+   "in": {
+    "start": 0.24,
+    "dur": 0.68,
+    "ease": "easeOutCubic",
+    "from": {
+     "scale": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "scale",
+     "gt": 0.008
+    }
+   ]
+  },
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "inter_semibold",
+   "size": 24,
+   "color": [
+    159,
+    204,
+    207,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1269,
+     746
+    ]
+   },
+   "in": {
+    "start": 0.24,
+    "dur": 0.68,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "city",
+   "role": "title",
+   "type": "text",
+   "text": "{city}",
+   "font": "serif",
+   "size": 83,
+   "color": [
+    249,
+    249,
+    246,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1225,
+     840
+    ]
+   },
+   "in": {
+    "start": 0.57,
+    "dur": 0.7000000000000001,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 11
+    }
+   },
+   "reveal": "x"
+  },
+  {
+   "id": "rule",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    1220,
+    880
+   ],
+   "to": [
+    1780,
+    880
+   ],
+   "progressSnap": "round",
+   "width": 2,
+   "color": [
+    111,
+    151,
+    157,
+    188
+   ],
+   "in": {
+    "start": 1.15,
+    "dur": 0.5,
+    "ease": "easeOutCubic",
+    "from": {
+     "progress": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "progress",
+     "gt": 0.02
+    }
+   ]
+  },
+  {
+   "id": "country",
+   "role": "subtitle",
+   "type": "text",
+   "text": "{country}",
+   "font": "sans_semibold",
+   "size": 31,
+   "color": [
+    237,
+    241,
+    241,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1227,
+     933
+    ]
+   },
+   "in": {
+    "start": 1.15,
+    "dur": 0.5,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "opacity",
+     "gt": 0.02
+    }
+   ],
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "time",
+   "role": "meta",
+   "type": "text",
+   "text": "{time}",
+   "font": "inter_medium",
+   "size": 25,
+   "color": [
+    193,
+    210,
+    213,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1461,
+     927
+    ]
+   },
+   "in": {
+    "start": 1.15,
+    "dur": 0.5,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "opacity",
+     "gt": 0.02
+    }
+   ],
+   "reveal": "x",
+   "optional": true
+  }
+ ]
+}

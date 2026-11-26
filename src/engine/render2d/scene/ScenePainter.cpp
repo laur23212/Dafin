@@ -1,6 +1,7 @@
 #include "engine/render2d/scene/ScenePainter.h"
 
 #include "core/scene/SceneKeycaps.h"
+#include "engine/render2d/scene/SceneGoldEffects.h"
 #include "engine/render2d/text/fonts/SkiaFonts.h"
 
 #include "include/core/SkBitmap.h"
@@ -29,9 +30,11 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QHash>
+#include <QJsonArray>
 #include <QMutex>
 #include <QStandardPaths>
 
+#include <array>
 #include <cfenv>
 #include <cmath>
 #include <cstring>
@@ -44,6 +47,7 @@ using scene::Channels;
 using scene::Profile;
 using scene::Rgba;
 using scene::Scene;
+using scene::TimedBlock;
 
 namespace {
 
@@ -722,6 +726,395 @@ TextArt maskText(const SkFont &font, const QString &text, double letterSpacing, 
     return art;
 }
 
+// pil1x text: the scripts' 1x PIL sprite (basic layout: kerning, no ligatures), as an A8 mask at
+// the pen; drawn in the actor's colour like mask1x.
+TextArt pilText(const SkFont &font, const QString &text, QPointF pen)
+{
+    TextArt art;
+    const std::vector<GlyphRun> runs = basicLayout(font, text);
+    const SkPoint origin{SkScalar(pen.x()), SkScalar(pen.y())};
+    const SkIRect bounds = layoutBounds(runs, origin);
+    const SkBitmap cov = coverage(runs, origin, bounds);
+    const SkIRect ink = alphaBox(cov);
+    if (ink.isEmpty()) {
+        art.origin = pen;
+        art.ink = QRectF(pen, QSizeF(0, 0));
+        art.valid = true;
+        return art;
+    }
+    SkBitmap crop;
+    crop.allocPixels(SkImageInfo::MakeA8(ink.width(), ink.height()));
+    cov.readPixels(crop.pixmap(), ink.left(), ink.top());
+    crop.setImmutable();
+    art.mask = crop;
+    art.image = crop.asImage();
+    art.origin = QPointF(bounds.left() + ink.left(), bounds.top() + ink.top());
+    art.ink = QRectF(art.origin, QSizeF(ink.width(), ink.height()));
+    art.valid = true;
+    return art;
+}
+
+// Stage08 tracked text: each glyph laid out alone, at round(pen), pen += its advance + tracking.
+// The art is placed as the script's sprite: ink left 8 px + bearing, ink top 9 px from its top;
+// `spriteW`/`spriteH` (in art.ink of a QRectF built here) give the sprite's own size.
+struct TrackedArt
+{
+    TextArt art;
+    double spriteW = 0.0, spriteH = 0.0;
+};
+
+TrackedArt trackedText(const SkFont &font, const QString &text, double tracking)
+{
+    TrackedArt out;
+    std::vector<GlyphRun> runs;
+    double pen = 8.0, sumAdv = 0.0;
+    for (int i = 0; i < text.size(); ++i) {
+        const QString ch = text.mid(i, 1);
+        std::vector<GlyphRun> one = basicLayout(font, ch);
+        double adv = 0.0;
+        for (GlyphRun &r : one) {
+            for (SkPoint &p : r.pos)
+                p.fX += SkScalar(std::round(pen));
+            runs.push_back(std::move(r));
+        }
+        adv = pilAdvance(font, ch); // getlength(ch), on hb-ft's 26.6 grid
+        sumAdv += adv;
+        pen += adv + tracking;
+    }
+    const SkIRect bounds = layoutBounds(runs, {0, 0});
+    const SkBitmap cov = coverage(runs, {0, 0}, bounds);
+    const SkIRect ink = alphaBox(cov);
+    out.spriteW = std::ceil(sumAdv + tracking * qMax(0, int(text.size()) - 1)) + 16;
+    if (ink.isEmpty()) {
+        out.spriteH = 20;
+        return out;
+    }
+    SkBitmap crop;
+    crop.allocPixels(SkImageInfo::MakeA8(ink.width(), ink.height()));
+    cov.readPixels(crop.pixmap(), ink.left(), ink.top());
+    crop.setImmutable();
+    out.art.mask = crop;
+    out.art.image = crop.asImage();
+    // In sprite coordinates: x as laid out from pen 8, ink top at 9.
+    out.art.origin = QPointF(bounds.left() + ink.left(), 9.0);
+    out.art.ink = QRectF(out.art.origin, QSizeF(ink.width(), ink.height()));
+    out.art.valid = true;
+    out.spriteH = ink.height() + 20;
+    return out;
+}
+
+// Dark Chapter A v2: glyphs at pen + Σ(advance + tracking) from the baseline anchor; the script's
+// sprite starts 4 px left of the pen and is ceil(Σ(adv + tracking) − tracking) + 11 px wide.
+TrackedArt chapterText(const SkFont &font, const QString &text, double tracking, QPointF pen)
+{
+    TrackedArt out;
+    std::vector<GlyphRun> runs;
+    double x = 0.0;
+    for (int i = 0; i < text.size(); ++i) {
+        std::vector<GlyphRun> one = basicLayout(font, text.mid(i, 1));
+        double adv = 0.0;
+        for (GlyphRun &r : one) {
+            for (SkPoint &p : r.pos)
+                p.fX += SkScalar(x);
+            runs.push_back(std::move(r));
+        }
+        adv = pilAdvance(font, text.mid(i, 1)); // getlength(ch), on hb-ft's 26.6 grid
+        x += adv + tracking;
+    }
+    const SkPoint origin{SkScalar(pen.x()), SkScalar(pen.y())};
+    const SkIRect bounds = layoutBounds(runs, origin);
+    const SkBitmap cov = coverage(runs, origin, bounds);
+    const SkIRect ink = alphaBox(cov);
+    out.spriteW = std::ceil(x - (text.isEmpty() ? 0.0 : tracking)) + 11;
+    if (ink.isEmpty())
+        return out;
+    SkBitmap crop;
+    crop.allocPixels(SkImageInfo::MakeA8(ink.width(), ink.height()));
+    cov.readPixels(crop.pixmap(), ink.left(), ink.top());
+    crop.setImmutable();
+    out.art.mask = crop;
+    out.art.image = crop.asImage();
+    out.art.origin = QPointF(bounds.left() + ink.left(), bounds.top() + ink.top());
+    out.art.ink = QRectF(out.art.origin, QSizeF(ink.width(), ink.height()));
+    out.art.valid = true;
+    out.spriteH = ink.height() + 11;
+    return out;
+}
+
+// ---- cov1x (Chapter A/B v4, RECONSTRUCTED_APPROX): float coverage maps, composited in order ----
+struct CovMap
+{
+    SkIRect rect = SkIRect::MakeEmpty(); // design px
+    std::vector<quint8> px;              // rect.width() × rect.height(), row-major
+    quint8 at(int x, int y) const
+    {
+        if (!rect.contains(x, y))
+            return 0;
+        return px[size_t(y - rect.top()) * size_t(rect.width()) + size_t(x - rect.left())];
+    }
+};
+
+// An A8 bitmap whose (0, 0) is at `origin` (supersampled px), reduced by `ss` with a box filter
+// onto the design grid, as PIL's resize(BOX) of the whole ss× frame did.
+CovMap boxReduce(const SkBitmap &bm, SkIPoint origin, int ss)
+{
+    CovMap m;
+    if (bm.width() <= 0 || bm.height() <= 0)
+        return m;
+    const auto fdiv = [](int v, int d) { return v >= 0 ? v / d : -((-v + d - 1) / d); };
+    const int x0 = fdiv(origin.x(), ss), y0 = fdiv(origin.y(), ss);
+    const int x1 = fdiv(origin.x() + bm.width() + ss - 1, ss), y1 = fdiv(origin.y() + bm.height() + ss - 1, ss);
+    m.rect = SkIRect::MakeLTRB(x0, y0, x1, y1);
+    m.px.assign(size_t(m.rect.width()) * size_t(m.rect.height()), 0);
+    const int n = ss * ss;
+    for (int Y = y0; Y < y1; ++Y)
+        for (int X = x0; X < x1; ++X) {
+            int sum = 0;
+            for (int j = 0; j < ss; ++j) {
+                const int by = Y * ss + j - origin.y();
+                if (by < 0 || by >= bm.height())
+                    continue;
+                const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, by));
+                for (int i = 0; i < ss; ++i) {
+                    const int bx = X * ss + i - origin.x();
+                    if (bx >= 0 && bx < bm.width())
+                        sum += row[bx];
+                }
+            }
+            m.px[size_t(Y - y0) * size_t(m.rect.width()) + size_t(X - x0)] = quint8((sum + n / 2) / n);
+        }
+    return m;
+}
+
+// Advance-rounded text: each glyph at (round(pen), ascender line), pen += advance + tracking,
+// all on an ss× grid; PIL's anchor 'la' puts the baseline one (whole-px) ascender lower.
+CovMap covText(const sk_sp<SkTypeface> &tf, const Actor &a, int ss)
+{
+    const SkFont font = pixelFont(tf, roundHalfEven(a.size * ss));
+    SkFontMetrics fm;
+    font.getMetrics(&fm);
+    std::vector<GlyphRun> runs;
+    double pen = roundHalfEven(a.ascender.x() * ss);
+    for (int i = 0; i < a.text.size(); ++i) {
+        const int len = (a.text.at(i).isHighSurrogate() && i + 1 < a.text.size()) ? 2 : 1;
+        std::vector<GlyphRun> one = basicLayout(font, a.text.mid(i, len));
+        i += len - 1;
+        const double px = roundHalfEven(pen);
+        double adv = 0.0;
+        adv = pilAdvance(font, a.text.mid(i - (len - 1), len)); // getlength(ch), on hb-ft's 26.6 grid
+        for (GlyphRun &g : one) {
+            for (SkPoint &p : g.pos)
+                p.fX += SkScalar(px);
+            runs.push_back(std::move(g));
+        }
+        pen += adv + a.letterSpacing * ss;
+    }
+    const SkPoint origin{0, SkScalar(roundHalfEven(a.ascender.y() * ss) + std::ceil(-fm.fAscent))};
+    const SkIRect bounds = layoutBounds(runs, origin);
+    return boxReduce(coverage(runs, origin, bounds), {bounds.left(), bounds.top()}, ss);
+}
+
+// A box: the (inclusive) pixel rect as a rounded rect drawn at 4×, box-reduced.
+CovMap covBox(const Actor &a)
+{
+    const int x0 = int(a.box[0]), y0 = int(a.box[1]);
+    const int w = int(a.box[2]) - x0 + 1, h = int(a.box[3]) - y0 + 1;
+    SkBitmap bm;
+    bm.allocPixels(SkImageInfo::MakeA8(qMax(1, w * 4), qMax(1, h * 4)));
+    bm.eraseColor(SK_ColorTRANSPARENT);
+    SkCanvas canvas(bm);
+    SkPaint paint;
+    paint.setAntiAlias(false);
+    paint.setColor(SK_ColorBLACK);
+    const SkRect r = SkRect::MakeWH(SkScalar(w * 4), SkScalar(h * 4));
+    canvas.drawRRect(SkRRect::MakeRectXY(r, SkScalar(a.radius * 4), SkScalar(a.radius * 4)), paint);
+    return boxReduce(bm, {x0 * 4, y0 * 4}, 4);
+}
+
+// ---- fx1x (Stage10 effects) -----------------------------------------------------------------
+// Exact Euclidean distance to the nearest feature pixel (Felzenszwalb & Huttenlocher), as
+// scipy's distance_transform_edt measured it.
+std::vector<float> edt(const std::vector<quint8> &feature, int w, int h)
+{
+    const double inf = 1e20;
+    std::vector<double> g(size_t(w) * size_t(h));
+    std::vector<double> f(size_t(qMax(w, h))), d(size_t(qMax(w, h)));
+    std::vector<int> v(size_t(qMax(w, h)));
+    std::vector<double> z(size_t(qMax(w, h)) + 1);
+    const auto pass = [&](int n) {
+        int k = 0;
+        v[0] = 0;
+        z[0] = -inf;
+        z[1] = inf;
+        for (int q = 1; q < n; ++q) {
+            double s = ((f[size_t(q)] + double(q) * q) - (f[size_t(v[size_t(k)])] + double(v[size_t(k)]) * v[size_t(k)])) / (2.0 * q - 2.0 * v[size_t(k)]);
+            while (s <= z[size_t(k)]) {
+                --k;
+                s = ((f[size_t(q)] + double(q) * q) - (f[size_t(v[size_t(k)])] + double(v[size_t(k)]) * v[size_t(k)])) / (2.0 * q - 2.0 * v[size_t(k)]);
+            }
+            ++k;
+            v[size_t(k)] = q;
+            z[size_t(k)] = s;
+            z[size_t(k) + 1] = inf;
+        }
+        k = 0;
+        for (int q = 0; q < n; ++q) {
+            while (z[size_t(k) + 1] < q)
+                ++k;
+            const double r = q - v[size_t(k)];
+            d[size_t(q)] = r * r + f[size_t(v[size_t(k)])];
+        }
+    };
+    for (int x = 0; x < w; ++x) {
+        for (int y = 0; y < h; ++y)
+            f[size_t(y)] = feature[size_t(y) * size_t(w) + size_t(x)] ? 0.0 : inf;
+        pass(h);
+        for (int y = 0; y < h; ++y)
+            g[size_t(y) * size_t(w) + size_t(x)] = d[size_t(y)];
+    }
+    std::vector<float> out(g.size());
+    for (int y = 0; y < h; ++y) {
+        for (int x = 0; x < w; ++x)
+            f[size_t(x)] = g[size_t(y) * size_t(w) + size_t(x)];
+        pass(w);
+        for (int x = 0; x < w; ++x)
+            out[size_t(y) * size_t(w) + size_t(x)] = float(std::sqrt(qMin(d[size_t(x)], 1e18)));
+    }
+    return out;
+}
+
+// cv2.GaussianBlur on a float image: kernel size round(8σ + 1) | 1, BORDER_REFLECT_101.
+std::vector<float> gaussBlur(const std::vector<float> &src, int w, int h, double sigma)
+{
+    const int k = int(std::lround(sigma * 8.0 + 1.0)) | 1, r = k / 2;
+    std::vector<double> ker(size_t(k));
+    double sum = 0.0;
+    for (int i = 0; i < k; ++i) {
+        const double x = i - r;
+        ker[size_t(i)] = std::exp(-x * x / (2.0 * sigma * sigma));
+        sum += ker[size_t(i)];
+    }
+    for (double &v : ker)
+        v /= sum;
+    const auto refl = [](int i, int n) {
+        if (n == 1)
+            return 0;
+        while (i < 0 || i >= n)
+            i = i < 0 ? -i : 2 * n - 2 - i;
+        return i;
+    };
+    std::vector<float> tmp(src.size()), out(src.size());
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x) {
+            double s = 0.0;
+            for (int i = 0; i < k; ++i)
+                s += ker[size_t(i)] * src[size_t(y) * size_t(w) + size_t(refl(x + i - r, w))];
+            tmp[size_t(y) * size_t(w) + size_t(x)] = float(s);
+        }
+    for (int y = 0; y < h; ++y)
+        for (int x = 0; x < w; ++x) {
+            double s = 0.0;
+            for (int i = 0; i < k; ++i)
+                s += ker[size_t(i)] * tmp[size_t(refl(y + i - r, h)) * size_t(w) + size_t(x)];
+            out[size_t(y) * size_t(w) + size_t(x)] = float(s);
+        }
+    return out;
+}
+
+// A text's coverage (0..1) in a w × h cell with its pen (baseline) at `pen`.
+std::vector<float> cellMask(const SkFont &font, const QString &text, QPointF pen, int w, int h)
+{
+    std::vector<float> m(size_t(qMax(1, w)) * size_t(qMax(1, h)), 0.0f);
+    const SkBitmap bm = coverage(basicLayout(font, text), {SkScalar(pen.x()), SkScalar(pen.y())}, SkIRect::MakeWH(qMax(1, w), qMax(1, h)));
+    for (int y = 0; y < bm.height(); ++y) {
+        const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, y));
+        for (int x = 0; x < bm.width(); ++x)
+            m[size_t(y) * size_t(w) + size_t(x)] = row[x] / 255.0f;
+    }
+    return m;
+}
+
+double advanceOf(const SkFont &font, const QString &text)
+{
+    return pilAdvance(font, text); // getlength, on hb-ft's 26.6 grid
+}
+
+struct FxArt
+{
+    QString kind;
+    QHash<QString, std::array<std::vector<float>, 2>> fields; // sdfMorph: per letter, both weights
+    std::vector<double> adv0, adv1;
+    std::vector<float> mask, soft; // maskedLight: text mask + halo (rect); focusMix: sharp + blurred (cell)
+    SkIRect rect = SkIRect::MakeEmpty();
+    double xmax = 0.0;
+};
+
+double fxNum(const QJsonObject &o, const char *k, int i = -1)
+{
+    const QJsonValue v = o.value(QLatin1String(k));
+    return i < 0 ? v.toDouble() : v.toArray().at(i).toDouble();
+}
+
+// A Stage10 timing block {start, dur, ease}: smoothstep or easeOutCubic of the clamped phase.
+double fxEase(const QJsonObject &e, const char *k, double t)
+{
+    const QJsonObject b = e.value(QLatin1String(k)).toObject();
+    const double x = qBound(0.0, (t - b.value(QStringLiteral("start")).toDouble()) / b.value(QStringLiteral("dur")).toDouble(), 1.0);
+    return b.value(QStringLiteral("ease")).toString(QStringLiteral("smoothstep")) == QLatin1String("easeOutCubic")
+               ? 1.0 - std::pow(1.0 - x, 3.0)
+               : x * x * (3.0 - 2.0 * x);
+}
+
+// gold1x: the Golden Run effects' text, drawn as PIL drew it (basic layout on hb-ft's 26.6 grid).
+class SkiaGoldText : public scene::gold::GoldText
+{
+public:
+    explicit SkiaGoldText(QHash<QString, sk_sp<SkTypeface>> faces) : faces_(std::move(faces)) {}
+    bool has(const QString &font) const override { return faces_.value(font) != nullptr; }
+    scene::gold::TextBox bbox(const QString &font, int px, const QString &text) const override
+    {
+        const PilBox b = pilBBox(pixelFont(faces_.value(font), px), text);
+        return {b.left, b.top, b.right, b.bottom};
+    }
+    double length(const QString &font, int px, const QString &text) const override
+    {
+        return pilAdvance(pixelFont(faces_.value(font), px), text);
+    }
+    int ascender(const QString &font, int px) const override { return pilAscender(pixelFont(faces_.value(font), px)); }
+    void draw(scene::gold::M8 &into, const QString &font, int px, const QString &text, double x, double y) const override
+    {
+        if (into.empty() || !faces_.value(font))
+            return;
+        // PIL puts the pen on whole pixels with x half up but y half down (100.5 draws at 100).
+        y = std::ceil(y - 0.5);
+        const SkBitmap bm = coverage(basicLayout(pixelFont(faces_.value(font), px), text), {SkScalar(x), SkScalar(y)},
+                                     SkIRect::MakeWH(into.w, into.h));
+        for (int j = 0; j < bm.height() && j < into.h; ++j) {
+            const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, j));
+            for (int i = 0; i < bm.width() && i < into.w; ++i) {
+                const int o = into.at(i, j), v = row[i];
+                into.at(i, j) = quint8(o + (255 - o) * v / 255); // fill 255 over what is there
+            }
+        }
+    }
+
+private:
+    QHash<QString, sk_sp<SkTypeface>> faces_;
+};
+
+// PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
+// coordinates. Width 1 is a thin line.
+void pilLine(SkCanvas &c, double ax, double ay, double bx, double by, double width, SkColor color)
+{
+    SkPaint paint;
+    paint.setAntiAlias(false);
+    paint.setStyle(SkPaint::kStroke_Style);
+    paint.setStrokeWidth(SkScalar(qMax(1.0, std::trunc(width))));
+    paint.setStrokeCap(SkPaint::kButt_Cap);
+    paint.setColor(color);
+    c.drawLine(SkScalar(ax + 0.5), SkScalar(ay + 0.5), SkScalar(bx + 0.5), SkScalar(by + 0.5), paint);
+}
+
 SkColor skColor(const Rgba &c, double alphaScale = 1.0)
 {
     const int a = int(std::lround(qBound(0.0, c.a * alphaScale, 255.0)));
@@ -736,6 +1129,11 @@ public:
     Scene scene;
     quint64 key = 0;
     QHash<QString, TextArt> texts;
+    QHash<QString, QSizeF> trackedSprites; // Stage08: the sprite size the centring uses
+    QHash<QString, CovMap> covs;           // cov1x: each actor's coverage on the design grid
+    QHash<QString, FxArt> fx;              // fx1x: the Stage10 effects' masks and fields
+    QHash<QString, std::shared_ptr<const scene::gold::GoldEffect>> gold; // gold1x: one per text actor
+    QHash<QString, SkIRect> goldBoxes;     // gold1x: where each effect has ink at rest (frame 65)
 
     void build(const QStringList &dirs, QString *error)
     {
@@ -791,10 +1189,146 @@ public:
             if (!scene::resolveLayout(scene, fns, error))
                 return;
         }
+        if (scene.profile == Profile::Gold1x) {
+            const SkiaGoldText gt(faces);
+            for (const Actor &a : std::as_const(scene.actors)) {
+                if (a.type != QLatin1String("text") || a.effect.isEmpty())
+                    continue;
+                scene::gold::GoldActor ga;
+                ga.font = a.font;
+                ga.size = int(a.size);
+                ga.text = a.text;
+                ga.color[0] = a.color.r;
+                ga.color[1] = a.color.g;
+                ga.color[2] = a.color.b;
+                ga.effect = a.effect;
+                std::shared_ptr<const scene::gold::GoldEffect> effect = scene::gold::makeGoldEffect(gt, ga);
+                if (!effect)
+                    continue;
+                scene::gold::Frame rest;
+                effect->draw(rest, 2.6);
+                SkIRect box = SkIRect::MakeEmpty();
+                for (int y = 0; y < scene::gold::FH; ++y)
+                    for (int x = 0; x < scene::gold::FW; ++x) {
+                        const quint8 *p = rest.px(x, y);
+                        if (qMax(p[0], qMax(p[1], p[2])) > 8)
+                            box.join(SkIRect::MakeXYWH(x, y, 1, 1));
+                    }
+                goldBoxes.insert(a.id, box.isEmpty() ? SkIRect::MakeWH(scene.width, scene.height) : box.makeOutset(20, 20));
+                gold.insert(a.id, effect);
+            }
+        }
+        if (scene.profile == Profile::Fx1x) {
+            for (const Actor &a : std::as_const(scene.actors)) {
+                if (a.type != QLatin1String("text") || a.effect.isEmpty())
+                    continue;
+                const QJsonObject &e = a.effect;
+                FxArt art;
+                art.kind = e.value(QStringLiteral("type")).toString();
+                const SkFont f = pixelFont(faces.value(a.font), int(a.size));
+                if (art.kind == QLatin1String("sdfMorph")) {
+                    const SkFont f2 = pixelFont(faces.value(e.value(QStringLiteral("fontTo")).toString()), int(a.size));
+                    const int cw = int(fxNum(e, "cell", 0)), ch = int(fxNum(e, "cell", 1));
+                    const QPointF o(fxNum(e, "origin", 0), fxNum(e, "origin", 1));
+                    for (int i = 0; i < a.text.size(); ++i) {
+                        const QString l = a.text.mid(i, 1);
+                        art.adv0.push_back(advanceOf(f, l));
+                        art.adv1.push_back(advanceOf(f2, l));
+                        if (art.fields.contains(l))
+                            continue;
+                        std::array<std::vector<float>, 2> pair;
+                        for (int k = 0; k < 2; ++k) {
+                            const std::vector<float> m = cellMask(k ? f2 : f, l, o, cw, ch);
+                            std::vector<quint8> in(m.size()), out(m.size());
+                            for (size_t q = 0; q < m.size(); ++q) {
+                                in[q] = m[q] > 0.5f;
+                                out[q] = !in[q];
+                            }
+                            // edt(inside) − edt(outside): distance to the nearest outside / inside pixel
+                            const std::vector<float> din = edt(out, cw, ch), dout = edt(in, cw, ch);
+                            pair[size_t(k)].resize(m.size());
+                            for (size_t q = 0; q < m.size(); ++q)
+                                pair[size_t(k)][q] = din[q] - dout[q];
+                        }
+                        art.fields.insert(l, pair);
+                    }
+                    double w0 = 0.0;
+                    for (double v : art.adv0)
+                        w0 += v;
+                    w0 += fxNum(e, "tracking", 0) * double(qMax<qsizetype>(0, a.text.size() - 1));
+                    const double x0 = fxNum(e, "centerX") - w0 / 2.0 - o.x();
+                    art.rect = SkIRect::MakeXYWH(int(x0), int(fxNum(e, "baselineY") - o.y()), int(w0) + cw, ch);
+                } else if (art.kind == QLatin1String("maskedLight")) {
+                    const double sig = fxNum(e, "haloSigma");
+                    const int m = int(std::ceil(sig * 4.0)) + 2;
+                    const std::vector<GlyphRun> runs = basicLayout(f, a.text);
+                    SkIRect b = layoutBounds(runs, {SkScalar(a.baseline.x()), SkScalar(a.baseline.y())}).makeOutset(m, m);
+                    if (!b.intersect(SkIRect::MakeWH(scene.width, scene.height)))
+                        continue;
+                    art.rect = b;
+                    art.mask = cellMask(f, a.text, a.baseline - QPointF(b.left(), b.top()), b.width(), b.height());
+                    art.soft = gaussBlur(art.mask, b.width(), b.height(), sig);
+                    art.xmax = std::trunc(a.baseline.x() + advanceOf(f, a.text) + fxNum(e, "beam", 1));
+                } else if (art.kind == QLatin1String("focusMix")) {
+                    const int cw = int(fxNum(e, "cell", 0)), ch = int(fxNum(e, "cell", 1));
+                    const QPointF o(fxNum(e, "origin", 0), fxNum(e, "origin", 1));
+                    art.mask = cellMask(f, a.text, o, cw, ch);
+                    art.soft = gaussBlur(art.mask, cw, ch, fxNum(e, "sigma"));
+                    art.rect = SkIRect::MakeXYWH(int(a.baseline.x() - o.x()), int(a.baseline.y() - o.y()), cw, ch);
+                }
+                fx.insert(a.id, art);
+            }
+        }
+        if (scene.profile == Profile::Cov1x) {
+            for (const Actor &a : std::as_const(scene.actors)) {
+                if (a.type == QLatin1String("text"))
+                    covs.insert(a.id, covText(faces.value(a.font), a, a.ss > 0 ? a.ss : scene.supersample));
+                else if (a.type == QLatin1String("rect") || a.type == QLatin1String("roundRect"))
+                    covs.insert(a.id, covBox(a));
+            }
+        }
         for (const Actor &a : std::as_const(scene.actors)) {
-            if (a.type != QLatin1String("text"))
+            if (a.type != QLatin1String("text") || scene.profile == Profile::Cov1x || scene.profile == Profile::Fx1x
+                || scene.profile == Profile::Gold1x)
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
+            if (scene.profile == Profile::Pil1x && a.spriteChapter) {
+                const TrackedArt ta = chapterText(pixelFont(tf, int(a.size)), a.text, a.letterSpacing, a.baseline);
+                texts.insert(a.id, ta.art);
+                trackedSprites.insert(a.id, QSizeF(ta.spriteW, ta.spriteH));
+                continue;
+            }
+            if (scene.profile == Profile::Pil1x && a.tracked) {
+                const TrackedArt ta = trackedText(pixelFont(tf, int(a.size)), a.text, a.tracking);
+                texts.insert(a.id, ta.art);
+                trackedSprites.insert(a.id, QSizeF(ta.spriteW, ta.spriteH));
+                continue;
+            }
+            if (scene.profile == Profile::Pil1x) {
+                const SkFont f1 = pixelFont(tf, int(a.size));
+                // at.right/top: the script's sprite (ink + 8 px padding) has its right edge and top
+                // there, whatever the text is (the Stage06 counter).
+                const auto place = [&a](TextArt art) {
+                    if (a.anchorLeft) { // Stage09 text_layer(): the sprite's top-left corner
+                        const QPointF o(a.anchorLeftX + a.spritePad, a.anchorTopY + a.spritePad);
+                        const QPointF d = o - art.ink.topLeft();
+                        art.ink.translate(d);
+                        art.origin += d;
+                        return art;
+                    }
+                    if (!a.anchorRight)
+                        return art;
+                    const QPointF o(a.anchorRightX - 8 - art.ink.width(), a.anchorTopY + 8);
+                    art.ink.moveTopLeft(o);
+                    art.origin = o;
+                    return art;
+                };
+                texts.insert(a.id, place(pilText(f1, a.text, a.baseline)));
+                if (a.hasCounter)
+                    for (int n = 0; n <= a.counterTo; ++n)
+                        texts.insert(a.id + QLatin1Char('#') + QString::number(n), place(pilText(f1, QString::number(n), a.baseline)));
+                continue;
+            }
             const Actor *flat = flatGroupOf(a);
             if (scene.profile == Profile::Sprite2x || flat) {
                 QPointF pen = a.baseline;
@@ -828,6 +1362,43 @@ public:
                 texts.insert(a.id, maskText(pixelFont(tf, size), a.text, a.letterSpacing, a.baseline));
             }
         }
+        // pil1x "row" (Stage09 A_Crisp): pens getlength + gap apart, the run centred in row.width.
+        QList<QPair<QString, TimedBlock>> enters; // added after the walk: the list must not change under it
+        for (const Actor &g : std::as_const(scene.actors)) {
+            if (!g.hasRow || scene.profile != Profile::Pil1x)
+                continue;
+            std::vector<const Actor *> kids;
+            std::vector<double> lens;
+            double sum = 0.0;
+            for (const Actor &k : std::as_const(scene.actors)) {
+                if (k.parent != g.id || k.type != QLatin1String("text"))
+                    continue;
+                const SkFont f1 = pixelFont(faces.value(k.font), int(k.size));
+                const double len = pilAdvance(f1, k.text); // getlength, on hb-ft's 26.6 grid
+                kids.push_back(&k);
+                lens.push_back(len);
+                sum += len;
+            }
+            if (kids.empty())
+                continue;
+            double x = (g.rowWidth - (sum + g.rowGap * double(kids.size() - 1))) / 2.0;
+            if (g.rowRoundLeft)
+                x = roundHalfEven(x);
+            for (size_t i = 0; i < kids.size(); ++i) {
+                const Actor &k = *kids[i];
+                texts.insert(k.id, pilText(pixelFont(faces.value(k.font), int(k.size)), k.text, QPointF(x, g.rowBaseline)));
+                if (g.rowEnter.present) { // Stage11 Phrase Reflow: from the word's own centred place
+                    TimedBlock b = g.rowEnter;
+                    b.values = {{QStringLiteral("dx"), (g.rowWidth / 2.0 - lens[i] / 2.0) - x}};
+                    enters.append({k.id, b});
+                }
+                x += lens[i] + g.rowGap;
+            }
+        }
+        for (const auto &[id, b] : std::as_const(enters))
+            for (Actor &m : scene.actors)
+                if (m.id == id)
+                    m.inMore.append(b);
         const scene::InkFn ink = [this](const Actor &t) -> std::optional<QRectF> {
             const auto it = texts.constFind(t.id);
             if (it == texts.constEnd())
@@ -995,6 +1566,26 @@ public:
         c.scale(SkScalar(s), SkScalar(s));
         const bool exact = s == 1.0 && offX == std::floor(offX);
         const SkSamplingOptions sampling = exact ? SkSamplingOptions() : SkSamplingOptions(SkCubicResampler::Mitchell());
+        if (sc.profile == Profile::Pil1x) {
+            paintPil(c);
+            c.restore();
+            return;
+        }
+        if (sc.profile == Profile::Cov1x) {
+            paintCov(c, sampling);
+            c.restore();
+            return;
+        }
+        if (sc.profile == Profile::Fx1x) {
+            paintFx(c, sampling);
+            c.restore();
+            return;
+        }
+        if (sc.profile == Profile::Gold1x) {
+            paintGold(c, sampling);
+            c.restore();
+            return;
+        }
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
             if (a.hidden) // Smart Keycaps: a "+" that would start a wrapped row
@@ -1027,6 +1618,596 @@ public:
     }
 
 private:
+    // gold1x (Golden Run 18): every effect lights a black frame as the proofs did; the frame is
+    // keyed on black (alpha = the brightest channel, colour = frame / alpha).
+    void paintGold(SkCanvas &c, const SkSamplingOptions &sampling) const
+    {
+        const Scene &sc = r->scene;
+        scene::gold::Frame f;
+        bool any = false;
+        for (const Actor &a : sc.actors) {
+            const auto it = r->gold.constFind(a.id);
+            if (it == r->gold.constEnd())
+                continue;
+            (*it)->draw(f, t);
+            any = true;
+        }
+        if (!any)
+            return;
+        SkIRect ink = SkIRect::MakeEmpty();
+        for (int y = 0; y < scene::gold::FH; ++y)
+            for (int x = 0; x < scene::gold::FW; ++x) {
+                const quint8 *p = f.px(x, y);
+                if (p[0] | p[1] | p[2])
+                    ink.join(SkIRect::MakeXYWH(x, y, 1, 1));
+            }
+        if (ink.isEmpty())
+            return;
+        SkBitmap bm;
+        bm.allocPixels(SkImageInfo::Make(ink.width(), ink.height(), kRGBA_8888_SkColorType, kUnpremul_SkAlphaType));
+        for (int y = 0; y < ink.height(); ++y) {
+            auto *row = static_cast<quint8 *>(bm.getAddr(0, y));
+            for (int x = 0; x < ink.width(); ++x) {
+                const quint8 *p = f.px(ink.left() + x, ink.top() + y);
+                const int a = qMax(int(p[0]), qMax(int(p[1]), int(p[2])));
+                for (int k = 0; k < 3; ++k)
+                    row[x * 4 + k] = a > 0 ? quint8(qMin(255, p[k] * 255 / a)) : 0;
+                row[x * 4 + 3] = quint8(a);
+            }
+        }
+        bm.setImmutable();
+        c.drawImage(bm.asImage(), SkScalar(ink.left()), SkScalar(ink.top()), sampling, nullptr);
+    }
+
+    // fx1x (Stage10): each effect as render_stage10.py mixed it, composited into one layer
+    // (colour·(1 − a) + ink·a in order; the light's halo as a warm layer under the text).
+    void paintFx(SkCanvas &c, const SkSamplingOptions &sampling) const
+    {
+        const Scene &sc = r->scene;
+        struct Px
+        {
+            int x, y;
+            float a, rgb[3];
+        };
+        std::vector<Px> ops;
+        SkIRect all = SkIRect::MakeEmpty();
+        const auto put = [&](int x, int y, float a, float r0, float g0, float b0) {
+            if (a <= 0.0f || x < 0 || y < 0 || x >= sc.width || y >= sc.height)
+                return;
+            ops.push_back({x, y, qMin(a, 1.0f), {r0, g0, b0}});
+            all.join(SkIRect::MakeXYWH(x, y, 1, 1));
+        };
+        for (const Actor &a : sc.actors) {
+            const auto it = r->fx.constFind(a.id);
+            if (it == r->fx.constEnd())
+                continue;
+            const FxArt &art = *it;
+            const QJsonObject &e = a.effect;
+            const auto col = [](const QJsonValue &v, int k) { return float(v.toArray().at(k).toDouble()); };
+            if (art.kind == QLatin1String("sdfMorph")) {
+                const double enter = fxEase(e, "enter", t), morph = fxEase(e, "morph", t), leave = fxEase(e, "leave", t);
+                const double shape = morph * (1 - leave) + leave * fxNum(e, "leaveShape");
+                const double tr0 = fxNum(e, "tracking", 0), tr1 = fxNum(e, "tracking", 1);
+                const double tracking = tr0 + (tr1 - tr0) * shape;
+                double wsum = 0.0;
+                std::vector<double> adv(art.adv0.size());
+                for (size_t i = 0; i < adv.size(); ++i)
+                    wsum += adv[i] = art.adv0[i] + (art.adv1[i] - art.adv0[i]) * shape;
+                double x = fxNum(e, "centerX") - (wsum + tracking * double(adv.size() - 1)) / 2.0;
+                const double rise = fxNum(e, "rise"), lift = fxNum(e, "lift");
+                const double base = fxNum(e, "baselineY") + (rise + (0 - rise) * enter) + (0 + lift * leave);
+                const double op = enter * (1 - fxEase(e, "fade", t));
+                const int cw = int(fxNum(e, "cell", 0)), ch = int(fxNum(e, "cell", 1));
+                const double gx = fxNum(e, "origin", 0), gb = fxNum(e, "origin", 1);
+                for (int i = 0; i < a.text.size() && size_t(i) < adv.size(); ++i) {
+                    const auto &pair = art.fields.value(a.text.mid(i, 1));
+                    const int ox = int(roundHalfEven(x - gx)), oy = int(roundHalfEven(base - gb));
+                    for (int yy = 0; yy < ch; ++yy)
+                        for (int xx = 0; xx < cw; ++xx) {
+                            const size_t q = size_t(yy) * size_t(cw) + size_t(xx);
+                            const double s = pair[0][q] * (1 - shape) + pair[1][q] * shape;
+                            put(ox + xx, oy + yy, float(qBound(0.0, (s + 0.8) / 1.6, 1.0) * op), float(a.color.r), float(a.color.g), float(a.color.b));
+                        }
+                    x += adv[size_t(i)] + tracking;
+                }
+            } else if (art.kind == QLatin1String("maskedLight")) {
+                const double reveal = fxEase(e, "reveal", t), b0 = fxNum(e, "beam", 0);
+                const double beam = b0 + (art.xmax - b0) * reveal;
+                const double op = 1 - fxEase(e, "fade", t);
+                const QJsonArray roi = e.value(QStringLiteral("roi")).toArray();
+                SkIRect box = SkIRect::MakeLTRB(roi.at(2).toInt(), roi.at(0).toInt(), roi.at(3).toInt(), roi.at(1).toInt());
+                if (!box.intersect(art.rect))
+                    continue;
+                const double add[3] = {col(e.value(QStringLiteral("haloAdd")), 0), col(e.value(QStringLiteral("haloAdd")), 1), col(e.value(QStringLiteral("haloAdd")), 2)};
+                const double top = qMax(add[0], qMax(add[1], add[2]));
+                const QJsonValue lit = e.value(QStringLiteral("lit"));
+                for (int y = box.top(); y < box.bottom(); ++y)
+                    for (int x = box.left(); x < box.right(); ++x) {
+                        const size_t q = size_t(y - art.rect.top()) * size_t(art.rect.width()) + size_t(x - art.rect.left());
+                        const double L = art.soft[q] * std::exp(-0.5 * std::pow((x - beam) / fxNum(e, "haloSpread"), 2.0));
+                        if (top > 0.0) // additive light, drawn as a warm layer
+                            put(x, y, float(top * L / 255.0), float(255.0 * add[0] / top), float(255.0 * add[1] / top), float(255.0 * add[2] / top));
+                    }
+                for (int y = box.top(); y < box.bottom(); ++y)
+                    for (int x = box.left(); x < box.right(); ++x) {
+                        const size_t q = size_t(y - art.rect.top()) * size_t(art.rect.width()) + size_t(x - art.rect.left());
+                        const double v = qBound(0.0, (beam - x) / fxNum(e, "edge") + fxNum(e, "edgeBias"), 1.0);
+                        const double g = std::exp(-0.5 * std::pow((x - beam) / fxNum(e, "glowSigma"), 2.0)) * fxNum(e, "warm");
+                        const float am = float(art.mask[q] * v * op);
+                        put(x, y, am, float(a.color.r + (col(lit, 0) - a.color.r) * g), float(a.color.g + (col(lit, 1) - a.color.g) * g),
+                            float(a.color.b + (col(lit, 2) - a.color.b) * g));
+                    }
+            } else if (art.kind == QLatin1String("focusMix")) {
+                const double enter = fxEase(e, "enter", t), move = fxEase(e, "move", t), resolve = fxEase(e, "resolve", t);
+                const double outfade = 1 - fxEase(e, "fade", t);
+                const double fc = e.value(QStringLiteral("order")).toInt() == 0 ? (1 - move) * (1 - resolve) + resolve : move * (1 - resolve) + resolve;
+                const double factor = 0.57 + 0.43 * fc;
+                const QJsonValue soft = e.value(QStringLiteral("soft"));
+                const float rgb[3] = {std::trunc(col(soft, 0) + (a.color.r - col(soft, 0)) * fc), std::trunc(col(soft, 1) + (a.color.g - col(soft, 1)) * fc),
+                                      std::trunc(col(soft, 2) + (a.color.b - col(soft, 2)) * fc)};
+                for (int y = 0; y < art.rect.height(); ++y)
+                    for (int x = 0; x < art.rect.width(); ++x) {
+                        const size_t q = size_t(y) * size_t(art.rect.width()) + size_t(x);
+                        const double al = (art.soft[q] * (1 - fc) + art.mask[q] * fc) * enter * outfade * factor;
+                        put(art.rect.left() + x, art.rect.top() + y, float(al), rgb[0], rgb[1], rgb[2]);
+                    }
+            }
+        }
+        if (ops.empty())
+            return;
+        const int w = all.width(), h = all.height();
+        std::vector<float> accA(size_t(w) * size_t(h), 0.0f), accC(size_t(w) * size_t(h) * 3, 0.0f);
+        for (const Px &p : ops) {
+            const size_t i = size_t(p.y - all.top()) * size_t(w) + size_t(p.x - all.left());
+            for (int k = 0; k < 3; ++k)
+                accC[i * 3 + k] = accC[i * 3 + k] * (1.0f - p.a) + p.rgb[k] * p.a;
+            accA[i] = accA[i] * (1.0f - p.a) + p.a;
+        }
+        SkBitmap bm;
+        bm.allocPixels(SkImageInfo::Make(w, h, kRGBA_8888_SkColorType, kUnpremul_SkAlphaType));
+        for (int y = 0; y < h; ++y) {
+            auto *row = static_cast<quint8 *>(bm.getAddr(0, y));
+            for (int x = 0; x < w; ++x) {
+                const size_t i = size_t(y) * size_t(w) + size_t(x);
+                const float a = accA[i];
+                for (int k = 0; k < 3; ++k)
+                    row[x * 4 + k] = a > 0.0f ? quint8(qBound(0.0f, accC[i * 3 + k] / qMax(a, 1e-6f), 255.0f)) : 0;
+                row[x * 4 + 3] = quint8(qBound(0.0f, a * 255.0f, 255.0f));
+            }
+        }
+        bm.setImmutable();
+        c.drawImage(bm.asImage(), SkScalar(all.left()), SkScalar(all.top()), sampling, nullptr);
+    }
+
+    // cov1x: m = coverage · alpha · group · fade · crop wipe (· the clipTo actor's wiped box);
+    // colour = c·(1 − m) + ink·m in actor order; drawn as one unpremultiplied image.
+    void paintCov(SkCanvas &c, const SkSamplingOptions &sampling) const
+    {
+        const Scene &sc = r->scene;
+        struct Layer
+        {
+            const CovMap *map;
+            const CovMap *clip;
+            double op, edge, clipEdge;
+            bool wipe, clipWipe;
+            int dy;
+            float rgb[3];
+        };
+        std::vector<Layer> layers;
+        SkIRect all = SkIRect::MakeEmpty();
+        const auto edgeOf = [](const Actor &a, const Channels &ch) {
+            return a.wipeRange[0] + (a.wipeRange[1] - a.wipeRange[0]) * ch.wipe;
+        };
+        for (const Actor &a : sc.actors) {
+            const auto it = r->covs.constFind(a.id);
+            if (it == r->covs.constEnd() || it->rect.isEmpty())
+                continue;
+            const Channels ch = scene::drawChannels(sc, a, t, nullptr);
+            const double op = a.covAlpha * ch.opacity;
+            if (op <= 0.0)
+                continue;
+            Layer l{&*it, nullptr, op, 0.0, 0.0, a.hasWipeRange, false, int(roundHalfEven(ch.dy)),
+                    {float(a.color.r), float(a.color.g), float(a.color.b)}};
+            if (a.type != QLatin1String("text"))
+                l.rgb[0] = float(a.fill.r), l.rgb[1] = float(a.fill.g), l.rgb[2] = float(a.fill.b);
+            if (a.type == QLatin1String("rect")) // a rect keeps its colour in both fields
+                l.rgb[0] = float(a.color.r), l.rgb[1] = float(a.color.g), l.rgb[2] = float(a.color.b);
+            if (l.wipe)
+                l.edge = edgeOf(a, ch);
+            if (!a.clipActor.isEmpty()) {
+                const Actor *ca = sc.actor(a.clipActor);
+                const auto ct = r->covs.constFind(a.clipActor);
+                if (ca && ct != r->covs.constEnd()) {
+                    l.clip = &*ct;
+                    l.clipWipe = ca->hasWipeRange;
+                    if (l.clipWipe)
+                        l.clipEdge = edgeOf(*ca, scene::drawChannels(sc, *ca, t, nullptr));
+                }
+            }
+            all.join(it->rect.makeOffset(0, l.dy));
+            layers.push_back(l);
+        }
+        if (!all.intersect(SkIRect::MakeWH(sc.width, sc.height)) || layers.empty())
+            return;
+        const int w = all.width(), h = all.height();
+        std::vector<float> accA(size_t(w) * size_t(h), 0.0f), accC(size_t(w) * size_t(h) * 3, 0.0f);
+        for (const Layer &l : layers) {
+            const SkIRect lr = l.map->rect.makeOffset(0, l.dy);
+            for (int y = qMax(lr.top(), all.top()); y < qMin(lr.bottom(), all.bottom()); ++y)
+                for (int x = qMax(lr.left(), all.left()); x < qMin(lr.right(), all.right()); ++x) {
+                    float m = float(l.map->at(x, y - l.dy)) / 255.0f * float(l.op);
+                    if (l.wipe)
+                        m *= float(qBound(0.0, l.edge - x, 1.0));
+                    if (l.clip) {
+                        if (!l.clip->at(x, y))
+                            continue;
+                        if (l.clipWipe)
+                            m *= float(qBound(0.0, l.clipEdge - x, 1.0));
+                    }
+                    if (m <= 0.0f)
+                        continue;
+                    const size_t i = size_t(y - all.top()) * size_t(w) + size_t(x - all.left());
+                    for (int k = 0; k < 3; ++k)
+                        accC[i * 3 + k] = accC[i * 3 + k] * (1.0f - m) + l.rgb[k] * m;
+                    accA[i] = accA[i] * (1.0f - m) + m;
+                }
+        }
+        SkBitmap bm;
+        bm.allocPixels(SkImageInfo::Make(w, h, kRGBA_8888_SkColorType, kUnpremul_SkAlphaType));
+        for (int y = 0; y < h; ++y) {
+            auto *row = static_cast<quint8 *>(bm.getAddr(0, y));
+            for (int x = 0; x < w; ++x) {
+                const size_t i = size_t(y) * size_t(w) + size_t(x);
+                const float a = accA[i];
+                for (int k = 0; k < 3; ++k)
+                    row[x * 4 + k] = a > 0.0f ? quint8(qBound(0.0f, accC[i * 3 + k] / qMax(a, 1e-6f), 255.0f)) : 0;
+                row[x * 4 + 3] = quint8(qBound(0.0f, a * 255.0f, 255.0f));
+            }
+        }
+        bm.setImmutable();
+        c.drawImage(bm.asImage(), SkScalar(all.left()), SkScalar(all.top()), sampling, nullptr);
+    }
+
+    // ---- pil1x (Part5 Stage05-08): every part on its own layer, in order; scene exitWipe ----
+    static double channelValue(const Channels &ch, const QString &name)
+    {
+        if (name == QLatin1String("opacity"))
+            return ch.opacity;
+        if (name == QLatin1String("wipe"))
+            return ch.wipe;
+        if (name == QLatin1String("progress"))
+            return ch.progress;
+        if (name == QLatin1String("scale"))
+            return ch.scale;
+        if (name == QLatin1String("vscale"))
+            return ch.vscale;
+        if (name == QLatin1String("dx"))
+            return ch.dx;
+        return ch.dy;
+    }
+
+    bool pilVisible(const Actor &a, double t) const
+    {
+        const Scene &sc = r->scene;
+        for (const Actor *node = &a; node; node = node->parent.isEmpty() ? nullptr : sc.actor(node->parent)) {
+            for (const Actor::Condition &cond : node->visibleWhen) {
+                const Actor *other = cond.actor.isEmpty() ? node : sc.actor(cond.actor);
+                if (!other)
+                    continue;
+                if (!(channelValue(scene::drawChannels(sc, *other, t, nullptr), cond.channel) > cond.gt))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    void paintPil(SkCanvas &c) const
+    {
+        const Scene &sc = r->scene;
+        if (sc.exitSlide.present && t >= sc.exitSlide.start) {
+            // Stage06 rigid exit: the title as it stood at `hold`, cropped, slides down whole.
+            const TimedBlock &s = sc.exitSlide;
+            if (t >= s.start + s.dur)
+                return;
+            const double p = s.dur <= 0.0 ? 1.0 : s.ease((t - s.start) / s.dur);
+            const double dy = roundHalfEven(sc.exitSlideDistance * p);
+            const double x = sc.exitSlideRect[0], y = sc.exitSlideRect[1], w = sc.exitSlideRect[2], h = sc.exitSlideRect[3];
+            const double vis = qBound(0.0, double(sc.height) - (y + dy), h);
+            if (vis <= 0.0)
+                return;
+            c.save();
+            c.translate(0, SkScalar(dy));
+            c.clipRect(SkRect::MakeXYWH(SkScalar(x), SkScalar(y), SkScalar(w), SkScalar(vis)));
+            paintPilAt(c, sc.exitSlideHold);
+            c.restore();
+            return;
+        }
+        paintPilAt(c, t);
+    }
+
+    void paintPilAt(SkCanvas &c, double at) const
+    {
+        const Scene &sc = r->scene;
+        const double t = at; // the frame's own time, or the exitSlide's frozen hold
+        // layer "base" (Stage07 matte) first, outside the exit wipe; then everything else.
+        drawPilActors(c, t, true);
+        SkRect keep = SkRect::MakeWH(SkScalar(sc.width), SkScalar(sc.height));
+        if (sc.exitWipe.present) {
+            const TimedBlock &w = sc.exitWipe;
+            const double p = w.dur <= 0.0 ? (t >= w.start ? 1.0 : 0.0) : w.ease((t - w.start) / w.dur);
+            if (p >= 1.0)
+                return;
+            if (p > 0.0) {
+                const double W = sc.width, H = sc.height;
+                if (sc.exitWipeMode == QLatin1String("right"))
+                    keep = SkRect::MakeLTRB(0, 0, SkScalar(roundHalfEven(W * (1.0 - p)) + 1), SkScalar(H));
+                else if (sc.exitWipeMode == QLatin1String("left"))
+                    keep = SkRect::MakeLTRB(SkScalar(roundHalfEven(W * p)), 0, SkScalar(W), SkScalar(H));
+                else if (sc.exitWipeMode == QLatin1String("top"))
+                    keep = SkRect::MakeLTRB(0, SkScalar(roundHalfEven(H * p)), SkScalar(W), SkScalar(H));
+                else
+                    keep = SkRect::MakeLTRB(0, 0, SkScalar(qMax(0.0, roundHalfEven(sc.exitWipeRight - (sc.exitWipeRight - sc.exitWipeLeft) * p)) + 1), SkScalar(H));
+            }
+        }
+        c.save();
+        c.clipRect(keep);
+        drawPilActors(c, t, false);
+        c.restore();
+    }
+
+    static bool inBase(const Scene &sc, const Actor &a)
+    {
+        for (const Actor *node = &a; node; node = node->parent.isEmpty() ? nullptr : sc.actor(node->parent))
+            if (node->layerBase)
+                return true;
+        return false;
+    }
+
+    void drawPilActors(SkCanvas &c, double t, bool base) const
+    {
+        const Scene &sc = r->scene;
+        for (const Actor &a : sc.actors) {
+            if (inBase(sc, a) != base)
+                continue;
+            const Actor *parent = a.parent.isEmpty() ? nullptr : sc.actor(a.parent);
+            if (parent && parent->pane)
+                continue; // drawn with its pane
+            const bool group = a.type == QLatin1String("group");
+            if ((group && !a.pane) || !pilVisible(a, t))
+                continue;
+            if (group) {
+                c.saveLayer(nullptr, nullptr);
+                for (const Actor &k : sc.actors)
+                    if (k.parent == a.id && pilVisible(k, t))
+                        drawPilShape(c, k, scene::drawChannels(sc, k, t, nullptr));
+                c.restore();
+                continue;
+            }
+            const Channels ch = scene::drawChannels(sc, a, t, nullptr);
+            if (a.type == QLatin1String("text"))
+                drawPilText(c, a, ch, t);
+            else
+                drawPilShape(c, a, ch);
+        }
+    }
+
+    void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch, double t) const
+    {
+        const Scene &sc = r->scene;
+        if (a.spriteChapter) {
+            const TextArt art = r->texts.value(a.id);
+            const double w = r->trackedSprites.value(a.id).width();
+            if (!art.image || ch.opacity <= 0.0 || ch.wipe <= 0.0 || ch.opacity < sc.minOpacity
+                || (sc.skipAtThreshold && ch.opacity <= sc.minOpacity))
+                return;
+            const double cw = qBound(0.0, roundHalfEven(w * ch.wipe), w);
+            if (cw < 1.0)
+                return;
+            const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
+            const double left = a.baseline.x() - 4 + x;
+            c.save();
+            c.clipRect(SkRect::MakeLTRB(SkScalar(left), -1e6f, SkScalar(left + cw), 1e6f));
+            SkPaint paint;
+            paint.setColor(skColor(a.color, qMin(1.0, ch.opacity)));
+            c.drawImage(art.image, SkScalar(art.origin.x() + x), SkScalar(art.origin.y() + y), SkSamplingOptions(), &paint);
+            c.restore();
+            return;
+        }
+        if (a.tracked) {
+            // Stage08: centred sprite, left-to-right crop int(w·ent), opacity 1 − exit.
+            const TextArt art = r->texts.value(a.id);
+            const QSizeF sp = r->trackedSprites.value(a.id);
+            if (!art.image || ch.wipe <= 0.0 || ch.opacity <= 0.0)
+                return;
+            const double x = std::trunc(a.centerAt.x() - sp.width() / 2.0);
+            const double y = std::trunc(roundHalfEven(a.centerAt.y() - sp.height() / 2.0 + ch.dy));
+            const double vis = std::trunc(sp.width() * ch.wipe);
+            if (vis <= 0.0)
+                return;
+            c.save();
+            c.clipRect(SkRect::MakeXYWH(SkScalar(x), SkScalar(y), SkScalar(vis), SkScalar(sp.height())));
+            SkPaint paint;
+            paint.setColor(skColor(a.color, qMin(1.0, ch.opacity)));
+            c.drawImage(art.image, SkScalar(x + art.origin.x()), SkScalar(y + art.origin.y()), SkSamplingOptions(), &paint);
+            c.restore();
+            return;
+        }
+        QString key = a.id;
+        if (a.hasCounter) {
+            const TimedBlock &k = a.counter;
+            const double p = k.dur <= 0.0 ? (t >= k.start ? 1.0 : 0.0) : k.ease((t - k.start) / k.dur);
+            key += QLatin1Char('#') + QString::number(qBound(0, int(roundHalfEven(a.counterTo * p)), a.counterTo));
+        }
+        const TextArt art = r->texts.value(key);
+        const double op = qBound(0.0, ch.opacity, 1.0);
+        if (!art.image || op < sc.minOpacity || (sc.skipAtThreshold && op <= sc.minOpacity))
+            return;
+        if (!a.reveal.isEmpty() && sc.minReveal > 0.0
+            && (sc.skipAtThreshold ? ch.wipe <= sc.minReveal : qBound(0.0, ch.wipe, 1.0) < sc.minReveal))
+            return;
+        if (!a.reveal.isEmpty() && sc.revealCrop) {
+            // Stage07 put(): the sprite cropped to max(1, int(w·v)) px from its left edge.
+            const double v = qBound(0.0, ch.wipe, 1.0);
+            const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
+            const double L = art.ink.left() - 8 + x, w = art.ink.width() + 16;
+            c.save();
+            if (v < sc.fullReveal)
+                c.clipRect(SkRect::MakeLTRB(SkScalar(L), -1e6f, SkScalar(L + qMax(1.0, std::trunc(w * v))), 1e6f));
+            SkPaint paint;
+            paint.setColor(skColor(a.color, op));
+            c.drawImage(art.image, SkScalar(art.origin.x() + x), SkScalar(art.origin.y() + y), SkSamplingOptions(), &paint);
+            c.restore();
+            return;
+        }
+        const double x = a.truncOffsets ? std::trunc(ch.dx) : roundHalfEven(ch.dx);
+        const double y = a.truncOffsets ? std::trunc(ch.dy) : roundHalfEven(ch.dy);
+        c.save();
+        if (a.hasClipRect) // Stage09 C: the sprite cropped to a canvas rect (right/bottom exclusive)
+            c.clipRect(SkRect::MakeLTRB(SkScalar(a.clipRect[0]), SkScalar(a.clipRect[1]), SkScalar(a.clipRect[2]), SkScalar(a.clipRect[3])));
+        if (!a.reveal.isEmpty()) {
+            // The scripts revealed the whole sprite (ink plus 8 px of padding) from one side.
+            const double v = qBound(0.0, ch.wipe, 1.0);
+            if (v == 0.0) {
+                c.restore();
+                return;
+            }
+            const double L = art.ink.left() - 8 + x, T = art.ink.top() - 8 + y;
+            const double w = art.ink.width() + 16, h = art.ink.height() + 16;
+            if (a.reveal == QLatin1String("x"))
+                c.clipRect(SkRect::MakeLTRB(SkScalar(L), SkScalar(T), SkScalar(L + qMax(0.0, roundHalfEven(w * v))), SkScalar(T + h + 1)));
+            else
+                c.clipRect(SkRect::MakeLTRB(SkScalar(L), SkScalar(T + h - qMax(0.0, roundHalfEven(h * v))), SkScalar(L + w + 1), SkScalar(T + h + 1)));
+        }
+        SkPaint paint;
+        paint.setColor(skColor(a.color, op));
+        c.drawImage(art.image, SkScalar(art.origin.x() + x), SkScalar(art.origin.y() + y), SkSamplingOptions(), &paint);
+        c.restore();
+    }
+
+    void drawPilShape(SkCanvas &c, const Actor &actor, const Channels &channels) const
+    {
+        // "draw": "direct" (Stage07) wrote straight on the RGB frame: opaque in the result.
+        Actor a = actor;
+        Channels ch = channels;
+        if (a.drawDirect) {
+            for (Rgba *col : {&a.color, &a.fill, &a.strokeColor, &a.ringColor, &a.dotColor, &a.stemColor})
+                col->a = 255;
+            ch.opacity = 1.0;
+        }
+        const QString &tp = a.type;
+        if (tp == QLatin1String("rect") || tp == QLatin1String("roundRect")) {
+            double x0 = a.box[0], y0 = a.box[1], x1 = a.box[2], y1 = a.box[3];
+            const double w = x1 - x0, h = y1 - y0;
+            if (a.wipeDown && a.wipeSnapRound) // Stage09 B guide bar: y0 + round(h·p)
+                y1 = y0 + roundHalfEven(h * ch.wipe);
+            else if (a.wipeSnapInt1)
+                x1 = x0 + qMax(1.0, std::trunc(w * ch.wipe));
+            else if (a.wipeSnapRound)
+                x1 = x0 + roundHalfEven(w * ch.wipe);
+            else if (ch.wipe != 1.0)
+                x1 = x0 + w * ch.wipe;
+            if (r->scene.skipEmptyRects && (x1 <= x0 || y1 <= y0))
+                return;
+            if (ch.vscale != 1.0) {
+                const double trim = h * (1.0 - ch.vscale) / 2.0;
+                y0 += trim;
+                y1 -= trim;
+            }
+            SkPaint paint;
+            paint.setAntiAlias(false);
+            const SkRect rr = SkRect::MakeLTRB(SkScalar(x0), SkScalar(y0), SkScalar(x1 + 1), SkScalar(y1 + 1));
+            if (!a.hasFill && a.hasStroke && tp == QLatin1String("rect")) { // outline only
+                paint.setStyle(SkPaint::kStroke_Style);
+                paint.setStrokeWidth(SkScalar(qMax(1.0, a.stroke)));
+                paint.setColor(skColor(a.strokeColor, ch.opacity));
+                c.drawRect(rr.makeInset(SkScalar(a.stroke / 2.0), SkScalar(a.stroke / 2.0)), paint);
+                return;
+            }
+            paint.setColor(skColor(tp == QLatin1String("roundRect") ? a.fill : a.color, ch.opacity));
+            if (a.radius > 0) {
+                const SkRRect outer = SkRRect::MakeRectXY(rr, SkScalar(a.radius), SkScalar(a.radius));
+                if (a.hasStroke && a.stroke > 0 && tp == QLatin1String("roundRect")) {
+                    // Dark Chapter A v2: PIL's outline replaced the fill on its own pane, so the
+                    // fill stops inside the hairline and the hairline is a ring of its own.
+                    SkRRect inner;
+                    outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+                    c.drawRRect(inner, paint);
+                    paint.setColor(skColor(a.strokeColor, ch.opacity));
+                    c.drawDRRect(outer, inner, paint);
+                } else {
+                    c.drawRRect(outer, paint);
+                }
+            } else {
+                c.drawRect(rr, paint);
+            }
+        } else if (tp == QLatin1String("line")) {
+            double ax = a.from.x(), ay = a.from.y(), bx = a.to.x(), by = a.to.y();
+            const double p = ch.progress, v = ch.vscale;
+            if (a.progressSnapRound) {
+                const double base = a.hasProgressBase ? a.progressBase : ax;
+                bx = base + roundHalfEven((bx - base) * p);
+            } else if (a.collapseEnds) {
+                const double L = by - ay;
+                ay += L * (1.0 - v) / 2.0;
+                by -= L * (1.0 - v) / 2.0;
+            } else if (p != 1.0 || v != 1.0) {
+                const double L = by - ay, top = ay;
+                ay = top + (L * p) * (1.0 - v) / 2.0;
+                by = top + (L * p) * (1.0 + v) / 2.0;
+            }
+            pilLine(c, ax, ay, bx, by, a.width, skColor(a.color, ch.opacity));
+        } else if (tp == QLatin1String("route")) {
+            const double p = qBound(0.0, ch.progress, 1.0);
+            const int n = int(a.points.size()) - 1;
+            double start = 0.0;
+            for (int i = 0; i < n; ++i) {
+                const QPointF q0 = a.points.at(i), q1 = a.points.at(i + 1);
+                const double wgt = i < a.segmentWeights.size() ? a.segmentWeights.at(i) : 1.0 / n;
+                if (i == n - 1 || p <= start + wgt) {
+                    const double q = (p - start) / wgt;
+                    pilLine(c, q0.x(), q0.y(), q0.x() + (q1.x() - q0.x()) * q, q0.y() + (q1.y() - q0.y()) * q, a.width,
+                            skColor(a.color, ch.opacity));
+                    break;
+                }
+                pilLine(c, q0.x(), q0.y(), q1.x(), q1.y(), a.width, skColor(a.color, ch.opacity));
+                start += wgt;
+            }
+        } else if (tp == QLatin1String("pin")) {
+            const double rad = roundHalfEven(a.circleRadius * ch.scale);
+            const double cx = a.center.x(), cy = a.center.y();
+            SkPaint paint;
+            paint.setAntiAlias(false);
+            const SkRect ring = SkRect::MakeLTRB(SkScalar(cx - rad), SkScalar(cy - rad), SkScalar(cx + rad + 1), SkScalar(cy + rad + 1));
+            SkRRect outer = SkRRect::MakeOval(ring), inner;
+            outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+            paint.setColor(skColor(a.ringColor, ch.opacity));
+            c.drawDRRect(outer, inner, paint);
+            paint.setColor(skColor(a.dotColor, ch.opacity));
+            c.drawOval(SkRect::MakeLTRB(SkScalar(cx - a.pinDot), SkScalar(cy - a.pinDot), SkScalar(cx + a.pinDot + 1), SkScalar(cy + a.pinDot + 1)), paint);
+            pilLine(c, cx, cy + rad, cx, cy + rad + roundHalfEven(a.pinStem * ch.scale), a.stroke, skColor(a.stemColor, ch.opacity));
+        } else if (tp == QLatin1String("ellipse") || tp == QLatin1String("ring")) {
+            SkRect bb;
+            if (a.hasCenter) {
+                const double rad = roundHalfEven(a.circleRadius * ch.scale);
+                bb = SkRect::MakeLTRB(SkScalar(a.center.x() - rad), SkScalar(a.center.y() - rad),
+                                      SkScalar(a.center.x() + rad + 1), SkScalar(a.center.y() + rad + 1));
+            } else {
+                bb = SkRect::MakeLTRB(SkScalar(a.box[0]), SkScalar(a.box[1]), SkScalar(a.box[2] + 1), SkScalar(a.box[3] + 1));
+            }
+            SkPaint paint;
+            paint.setAntiAlias(false);
+            if (tp == QLatin1String("ring")) {
+                SkRRect outer = SkRRect::MakeOval(bb), inner;
+                outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+                paint.setColor(skColor(a.color, ch.opacity));
+                c.drawDRRect(outer, inner, paint);
+            } else {
+                paint.setColor(skColor(a.fill, ch.opacity));
+                c.drawOval(bb, paint);
+            }
+        }
+    }
+
     void drawSpriteText(SkCanvas &c, const Actor &a, const Channels &ch, const SkSamplingOptions &sampling,
                         double ox, double oy) const
     {
@@ -1298,9 +2479,20 @@ std::shared_ptr<const VectorPainter> makeScenePainter(std::shared_ptr<const Scen
     };
     for (const Actor &a : renderer->scene.actors) {
         const Channels ch = scene::drawChannels(renderer->scene, a, designT, nullptr);
-        for (double v : {ch.opacity, ch.wipe, ch.progress, ch.scale, ch.dx, ch.dy})
+        for (double v : {ch.opacity, ch.wipe, ch.progress, ch.scale, ch.dx, ch.dy, ch.vscale})
             mix(v);
     }
+    // The pil1x exit wipe moves while every actor rests: it must change the key too.
+    for (const TimedBlock *ew : {&renderer->scene.exitWipe, &renderer->scene.exitSlide})
+        if (ew->present)
+            mix(ew->dur <= 0.0 ? (designT >= ew->start ? 1.0 : 0.0) : ew->ease((designT - ew->start) / ew->dur));
+    // fx1x and gold1x effects keep their own timing, outside the channels: every time is its own frame.
+    if (renderer->scene.profile == Profile::Fx1x || renderer->scene.profile == Profile::Gold1x)
+        mix(designT);
+    // A counter's value moves while its channels may rest.
+    for (const Actor &a : renderer->scene.actors)
+        if (a.hasCounter)
+            mix(a.counter.dur <= 0.0 ? (designT >= a.counter.start ? 1.0 : 0.0) : a.counter.ease((designT - a.counter.start) / a.counter.dur));
     p->key = h ? h : 1;
     p->r = std::move(renderer);
     return p;
@@ -1373,6 +2565,21 @@ QHash<QString, QRectF> sceneRestBoxes(const SceneRenderer &renderer)
         QPointF off;
         for (const Actor *g = sc.actor(a.parent); g; g = sc.actor(g->parent))
             off += g->groupAt;
+        if (renderer.goldBoxes.contains(a.id)) { // gold1x: where the effect has ink at rest
+            const SkIRect c = renderer.goldBoxes.value(a.id);
+            boxes.insert(a.id, QRectF(c.left(), c.top(), c.width(), c.height()));
+            continue;
+        }
+        if (renderer.fx.contains(a.id)) { // fx1x: the effect's area
+            const SkIRect c = renderer.fx.value(a.id).rect;
+            boxes.insert(a.id, QRectF(c.left(), c.top(), c.width(), c.height()));
+            continue;
+        }
+        if (renderer.covs.contains(a.id)) { // cov1x: the actor's coverage rect
+            const SkIRect c = renderer.covs.value(a.id).rect;
+            boxes.insert(a.id, QRectF(c.left(), c.top(), c.width(), c.height()));
+            continue;
+        }
         if (a.type == QLatin1String("group")) {
             if (a.flatten)
                 boxes.insert(a.id, QRectF(a.groupAt + off, QSizeF(a.groupW, a.groupH)));

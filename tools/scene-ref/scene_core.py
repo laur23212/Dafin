@@ -17,9 +17,9 @@ from typing import Any
 
 FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
-ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'circle', 'group', 'repeat', 'keycaps'}
+ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'circle', 'group', 'repeat', 'keycaps', 'pin'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
-PROFILES = {'sprite2x', 'mask1x'}
+PROFILES = {'sprite2x', 'mask1x', 'pil1x', 'cov1x', 'fx1x', 'gold1x'}
 
 
 class SceneError(ValueError):
@@ -68,6 +68,7 @@ EASES = {
     'smoothstep': lambda u: (lambda x: x * x * (3 - 2 * x))(clamp01(u)),
     'easeOutCubic': lambda u: 1 - (1 - clamp01(u)) ** 3,
     'easeOutQuart': lambda u: 1 - (1 - clamp01(u)) ** 4,
+    'easeInCubic': lambda u: clamp01(u) ** 3,
     # Stage03b C revision's ease5: x*x*x*(x*(6*x-15)+10), evaluated in that order
     'smootherstep': lambda u: (lambda x: x * x * x * (x * (6 * x - 15) + 10))(clamp01(u)),
 }
@@ -88,8 +89,12 @@ def ease_fn(spec):
     raise SceneError(f'unknown ease {spec!r}')
 
 
-def phase(t, start, dur, ease):
-    """Progress of one timed block: 0 before start, 1 after start+dur."""
+def phase(t, start, dur, ease, delay=0.0):
+    """Progress of one timed block: 0 before start, 1 after start+dur. `delay` (a per-copy stagger,
+    Stage11 Arc Resolve) is taken off after the start, as ((t − start) − delay) / dur."""
+    if delay:
+        x = (t - start) - delay
+        return (1.0 if x >= 0 else 0.0) if dur <= 0 else ease_fn(ease)(x / dur)
     if dur <= 0:
         return 1.0 if t >= start else 0.0
     return ease_fn(ease)((t - start) / dur)
@@ -106,7 +111,7 @@ _BIN = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
 _CMP = {ast.Lt: operator.lt, ast.LtE: operator.le, ast.Gt: operator.gt, ast.GtE: operator.ge,
         ast.Eq: operator.eq, ast.NotEq: operator.ne}
 _FUNCS = {'min': min, 'max': max, 'abs': abs, 'round': round, 'int': int, 'float': float,
-          'floor': math.floor, 'ceil': math.ceil}
+          'floor': math.floor, 'ceil': math.ceil, 'sin': math.sin, 'cos': math.cos}
 
 
 def eval_expr(src: str, env: dict, funcs: dict | None = None):
@@ -332,6 +337,14 @@ def expand_actors(actors, sc: Scene, env=None, parent=None, out=None):
             if not a.get('optional', False):
                 raise SceneError(f'actor {a["id"]} is disabled but not optional')
             continue
+        if a['type'] == 'repeat' and 'over' in a:  # one copy per character (Stage11 Arc Resolve)
+            var, cvar = a.get('as', 'i'), a.get('char', 'c')
+            for i, ch in enumerate(format_text(a['over'], env)):
+                sub = copy.deepcopy(a['actor'])
+                local = {**env, var: i, cvar: ch}
+                sub['id'] = format_text(sub['id'], local)
+                expand_actors([sub], sc, {var: i, cvar: ch, **{k: v for k, v in (env or {}).items()}}, parent, out)
+            continue
         if a['type'] == 'repeat':
             n = a['count']
             n = eval_expr(n['expr'], env) if isinstance(n, dict) else (eval_expr(n, env) if isinstance(n, str) else n)
@@ -358,9 +371,10 @@ def expand_actors(actors, sc: Scene, env=None, parent=None, out=None):
             continue
         if r['type'] == 'text':
             r['text'] = format_text(r.get('text', ''), env)
-        if 'effect' in r and r['effect'].get('type') in RESERVED_EFFECTS:
+        if 'effect' in r and r['effect'].get('type') in RESERVED_EFFECTS \
+                and sc.raw.get('render', {}).get('profile') != 'fx1x':
             raise SceneError(f'{r["id"]}: effect {r["effect"]["type"]} is reserved for a later '
-                             'version (docs/scene-titles.md, Stage10); ask for the extension')
+                             'version outside the fx1x profile (docs/scene-titles.md, Stage10)')
         if r['type'] == 'group':
             r['_childIds'] = []
             out.append(r)
@@ -447,10 +461,13 @@ def resolve_align(actors, by_id):
 def scene_events(sc: Scene):
     ins, outs = [], []
     for a in sc.actors:
-        if 'in' in a:
-            ins.append(float(a['in']['start']) + float(a['in'].get('dur', 0)))
-        if 'out' in a:
-            outs.append(float(a['out']['start']))
+        for b in blocks(a.get('in')):
+            ins.append(float(b['start']) + float(b.get('dur', 0)))
+        for b in blocks(a.get('out')):
+            outs.append(float(b['start']))
+    for key in ('exitWipe', 'exitSlide'):  # scene-wide exits count too
+        if sc.raw.get(key):
+            outs.append(float(sc.raw[key]['start']))
     D0 = sc.design_duration
     hold_start = max(ins) if ins else 0.0
     hold_end = min(outs) if outs else D0
@@ -498,16 +515,41 @@ def cadence_time(sc: Scene, t: float, project_fps: float) -> float:
 # ----------------------------------------------------------------------------------------------
 # Animated channels of one actor at design time t.
 
-REVEAL = ('opacity', 'wipe', 'progress')  # multiplicative, rest value 1
+REVEAL = ('opacity', 'wipe', 'progress', 'vscale')  # multiplicative, rest value 1 (vscale: collapse to the vertical centre)
 OFFSET = ('dx', 'dy')                     # additive, rest value 0
 SCALE = ('scale',)                        # multiplicative, rest value 1
 
 
-def channels(actor: dict, t: float) -> dict:
-    ch = {'opacity': 1.0, 'wipe': 1.0, 'progress': 1.0, 'dx': 0.0, 'dy': 0.0, 'scale': 1.0}
-    blk_in, blk_out = actor.get('in'), actor.get('out')
+def blocks(v):
+    """`in` / `out` is one timed block or a list of them (one curve per channel group)."""
+    if not v:
+        return []
+    return list(v) if isinstance(v, list) else [v]
+
+
+def channels(actor: dict, t: float, clock=None) -> dict:
+    """`clock(actor_id, channel)` resolves blocks timed by another actor's channel instead of t
+    (`"clock": {"actor": id, "channel": "wipe"}`: Stage07's answer tag eases on the block's reveal)."""
+    ch = {'opacity': 1.0, 'wipe': 1.0, 'progress': 1.0, 'dx': 0.0, 'dy': 0.0, 'scale': 1.0, 'vscale': 1.0}
+    for blk_in in blocks(actor.get('in')):
+        _apply_in(ch, actor, blk_in, _clock_t(blk_in, t, clock))
+    for blk_out in blocks(actor.get('out')):
+        _apply_out(ch, actor, blk_out, _clock_t(blk_out, t, clock))
+    return ch
+
+
+def _clock_t(blk, t, clock):
+    c = blk.get('clock') if blk else None
+    if not c:
+        return t
+    if clock is None:
+        raise SceneError('a clock-timed block needs the scene (pil1x only)')
+    return clock(c['actor'], c['channel'])
+
+
+def _apply_in(ch, actor, blk_in, t):
     if blk_in:
-        p = phase(t, float(blk_in['start']), float(blk_in.get('dur', 0)), blk_in.get('ease'))
+        p = phase(t, float(blk_in['start']), float(blk_in.get('dur', 0)), blk_in.get('ease'), float(blk_in.get('delay', 0)))
         frm = blk_in.get('from', {'opacity': 0})
         for k, v in frm.items():
             if k in REVEAL or k in SCALE:
@@ -516,8 +558,13 @@ def channels(actor: dict, t: float) -> dict:
                 ch[k] += v * (1 - p)
             else:
                 raise SceneError(f'{actor["id"]}: unknown channel {k!r}')
+        if 'arc' in blk_in:  # Stage11 Arc Resolve: a lift of arc·sin(πp)·(1 − p) on the way in
+            ch['dy'] += float(blk_in['arc']) * math.sin(math.pi * p) * (1 - p)
+
+
+def _apply_out(ch, actor, blk_out, t):
     if blk_out:
-        p = phase(t, float(blk_out['start']), float(blk_out.get('dur', 0)), blk_out.get('ease'))
+        p = phase(t, float(blk_out['start']), float(blk_out.get('dur', 0)), blk_out.get('ease'), float(blk_out.get('delay', 0)))
         to = blk_out.get('to', {'opacity': 0})
         for k, v in to.items():
             if k in REVEAL or k in SCALE:
@@ -526,7 +573,6 @@ def channels(actor: dict, t: float) -> dict:
                 ch[k] += v * p
             else:
                 raise SceneError(f'{actor["id"]}: unknown channel {k!r}')
-    return ch
 
 
 def legacy_round(v: float) -> int:

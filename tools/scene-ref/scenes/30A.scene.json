@@ -1,0 +1,103 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.etched",
+ "label": "Etched",
+ "category": "Golden Run",
+ "source": {
+  "asset": "30A",
+  "sha256": "fa49fb8287ae083599af090de85e0fbb3ef8b13d6f32f236535bd4e2d68660a3",
+  "script": "render_stage30.py :: scene_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-Regular.ttf",
+   "sha256": "bcdc596729c24044e28c54815ecbe6004f83b10169a49a51160b22f59116249f",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "ETCHED",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 292,
+   "color": [
+    242,
+    237,
+    225
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "contourTrace",
+    "region": [
+     130,
+     315,
+     1660,
+     450
+    ],
+    "baseline": 330,
+    "tracking": 12,
+    "trace": [
+     0.18,
+     0.62,
+     0.14
+    ],
+    "fill": [
+     0.4,
+     0.62
+    ],
+    "out": [
+     4.55,
+     0.85
+    ],
+    "tracer": [
+     1.55,
+     0.55
+    ],
+    "tracerColor": [
+     239,
+     155,
+     111
+    ]
+   }
+  }
+ ]
+}

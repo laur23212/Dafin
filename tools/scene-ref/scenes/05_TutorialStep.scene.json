@@ -1,0 +1,344 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.practical.tutorial-step",
+ "label": "Tutorial Step",
+ "category": "Instructional Titles",
+ "source": {
+  "asset": "05_TutorialStep",
+  "sha256": "a3c2b87eed76e69f00c8360678119eeff26be358c394a4b626114af1af1d01ac",
+  "script": "Dafin_Part5_Stage05_Practical_Title_Families_16x9 :: scripts/render_stage05.py",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitWipe": {
+  "start": 5.0,
+  "dur": 0.5,
+  "ease": "smoothstep",
+  "left": 80,
+  "right": 1180
+ },
+ "fonts": {
+  "noto_display_sb": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "inter_medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "inter_semibold": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "step",
+   "type": "text",
+   "default": "01",
+   "label": "Step"
+  },
+  {
+   "id": "label",
+   "type": "text",
+   "default": "PROCES DE EDITARE",
+   "label": "Label"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Alege cadrul potrivit",
+   "label": "Title"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Începe cu momentul esențial",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "panel",
+   "role": "carrier",
+   "type": "roundRect",
+   "box": [
+    92,
+    741,
+    1152,
+    972
+   ],
+   "radius": 4,
+   "wipeSnap": "int1",
+   "in": {
+    "start": 0.12,
+    "dur": 0.6,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ],
+   "fill": [
+    12,
+    19,
+    26,
+    220
+   ]
+  },
+  {
+   "id": "accent",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    92,
+    741,
+    99,
+    972
+   ],
+   "color": [
+    168,
+    199,
+    206,
+    235
+   ],
+   "out": {
+    "start": 5.05,
+    "dur": 0.29000000000000004,
+    "ease": "smoothstep",
+    "to": {
+     "vscale": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "panel",
+     "channel": "wipe",
+     "gt": 0.15
+    },
+    {
+     "channel": "vscale",
+     "gt": 0.005
+    }
+   ]
+  },
+  {
+   "id": "divider",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    273,
+    784
+   ],
+   "to": [
+    273,
+    929
+   ],
+   "width": 2,
+   "color": [
+    150,
+    172,
+    177,
+    100
+   ],
+   "collapse": "ends",
+   "out": {
+    "start": 5.05,
+    "dur": 0.29000000000000004,
+    "ease": "smoothstep",
+    "to": {
+     "vscale": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "panel",
+     "channel": "wipe",
+     "gt": 0.76
+    },
+    {
+     "channel": "vscale",
+     "gt": 0.005
+    }
+   ]
+  },
+  {
+   "id": "stepNumber",
+   "role": "stepNumber",
+   "type": "text",
+   "text": "{step}",
+   "font": "noto_display_sb",
+   "size": 83,
+   "color": [
+    244,
+    248,
+    250,
+    255
+   ],
+   "at": {
+    "baseline": [
+     135,
+     879
+    ]
+   },
+   "reveal": "x",
+   "in": [
+    {
+     "start": 0.12,
+     "dur": 0.6,
+     "ease": "easeOutCubic",
+     "from": {
+      "wipe": 0
+     }
+    },
+    {
+     "start": 0.31,
+     "dur": 0.6299999999999999,
+     "ease": "easeOutCubic",
+     "from": {
+      "dy": 7
+     }
+    }
+   ],
+   "out": {
+    "start": 5.0,
+    "dur": 0.6399999999999997,
+    "ease": "smoothstep",
+    "to": {
+     "dy": 12
+    }
+   }
+  },
+  {
+   "id": "label",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{label}",
+   "font": "inter_medium",
+   "size": 22,
+   "color": [
+    168,
+    190,
+    194,
+    255
+   ],
+   "at": {
+    "baseline": [
+     318,
+     795
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.76,
+    "dur": 0.51,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "inter_semibold",
+   "size": 52,
+   "color": [
+    250,
+    250,
+    249,
+    255
+   ],
+   "at": {
+    "baseline": [
+     317,
+     862
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.31,
+    "dur": 0.6299999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 8
+    }
+   },
+   "out": {
+    "start": 5.0,
+    "dur": 0.6399999999999997,
+    "ease": "smoothstep",
+    "to": {
+     "dy": 12
+    }
+   }
+  },
+  {
+   "id": "subtitle",
+   "role": "description",
+   "type": "text",
+   "text": "{subtitle}",
+   "font": "inter_medium",
+   "size": 28,
+   "color": [
+    202,
+    211,
+    217,
+    255
+   ],
+   "at": {
+    "baseline": [
+     322,
+     927
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.76,
+    "dur": 0.51,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 6
+    }
+   },
+   "optional": true
+  }
+ ]
+}

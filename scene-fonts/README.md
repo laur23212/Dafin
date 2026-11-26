@@ -13,7 +13,8 @@ ship it.
 
 All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open Font License 1.1
 (`OFL-Noto.txt`, `OFL-Inter.txt`), except FreeSerif (GNU FreeFont: GPL-3+ with the font exception,
-which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
+which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the ParaType PT fonts
+(ParaType Free Font License, `COPYING-ParaType.txt`) and Roboto Slab (Apache 2.0, `COPYING-RobotoSlab.txt`).
 
 | File | sha256 | Package |
 |---|---|---|
@@ -25,18 +26,41 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
 | Inter-Regular.otf | be6d709dcb730ddaf050cbdae6fe89bd56d5d14dc66885639bbf6f06bd03521b | fonts-inter 4.0+ds-1 |
 | NotoSerif-SemiBoldItalic.ttf | fbf7c52746a6d0308cc137938d6a7c44fd40ee2db6bbf54d3df59851598d68fc | fonts-noto-extra 20201225-2 |
 | InterDisplay-Regular.otf | 42263268dce7a1217d590dd44675fa624438cc767b3c37e9a149f2a40c406ca0 | fonts-inter 4.0+ds-1 |
-| NotoSansSymbols2-Regular.ttf | 876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688 | fonts-noto-core 20201225-2 (the ⌘ ⌥ keys of Stage13C) |
 | Inter-Medium.otf | 1e65171fccd6f445b7742728454620ec2867356c849af78e71bf2c4f0e3d97ba | fonts-inter 4.0+ds-1 |
 | NotoSansDisplay-Medium.ttf | 0d7de6c6a264dfa9b0e93efc1338414bff20f79aaf9ff85e3a9fc901bdf9dbea | fonts-noto-extra 20201225-2 |
 | NotoSansDisplay-SemiCondensedExtraBold.ttf | b224e7ec937a28e4b7f4925acf5be35ac480489fac28f598185f3e1af91473a4 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
 | NotoSansDisplay-SemiCondensedMedium.ttf | 1d1ab248177e1fd53daf9f481215e27ddf948578b8d99c51962de399f7a77e96 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
 | FreeSerif.ttf | c57bf5de095af4e070c2acb5bce634316409ed4203b5098f4fdadb691dc7b3d2 | fonts-freefont-ttf 20211204+svn4273-2 (Stage03b A); GPL-3+ with the font exception, `COPYING-FreeFont.txt` |
+| InterDisplay-Medium.otf | cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c | fonts-inter 4.0+ds-1 (Part5 Stage05) |
+| NotoSerifDisplay-Medium.ttf | ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19 | fonts-noto-extra 20201225-2 (Part5 Stage05) |
+| PTS75F.ttf | 576b59732fff967895eba1eed0fc5f8cdb069ea31fde878c0cdc36aa2d4615ef | fonts-paratype 20181108-3 (PT Sans Bold) |
+| PTC55F.ttf | 17831d9f44e62fb9b80c91827af8eafa51cb0f61529a7176c9c5135555384e70 | fonts-paratype 20181108-3 (PT Sans Caption) |
+| PTC75F.ttf | 9a1a5425abb2f16d85cd8a677879b59b595c5c55014b0fc60233f810aedd7292 | fonts-paratype 20181108-3 (PT Sans Caption Bold) |
+| PTF55F.ttf | d074251529defb38523f3d89cfadfc2491515b32c22f154a8fc6b4c184415a69 | fonts-paratype 20181108-3 (PT Serif) |
+| PTF75F.ttf | 71a57caa616bec6f7266bddb176defd481f4edfca357123d4d3d8bb942b10f26 | fonts-paratype 20181108-3 (PT Serif Bold) |
+| RobotoSlab-Bold.otf | f860d0a2b4323863d94f76d579d4ddb54048c87d07f3bff936f40c22d7cb49dd | fonts-roboto-slab 1.100263+20170512-2 |
+| EBGaramond12-Regular.ttf | 689aa494b0eb1913085eaeb84d28b18e3b788b45dddbb3083a676d2e8896b5a4 | fonts-ebgaramond-extra 0.016+git20210310.42d4f9f2-1 (OFL) |
+| EBGaramond12-Bold.ttf | 3209fd31257e096b80c84e49d611ddb513d57d3b2f4dd20719d2ae102906fe1e | fonts-ebgaramond-extra 0.016+git20210310.42d4f9f2-1 (OFL; Dark Chapter A v2, Chapter A v4) |
+| NotoSansDisplay-Black.ttf | 4bf498b3b6a4b3fe311b8771c001cef5077a339f329649542d237cc284d3b13d | fonts-noto-extra 20201225-2 (Stage09 Word Shift B7) |
+| NotoSansDisplay-SemiCondensedBold.ttf | 7b2e466a506a2f6ce6ee807dd97fc157acc11d5c7c88dcb4c7af5729ae427906 | fonts-noto-extra 20201225-2 (Stage09 Split Motion C1) |
+| NotoSerifDisplay-SemiBold.ttf | 74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40 | fonts-noto-extra 20201225-2 (Stage11 Phrase Reflow) |
+| NotoSansDisplay-Light.ttf | b2938eecdbdacbbcc9fab3641268d02afb0c0896335ab12331793195de019197 | fonts-noto-extra 20201225-2 (Stage10 Typography Morph) |
+| InterDisplay-ExtraBold.otf | 7f233cb770bedfb0e4d1d5bada87dade7505513b020ca4b1ae2566fa358263b4 | fonts-inter 4.0+ds-1 (Golden 25A, 26A, 39A) |
+| InterDisplay-Bold.otf | 4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970 | fonts-inter 4.0+ds-1 (Golden 32A, 33A, 34A, 35A, 48A, 49A) |
+| InterDisplay-Black.otf | c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8 | fonts-inter 4.0+ds-1 (Golden 25A, 26B, 27B, 28B, 28C, 29A, 29C, 30B) |
+| NotoSerifDisplay-BoldItalic.ttf | d3c055380d05e41732096c337226afe96640e7eaeaf7d1294556545b95ccc123 | fonts-noto-extra 20201225-2 (Golden 25B) |
+| NotoSerifDisplay-ExtraLight.ttf | 492dccca49ec4cfe08eb99fa911003be314dc6373f6aaf1285861724f17b5c3b | fonts-noto-extra 20201225-2 (Golden 26C) |
+| NotoSerifDisplay-Bold.ttf | 8666c2488e681a31670f9fc0b5d59fa4f21f2a0664a76876fe49ebd832f673c7 | fonts-noto-extra 20201225-2 (Golden 26C) |
+| NotoSerifDisplay-SemiBoldItalic.ttf | a526accf800873339a9568f16a30229a05070cb9a31825011c3819e99c98532a | fonts-noto-extra 20201225-2 (Golden 27A) |
+| NotoSerifDisplay-Italic.ttf | 96ad3a5588b1d6e564589d236b8fa1839e8169a6b87a055340c36b87904e93e0 | fonts-noto-extra 20201225-2 (Golden 27C) |
+| NotoSerifDisplay-MediumItalic.ttf | 862ef9d1adc931b504f5c35f39a7fe25ba25397f22f680ba3d07704a9664e12e | fonts-noto-extra 20201225-2 (Golden 28A) |
+| NotoSerifDisplay-Regular.ttf | bcdc596729c24044e28c54815ecbe6004f83b10169a49a51160b22f59116249f | fonts-noto-extra 20201225-2 (Golden 30A) |
+| Lato-Heavy.ttf | 4ce7ec20cd9c391b271b4149ad8cf5a71301d98965403f14fc5530d017146dbb | fonts-lato 2.015-1 (OFL) |
 
 `NotoSerif-SemiBoldItalic.ttf` and `InterDisplay-Regular.otf` are **not** proof fonts. They draw the reconstructed Chapter C title (`presets/scene-titles/`),
 whose original script and font are lost (`FONT_UNKNOWN`); they are the closest installed files, not the original.
 
-Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
-reserved effects, which v1 refuses.
+Stage10's effects run in the fx1x profile (docs/scene-titles.md).
 
 NotoSansSymbols2-Regular.ttf draws the Mac key glyphs `⌘ ⌥ ⇧ ⌃` of the Smart Keycaps
 (`docs/scene-keycaps.md`). It was recovered from the official Debian package

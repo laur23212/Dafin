@@ -1,0 +1,100 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.awaken",
+ "label": "Awaken",
+ "category": "Golden Run",
+ "source": {
+  "asset": "26C",
+  "sha256": "f3726661c6873458b1fb8eda489ad0e95367e84a42e7a6f11ba87fa8f4ad35c2",
+  "script": "render_stage26.py :: scene_c",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "thin": {
+   "file": "NotoSerifDisplay-ExtraLight.ttf",
+   "sha256": "492dccca49ec4cfe08eb99fa911003be314dc6373f6aaf1285861724f17b5c3b",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "bold": {
+   "file": "NotoSerifDisplay-Bold.ttf",
+   "sha256": "8666c2488e681a31670f9fc0b5d59fa4f21f2a0664a76876fe49ebd832f673c7",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "AWAKEN",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "thin",
+   "size": 300,
+   "color": [
+    243,
+    239,
+    233
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "weightMorph",
+    "fontTo": "bold",
+    "tracking": 9,
+    "baseline": 662,
+    "cellHeight": 300,
+    "pen": 256,
+    "morph": [
+     0.52,
+     1.24
+    ],
+    "in": [
+     0.15,
+     0.38
+    ],
+    "out": [
+     4.6,
+     0.6
+    ],
+    "colorFrom": [
+     175,
+     204,
+     222
+    ]
+   }
+  }
+ ]
+}

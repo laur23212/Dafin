@@ -1,0 +1,118 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.become",
+ "label": "Become → Evolve",
+ "category": "Golden Run",
+ "source": {
+  "asset": "25A",
+  "sha256": "bf5683a4211cc5dfff9f2d0c5dfd125968f6b51b807dd9fd7d8ff52dbbfe04d3",
+  "script": "render_stage25.py :: scene_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "heavy": {
+   "file": "InterDisplay-ExtraBold.otf",
+   "sha256": "7f233cb770bedfb0e4d1d5bada87dade7505513b020ca4b1ae2566fa358263b4",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "BECOME",
+   "label": "Word"
+  },
+  {
+   "id": "to",
+   "type": "text",
+   "default": "EVOLVE",
+   "label": "Becomes"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "heavy",
+   "size": 330,
+   "color": [
+    203,
+    214,
+    225
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "contourMorph",
+    "to": "{to}",
+    "fontTo": "black",
+    "sizeTo": 334,
+    "cell": [
+     232,
+     292
+    ],
+    "gap": 12,
+    "glyph": [
+     206,
+     252
+    ],
+    "glyphAt": [
+     13,
+     20
+    ],
+    "y": 405,
+    "colorTo": [
+     218,
+     249,
+     239
+    ],
+    "in": [
+     0.16,
+     0.48
+    ],
+    "morph": [
+     1.21,
+     1.14
+    ],
+    "out": [
+     4.72,
+     0.56
+    ]
+   }
+  }
+ ]
+}

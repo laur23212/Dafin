@@ -1,0 +1,463 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.editorial.question-answer",
+ "label": "Question & Answer",
+ "category": "Editorial Titles",
+ "source": {
+  "asset": "07_QA_v3",
+  "sha256": "c17998ab3ff4d3eade78cf41976663b50ddb822ec098c5089a0ddf88bca1c556",
+  "script": "Dafin_Part5_Stage07_InfoKinetics :: scripts/render_stage07.py frame_c with render_targeted_fixes_v3.py fonts",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.002,
+  "minReveal": 0.002,
+  "fullOpacity": 0.999,
+  "fullReveal": 0.999,
+  "skipCompare": "lt",
+  "revealMode": "crop"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitWipe": {
+  "start": 4.97,
+  "dur": 0.5800000000000001,
+  "ease": "smoothstep",
+  "mode": "left"
+ },
+ "fonts": {
+  "ptc_bold": {
+   "file": "PTC75F.ttf",
+   "sha256": "9a1a5425abb2f16d85cd8a677879b59b595c5c55014b0fc60233f810aedd7292",
+   "package": "fonts-paratype 20181108-3"
+  },
+  "ptf": {
+   "file": "PTF55F.ttf",
+   "sha256": "d074251529defb38523f3d89cfadfc2491515b32c22f154a8fc6b4c184415a69",
+   "package": "fonts-paratype 20181108-3"
+  },
+  "ptf_bold": {
+   "file": "PTF75F.ttf",
+   "sha256": "71a57caa616bec6f7266bddb176defd481f4edfca357123d4d3d8bb942b10f26",
+   "package": "fonts-paratype 20181108-3"
+  },
+  "ptc": {
+   "file": "PTC55F.ttf",
+   "sha256": "17831d9f44e62fb9b80c91827af8eafa51cb0f61529a7176c9c5135555384e70",
+   "package": "fonts-paratype 20181108-3"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "O ÎNTREBARE ESENȚIALĂ",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "line1",
+   "type": "text",
+   "default": "CUM FACEM",
+   "label": "Question, line 1"
+  },
+  {
+   "id": "line2",
+   "type": "text",
+   "default": "SĂ CONTEZE?",
+   "label": "Question, line 2"
+  },
+  {
+   "id": "answerTag",
+   "type": "text",
+   "default": "RĂSPUNSUL",
+   "label": "Answer label"
+  },
+  {
+   "id": "answer",
+   "type": "text",
+   "default": "PRIN DETALII.",
+   "label": "Answer"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Dincolo de prima impresie.",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "frameOuter",
+   "role": "matte",
+   "layer": "base",
+   "draw": "direct",
+   "type": "rect",
+   "box": [
+    127,
+    115,
+    1794,
+    962
+   ],
+   "strokeColor": [
+    135,
+    135,
+    128,
+    55
+   ],
+   "stroke": 1
+  },
+  {
+   "id": "frameInner",
+   "role": "matte",
+   "layer": "base",
+   "draw": "direct",
+   "type": "rect",
+   "box": [
+    132,
+    120,
+    1789,
+    957
+   ],
+   "strokeColor": [
+    90,
+    91,
+    88,
+    33
+   ],
+   "stroke": 1
+  },
+  {
+   "id": "glow",
+   "role": "matte",
+   "type": "group",
+   "pane": true,
+   "layer": "base",
+   "children": [
+    {
+     "id": "glowRings",
+     "type": "repeat",
+     "count": 28,
+     "as": "i",
+     "actor": {
+      "id": "glow{i}",
+      "type": "ellipse",
+      "center": [
+       1060,
+       570
+      ],
+      "radius": {
+       "expr": "700-20*i"
+      },
+      "fill": [
+       145,
+       130,
+       112,
+       {
+        "expr": "int((20*i)/550*3)"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "ptc_bold",
+   "size": 27,
+   "color": [
+    209,
+    184,
+    137,
+    255
+   ],
+   "at": {
+    "baseline": [
+     298,
+     278
+    ]
+   },
+   "in": {
+    "start": 0.12,
+    "dur": 0.53,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "line1",
+   "role": "question",
+   "type": "text",
+   "text": "{line1}",
+   "font": "ptf",
+   "size": 130,
+   "color": [
+    247,
+    247,
+    243,
+    255
+   ],
+   "at": {
+    "baseline": [
+     298,
+     453
+    ]
+   },
+   "in": {
+    "start": 0.38,
+    "dur": 0.8099999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 13
+    }
+   },
+   "reveal": "x"
+  },
+  {
+   "id": "line2",
+   "role": "question",
+   "type": "text",
+   "text": "{line2}",
+   "font": "ptf",
+   "size": 130,
+   "color": [
+    247,
+    247,
+    243,
+    255
+   ],
+   "at": {
+    "baseline": [
+     298,
+     638
+    ]
+   },
+   "in": {
+    "start": 0.76,
+    "dur": 0.8200000000000001,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 12
+    }
+   },
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "rule",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    290,
+    713
+   ],
+   "to": [
+    1360,
+    713
+   ],
+   "progressSnap": "round",
+   "width": 2,
+   "color": [
+    201,
+    179,
+    137,
+    165
+   ],
+   "draw": "direct",
+   "in": {
+    "start": 0.76,
+    "dur": 0.8200000000000001,
+    "ease": "easeOutCubic",
+    "from": {
+     "progress": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "progress",
+     "gt": 0.01
+    }
+   ]
+  },
+  {
+   "id": "answerBlock",
+   "role": "carrier",
+   "type": "roundRect",
+   "box": [
+    290,
+    763,
+    536,
+    809
+   ],
+   "radius": 3,
+   "fill": [
+    213,
+    189,
+    145,
+    255
+   ],
+   "wipeSnap": "round",
+   "draw": "direct",
+   "in": {
+    "start": 1.47,
+    "dur": 0.7100000000000002,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ]
+  },
+  {
+   "id": "answerTag",
+   "role": "answerLabel",
+   "type": "text",
+   "text": "{answerTag}",
+   "font": "ptc",
+   "size": 27,
+   "color": [
+    27,
+    31,
+    33,
+    255
+   ],
+   "at": {
+    "baseline": [
+     314,
+     806
+    ]
+   },
+   "in": {
+    "start": 0.55,
+    "dur": 0.44999999999999996,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    },
+    "clock": {
+     "actor": "answerBlock",
+     "channel": "wipe"
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "answerBlock",
+     "channel": "wipe",
+     "gt": 0.55
+    }
+   ],
+   "reveal": "x"
+  },
+  {
+   "id": "answer",
+   "role": "answer",
+   "type": "text",
+   "text": "{answer}",
+   "font": "ptf_bold",
+   "size": 74,
+   "color": [
+    247,
+    247,
+    243,
+    255
+   ],
+   "at": {
+    "baseline": [
+     588,
+     811
+    ]
+   },
+   "in": {
+    "start": 1.47,
+    "dur": 0.7100000000000002,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 10
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "answerBlock",
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ],
+   "reveal": "x"
+  },
+  {
+   "id": "subtitle",
+   "role": "description",
+   "type": "text",
+   "text": "{subtitle}",
+   "font": "ptc",
+   "size": 27,
+   "color": [
+    186,
+    194,
+    193,
+    255
+   ],
+   "at": {
+    "baseline": [
+     300,
+     882
+    ]
+   },
+   "in": {
+    "start": 1.95,
+    "dur": 0.55,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "actor": "answerBlock",
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ],
+   "reveal": "x",
+   "optional": true
+  }
+ ]
+}

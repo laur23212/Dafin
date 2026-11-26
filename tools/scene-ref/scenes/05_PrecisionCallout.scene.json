@@ -1,0 +1,319 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.practical.precision-callout",
+ "label": "Precision Callout",
+ "category": "Callouts",
+ "source": {
+  "asset": "05_PrecisionCallout",
+  "sha256": "6439a269f17f556688249d54da8730426900eeea88857e4d02a32870fc6d3bae",
+  "script": "Dafin_Part5_Stage05_Practical_Title_Families_16x9 :: scripts/render_stage05.py",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitWipe": {
+  "start": 5.0,
+  "dur": 0.5,
+  "ease": "smoothstep",
+  "left": 1140,
+  "right": 1895
+ },
+ "fonts": {
+  "noto_display_sb": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "inter_medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "DETALIU DE CADRU",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Conturul subiectului",
+   "label": "Title"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Urmărește separarea de fundal",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "leader",
+   "role": "pointer",
+   "type": "group",
+   "pane": true,
+   "in": {
+    "start": 0.09,
+    "dur": 0.76,
+    "ease": "easeOutCubic",
+    "from": {
+     "progress": 0,
+     "scale": 0
+    }
+   },
+   "out": {
+    "start": 5.03,
+    "dur": 0.33000000000000007,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "progress",
+     "gt": 0.03
+    },
+    {
+     "channel": "opacity",
+     "gt": 0.005
+    }
+   ],
+   "children": [
+    {
+     "id": "leaderLine",
+     "type": "route",
+     "points": [
+      [
+       1180,
+       808
+      ],
+      [
+       1270,
+       808
+      ],
+      [
+       1340,
+       730
+      ]
+     ],
+     "segmentWeights": [
+      0.45,
+      0.55
+     ],
+     "width": 3,
+     "color": [
+      228,
+      235,
+      236,
+      216
+     ]
+    },
+    {
+     "id": "leaderRing",
+     "type": "ring",
+     "center": [
+      1180,
+      808
+     ],
+     "radius": 10,
+     "stroke": 2,
+     "color": [
+      246,
+      247,
+      243,
+      210
+     ]
+    },
+    {
+     "id": "leaderDot",
+     "type": "ellipse",
+     "center": [
+      1180,
+      808
+     ],
+     "radius": 3,
+     "fill": [
+      246,
+      247,
+      243,
+      218
+     ]
+    }
+   ]
+  },
+  {
+   "id": "panel",
+   "role": "carrier",
+   "type": "roundRect",
+   "box": [
+    1330,
+    586,
+    1878,
+    779
+   ],
+   "radius": 2,
+   "in": {
+    "start": 0.35,
+    "dur": 0.64,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ],
+   "fill": [
+    13,
+    20,
+    28,
+    229
+   ]
+  },
+  {
+   "id": "stripe",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    1330,
+    586,
+    1335,
+    779
+   ],
+   "color": [
+    167,
+    194,
+    200,
+    215
+   ],
+   "visibleWhen": [
+    {
+     "actor": "panel",
+     "channel": "wipe",
+     "gt": 0.65
+    }
+   ]
+  },
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "inter_medium",
+   "size": 24,
+   "color": [
+    168,
+    194,
+    200,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1369,
+     636
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.7,
+    "dur": 0.6200000000000001,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "noto_display_sb",
+   "size": 46,
+   "color": [
+    251,
+    251,
+    250,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1367,
+     698
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.7,
+    "dur": 0.6200000000000001,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 8
+    }
+   }
+  },
+  {
+   "id": "subtitle",
+   "role": "description",
+   "type": "text",
+   "text": "{subtitle}",
+   "font": "inter_medium",
+   "size": 25,
+   "color": [
+    211,
+    218,
+    223,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1368,
+     752
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 1.05,
+    "dur": 0.45999999999999996,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}

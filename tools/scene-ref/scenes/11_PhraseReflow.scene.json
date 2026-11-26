@@ -1,0 +1,191 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.phrase-reflow",
+ "label": "Phrase Reflow",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "11_PhraseReflow",
+  "sha256": "8a8449a1b3377d7e8372747a2a630f4e4461fda77385d584505adcc40ad42899",
+  "script": "render_stage11.py :: frame_b",
+  "status": "POSITIVE_HISTORICAL_CREATOR_RATING_NOT_PROFESSIONAL"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.001,
+  "skipCompare": "le",
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-SemiBold.ttf",
+   "sha256": "74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word1",
+   "type": "text",
+   "default": "MEREU",
+   "label": "Word 1"
+  },
+  {
+   "id": "word2",
+   "type": "text",
+   "default": "ÎNAINTE",
+   "label": "Word 2"
+  }
+ ],
+ "actors": [
+  {
+   "id": "phrase",
+   "role": "carrierMotion",
+   "type": "group",
+   "at": [
+    0,
+    0
+   ],
+   "row": {
+    "gap": 66,
+    "width": 1920,
+    "baseline": 574,
+    "roundLeft": false,
+    "enter": {
+     "start": 1.13,
+     "dur": 0.93,
+     "ease": "smoothstep"
+    }
+   },
+   "children": [
+    {
+     "id": "word1",
+     "role": "title",
+     "type": "text",
+     "text": "{word1}",
+     "font": "serif",
+     "size": 163,
+     "color": [
+      44,
+      48,
+      48
+     ],
+     "at": {
+      "baseline": [
+       0,
+       574
+      ]
+     },
+     "in": [
+      {
+       "start": 0.17,
+       "dur": 0.62,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 2.05,
+       "dur": 0.72,
+       "ease": "smoothstep",
+       "from": {
+        "dy": -116
+       }
+      },
+      {
+       "start": 0.2,
+       "dur": 0.52,
+       "ease": "easeOutCubic",
+       "from": {
+        "dy": 25
+       }
+      }
+     ],
+     "out": {
+      "start": 5.05,
+      "dur": 0.72,
+      "ease": "smoothstep",
+      "to": {
+       "opacity": 0,
+       "dy": -13
+      }
+     }
+    },
+    {
+     "id": "word2",
+     "role": "title",
+     "type": "text",
+     "text": "{word2}",
+     "font": "serif",
+     "size": 163,
+     "color": [
+      44,
+      48,
+      48
+     ],
+     "at": {
+      "baseline": [
+       0,
+       574
+      ]
+     },
+     "in": [
+      {
+       "start": 0.17,
+       "dur": 0.62,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 2.05,
+       "dur": 0.72,
+       "ease": "smoothstep",
+       "from": {
+        "dy": 110
+       }
+      },
+      {
+       "start": 0.35,
+       "dur": 0.52,
+       "ease": "easeOutCubic",
+       "from": {
+        "dy": 25
+       }
+      }
+     ],
+     "out": {
+      "start": 5.05,
+      "dur": 0.72,
+      "ease": "smoothstep",
+      "to": {
+       "opacity": 0,
+       "dy": 13
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

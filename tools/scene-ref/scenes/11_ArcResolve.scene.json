@@ -1,0 +1,139 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.arc-resolve",
+ "label": "Arc Resolve",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "11_ArcResolve",
+  "sha256": "7786e79129b93f537bbbef3253e18c95c2cb519d90c65a7cfffafe18a4f262a7",
+  "script": "render_stage11.py :: frame_a",
+  "status": "POSITIVE_HISTORICAL_CREATOR_RATING_NOT_PROFESSIONAL"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.001,
+  "skipCompare": "le",
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  }
+ },
+ "params": [
+  {
+   "id": "title",
+   "type": "text",
+   "default": "TOTUL PRINDE VIAȚĂ",
+   "label": "Title"
+  }
+ ],
+ "actors": [
+  {
+   "id": "letters",
+   "role": "carrierMotion",
+   "type": "group",
+   "at": [
+    0,
+    0
+   ],
+   "row": {
+    "gap": 1.8,
+    "width": 1920,
+    "baseline": 572,
+    "roundLeft": false
+   },
+   "children": [
+    {
+     "id": "glyph",
+     "type": "repeat",
+     "over": "{title}",
+     "as": "i",
+     "char": "c",
+     "actor": {
+      "id": "g{i}",
+      "role": "title",
+      "type": "text",
+      "text": "{c}",
+      "font": "sans",
+      "size": 148,
+      "color": [
+       238,
+       234,
+       224
+      ],
+      "at": {
+       "baseline": [
+        0,
+        572
+       ]
+      },
+      "in": [
+       {
+        "start": 0.28,
+        "delay": {
+         "expr": "i*0.047"
+        },
+        "dur": 0.33,
+        "ease": "smoothstep",
+        "from": {
+         "opacity": 0
+        }
+       },
+       {
+        "start": 0.27,
+        "delay": {
+         "expr": "i*0.047"
+        },
+        "dur": 0.74,
+        "ease": "easeOutCubic",
+        "from": {
+         "dx": {
+          "expr": "-43 + 20*sin(i*1.63)"
+         },
+         "dy": {
+          "expr": "68 + 17*cos(i*0.93)"
+         }
+        },
+        "arc": -18
+       }
+      ],
+      "out": {
+       "start": 5.06,
+       "dur": 0.72,
+       "ease": "smoothstep",
+       "to": {
+        "opacity": 0,
+        "dx": {
+         "expr": "-(19 + 3*cos(i*0.5))"
+        },
+        "dy": -13
+       }
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

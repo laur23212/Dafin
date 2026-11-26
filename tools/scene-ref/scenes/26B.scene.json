@@ -1,0 +1,99 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.kinetic",
+ "label": "Kinetic",
+ "category": "Golden Run",
+ "source": {
+  "asset": "26B",
+  "sha256": "c38aaf72fcedebe4fa3b5b2c8d6408fa40d8340f1dc966c9a61e97b027fa2269",
+  "script": "render_stage26.py :: scene_b",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "KINETIC",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "black",
+   "size": 325,
+   "color": [
+    246,
+    246,
+    239
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "widthBloom",
+    "tracking": 8,
+    "baseline": 655,
+    "grow": [
+     0.22,
+     0.92,
+     0.105
+    ],
+    "overshoot": 0.055,
+    "from": 0.12,
+    "in": [
+     0.04,
+     0.25
+    ],
+    "out": [
+     4.55,
+     0.57
+    ],
+    "squeeze": [
+     0.86,
+     0.08
+    ],
+    "colorFrom": [
+     164,
+     214,
+     249
+    ]
+   }
+  }
+ ]
+}

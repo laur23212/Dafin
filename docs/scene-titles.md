@@ -289,6 +289,117 @@ Source: `Stage03b_Alternative_LowerThird_Families_v1/source/render.py`.
 - Rectangles are written straight into the canvas: later shapes *replace* earlier ones, alpha
   included. This is how the coral seam overwrites both straps.
 
+### pil1x (Part5 Stage05–08)
+
+Source: `render_stage05.py` and its siblings.
+- Text is a 1× PIL sprite (basic layout) with 8 px of padding, composited at `round(x + dx)`.
+  `reveal: "x"` (from the left) or `"y"` (from the bottom) cuts the sprite by the actor's `wipe`
+  (`0 … round(w·v) − 1`, inclusive); opacity is a `round(α·p)` table, clamped to 0…255.
+- Every shape is drawn on its own transparent full-frame pane, then `alpha_composite`d, in order.
+  A `group` with `pane: true` draws its children into one pane (a leader line and its dots).
+  Rects take `x1 = x0 + w·wipe` (`wipeSnap: "int1"`: `x0 + max(1, int(w·wipe))`); `vscale` trims a
+  rect or a line equally at both ends (`collapse: "ends"` on a line trims its rest length; otherwise
+  `progress` grows it from `from` and `vscale` collapses that to its centre). Lines are PIL lines
+  (no anti-aliasing). A `route` may give `segmentWeights` (shares of progress per segment). An
+  `ellipse`/`ring` may be `center` + `radius`, the radius being `round(radius·scale)`.
+- `visibleWhen: [{"actor": id, "channel": "wipe", "gt": 0.01}]` draws an actor only past a
+  threshold, as the scripts' `if p > .01:` did (`actor` defaults to itself; groups apply to
+  their children).
+- Scene `exitWipe: {"start", "dur", "ease", "left", "right"}` closes the whole title: everything
+  right of `round(right − (right − left)·p)` is removed; at p = 1 nothing is left. It counts as an
+  exit for the hold.
+- Stage06 settings (`render`): `minOpacity` 0.002, `minReveal` 0.002, `fullOpacity` 0.999,
+  `alphaTable: "trunc"` (`int(a·p)`), `skipEmptyRects` (its `pane()` drew nothing when x1 ≤ x0).
+  `wipeSnap: "round"` (`x0 + round(w·p)`); a line with `progressSnap: "round"` ends at
+  `base + round((to.x − base)·p)` (`progressBase`, default `from.x`).
+- `pin` (Stage06 Location): `center`, `radius`, `stem`, `dotRadius`, `stroke`, `ringColor`,
+  `dotColor`, `stemColor`. Ring radius `round(radius·scale)`, a fixed dot, a stem of
+  `round(stem·scale)` below the ring: one editable motif.
+- A text `counter: {"start", "dur", "ease", "to"}` shows `str(round(to·phase))` (Stage06 Metric),
+  with `at: {"right": x, "top": y}` keeping the sprite's right edge fixed.
+- Scene `exitSlide: {"start", "dur", "ease", "rect": [x, y, w, h], "distance", "hold"}`: Stage06's
+  rigid exit. The title as it stood at `hold`, cropped to `rect`, slides down by
+  `round(distance·p)`, cut at the frame's bottom edge; at p = 1 nothing is left.
+- Stage07 settings: `skipCompare: "lt"`, `revealMode: "crop"` (the sprite cut to
+  `max(1, int(w·v))` px while `v < fullReveal`), `fullReveal` 0.999. `layer: "base"` actors (the
+  frame's matte, its fades and hairlines) are drawn first and are never wiped; `draw: "direct"`
+  writes straight on the frame as the scripts' `ImageDraw.Draw(im)` did, which the RGB proofs show
+  opaque, so the alpha layer keeps them opaque. A rect with `strokeColor` and no `color` is an
+  outline. `exitWipe.mode`: `"right"` keeps x ≤ round(W·(1−q)), `"left"` keeps x ≥ round(W·q),
+  `"top"` keeps y ≥ round(H·q); the default `"span"` is Stage05's `left`/`right` form.
+- Stage08 Cinematic: a text with `tracking` is laid out glyph by glyph at `round(pen)`, `pen +=
+  advance + tracking` (the "advance-rounded" layout), on a sprite `ceil(Σadvances + tracking·(n−1)) + 16`
+  wide; `at: {"center": [x, y]}` centres that sprite (`int`, `int(round(…+dy))`); `wipe` crops it to
+  `int(w·v)` px; `composite: "numpy"` reproduces the script's `trunc(t·(1−a)) + round(c·a)` blend in
+  the reference's direct mode. Ease `easeInCubic` (u³).
+- `sprite: "chapter"` (Dark Chapter A v2): glyphs at float pens, `+ getlength(ch) + letterSpacing`,
+  4 px of padding; `wipe` crops `round(w·v)` px of that sprite. A `roundRect` may have `fill` and
+  `strokeColor`/`stroke` (one pane, the hairline over the fill).
+- Stage09: `at: {"left": x, "top": y}` places the sprite's top-left corner; `spritePad` (default 8)
+  is its padding (text_layer(): 11). `offsetSnap: "trunc"` moves by int(dx). `clipRect: {"box":
+  [x0, y0, x1, y1]}` crops the sprite to a canvas rect (x1, y1 exclusive; mask1x's clipRect is
+  PIL-inclusive and rises). A group with `row: {"gap": 33, "width": 1920, "baseline": 556}` sets
+  its texts' pens getlength + gap apart, the run centred (A_Crisp word relay); each word keeps its
+  own colour param. A `rect` with `wipeDir: "down"` and `wipeSnap: "round"` ends at
+  `y0 + round(h·wipe)` (the B guide bar). The chapter sprite follows the render opacity rules.
+- Stage11: a `repeat` with `"over": "{title}"` makes one copy per character (`as` the index,
+  `char` the character), so a per-letter animation follows the edited text; in a `row` with
+  `roundLeft: false` and `gap` the tracking, the letters sit pen to pen (Arc Resolve). An in-block
+  may add `arc`: `dy += arc·sin(πp)·(1 − p)`; any block may add `delay` (phase ((t − start) − delay)/dur, a per-copy stagger). Expressions may call `sin` and `cos`. `row.enter`
+  (`start`, `dur`, `ease`) slides each text in from where it would sit centred alone (Phrase Reflow).
+- A block may run on `"clock": {"actor": id, "channel": "wipe"}` instead of time: Stage07's answer
+  tag eases on `(blockReveal − 0.55) / 0.45`.
+- `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
+  slide on another). Reveal channels multiply across blocks; offsets add.
+
+### gold1x (the Golden Run 18 and the later stages)
+
+The Golden Run proofs (`render_stage25.py` … `render_stage30.py`, three scenes each) drew light
+onto a pure black frame with numpy and OpenCV. In gold1x every text actor carries an `effect`
+naming one of the 18 mechanisms, with the scene's own numbers as fields: `contourMorph` (25A),
+`elasticWarp` (25B), `arcToBaseline` (25C), `perspectivePlane` (26A), `widthBloom` (26B),
+`weightMorph` (26C), `spectralInk` (27A), `glyphPivot` (27B), `mirrorUnfold` (27C),
+`slantMorph` (28A), `counterRelease` (28B), `inverseTransit` (28C), `depthCast` (29A),
+`pleatUnfold` (29B), `particleCoalesce` (29C), `contourTrace` (30A), `characterReel` (30B),
+`isolineCollapse` (30C). The later stages (B2) add 11 more: `splitRegister` (32A),
+`glyphTorsion` (32B), `imprintPress` (33A), `pairKerning` (33B), `solidExtract` (34A),
+`printRegister` (34B), `tidalInk` (35A), `hatchEngrave` (35B), `gridReflow` (39A), `rippleWave`
+(48A), `signalWave` (49A). Timing pairs are `[start, dur]` (a third number is the per-letter
+stagger). The word, the second word of 25A (`to`) and the colours are params; a different word
+re-runs the layout, the masks and the fields.
+
+The reference (`tools/scene-ref/golden.py`) repeats each script step for step and is identical to
+it on all 150 frames (`test_parity.py --golden`, and `--later` for 32A … 49A). Native (`engine/render2d/scene/SceneGoldOps.h`,
+`SceneGoldEffects.h`) runs the same steps in plain C++ on a black frame and keys it on black:
+alpha = the brightest channel, colour = frame ÷ alpha, which gives the same light over black and
+the same tint over footage. Its cv2 stand-ins were measured against OpenCV here: INTER_AREA and
+INTER_CUBIC resizes and the L2 3 × 3 / 5 × 5 / exact distance transforms equal, INTER_LINEAR and
+warpAffine within 1 level. 29C's particles come from numpy's `default_rng(1009)` (PCG64 +
+SeedSequence) rebuilt bit for bit, so every dot lands where the script put it. Two steps are
+modelled rather than copied: 28B finds the counters as the background that does not reach the
+mask's edge, plus the ink pixels next to them (the script filled odd-depth cv2 contours, which run
+through those pixels), and 30A traces each glyph's borders with Moore tracing, down the left side
+first like cv2.findContours. Text follows PIL to the pixel: advances on hb-ft's unhinted 26.6 grid
+(`pilAdvance`), and a pen at a half pixel goes right in x but up in y (`ceil(y − 0.5)`), as
+ImageDraw.text does. Run against the reference with FreeType + HarfBuzz text standing in for Skia,
+all 29 scenes have SSIM ≥ 0.988 on frames 10–135 (26 of them 1.000).
+
+### cov1x (Chapter A v4 / B v4, RECONSTRUCTED_APPROX)
+
+The original v4 scripts are SOURCE_MISSING; the reference is `dafin_chapters_v4_recon.py`, rebuilt
+from measurements of the approved MP4s (`claude/chapters-v4-reconstruction.md` in the project).
+Every actor is a float coverage map over the frame, composited in order as
+`colour·(1 − m) + ink·m` with `m = coverage · alpha · group opacity · own fade · wipe`.
+
+- `render.ss` (1–4; a text may override it with its own `ss`, the one `ss` field): text is laid out at
+  that factor and BOX-reduced. Layout is advance-rounded: each glyph at `(round(pen), y)` with
+  PIL's anchor `la`, `at: {"ascender": [x, y]}` the ascender line, `pen += getlength(ch) + letterSpacing`.
+- `rect` / `roundRect` (`fill`): the inclusive pixel box drawn at 4× and BOX-reduced.
+- `alpha`: a constant opacity. `wipeRange: [x0, x1]` with a `wipe` channel: a crop edge moving
+  from x0 to x1 with a 1 px anti-aliased edge, so a wiped box is cropped, not re-rounded.
+- `clipTo: {"actor": id}`: the actor only shows where that actor's box has coverage and its wipe
+  has passed (the B tag text in its tag, the subtitle in its panel).
+
 ## Preview and matte
 
 - `preview.background` is the matte the proof was judged on. It is used only for previews and
@@ -303,8 +414,13 @@ Source: `Stage03b_Alternative_LowerThird_Families_v1/source/render.py`.
 
 ## Reserved effects (Stage10)
 
-`effect.type` values `sdfMorph`, `maskedLight` and `focusMix` are reserved. v1 loaders must refuse
-them ("ask for the extension") rather than fake them. Their mechanisms, from `render_stage10.py`:
+`effect.type` values `sdfMorph`, `maskedLight` and `focusMix` run only in the **fx1x** profile
+(`render.profile: "fx1x"`); every other profile still refuses them. In fx1x each text actor's
+`effect` carries its own timing blocks (`{start, dur, ease}`, smoothstep or easeOutCubic) and the
+numbers below as fields, because the effects mix their phases in ways one opacity channel cannot.
+They draw over an opaque frame as `render_stage10.py` did (float32 masks, uint8 after each
+composite); the alpha layer is solved from a render over black and over white. Native: exact EDT
+(Felzenszwalb), cv2's Gaussian kernel (round(8σ + 1) | 1, reflect-101). Mechanisms:
 
 - **sdfMorph** (Typography Morph): a real weight morph, not a crossfade.
   - Every glyph is drawn in two weights (Light and Black) into a cell, on the same baseline.
@@ -341,6 +457,17 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 13C_U1/U2/U3 (Universal and macOS shortcuts) | 150/150 frames identical |
   | 03b_LT_A_25, 03b_LT_C_25_REV | 150/150 frames identical |
   | 03b_LT_B_60, 03b_LT_C_60_REV | 360/360 frames identical |
+  | 05_TutorialStep, 05_PrecisionCallout, 05_PullQuote (pil1x, over a test plate: the proofs' photo is missing) | 150/150 frames identical |
+  | 06_Metric, 06_Location (pil1x, over a test plate) | 150/150 frames identical |
+  | 07_Kinetic, 07_Insights_v2, 07_QA_v3 (pil1x, RGB over the scripts' footage crops) | 150/150 frames identical |
+  | 08_Cinematic_Garamond / Inter / RobotoSlab / Lato (pil1x over the script's charcoal) | 150/150 frames identical |
+  | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
+  | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
+  | 25A … 30C, the Golden Run 18 (gold1x into the scripts' black frame) | 150/150 frames identical |
+  | 32A … 49A, the later stages (gold1x into the scripts' black frame) | 150/150 frames identical |
+  | 10_TypographyMorph, 10_MaskedLightReveal, 10_PrecisionFocus (fx1x over the script's backgrounds) | 150/150 frames identical |
+  | 11_ArcResolve, 11_PhraseReflow (pil1x over the script's gradients) | 150/150 frames identical |
+  | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the

@@ -1,0 +1,92 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.cinematic.statement-garamond",
+ "label": "Cinematic Statement A EB Garamond",
+ "category": "Cinematic Titles",
+ "source": {
+  "asset": "08_Cinematic_Garamond",
+  "sha256": "da84b1e7c882a36439306e29a0a90775c25896efd2fc498683a1467e96444f56",
+  "script": "Dafin_Part5_Stage08 :: render_font_alternatives.py overlay_fast",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "EBGaramond12-Regular.ttf",
+   "sha256": "689aa494b0eb1913085eaeb84d28b18e3b788b45dddbb3083a676d2e8896b5a4",
+   "package": "fonts-ebgaramond-extra 0.016+git20210310.42d4f9f2-1"
+  }
+ },
+ "params": [
+  {
+   "id": "title",
+   "type": "text",
+   "default": "TOTUL SE SCHIMBĂ",
+   "label": "Statement"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "title",
+   "size": 164,
+   "tracking": 3.8,
+   "color": [
+    238,
+    233,
+    223,
+    255
+   ],
+   "at": {
+    "center": [
+     960,
+     540
+    ]
+   },
+   "reveal": "x",
+   "composite": "numpy",
+   "in": {
+    "start": 0.2,
+    "dur": 1.05,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0,
+     "dy": 23
+    }
+   },
+   "out": {
+    "start": 5.05,
+    "dur": 0.66,
+    "ease": "easeInCubic",
+    "to": {
+     "opacity": 0,
+     "dy": 12
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,94 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.parallel",
+ "label": "Parallel",
+ "category": "Golden Run",
+ "source": {
+  "asset": "34B",
+  "sha256": "274a37463937924dd0c1a56bebd4f889358efad6734fc911b7bc86696040b00c",
+  "script": "render_stage34.py :: Register",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-SemiBold.ttf",
+   "sha256": "74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "PARALLEL",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 226,
+   "color": [
+    246,
+    245,
+    237
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "printRegister",
+    "tracking": 5,
+    "warm": [
+     221,
+     178,
+     142
+    ],
+    "blue": [
+     148,
+     191,
+     204
+    ],
+    "outward": [
+     1.14,
+     1.08,
+     0.99,
+     0.88,
+     0.88,
+     0.99,
+     1.08,
+     1.14
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,104 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.contour",
+ "label": "Contour",
+ "category": "Golden Run",
+ "source": {
+  "asset": "30C",
+  "sha256": "94b664c2f81cd032edf62d8d7a7d5fcfbbec45fa1c6bfc845c7201a6ead39ebe",
+  "script": "render_stage30.py :: scene_c",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-Medium.ttf",
+   "sha256": "ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "CONTOUR",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 266,
+   "color": [
+    242,
+    237,
+    225
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "isolineCollapse",
+    "region": [
+     130,
+     315,
+     1660,
+     450
+    ],
+    "baseline": 330,
+    "tracking": 6,
+    "ringColor": [
+     217,
+     230,
+     232
+    ],
+    "rings": [
+     [
+      15,
+      0.4
+     ],
+     [
+      32,
+      0.43
+     ],
+     [
+      55,
+      0.44
+     ],
+     [
+      80,
+      0.38
+     ]
+    ]
+   }
+  }
+ ]
+}

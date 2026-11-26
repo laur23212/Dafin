@@ -1,0 +1,74 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.imprint",
+ "label": "Imprint",
+ "category": "Golden Run",
+ "source": {
+  "asset": "33A",
+  "sha256": "54dfa168f7328d38e72f516265eb758682e259bbc11a897b987a11e4ecfc38c4",
+  "script": "render_stage33.py :: Imprint",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "bold": {
+   "file": "InterDisplay-Bold.otf",
+   "sha256": "4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "IMPRINT",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "bold",
+   "size": 298,
+   "color": [
+    244,
+    244,
+    238
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "imprintPress",
+    "tracking": 13
+   }
+  }
+ ]
+}

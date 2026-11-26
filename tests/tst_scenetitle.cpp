@@ -651,6 +651,36 @@ private slots:
             QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
         QTest::newRow("12B_C blank") << scenePath("12B_C_Anchor_Index_Manual") << QStringLiteral("12B_C_Anchor_Index_Manual_blank")
                                      << ports << QStringLiteral(R"({"badge1":"","badge2":""})");
+        // Golden Run 18 (gold1x; identical to render_stage25.py … render_stage30.py on all 150 frames).
+        for (const char *n : {"25A", "25B", "25C", "26A", "26B", "26C", "27A", "27B", "27C", "28A", "28B", "28C", "29A", "29B", "29C", "30A", "30B", "30C"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
+        // The later Golden Run stages (gold1x; identical to their scripts on all 150 frames).
+        for (const char *n : {"32A", "32B", "33A", "33B", "34A", "34B", "35A", "35B", "39A", "48A", "49A"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
+        // Batch 1 ports, Part5 Stage05 to Stage11 (identical to their scripts on all 150 frames).
+        QTest::newRow("05_TutorialStep") << scenePath("05_TutorialStep") << QStringLiteral("05_TutorialStep") << ports << QString();
+        QTest::newRow("05_PrecisionCallout") << scenePath("05_PrecisionCallout") << QStringLiteral("05_PrecisionCallout") << ports << QString();
+        QTest::newRow("05_PullQuote") << scenePath("05_PullQuote") << QStringLiteral("05_PullQuote") << ports << QString();
+        QTest::newRow("06_Metric") << scenePath("06_Metric") << QStringLiteral("06_Metric") << ports << QString();
+        QTest::newRow("06_Location") << scenePath("06_Location") << QStringLiteral("06_Location") << ports << QString();
+        QTest::newRow("07_Kinetic") << scenePath("07_Kinetic") << QStringLiteral("07_Kinetic") << ports << QString();
+        QTest::newRow("07_Insights_v2") << scenePath("07_Insights_v2") << QStringLiteral("07_Insights_v2") << ports << QString();
+        QTest::newRow("07_QA_v3") << scenePath("07_QA_v3") << QStringLiteral("07_QA_v3") << ports << QString();
+        QTest::newRow("08_Cinematic_Garamond") << scenePath("08_Cinematic_Garamond") << QStringLiteral("08_Cinematic_Garamond") << ports << QString();
+        QTest::newRow("08_Cinematic_Inter") << scenePath("08_Cinematic_Inter") << QStringLiteral("08_Cinematic_Inter") << ports << QString();
+        QTest::newRow("08_Cinematic_RobotoSlab") << scenePath("08_Cinematic_RobotoSlab") << QStringLiteral("08_Cinematic_RobotoSlab") << ports << QString();
+        QTest::newRow("08_Cinematic_Lato") << scenePath("08_Cinematic_Lato") << QStringLiteral("08_Cinematic_Lato") << ports << QString();
+        QTest::newRow("10_TypographyMorph") << scenePath("10_TypographyMorph") << QStringLiteral("10_TypographyMorph") << ports << QString();
+        QTest::newRow("10_MaskedLightReveal") << scenePath("10_MaskedLightReveal") << QStringLiteral("10_MaskedLightReveal") << ports << QString();
+        QTest::newRow("10_PrecisionFocus") << scenePath("10_PrecisionFocus") << QStringLiteral("10_PrecisionFocus") << ports << QString();
+        QTest::newRow("11_ArcResolve") << scenePath("11_ArcResolve") << QStringLiteral("11_ArcResolve") << ports << QString();
+        QTest::newRow("11_PhraseReflow") << scenePath("11_PhraseReflow") << QStringLiteral("11_PhraseReflow") << ports << QString();
+        QTest::newRow("09_WordRelay_A1") << scenePath("09_WordRelay_A1") << QStringLiteral("09_WordRelay_A1") << ports << QString();
+        QTest::newRow("09_SplitMotion_C1") << scenePath("09_SplitMotion_C1") << QStringLiteral("09_SplitMotion_C1") << ports << QString();
+        QTest::newRow("09_WordShift_B7") << scenePath("09_WordShift_B7") << QStringLiteral("09_WordShift_B7") << ports << QString();
+        QTest::newRow("04_Chapter_A_v4") << scenePath("04_Chapter_A_v4") << QStringLiteral("04_Chapter_A_v4") << ports << QString();
+        QTest::newRow("04_Chapter_B_v4") << scenePath("04_Chapter_B_v4") << QStringLiteral("04_Chapter_B_v4") << ports << QString();
+        QTest::newRow("04_Dark_Chapter_A_v2") << scenePath("04_Dark_Chapter_A_v2") << QStringLiteral("04_Dark_Chapter_A_v2") << ports << QString();
     }
 
     // Reference frames: tools/scene-ref/render.py render <scene> --frames <frames> --no-mp4.

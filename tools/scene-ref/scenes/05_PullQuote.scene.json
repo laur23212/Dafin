@@ -1,0 +1,289 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.practical.pull-quote",
+ "label": "Editorial Pull Quote",
+ "category": "Editorial Titles",
+ "source": {
+  "asset": "05_PullQuote",
+  "sha256": "5eb2aa43a877b7f7bcb8fa80cb3a995ea2036c830c34383669dc639750c5820c",
+  "script": "Dafin_Part5_Stage05_Practical_Title_Families_16x9 :: scripts/render_stage05.py",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitWipe": {
+  "start": 5.0,
+  "dur": 0.5,
+  "ease": "smoothstep",
+  "left": 1230,
+  "right": 1900
+ },
+ "fonts": {
+  "noto_serif": {
+   "file": "NotoSerifDisplay-Medium.ttf",
+   "sha256": "ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "inter_medium": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "inter_semibold": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "label",
+   "type": "text",
+   "default": "DIN POVESTE",
+   "label": "Label"
+  },
+  {
+   "id": "line1",
+   "type": "text",
+   "default": "Fiecare cadru",
+   "label": "Quote, line 1"
+  },
+  {
+   "id": "line2",
+   "type": "text",
+   "default": "spune ceva.",
+   "label": "Quote, line 2"
+  },
+  {
+   "id": "attribution",
+   "type": "text",
+   "default": "— Un gând despre film",
+   "label": "Attribution"
+  }
+ ],
+ "actors": [
+  {
+   "id": "panel",
+   "role": "carrier",
+   "type": "roundRect",
+   "box": [
+    1254,
+    219,
+    1878,
+    741
+   ],
+   "radius": 2,
+   "in": {
+    "start": 0.07,
+    "dur": 0.6399999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ],
+   "fill": [
+    14,
+    19,
+    27,
+    235
+   ]
+  },
+  {
+   "id": "rule",
+   "role": "accent",
+   "type": "line",
+   "from": [
+    1293,
+    286
+   ],
+   "to": [
+    1293,
+    627
+   ],
+   "width": 3,
+   "color": [
+    210,
+    204,
+    192,
+    184
+   ],
+   "in": {
+    "start": 0.13,
+    "dur": 0.62,
+    "ease": "easeOutCubic",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.02,
+    "dur": 0.3200000000000003,
+    "ease": "smoothstep",
+    "to": {
+     "vscale": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "progress",
+     "gt": 0.01
+    },
+    {
+     "channel": "vscale",
+     "gt": 0.005
+    }
+   ]
+  },
+  {
+   "id": "label",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{label}",
+   "font": "inter_semibold",
+   "size": 24,
+   "color": [
+    201,
+    201,
+    193,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1328,
+     308
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.37,
+    "dur": 0.54,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "line1",
+   "role": "quote",
+   "type": "text",
+   "text": "{line1}",
+   "font": "noto_serif",
+   "size": 68,
+   "color": [
+    246,
+    243,
+    236,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1326,
+     423
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.53,
+    "dur": 0.6199999999999999,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 10
+    }
+   }
+  },
+  {
+   "id": "line2",
+   "role": "quote",
+   "type": "text",
+   "text": "{line2}",
+   "font": "noto_serif",
+   "size": 68,
+   "color": [
+    246,
+    243,
+    236,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1326,
+     516
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 0.77,
+    "dur": 0.71,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 10
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "attribution",
+   "role": "attribution",
+   "type": "text",
+   "text": "{attribution}",
+   "font": "inter_medium",
+   "size": 27,
+   "color": [
+    220,
+    223,
+    226,
+    255
+   ],
+   "at": {
+    "baseline": [
+     1328,
+     647
+    ]
+   },
+   "reveal": "x",
+   "in": {
+    "start": 1.18,
+    "dur": 0.44999999999999996,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}

@@ -1,0 +1,114 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.unbound",
+ "label": "Unbound",
+ "category": "Golden Run",
+ "source": {
+  "asset": "25B",
+  "sha256": "9473410bbaee28b0ad41501ec80676d41247ce3c87e4141805cc7596d5582f1c",
+  "script": "render_stage25.py :: scene_b",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-BoldItalic.ttf",
+   "sha256": "d3c055380d05e41732096c337226afe96640e7eaeaf7d1294556545b95ccc123",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "UNBOUND",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 333,
+   "color": [
+    176,
+    193,
+    247
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "elasticWarp",
+    "tracking": -1,
+    "width": 1580,
+    "margin": [
+     30,
+     140
+    ],
+    "dy": 22,
+    "settle": [
+     0.38,
+     1.28
+    ],
+    "curl": [
+     4.42,
+     0.83
+    ],
+    "amp": [
+     70,
+     75
+    ],
+    "phase": [
+     0.6,
+     1.6
+    ],
+    "freq": [
+     1.1,
+     0.82
+    ],
+    "shear": 0.32,
+    "in": [
+     0.1,
+     0.44
+    ],
+    "out": [
+     4.91,
+     0.54
+    ],
+    "colorTo": [
+     242,
+     237,
+     244
+    ]
+   }
+  }
+ ]
+}

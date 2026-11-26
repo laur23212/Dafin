@@ -1,0 +1,116 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.gravity",
+ "label": "Gravity",
+ "category": "Golden Run",
+ "source": {
+  "asset": "29A",
+  "sha256": "94a05013a96b6e0ce2f5a860cf86126dd8f588b0359379dd91e5a36d63c88113",
+  "script": "render_stage29.py :: scene_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "GRAVITY",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "black",
+   "size": 320,
+   "color": [
+    245,
+    245,
+    240
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "depthCast",
+    "maxWidth": 1530,
+    "tracking": 3,
+    "dy": 7,
+    "visible": [
+     0.12,
+     5.6
+    ],
+    "in": [
+     0.14,
+     0.31
+    ],
+    "retract": [
+     0.3,
+     1.58
+    ],
+    "expand": [
+     4.55,
+     0.69,
+     0.9
+    ],
+    "layers": 21,
+    "extrude": [
+     176,
+     75
+    ],
+    "castColor": [
+     50,
+     62,
+     75
+    ],
+    "castLift": 57,
+    "castOut": [
+     5.12,
+     0.48
+    ],
+    "out": [
+     4.6,
+     0.56
+    ],
+    "light": [
+     0.25,
+     1.15
+    ]
+   }
+  }
+ ]
+}

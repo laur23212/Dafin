@@ -1,0 +1,74 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.vector",
+ "label": "Vector Split Register",
+ "category": "Golden Run",
+ "source": {
+  "asset": "32A",
+  "sha256": "d2fe813802bbba00458b0683025bb83e67f636463c81d2eba8bfc6bf528a9f2e",
+  "script": "render_stage32.py (v6.3.28) :: effect_a",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "bold": {
+   "file": "InterDisplay-Bold.otf",
+   "sha256": "4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "VECTOR",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "bold",
+   "size": 280,
+   "color": [
+    244,
+    243,
+    237
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "splitRegister",
+    "tracking": 5
+   }
+  }
+ ]
+}

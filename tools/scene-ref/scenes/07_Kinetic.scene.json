@@ -1,0 +1,407 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.editorial.kinetic-headline",
+ "label": "Kinetic Headline",
+ "category": "Editorial Titles",
+ "source": {
+  "asset": "07_Kinetic",
+  "sha256": "7a9799187e96f0f13d4cf236e7899dce8b176932ca7c6ed56697cb4a1fc3a274",
+  "script": "Dafin_Part5_Stage07_InfoKinetics :: scripts/render_stage07.py frame_a",
+  "status": "POSITIVE_HISTORICAL_CREATOR_RATING_NOT_PROFESSIONAL"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.002,
+  "minReveal": 0.002,
+  "fullOpacity": 0.999,
+  "fullReveal": 0.999,
+  "skipCompare": "lt",
+  "revealMode": "crop"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "exitWipe": {
+  "start": 4.97,
+  "dur": 0.5800000000000001,
+  "ease": "smoothstep",
+  "mode": "right"
+ },
+ "fonts": {
+  "main": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "reg": {
+   "file": "NotoSansDisplay-Regular.ttf",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac",
+   "package": "fonts-noto-core 20201225-2"
+  },
+  "inter": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  },
+  "inter_semibold": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "IDEEA PRINCIPALĂ",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "line1",
+   "type": "text",
+   "default": "UN DETALIU",
+   "label": "Line 1"
+  },
+  {
+   "id": "line2",
+   "type": "text",
+   "default": "SCHIMBĂ TOTUL",
+   "label": "Line 2"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Uneori, diferența stă în lucrurile mici.",
+   "label": "Subtitle"
+  },
+  {
+   "id": "index",
+   "type": "text",
+   "default": "01  /  PERSPECTIVĂ",
+   "label": "Index"
+  }
+ ],
+ "actors": [
+  {
+   "id": "matte",
+   "role": "matte",
+   "layer": "base",
+   "draw": "direct",
+   "type": "rect",
+   "box": [
+    0,
+    0,
+    1030,
+    1080
+   ],
+   "color": [
+    17,
+    23,
+    28,
+    255
+   ]
+  },
+  {
+   "id": "matteFade",
+   "role": "matte",
+   "type": "repeat",
+   "count": 160,
+   "as": "i",
+   "layer": "base",
+   "actor": {
+    "id": "matteFade{i}",
+    "type": "line",
+    "layer": "base",
+    "draw": "direct",
+    "from": [
+     {
+      "expr": "1030+i"
+     },
+     0
+    ],
+    "to": [
+     {
+      "expr": "1030+i"
+     },
+     1080
+    ],
+    "width": 1,
+    "color": [
+     17,
+     23,
+     28,
+     {
+      "expr": "round(225*(1-i/160)**1.5)"
+     }
+    ]
+   }
+  },
+  {
+   "id": "separator",
+   "role": "matte",
+   "layer": "base",
+   "draw": "direct",
+   "type": "line",
+   "from": [
+    1020,
+    90
+   ],
+   "to": [
+    1020,
+    990
+   ],
+   "width": 1,
+   "color": [
+    180,
+    189,
+    191,
+    78
+   ]
+  },
+  {
+   "id": "tick",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    146,
+    322,
+    152,
+    355
+   ],
+   "color": [
+    158,
+    208,
+    206,
+    255
+   ],
+   "wipeSnap": "round",
+   "draw": "direct",
+   "in": {
+    "start": 0.08,
+    "dur": 0.54,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.01
+    }
+   ]
+  },
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "inter_semibold",
+   "size": 26,
+   "color": [
+    153,
+    206,
+    205,
+    255
+   ],
+   "at": {
+    "baseline": [
+     178,
+     357
+    ]
+   },
+   "in": {
+    "start": 0.08,
+    "dur": 0.54,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "opacity",
+     "gt": 0.01
+    }
+   ],
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "line1",
+   "role": "title",
+   "type": "text",
+   "text": "{line1}",
+   "font": "main",
+   "size": 97,
+   "color": [
+    247,
+    247,
+    243,
+    255
+   ],
+   "at": {
+    "baseline": [
+     154,
+     479
+    ]
+   },
+   "in": {
+    "start": 0.3,
+    "dur": 0.74,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 16
+    }
+   },
+   "reveal": "x"
+  },
+  {
+   "id": "line2",
+   "role": "title",
+   "type": "text",
+   "text": "{line2}",
+   "font": "main",
+   "size": 95,
+   "color": [
+    247,
+    247,
+    243,
+    255
+   ],
+   "at": {
+    "baseline": [
+     154,
+     615
+    ]
+   },
+   "in": {
+    "start": 0.72,
+    "dur": 0.73,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0,
+     "dy": 13
+    }
+   },
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "underline",
+   "role": "accent",
+   "type": "line",
+   "from": [
+    146,
+    636
+   ],
+   "to": [
+    676,
+    636
+   ],
+   "progressSnap": "round",
+   "width": 3,
+   "color": [
+    148,
+    199,
+    197,
+    210
+   ],
+   "draw": "direct",
+   "in": {
+    "start": 0.72,
+    "dur": 0.73,
+    "ease": "easeOutCubic",
+    "from": {
+     "progress": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "progress",
+     "gt": 0.0
+    }
+   ]
+  },
+  {
+   "id": "subtitle",
+   "role": "description",
+   "type": "text",
+   "text": "{subtitle}",
+   "font": "reg",
+   "size": 32,
+   "color": [
+    215,
+    222,
+    221,
+    255
+   ],
+   "at": {
+    "baseline": [
+     156,
+     718
+    ]
+   },
+   "in": {
+    "start": 1.27,
+    "dur": 0.48,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "wipe": 0
+    }
+   },
+   "reveal": "x",
+   "optional": true
+  },
+  {
+   "id": "index",
+   "role": "meta",
+   "type": "text",
+   "text": "{index}",
+   "font": "inter",
+   "size": 21,
+   "color": [
+    178,
+    188,
+    189,
+    255
+   ],
+   "at": {
+    "baseline": [
+     155,
+     936
+    ]
+   },
+   "in": {
+    "start": 1.27,
+    "dur": 0.48,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}

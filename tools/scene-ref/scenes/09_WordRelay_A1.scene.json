@@ -1,0 +1,259 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.word-relay",
+ "label": "Word Relay",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "09_WordRelay_A1",
+  "sha256": "bf60ae92e893f97ed7a6d961cfb791326a1d64a39971d3b05832164b9b14aeef",
+  "script": "render_stage09_refinements.py (on reference_render_stage09.py)",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.001,
+  "skipCompare": "le",
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f"
+  }
+ },
+ "params": [
+  {
+   "id": "word1",
+   "type": "text",
+   "default": "FIECARE",
+   "label": "Word 1"
+  },
+  {
+   "id": "word1Color",
+   "type": "color",
+   "default": "#F4F2ED",
+   "label": "Word 1 colour"
+  },
+  {
+   "id": "word2",
+   "type": "text",
+   "default": "CADRU",
+   "label": "Word 2"
+  },
+  {
+   "id": "word2Color",
+   "type": "color",
+   "default": "#F4F2ED",
+   "label": "Word 2 colour"
+  },
+  {
+   "id": "word3",
+   "type": "text",
+   "default": "CONTEAZĂ",
+   "label": "Word 3"
+  },
+  {
+   "id": "word3Color",
+   "type": "color",
+   "default": "#F4F2ED",
+   "label": "Word 3 colour"
+  }
+ ],
+ "actors": [
+  {
+   "id": "row",
+   "role": "carrierMotion",
+   "type": "group",
+   "at": [
+    0,
+    0
+   ],
+   "row": {
+    "gap": 33,
+    "width": 1920,
+    "baseline": 556
+   },
+   "children": [
+    {
+     "id": "word1",
+     "role": "title",
+     "type": "text",
+     "text": "{word1}",
+     "font": "sans",
+     "size": 119,
+     "color": {
+      "expr": "word1Color"
+     },
+     "at": {
+      "baseline": [
+       0,
+       556
+      ]
+     },
+     "in": [
+      {
+       "start": 0.17,
+       "dur": 0.56,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 0.17,
+       "dur": 0.58,
+       "ease": "easeOutCubic",
+       "from": {
+        "dy": 32
+       }
+      }
+     ],
+     "out": [
+      {
+       "start": 4.89,
+       "dur": 0.62,
+       "ease": "smoothstep",
+       "to": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 5.12,
+       "dur": 0.48,
+       "ease": "easeInCubic",
+       "to": {
+        "dy": 22
+       }
+      }
+     ]
+    },
+    {
+     "id": "word2",
+     "role": "title",
+     "type": "text",
+     "text": "{word2}",
+     "font": "sans",
+     "size": 119,
+     "color": {
+      "expr": "word2Color"
+     },
+     "at": {
+      "baseline": [
+       0,
+       556
+      ]
+     },
+     "in": [
+      {
+       "start": 0.38,
+       "dur": 0.56,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 0.38,
+       "dur": 0.58,
+       "ease": "easeOutCubic",
+       "from": {
+        "dy": 32
+       }
+      }
+     ],
+     "out": [
+      {
+       "start": 4.89,
+       "dur": 0.62,
+       "ease": "smoothstep",
+       "to": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 5.12,
+       "dur": 0.48,
+       "ease": "easeInCubic",
+       "to": {
+        "dy": 22
+       }
+      }
+     ]
+    },
+    {
+     "id": "word3",
+     "role": "title",
+     "type": "text",
+     "text": "{word3}",
+     "font": "sans",
+     "size": 119,
+     "color": {
+      "expr": "word3Color"
+     },
+     "at": {
+      "baseline": [
+       0,
+       556
+      ]
+     },
+     "in": [
+      {
+       "start": 0.59,
+       "dur": 0.56,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 0.59,
+       "dur": 0.58,
+       "ease": "easeOutCubic",
+       "from": {
+        "dy": 32
+       }
+      }
+     ],
+     "out": [
+      {
+       "start": 4.89,
+       "dur": 0.62,
+       "ease": "smoothstep",
+       "to": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 5.12,
+       "dur": 0.48,
+       "ease": "easeInCubic",
+       "to": {
+        "dy": 22
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

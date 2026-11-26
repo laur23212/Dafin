@@ -1,0 +1,88 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.phase",
+ "label": "Phase",
+ "category": "Golden Run",
+ "source": {
+  "asset": "28C",
+  "sha256": "5d43ca551663caf007c7b55df11c4377078d1873a680f9a928264f9b46b787e1",
+  "script": "render_stage28.py :: scene_c",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "InterDisplay-Black.otf",
+   "sha256": "c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "PHASE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "black",
+   "size": 397,
+   "color": [
+    239,
+    237,
+    231
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "inverseTransit",
+    "maxWidth": 1440,
+    "tracking": -4,
+    "visible": [
+     0.18,
+     5.58
+    ],
+    "exit": [
+     4.36,
+     1.03
+    ],
+    "enter": [
+     0.2,
+     1.45
+    ],
+    "slab": 215.0
+   }
+  }
+ ]
+}

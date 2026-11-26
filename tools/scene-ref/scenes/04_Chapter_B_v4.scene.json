@@ -1,0 +1,278 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.chapter.tag-panel-v4",
+ "label": "Tag & Panel Chapter B v4",
+ "category": "Chapter Titles",
+ "source": {
+  "asset": "04_Chapter_B_v4",
+  "sha256": "b497ab031631f404f0fe5355b4deeee8a63640910f71fa0b6344adcc096655c2",
+  "script": "RECONSTRUCTED_APPROX :: dafin_chapters_v4_recon.py + chapters_v4_params.json (measured from the approved MP4; the original v4 script is SOURCE_MISSING)",
+  "status": "APPROVED_RECONSTRUCTED_APPROX"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "cov1x",
+  "ss": 2
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c"
+  },
+  "sansBold": {
+   "file": "InterDisplay-SemiBold.otf",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f"
+  }
+ },
+ "params": [
+  {
+   "id": "tag",
+   "type": "text",
+   "default": "CAPITOLUL 3",
+   "label": "Chapter"
+  },
+  {
+   "id": "line1",
+   "type": "text",
+   "default": "ÎN CĂUTAREA",
+   "label": "Title, line 1"
+  },
+  {
+   "id": "line2",
+   "type": "text",
+   "default": "LUMINII",
+   "label": "Title, line 2"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Un oraș în lumină și tăcere",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "card",
+   "role": "carrierMotion",
+   "type": "group",
+   "at": [
+    0,
+    0
+   ],
+   "out": {
+    "start": 5.02468079328537,
+    "dur": 0.5973645204305652,
+    "ease": "easeOutCubic",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "tag",
+     "type": "roundRect",
+     "box": [
+      122,
+      375,
+      369,
+      432
+     ],
+     "radius": 8,
+     "role": "carrier",
+     "alpha": 0.902,
+     "in": [
+      {
+       "start": 0.05975250244140626,
+       "dur": 0.5318041992187501,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      122,
+      370
+     ],
+     "fill": [
+      235,
+      239,
+      243
+     ]
+    },
+    {
+     "id": "tag_text",
+     "type": "text",
+     "text": "{tag}",
+     "font": "sans",
+     "size": 30.5,
+     "letterSpacing": 0.0,
+     "at": {
+      "ascender": [
+       150.5,
+       385
+      ]
+     },
+     "role": "eyebrow",
+     "color": [
+      23,
+      28,
+      31
+     ],
+     "alpha": 1.0,
+     "clipTo": {
+      "actor": "tag"
+     }
+    },
+    {
+     "id": "title1",
+     "type": "text",
+     "text": "{line1}",
+     "font": "sansBold",
+     "size": 83,
+     "letterSpacing": 0.0,
+     "at": {
+      "ascender": [
+       126,
+       457
+      ]
+     },
+     "role": "title",
+     "color": [
+      250,
+      248,
+      244
+     ],
+     "alpha": 0.99,
+     "in": [
+      {
+       "start": 0.2768817901611327,
+       "dur": 0.6635008621215823,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      114,
+      680
+     ],
+     "ss": 1
+    },
+    {
+     "id": "title2",
+     "type": "text",
+     "text": "{line2}",
+     "font": "sansBold",
+     "size": 83,
+     "letterSpacing": 0.0,
+     "at": {
+      "ascender": [
+       117,
+       532
+      ]
+     },
+     "role": "title",
+     "color": [
+      250,
+      248,
+      244
+     ],
+     "alpha": 0.99,
+     "in": [
+      {
+       "start": 0.2768817901611327,
+       "dur": 0.6635008621215823,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      114,
+      680
+     ],
+     "optional": true,
+     "ss": 1
+    },
+    {
+     "id": "panel",
+     "type": "roundRect",
+     "box": [
+      122,
+      638,
+      492,
+      697
+     ],
+     "radius": 6,
+     "role": "carrier",
+     "alpha": 0.93,
+     "in": [
+      {
+       "start": 0.6292271518707275,
+       "dur": 0.5034588932991029,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      122,
+      493
+     ],
+     "fill": [
+      42,
+      52,
+      66
+     ]
+    },
+    {
+     "id": "subtitle",
+     "type": "text",
+     "text": "{subtitle}",
+     "font": "sans",
+     "size": 26,
+     "letterSpacing": 0.5,
+     "at": {
+      "ascender": [
+       144,
+       648
+      ]
+     },
+     "role": "description",
+     "color": [
+      221,
+      230,
+      236
+     ],
+     "alpha": 1.0,
+     "clipTo": {
+      "actor": "panel"
+     },
+     "optional": true
+    }
+   ]
+  }
+ ]
+}

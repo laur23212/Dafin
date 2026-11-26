@@ -1,0 +1,109 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.masked-light",
+ "label": "Masked Light Reveal",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "10_MaskedLightReveal",
+  "sha256": "90747499925bd27561b9c15ae49641cf8d39cea866af66b364d5fe11ddc89c7c",
+  "script": "render_stage10.py :: frame_b",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "fx1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-Medium.ttf",
+   "sha256": "ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "title",
+   "type": "text",
+   "default": "DIN UMBRĂ",
+   "label": "Title"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "serif",
+   "size": 164,
+   "color": [
+    213,
+    215,
+    213
+   ],
+   "at": {
+    "baseline": [
+     177,
+     610
+    ]
+   },
+   "effect": {
+    "type": "maskedLight",
+    "lit": [
+     247,
+     241,
+     230
+    ],
+    "beam": [
+     135,
+     160
+    ],
+    "edge": 118,
+    "edgeBias": 0.52,
+    "glowSigma": 165,
+    "warm": 0.84,
+    "haloSigma": 20,
+    "haloSpread": 210,
+    "haloAdd": [
+     24,
+     16,
+     8
+    ],
+    "roi": [
+     360,
+     680,
+     125,
+     1450
+    ],
+    "reveal": {
+     "start": 0.2,
+     "dur": 2.12,
+     "ease": "smoothstep"
+    },
+    "fade": {
+     "start": 5.12,
+     "dur": 0.65,
+     "ease": "smoothstep"
+    }
+   }
+  }
+ ]
+}
