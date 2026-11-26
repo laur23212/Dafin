@@ -1743,8 +1743,8 @@ private:
                 const double fc = e.value(QStringLiteral("order")).toInt() == 0 ? (1 - move) * (1 - resolve) + resolve : move * (1 - resolve) + resolve;
                 const double factor = 0.57 + 0.43 * fc;
                 const QJsonValue soft = e.value(QStringLiteral("soft"));
-                const float rgb[3] = {std::trunc(col(soft, 0) + (a.color.r - col(soft, 0)) * fc), std::trunc(col(soft, 1) + (a.color.g - col(soft, 1)) * fc),
-                                      std::trunc(col(soft, 2) + (a.color.b - col(soft, 2)) * fc)};
+                const float rgb[3] = {static_cast<float>(std::trunc(col(soft, 0) + (a.color.r - col(soft, 0)) * fc)), static_cast<float>(std::trunc(col(soft, 1) + (a.color.g - col(soft, 1)) * fc)),
+                                      static_cast<float>(std::trunc(col(soft, 2) + (a.color.b - col(soft, 2)) * fc))};
                 for (int y = 0; y < art.rect.height(); ++y)
                     for (int x = 0; x < art.rect.width(); ++x) {
                         const size_t q = size_t(y) * size_t(art.rect.width()) + size_t(x);
