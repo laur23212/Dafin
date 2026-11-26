@@ -805,6 +805,13 @@ public:
                 // at.right/top: the script's sprite (ink + 8 px padding) has its right edge and top
                 // there, whatever the text is (the Stage06 counter).
                 const auto place = [&a](TextArt art) {
+                    if (a.anchorLeft) { // Stage09 text_layer(): the sprite's top-left corner
+                        const QPointF o(a.anchorLeftX + a.spritePad, a.anchorTopY + a.spritePad);
+                        const QPointF d = o - art.ink.topLeft();
+                        art.ink.translate(d);
+                        art.origin += d;
+                        return art;
+                    }
                     if (!a.anchorRight)
                         return art;
                     const QPointF o(a.anchorRightX - 8 - art.ink.width(), a.anchorTopY + 8);
@@ -844,6 +851,37 @@ public:
                 }
                 const double size = qMax(10.0, roundHalfEven(a.size));
                 texts.insert(a.id, maskText(pixelFont(tf, size), a.text, a.letterSpacing, a.baseline));
+            }
+        }
+        // pil1x "row" (Stage09 A_Crisp): pens getlength + gap apart, the run centred in row.width.
+        for (const Actor &g : std::as_const(scene.actors)) {
+            if (!g.hasRow || scene.profile != Profile::Pil1x)
+                continue;
+            std::vector<const Actor *> kids;
+            std::vector<double> lens;
+            double sum = 0.0;
+            for (const Actor &k : std::as_const(scene.actors)) {
+                if (k.parent != g.id || k.type != QLatin1String("text"))
+                    continue;
+                const SkFont f1 = pixelFont(faces.value(k.font), int(k.size));
+                double len = 0.0;
+                for (const GlyphRun &run : basicLayout(f1, k.text)) {
+                    std::vector<SkScalar> w(run.glyphs.size());
+                    run.font.getWidths({run.glyphs.data(), run.glyphs.size()}, {w.data(), w.size()});
+                    for (SkScalar v : w)
+                        len += v;
+                }
+                kids.push_back(&k);
+                lens.push_back(len);
+                sum += len;
+            }
+            if (kids.empty())
+                continue;
+            double x = roundHalfEven((g.rowWidth - (sum + g.rowGap * double(kids.size() - 1))) / 2.0);
+            for (size_t i = 0; i < kids.size(); ++i) {
+                const Actor &k = *kids[i];
+                texts.insert(k.id, pilText(pixelFont(faces.value(k.font), int(k.size)), k.text, QPointF(x, g.rowBaseline)));
+                x += lens[i] + g.rowGap;
             }
         }
         const scene::InkFn ink = [this](const Actor &t) -> std::optional<QRectF> {
@@ -1236,7 +1274,8 @@ private:
         if (a.spriteChapter) {
             const TextArt art = r->texts.value(a.id);
             const double w = r->trackedSprites.value(a.id).width();
-            if (!art.image || ch.opacity <= 0.0 || ch.wipe <= 0.0)
+            if (!art.image || ch.opacity <= 0.0 || ch.wipe <= 0.0 || ch.opacity < sc.minOpacity
+                || (sc.skipAtThreshold && ch.opacity <= sc.minOpacity))
                 return;
             const double cw = qBound(0.0, roundHalfEven(w * ch.wipe), w);
             if (cw < 1.0)
@@ -1297,8 +1336,11 @@ private:
             c.restore();
             return;
         }
-        const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
+        const double x = a.truncOffsets ? std::trunc(ch.dx) : roundHalfEven(ch.dx);
+        const double y = a.truncOffsets ? std::trunc(ch.dy) : roundHalfEven(ch.dy);
         c.save();
+        if (a.hasClipRect) // Stage09 C: the sprite cropped to a canvas rect (right/bottom exclusive)
+            c.clipRect(SkRect::MakeLTRB(SkScalar(a.clipRect[0]), SkScalar(a.clipRect[1]), SkScalar(a.clipRect[2]), SkScalar(a.clipRect[3])));
         if (!a.reveal.isEmpty()) {
             // The scripts revealed the whole sprite (ink plus 8 px of padding) from one side.
             const double v = qBound(0.0, ch.wipe, 1.0);
@@ -1333,7 +1375,9 @@ private:
         if (tp == QLatin1String("rect") || tp == QLatin1String("roundRect")) {
             double x0 = a.box[0], y0 = a.box[1], x1 = a.box[2], y1 = a.box[3];
             const double w = x1 - x0, h = y1 - y0;
-            if (a.wipeSnapInt1)
+            if (a.wipeDown && a.wipeSnapRound) // Stage09 B guide bar: y0 + round(h·p)
+                y1 = y0 + roundHalfEven(h * ch.wipe);
+            else if (a.wipeSnapInt1)
                 x1 = x0 + qMax(1.0, std::trunc(w * ch.wipe));
             else if (a.wipeSnapRound)
                 x1 = x0 + roundHalfEven(w * ch.wipe);

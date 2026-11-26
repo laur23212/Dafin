@@ -328,6 +328,9 @@ private slots:
         QTest::newRow("08_Cinematic_Inter") << scenePath("08_Cinematic_Inter") << QStringLiteral("08_Cinematic_Inter");
         QTest::newRow("08_Cinematic_RobotoSlab") << scenePath("08_Cinematic_RobotoSlab") << QStringLiteral("08_Cinematic_RobotoSlab");
         QTest::newRow("08_Cinematic_Lato") << scenePath("08_Cinematic_Lato") << QStringLiteral("08_Cinematic_Lato");
+        QTest::newRow("09_WordRelay_A1") << scenePath("09_WordRelay_A1") << QStringLiteral("09_WordRelay_A1");
+        QTest::newRow("09_SplitMotion_C1") << scenePath("09_SplitMotion_C1") << QStringLiteral("09_SplitMotion_C1");
+        QTest::newRow("09_WordShift_B7") << scenePath("09_WordShift_B7") << QStringLiteral("09_WordShift_B7");
         QTest::newRow("04_Chapter_A_v4") << scenePath("04_Chapter_A_v4") << QStringLiteral("04_Chapter_A_v4");
         QTest::newRow("04_Chapter_B_v4") << scenePath("04_Chapter_B_v4") << QStringLiteral("04_Chapter_B_v4");
         QTest::newRow("04_Dark_Chapter_A_v2") << scenePath("04_Dark_Chapter_A_v2") << QStringLiteral("04_Dark_Chapter_A_v2");

@@ -561,6 +561,17 @@ class Pil1x:
         self.skip_le = r.get('skipCompare', 'le' if self.min_opacity > 0.001 else 'lt') == 'le'
         self.reveal_crop = r.get('revealMode') == 'crop'
         self.full_reveal = float(r.get('fullReveal', 1.0))
+        for g in sc.actors:  # "row" (Stage09 A_Crisp word relay): pens getlength + gap apart, centred
+            row = g.get('row') if g['type'] == 'group' else None
+            if not row:
+                continue
+            kids = [a for a in sc.actors if a.get('_parent') == g['id'] and a['type'] == 'text']
+            ls = [float(self.font(k['font'], k['size']).getlength(k['text'])) for k in kids]
+            gap = float(row.get('gap', 0))
+            cur = round((float(row['width']) - (sum(ls) + gap * (len(ls) - 1))) / 2)
+            for k, n in zip(kids, ls):
+                k['at'] = {'baseline': [cur, row['baseline']]}
+                cur += n + gap
 
     def font(self, key, size):
         return _truetype(font_path(self.sc, key, self.font_dirs), int(size), False)
@@ -591,14 +602,14 @@ class Pil1x:
     def draw_chapter(self, c, a, ch):
         im, (x, y) = self.chapter_sprite(a)
         op, v = ch['opacity'], ch['wipe']
-        if op <= 0 or v <= 0:
+        if op <= 0 or v <= 0 or op < self.min_opacity or (self.skip_le and op <= self.min_opacity):
             return
         cw = max(0, min(im.width, round(im.width * v)))
         if cw < 1:
             return
         sub = im.crop((0, 0, cw, im.height))
-        if op < 0.999:
-            sub.putalpha(sub.getchannel('A').point(lambda q: round(q * op)))
+        if op < min(0.999, self.full_opacity):  # Stage09 B7 place(): int(a·op) below .999
+            sub.putalpha(sub.getchannel('A').point((lambda q: int(q * op)) if self.alpha_trunc else (lambda q: round(q * op))))
         c.alpha_composite(sub, dest=(round(x + ch['dx']), round(y + ch['dy'])))
 
     def sprite(self, a, text=None):
@@ -608,10 +619,12 @@ class Pil1x:
             f = self.font(a['font'], a['size'])
             d = ImageDraw.Draw(Image.new('RGBA', (20, 20)))
             b = d.textbbox((0, 0), text, font=f)
-            px = py = self.PAD
+            px = py = int(a.get('spritePad', self.PAD))
             im = Image.new('RGBA', (max(1, b[2] - b[0] + px * 2), max(1, b[3] - b[1] + py * 2)), (0, 0, 0, 0))
             ImageDraw.Draw(im).text((px - b[0], py - b[1]), text, font=f, fill=self.rgba(a))
-            if 'right' in a['at']:  # Stage06 counter: the sprite's right edge is fixed
+            if 'left' in a['at']:  # Stage09 text_layer(): the sprite's top-left corner is placed
+                x, y = a['at']['left'], a['at']['top']
+            elif 'right' in a['at']:  # Stage06 counter: the sprite's right edge is fixed
                 x = a['at']['right'] - im.width
                 y = a['at']['top']
             else:
@@ -820,7 +833,18 @@ class Pil1x:
             else:
                 alpha = alpha.point(lambda p: max(0, min(255, round(p * op))))
         src = im.copy(); src.putalpha(alpha)
-        c.alpha_composite(src, (round(x + ch['dx']), round(y + ch['dy'])))
+        trunc = a.get('offsetSnap') == 'trunc'
+        sx = int(x + int(ch['dx'])) if trunc else round(x + ch['dx'])
+        sy = int(y + int(ch['dy'])) if trunc else round(y + ch['dy'])
+        cr = a.get('clipRect')
+        if cr:  # Stage09 C: the sprite cropped to a canvas rect (x1, y1 exclusive)
+            x0, y0, x1, y1 = cr['box']
+            bx0, by0 = max(0, x0 - sx), max(0, y0 - sy)
+            bx1, by1 = min(src.width, x1 - sx), min(src.height, y1 - sy)
+            if bx1 <= bx0 or by1 <= by0:
+                return
+            src, sx, sy = src.crop((bx0, by0, bx1, by1)), sx + bx0, sy + by0
+        c.alpha_composite(src, (sx, sy))
 
     def ink(self, a, ch, key='color'):
         r, g, b, A = self.rgba(a, key)
@@ -835,7 +859,9 @@ class Pil1x:
         if tp in ('rect', 'roundRect'):
             x0, y0, x1, y1 = a['box']
             w, h = x1 - x0, y1 - y0
-            if a.get('wipeSnap') == 'int1':  # Stage05 A: x0 + max(1, int(w·p))
+            if a.get('wipeDir') == 'down' and a.get('wipeSnap') == 'round':  # Stage09 B guide: y0 + round(h·p)
+                y1 = y0 + round(h * ch['wipe'])
+            elif a.get('wipeSnap') == 'int1':  # Stage05 A: x0 + max(1, int(w·p))
                 x1 = x0 + max(1, int(w * ch['wipe']))
             elif a.get('wipeSnap') == 'round':  # Stage06: x0 + round(w·p)
                 x1 = x0 + round(w * ch['wipe'])

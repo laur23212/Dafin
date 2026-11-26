@@ -1,0 +1,232 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.word-shift",
+ "label": "Word Shift",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "09_WordShift_B7",
+  "sha256": "8316da20838cf4b2ce3906a69fe970340f13523a44f1317926958d774b9ed0d2",
+  "script": "Stage09 B Art Direction v4 :: render.py (B7_Noto_Display_Black_Optical)",
+  "status": "POSITIVE_HISTORICAL_CREATOR_RATING_NOT_PROFESSIONAL"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.001,
+  "skipCompare": "le",
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "black": {
+   "file": "NotoSansDisplay-Black.ttf",
+   "sha256": "4bf498b3b6a4b3fe311b8771c001cef5077a339f329649542d237cc284d3b13d",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word1",
+   "type": "text",
+   "default": "OBSERVĂ.",
+   "label": "Word 1"
+  },
+  {
+   "id": "word1Color",
+   "type": "color",
+   "default": "#181D21",
+   "label": "Word 1 colour"
+  },
+  {
+   "id": "word2",
+   "type": "text",
+   "default": "ÎNȚELEGE.",
+   "label": "Word 2"
+  },
+  {
+   "id": "word2Color",
+   "type": "color",
+   "default": "#181D21",
+   "label": "Word 2 colour"
+  },
+  {
+   "id": "word3",
+   "type": "text",
+   "default": "CREEAZĂ.",
+   "label": "Word 3"
+  },
+  {
+   "id": "word3Color",
+   "type": "color",
+   "default": "#181D21",
+   "label": "Word 3 colour"
+  }
+ ],
+ "actors": [
+  {
+   "id": "guide",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    178,
+    350,
+    188,
+    715
+   ],
+   "color": [
+    177,
+    91,
+    63,
+    255
+   ],
+   "draw": "direct",
+   "wipeDir": "down",
+   "wipeSnap": "round",
+   "out": {
+    "start": 5.12,
+    "dur": 0.46,
+    "ease": "smoothstep",
+    "to": {
+     "wipe": 0
+    }
+   },
+   "visibleWhen": [
+    {
+     "channel": "wipe",
+     "gt": 0.001
+    }
+   ]
+  },
+  {
+   "id": "word1",
+   "role": "title",
+   "type": "text",
+   "text": "{word1}",
+   "font": "black",
+   "size": 144,
+   "letterSpacing": 0.2,
+   "sprite": "chapter",
+   "color": {
+    "expr": "word1Color"
+   },
+   "at": {
+    "baseline": [
+     284,
+     563
+    ]
+   },
+   "in": {
+    "start": 0.12,
+    "dur": 0.48,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "dy": 46
+    }
+   },
+   "out": {
+    "start": 1.3599999999999999,
+    "dur": 0.36,
+    "ease": "easeInCubic",
+    "to": {
+     "opacity": 0,
+     "dy": -32
+    }
+   }
+  },
+  {
+   "id": "word2",
+   "role": "title",
+   "type": "text",
+   "text": "{word2}",
+   "font": "black",
+   "size": 144,
+   "letterSpacing": 0.2,
+   "sprite": "chapter",
+   "color": {
+    "expr": "word2Color"
+   },
+   "at": {
+    "baseline": [
+     284,
+     563
+    ]
+   },
+   "in": {
+    "start": 1.82,
+    "dur": 0.48,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "dy": 46
+    }
+   },
+   "out": {
+    "start": 3.04,
+    "dur": 0.36,
+    "ease": "easeInCubic",
+    "to": {
+     "opacity": 0,
+     "dy": -32
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "word3",
+   "role": "title",
+   "type": "text",
+   "text": "{word3}",
+   "font": "black",
+   "size": 144,
+   "letterSpacing": 0.2,
+   "sprite": "chapter",
+   "color": {
+    "expr": "word3Color"
+   },
+   "at": {
+    "baseline": [
+     284,
+     563
+    ]
+   },
+   "in": {
+    "start": 3.5,
+    "dur": 0.48,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "dy": 46
+    }
+   },
+   "out": {
+    "start": 5.239999999999999,
+    "dur": 0.36,
+    "ease": "easeInCubic",
+    "to": {
+     "opacity": 0,
+     "dy": -32
+    }
+   },
+   "optional": true
+  }
+ ]
+}

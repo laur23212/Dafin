@@ -334,6 +334,13 @@ Source: `render_stage05.py` and its siblings.
 - `sprite: "chapter"` (Dark Chapter A v2): glyphs at float pens, `+ getlength(ch) + letterSpacing`,
   4 px of padding; `wipe` crops `round(w·v)` px of that sprite. A `roundRect` may have `fill` and
   `strokeColor`/`stroke` (one pane, the hairline over the fill).
+- Stage09: `at: {"left": x, "top": y}` places the sprite's top-left corner; `spritePad` (default 8)
+  is its padding (text_layer(): 11). `offsetSnap: "trunc"` moves by int(dx). `clipRect: {"box":
+  [x0, y0, x1, y1]}` crops the sprite to a canvas rect (x1, y1 exclusive; mask1x's clipRect is
+  PIL-inclusive and rises). A group with `row: {"gap": 33, "width": 1920, "baseline": 556}` sets
+  its texts' pens getlength + gap apart, the run centred (A_Crisp word relay); each word keeps its
+  own colour param. A `rect` with `wipeDir: "down"` and `wipeSnap: "round"` ends at
+  `y0 + round(h·wipe)` (the B guide bar). The chapter sprite follows the render opacity rules.
 - A block may run on `"clock": {"actor": id, "channel": "wipe"}` instead of time: Stage07's answer
   tag eases on `(blockReveal − 0.55) / 0.45`.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
@@ -412,6 +419,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 07_Kinetic, 07_Insights_v2, 07_QA_v3 (pil1x, RGB over the scripts' footage crops) | 150/150 frames identical |
   | 08_Cinematic_Garamond / Inter / RobotoSlab / Lato (pil1x over the script's charcoal) | 150/150 frames identical |
   | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
+  | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
   | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 

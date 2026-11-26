@@ -931,6 +931,14 @@ struct Loader
                                 "ask for the extension")
                      .arg(a.id, effType));
 
+        a.spritePad = r.contains(QStringLiteral("spritePad")) ? r.value(QStringLiteral("spritePad")).toDouble() : 8.0;
+        const QJsonObject row = r.value(QStringLiteral("row")).toObject();
+        if (!row.isEmpty()) {
+            a.hasRow = true;
+            a.rowGap = row.value(QStringLiteral("gap")).toDouble();
+            a.rowWidth = numberOf(row.value(QStringLiteral("width")), a.id + QStringLiteral(": row.width"));
+            a.rowBaseline = numberOf(row.value(QStringLiteral("baseline")), a.id + QStringLiteral(": row.baseline"));
+        }
         a.alpha = r.contains(QStringLiteral("alpha")) ? r.value(QStringLiteral("alpha")).toDouble() : 1.0;
         a.supersample = r.value(QStringLiteral("supersample")).toInt();
         if (a.supersample < 0 || a.supersample > 4)
@@ -954,6 +962,10 @@ struct Loader
             const QJsonObject at = r.value(QStringLiteral("at")).toObject();
             if (at.contains(QStringLiteral("baseline"))) {
                 a.baseline = pointOf(at.value(QStringLiteral("baseline")), a.id + QStringLiteral(": at"));
+            } else if (at.contains(QStringLiteral("left"))) {
+                a.anchorLeft = true;
+                a.anchorLeftX = numberOf(at.value(QStringLiteral("left")), a.id + QStringLiteral(": at.left"));
+                a.anchorTopY = numberOf(at.value(QStringLiteral("top")), a.id + QStringLiteral(": at.top"));
             } else if (at.contains(QStringLiteral("ascender"))) {
                 a.anchorAscender = true;
                 a.ascender = pointOf(at.value(QStringLiteral("ascender")), a.id + QStringLiteral(": at.ascender"));

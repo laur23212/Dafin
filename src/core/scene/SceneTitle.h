@@ -84,6 +84,13 @@ struct Actor
     bool spriteChapter = false; // "sprite": "chapter" (Dark Chapter A v2): float pens + letterSpacing,
                                 // 4 px padding; wipe crops round(w·v) px of that sprite
     bool anchorCenter = false; // at: {"center": [x, y]}: the tracked sprite centred there
+    // pil1x Stage09: at {left, top} places the sprite's corner; spritePad (default 8) its padding;
+    // a group "row" lays its texts out pen-to-pen (getlength + gap), centred in rowWidth
+    bool anchorLeft = false;
+    double anchorLeftX = 0.0;
+    double spritePad = 8.0;
+    bool hasRow = false;
+    double rowGap = 0.0, rowWidth = 0.0, rowBaseline = 0.0;
     // cov1x (Chapter A/B v4): at.ascender, a constant alpha, a crop wipe from wipeRange[0] to [1]
     bool anchorAscender = false;
     QPointF ascender;

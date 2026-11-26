@@ -241,6 +241,45 @@ def check_dark_chapter_a(src: Path, frames):
     return [{'example': '04_Dark_Chapter_A_v2', 'frames': len(frames), 'mismatched': bad}]
 
 
+def check_stage09(src: Path, frames):
+    """Stage09 A_Crisp and C_Noto (render_stage09_refinements.py over reference_render_stage09.py)
+    and B7 (the B Art Direction v4 render.py), each over its own plate. `src` holds the three
+    scripts. TEST-ONLY adapters: the portrait photo is a generated plate, the scripts' import paths
+    point into a temporary folder, and B7's candidate list leaves out B6 (Clear Sans) when that
+    font is not installed (the script asserts every candidate's font)."""
+    import tempfile, re
+    from PIL import Image
+    tmp = Path(tempfile.mkdtemp())
+    y, x = np.mgrid[0:1080, 0:1920]
+    plate = np.dstack([(40 + x / 1920 * 90 + y / 1080 * 30) % 256, (110 + np.sin(x / 90) * 30) % 256, (70 + y / 1080 * 80) % 256])
+    Image.fromarray(plate.astype(np.uint8)).save(tmp / 'plate.png')
+    o = (src / 'reference_render_stage09.py').read_text().replace(
+        "CLEAN='/mnt/data/Dafin_clean_source_check.png'", f"CLEAN={str(tmp / 'plate.png')!r}")
+    (tmp / 'stage09_orig.py').write_text(o)
+    r9 = (src / 'render_stage09_refinements.py').read_text().replace(
+        "ORIGINAL='/mnt/data/Dafin_Part5_Stage09_ExpressiveTitles_16x9/scripts/render_stage09.py'", f"ORIGINAL={str(tmp / 'stage09_orig.py')!r}")
+    (tmp / 'stage09_ref.py').write_text(r9)
+    b7 = (src / 'render.py').read_text().replace(
+        "SRC='/mnt/data/Dafin_Stage09_TypographyRefinement_v2/scripts/reference_render_stage09.py'", f"SRC={str(tmp / 'stage09_orig.py')!r}")
+    if not Path('/usr/share/fonts/truetype/clear-sans/ClearSans-Bold.ttf').exists():
+        b7 = re.sub(r"\n    'B6_Clear_Sans_Bold':[^\n]*", '', b7, count=1)
+    (tmp / 'stage09_b7.py').write_text(b7)
+    m = load_module(tmp / 'stage09_ref.py', 'stage09_ref')
+    mb = load_module(tmp / 'stage09_b7.py', 'stage09_b7')
+    out = []
+    for name, fn, bg in (('09_WordRelay_A1', m.VARIANTS['A_Crisp'], m.orig.A_BG),
+                         ('09_SplitMotion_C1', m.VARIANTS['C_Noto'], m.orig.C_BG),
+                         ('09_WordShift_B7', lambda t: mb.frame_b(t, 'B7_Noto_Display_Black_Optical'), mb.orig.B_BG)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(np.array(fn(i / 25).convert('RGB')), np.array(r.draw(i / 25, bg).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_chapters_v4(src: Path, frames):
     """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
     as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
@@ -313,6 +352,7 @@ def main():
     ap.add_argument('--stage06', type=Path, help='folder with render_stage06.py')
     ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
     ap.add_argument('--dark-chapter-a', type=Path, help='folder with render_a_dark_v2.py')
+    ap.add_argument('--stage09', type=Path, help='folder with reference_render_stage09.py, render_stage09_refinements.py, render.py (B7)')
     ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
@@ -334,6 +374,8 @@ def main():
         res.extend(check_stage06(o.stage06, frames))
     if o.stage07:
         res.extend(check_stage07(o.stage07, frames))
+    if o.stage09:
+        res.extend(check_stage09(o.stage09, frames))
     if o.chapters_v4:
         res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:
