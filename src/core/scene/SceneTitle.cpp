@@ -955,6 +955,7 @@ struct Loader
             } else if (parent.isEmpty() || !r.value(QStringLiteral("align")).toObject().contains(QStringLiteral("h"))) {
                 fail(QStringLiteral("%1: text needs at.baseline").arg(a.id));
             }
+            a.spriteChapter = r.value(QStringLiteral("sprite")).toString() == QLatin1String("chapter");
             if (r.contains(QStringLiteral("tracking"))) {
                 a.tracked = true;
                 a.tracking = r.value(QStringLiteral("tracking")).toDouble();

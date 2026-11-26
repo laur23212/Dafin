@@ -569,6 +569,38 @@ class Pil1x:
         c = core.parse_color(a[key], self.sc.palette)
         return tuple(c) if len(c) == 4 else (*c, 255)
 
+    def chapter_sprite(self, a):
+        """Dark Chapter A v2: pen = 4 + Σ(getlength(c) + tracking) at float x, ink rows from
+        getbbox; sprite ceil(Σ(adv + tracking) − tracking) + 11 wide, bbox height + 11 tall."""
+        key = ('chapter', a['id'], a['text'], a['font'], a['size'], a.get('letterSpacing', 0))
+        if key not in self.cache:
+            f, txt, trk, pad = self.font(a['font'], a['size']), a['text'], a.get('letterSpacing', 0), 4
+            width = int(math.ceil(sum(f.getlength(ch) + trk for ch in txt) - (trk if txt else 0)))
+            x1, y1, x2, y2 = f.getbbox(txt)
+            im = Image.new('RGBA', (width + 2 * pad + 3, y2 - y1 + 2 * pad + 3), (0, 0, 0, 0))
+            d = ImageDraw.Draw(im)
+            cur = pad
+            for ch in txt:
+                d.text((cur, pad - y1), ch, font=f, fill=self.rgba(a))
+                cur += f.getlength(ch) + trk
+            bx, by = a['at']['baseline']  # pen origin at sprite x + 4, baseline at sprite y + 4 − y1 + ascent
+            xy = (bx - pad, by - pad + y1 - f.getmetrics()[0])
+            self.cache[key] = (im, xy)
+        return self.cache[key]
+
+    def draw_chapter(self, c, a, ch):
+        im, (x, y) = self.chapter_sprite(a)
+        op, v = ch['opacity'], ch['wipe']
+        if op <= 0 or v <= 0:
+            return
+        cw = max(0, min(im.width, round(im.width * v)))
+        if cw < 1:
+            return
+        sub = im.crop((0, 0, cw, im.height))
+        if op < 0.999:
+            sub.putalpha(sub.getchannel('A').point(lambda q: round(q * op)))
+        c.alpha_composite(sub, dest=(round(x + ch['dx']), round(y + ch['dy'])))
+
     def sprite(self, a, text=None):
         text = a['text'] if text is None else text
         key = ('sprite', a['id'], text, a['font'], a['size'], json.dumps(a['at']))
@@ -701,6 +733,8 @@ class Pil1x:
             ch = self.chan(a, t)
             if a['type'] == 'text' and 'tracking' in a:
                 self.draw_tracked(c, a, ch)
+            elif a['type'] == 'text' and a.get('sprite') == 'chapter':
+                self.draw_chapter(c, a, ch)
             elif a['type'] == 'text':
                 self.draw_text(c, a, ch, self.counter_text(a, t) if a.get('counter') else None)
             elif a['type'] == 'group':
@@ -816,7 +850,10 @@ class Pil1x:
             fill = self.ink(a, ch, 'fill' if tp == 'roundRect' else 'color')
             if self.skip_empty and (x1 <= x0 or y1 <= y0):
                 return
-            if a.get('radius'):
+            if a.get('radius') and 'strokeColor' in a:  # Dark Chapter A v2's plate: fill and hairline
+                d.rounded_rectangle((x0, y0, x1, y1), radius=a['radius'], fill=fill,
+                                    outline=self.ink(a, ch, 'strokeColor'), width=int(a.get('stroke', 1)))
+            elif a.get('radius'):
                 d.rounded_rectangle((x0, y0, x1, y1), radius=a['radius'], fill=fill)
             else:
                 d.rectangle((x0, y0, x1, y1), fill=fill)

@@ -81,6 +81,8 @@ struct Actor
     bool layerBase = false;    // "layer": "base" (Stage07 matte): drawn first, never wiped
     bool tracked = false;      // text "tracking" (Stage08): glyph by glyph at round(pen), + tracking
     double tracking = 0.0;
+    bool spriteChapter = false; // "sprite": "chapter" (Dark Chapter A v2): float pens + letterSpacing,
+                                // 4 px padding; wipe crops round(w·v) px of that sprite
     bool anchorCenter = false; // at: {"center": [x, y]}: the tracked sprite centred there
     QPointF centerAt;
     bool wipeSnapRound = false;     // rect: x1 = x0 + round(w·wipe) (Stage06)

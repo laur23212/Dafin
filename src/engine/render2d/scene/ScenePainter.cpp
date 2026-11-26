@@ -598,6 +598,47 @@ TrackedArt trackedText(const SkFont &font, const QString &text, double tracking)
     return out;
 }
 
+// Dark Chapter A v2: glyphs at pen + Σ(advance + tracking) from the baseline anchor; the script's
+// sprite starts 4 px left of the pen and is ceil(Σ(adv + tracking) − tracking) + 11 px wide.
+TrackedArt chapterText(const SkFont &font, const QString &text, double tracking, QPointF pen)
+{
+    TrackedArt out;
+    std::vector<GlyphRun> runs;
+    double x = 0.0;
+    for (int i = 0; i < text.size(); ++i) {
+        std::vector<GlyphRun> one = basicLayout(font, text.mid(i, 1));
+        double adv = 0.0;
+        for (GlyphRun &r : one) {
+            for (SkPoint &p : r.pos)
+                p.fX += SkScalar(x);
+            std::vector<SkScalar> w(r.glyphs.size());
+            r.font.getWidths({r.glyphs.data(), r.glyphs.size()}, {w.data(), w.size()});
+            for (SkScalar v : w)
+                adv += v;
+            runs.push_back(std::move(r));
+        }
+        x += adv + tracking;
+    }
+    const SkPoint origin{SkScalar(pen.x()), SkScalar(pen.y())};
+    const SkIRect bounds = layoutBounds(runs, origin);
+    const SkBitmap cov = coverage(runs, origin, bounds);
+    const SkIRect ink = alphaBox(cov);
+    out.spriteW = std::ceil(x - (text.isEmpty() ? 0.0 : tracking)) + 11;
+    if (ink.isEmpty())
+        return out;
+    SkBitmap crop;
+    crop.allocPixels(SkImageInfo::MakeA8(ink.width(), ink.height()));
+    cov.readPixels(crop.pixmap(), ink.left(), ink.top());
+    crop.setImmutable();
+    out.art.mask = crop;
+    out.art.image = crop.asImage();
+    out.art.origin = QPointF(bounds.left() + ink.left(), bounds.top() + ink.top());
+    out.art.ink = QRectF(out.art.origin, QSizeF(ink.width(), ink.height()));
+    out.art.valid = true;
+    out.spriteH = ink.height() + 11;
+    return out;
+}
+
 // PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
 // coordinates. Width 1 is a thin line.
 void pilLine(SkCanvas &c, double ax, double ay, double bx, double by, double width, SkColor color)
@@ -645,6 +686,12 @@ public:
             if (a.type != QLatin1String("text"))
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
+            if (scene.profile == Profile::Pil1x && a.spriteChapter) {
+                const TrackedArt ta = chapterText(pixelFont(tf, int(a.size)), a.text, a.letterSpacing, a.baseline);
+                texts.insert(a.id, ta.art);
+                trackedSprites.insert(a.id, QSizeF(ta.spriteW, ta.spriteH));
+                continue;
+            }
             if (scene.profile == Profile::Pil1x && a.tracked) {
                 const TrackedArt ta = trackedText(pixelFont(tf, int(a.size)), a.text, a.tracking);
                 texts.insert(a.id, ta.art);
@@ -990,6 +1037,24 @@ private:
     void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch, double t) const
     {
         const Scene &sc = r->scene;
+        if (a.spriteChapter) {
+            const TextArt art = r->texts.value(a.id);
+            const double w = r->trackedSprites.value(a.id).width();
+            if (!art.image || ch.opacity <= 0.0 || ch.wipe <= 0.0)
+                return;
+            const double cw = qBound(0.0, roundHalfEven(w * ch.wipe), w);
+            if (cw < 1.0)
+                return;
+            const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
+            const double left = a.baseline.x() - 4 + x;
+            c.save();
+            c.clipRect(SkRect::MakeLTRB(SkScalar(left), -1e6f, SkScalar(left + cw), 1e6f));
+            SkPaint paint;
+            paint.setColor(skColor(a.color, qMin(1.0, ch.opacity)));
+            c.drawImage(art.image, SkScalar(art.origin.x() + x), SkScalar(art.origin.y() + y), SkSamplingOptions(), &paint);
+            c.restore();
+            return;
+        }
         if (a.tracked) {
             // Stage08: centred sprite, left-to-right crop int(w·ent), opacity 1 − exit.
             const TextArt art = r->texts.value(a.id);
@@ -1096,10 +1161,22 @@ private:
                 return;
             }
             paint.setColor(skColor(tp == QLatin1String("roundRect") ? a.fill : a.color, ch.opacity));
-            if (a.radius > 0)
-                c.drawRRect(SkRRect::MakeRectXY(rr, SkScalar(a.radius), SkScalar(a.radius)), paint);
-            else
+            if (a.radius > 0) {
+                const SkRRect outer = SkRRect::MakeRectXY(rr, SkScalar(a.radius), SkScalar(a.radius));
+                if (a.hasStroke && a.stroke > 0 && tp == QLatin1String("roundRect")) {
+                    // Dark Chapter A v2: PIL's outline replaced the fill on its own pane, so the
+                    // fill stops inside the hairline and the hairline is a ring of its own.
+                    SkRRect inner;
+                    outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+                    c.drawRRect(inner, paint);
+                    paint.setColor(skColor(a.strokeColor, ch.opacity));
+                    c.drawDRRect(outer, inner, paint);
+                } else {
+                    c.drawRRect(outer, paint);
+                }
+            } else {
                 c.drawRect(rr, paint);
+            }
         } else if (tp == QLatin1String("line")) {
             double ax = a.from.x(), ay = a.from.y(), bx = a.to.x(), by = a.to.y();
             const double p = ch.progress, v = ch.vscale;

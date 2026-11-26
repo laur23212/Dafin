@@ -223,6 +223,24 @@ def check_stage08_cinematic(src: Path, frames):
     return out
 
 
+def check_dark_chapter_a(src: Path, frames):
+    """Editorial Chapter A Dark v2 over the script's own backdrop. TEST-ONLY adapter: its QA output
+    folder is moved to a temporary one (the script writes text_bounds.json on import)."""
+    import tempfile
+    tmp = Path(tempfile.mkdtemp())
+    code = (src / 'render_a_dark_v2.py').read_text().replace(
+        "BASE=Path('/mnt/data/Dafin_Chapter_A_Dark_v2_Corrected')", f"BASE=Path({str(tmp)!r})")
+    (tmp / 'render_a_dark_v2_adapter.py').write_text(code)
+    m = load_module(tmp / 'render_a_dark_v2_adapter.py', 'dark_a_v2')
+    r = render.Pil1x(core.load_scene(HERE / 'scenes' / '04_Dark_Chapter_A_v2.scene.json'))
+    bad = []
+    for i in frames:
+        mx, n = diff(np.array(m.draw_frame(i / 25).convert('RGB')), np.array(r.draw(i / 25, m.BASE_IMAGE).convert('RGB')))
+        if mx:
+            bad.append({'frame': i, 'max': mx, 'pixels': n})
+    return [{'example': '04_Dark_Chapter_A_v2', 'frames': len(frames), 'mismatched': bad}]
+
+
 def check_stage13_primitives(src: Path):
     """Shapes the two ports do not use, against the frozen Stage13 helpers (and Stage15's plate)."""
     b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_frozen')
@@ -273,6 +291,7 @@ def main():
     ap.add_argument('--stage05', type=Path, help='folder with render_stage05.py')
     ap.add_argument('--stage06', type=Path, help='folder with render_stage06.py')
     ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
+    ap.add_argument('--dark-chapter-a', type=Path, help='folder with render_a_dark_v2.py')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
@@ -293,6 +312,8 @@ def main():
         res.extend(check_stage06(o.stage06, frames))
     if o.stage07:
         res.extend(check_stage07(o.stage07, frames))
+    if o.dark_chapter_a:
+        res.extend(check_dark_chapter_a(o.dark_chapter_a, frames))
     if o.stage08_cinematic:
         res.extend(check_stage08_cinematic(o.stage08_cinematic, frames))
     if o.stage13c:
