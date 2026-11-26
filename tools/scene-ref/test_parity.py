@@ -310,6 +310,27 @@ def check_anchors(note: Path, family: Path, frames):
     return out
 
 
+def check_stage11(src: Path, frames):
+    """Stage11 A Arc Resolve and B Phrase Reflow (render_stage11.py frame_a / frame_b, pil1x over
+    the script's own gradients). TEST-ONLY adapter: the script makes output folders next to its
+    parent folder on import, so it runs from a temporary copy."""
+    import tempfile, shutil
+    tmp = Path(tempfile.mkdtemp()) / 'scripts'
+    tmp.mkdir()
+    shutil.copy(src / 'render_stage11.py', tmp / 'render_stage11.py')
+    m = load_module(tmp / 'render_stage11.py', 'stage11')
+    out = []
+    for name, fn, bg in (('11_ArcResolve', m.frame_a, m.BG_A), ('11_PhraseReflow', m.frame_b, m.BG_B)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(np.array(fn(i / 25)), np.array(r.draw(i / 25, bg.convert('RGBA')).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_chapters_v4(src: Path, frames):
     """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
     as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
@@ -385,6 +406,7 @@ def main():
     ap.add_argument('--stage09', type=Path, help='folder with reference_render_stage09.py, render_stage09_refinements.py, render.py (B7)')
     ap.add_argument('--anchors', type=Path, nargs=2, metavar=('NOTE_DIR', 'FAMILY_DIR'),
                     help='folders with render_anchor_note_static_v4.py and base_stage12_anchor_family_v6.0.2.py')
+    ap.add_argument('--stage11', type=Path, help='folder with render_stage11.py')
     ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
@@ -410,6 +432,8 @@ def main():
         res.extend(check_stage09(o.stage09, frames))
     if o.anchors:
         res.extend(check_anchors(*o.anchors, frames))
+    if o.stage11:
+        res.extend(check_stage11(o.stage11, frames))
     if o.chapters_v4:
         res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:

@@ -861,6 +861,7 @@ public:
             }
         }
         // pil1x "row" (Stage09 A_Crisp): pens getlength + gap apart, the run centred in row.width.
+        QList<QPair<QString, TimedBlock>> enters; // added after the walk: the list must not change under it
         for (const Actor &g : std::as_const(scene.actors)) {
             if (!g.hasRow || scene.profile != Profile::Pil1x)
                 continue;
@@ -884,13 +885,24 @@ public:
             }
             if (kids.empty())
                 continue;
-            double x = roundHalfEven((g.rowWidth - (sum + g.rowGap * double(kids.size() - 1))) / 2.0);
+            double x = (g.rowWidth - (sum + g.rowGap * double(kids.size() - 1))) / 2.0;
+            if (g.rowRoundLeft)
+                x = roundHalfEven(x);
             for (size_t i = 0; i < kids.size(); ++i) {
                 const Actor &k = *kids[i];
                 texts.insert(k.id, pilText(pixelFont(faces.value(k.font), int(k.size)), k.text, QPointF(x, g.rowBaseline)));
+                if (g.rowEnter.present) { // Stage11 Phrase Reflow: from the word's own centred place
+                    TimedBlock b = g.rowEnter;
+                    b.values = {{QStringLiteral("dx"), (g.rowWidth / 2.0 - lens[i] / 2.0) - x}};
+                    enters.append({k.id, b});
+                }
                 x += lens[i] + g.rowGap;
             }
         }
+        for (const auto &[id, b] : std::as_const(enters))
+            for (Actor &m : scene.actors)
+                if (m.id == id)
+                    m.inMore.append(b);
         const scene::InkFn ink = [this](const Actor &t) -> std::optional<QRectF> {
             const auto it = texts.constFind(t.id);
             if (it == texts.constEnd())

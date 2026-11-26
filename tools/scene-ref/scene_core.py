@@ -89,8 +89,12 @@ def ease_fn(spec):
     raise SceneError(f'unknown ease {spec!r}')
 
 
-def phase(t, start, dur, ease):
-    """Progress of one timed block: 0 before start, 1 after start+dur."""
+def phase(t, start, dur, ease, delay=0.0):
+    """Progress of one timed block: 0 before start, 1 after start+dur. `delay` (a per-copy stagger,
+    Stage11 Arc Resolve) is taken off after the start, as ((t − start) − delay) / dur."""
+    if delay:
+        x = (t - start) - delay
+        return (1.0 if x >= 0 else 0.0) if dur <= 0 else ease_fn(ease)(x / dur)
     if dur <= 0:
         return 1.0 if t >= start else 0.0
     return ease_fn(ease)((t - start) / dur)
@@ -107,7 +111,7 @@ _BIN = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul,
 _CMP = {ast.Lt: operator.lt, ast.LtE: operator.le, ast.Gt: operator.gt, ast.GtE: operator.ge,
         ast.Eq: operator.eq, ast.NotEq: operator.ne}
 _FUNCS = {'min': min, 'max': max, 'abs': abs, 'round': round, 'int': int, 'float': float,
-          'floor': math.floor, 'ceil': math.ceil}
+          'floor': math.floor, 'ceil': math.ceil, 'sin': math.sin, 'cos': math.cos}
 
 
 def eval_expr(src: str, env: dict, funcs: dict | None = None):
@@ -329,6 +333,14 @@ def expand_actors(actors, sc: Scene, env=None, parent=None, out=None):
             if not a.get('optional', False):
                 raise SceneError(f'actor {a["id"]} is disabled but not optional')
             continue
+        if a['type'] == 'repeat' and 'over' in a:  # one copy per character (Stage11 Arc Resolve)
+            var, cvar = a.get('as', 'i'), a.get('char', 'c')
+            for i, ch in enumerate(format_text(a['over'], env)):
+                sub = copy.deepcopy(a['actor'])
+                local = {**env, var: i, cvar: ch}
+                sub['id'] = format_text(sub['id'], local)
+                expand_actors([sub], sc, {var: i, cvar: ch, **{k: v for k, v in (env or {}).items()}}, parent, out)
+            continue
         if a['type'] == 'repeat':
             n = a['count']
             n = eval_expr(n['expr'], env) if isinstance(n, dict) else (eval_expr(n, env) if isinstance(n, str) else n)
@@ -521,7 +533,7 @@ def _clock_t(blk, t, clock):
 
 def _apply_in(ch, actor, blk_in, t):
     if blk_in:
-        p = phase(t, float(blk_in['start']), float(blk_in.get('dur', 0)), blk_in.get('ease'))
+        p = phase(t, float(blk_in['start']), float(blk_in.get('dur', 0)), blk_in.get('ease'), float(blk_in.get('delay', 0)))
         frm = blk_in.get('from', {'opacity': 0})
         for k, v in frm.items():
             if k in REVEAL or k in SCALE:
@@ -530,11 +542,13 @@ def _apply_in(ch, actor, blk_in, t):
                 ch[k] += v * (1 - p)
             else:
                 raise SceneError(f'{actor["id"]}: unknown channel {k!r}')
+        if 'arc' in blk_in:  # Stage11 Arc Resolve: a lift of arc·sin(πp)·(1 − p) on the way in
+            ch['dy'] += float(blk_in['arc']) * math.sin(math.pi * p) * (1 - p)
 
 
 def _apply_out(ch, actor, blk_out, t):
     if blk_out:
-        p = phase(t, float(blk_out['start']), float(blk_out.get('dur', 0)), blk_out.get('ease'))
+        p = phase(t, float(blk_out['start']), float(blk_out.get('dur', 0)), blk_out.get('ease'), float(blk_out.get('delay', 0)))
         to = blk_out.get('to', {'opacity': 0})
         for k, v in to.items():
             if k in REVEAL or k in SCALE:

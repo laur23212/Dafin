@@ -341,6 +341,11 @@ Source: `render_stage05.py` and its siblings.
   its texts' pens getlength + gap apart, the run centred (A_Crisp word relay); each word keeps its
   own colour param. A `rect` with `wipeDir: "down"` and `wipeSnap: "round"` ends at
   `y0 + round(h·wipe)` (the B guide bar). The chapter sprite follows the render opacity rules.
+- Stage11: a `repeat` with `"over": "{title}"` makes one copy per character (`as` the index,
+  `char` the character), so a per-letter animation follows the edited text; in a `row` with
+  `roundLeft: false` and `gap` the tracking, the letters sit pen to pen (Arc Resolve). An in-block
+  may add `arc`: `dy += arc·sin(πp)·(1 − p)`; any block may add `delay` (phase ((t − start) − delay)/dur, a per-copy stagger). Expressions may call `sin` and `cos`. `row.enter`
+  (`start`, `dur`, `ease`) slides each text in from where it would sit centred alone (Phrase Reflow).
 - A block may run on `"clock": {"actor": id, "channel": "wipe"}` instead of time: Stage07's answer
   tag eases on `(blockReveal − 0.55) / 0.45`.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
@@ -430,6 +435,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 08_Cinematic_Garamond / Inter / RobotoSlab / Lato (pil1x over the script's charcoal) | 150/150 frames identical |
   | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
   | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
+  | 11_ArcResolve, 11_PhraseReflow (pil1x over the script's gradients) | 150/150 frames identical |
   | 11_AnchorNote_v4, 12_A_Anchor_Bracket, 12_B_Anchor_Measure, 12B_C_Anchor_Index_Manual (cv1x into the scripts' black plate) | 150/150 frames identical |
   | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |

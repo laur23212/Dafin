@@ -568,9 +568,16 @@ class Pil1x:
             kids = [a for a in sc.actors if a.get('_parent') == g['id'] and a['type'] == 'text']
             ls = [float(self.font(k['font'], k['size']).getlength(k['text'])) for k in kids]
             gap = float(row.get('gap', 0))
-            cur = round((float(row['width']) - (sum(ls) + gap * (len(ls) - 1))) / 2)
+            cur = (float(row['width']) - (sum(ls) + gap * (len(ls) - 1))) / 2
+            if row.get('roundLeft', True):
+                cur = round(cur)
+            ent = row.get('enter')  # Stage11 Phrase Reflow: each word slides from centred alone
             for k, n in zip(kids, ls):
                 k['at'] = {'baseline': [cur, row['baseline']]}
+                if ent:
+                    blk = {'start': ent['start'], 'dur': ent['dur'], 'ease': ent.get('ease'),
+                           'from': {'dx': (float(row['width']) / 2 - n / 2) - cur}}
+                    k['in'] = [*core.blocks(k.get('in')), blk]
                 cur += n + gap
 
     def font(self, key, size):

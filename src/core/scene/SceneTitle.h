@@ -46,6 +46,8 @@ struct TimedBlock
     Ease ease;
     QList<QPair<QString, double>> values;
     QString clockActor, clockChannel; // "clock": the phase runs on another actor's channel, not t
+    double delay = 0.0; // a per-copy stagger: phase ((t − start) − delay) / dur
+    double arc = 0.0; // in-blocks: dy += arc·sin(πp)·(1 − p) (Stage11 Arc Resolve's lift)
 };
 
 struct Channels
@@ -91,6 +93,8 @@ struct Actor
     double spritePad = 8.0;
     bool hasRow = false;
     double rowGap = 0.0, rowWidth = 0.0, rowBaseline = 0.0;
+    bool rowRoundLeft = true;
+    TimedBlock rowEnter; // row.enter: each text slides in from its own centred position
     // cov1x (Chapter A/B v4): at.ascender, a constant alpha, a crop wipe from wipeRange[0] to [1]
     bool anchorAscender = false;
     QPointF ascender;

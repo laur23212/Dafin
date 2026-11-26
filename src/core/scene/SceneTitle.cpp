@@ -523,6 +523,11 @@ private:
                 return args[0].toString().trimmed().toDouble();
             return num(args[0]);
         }
+        if (name == QLatin1String("sin") || name == QLatin1String("cos")) {
+            need(1);
+            const double x = num(args[0]);
+            return name == QLatin1String("sin") ? std::sin(x) : std::cos(x);
+        }
         if (name == QLatin1String("floor") || name == QLatin1String("ceil")) {
             need(1);
             const double x = num(args[0]);
@@ -542,7 +547,8 @@ private:
             ++m_pos;
             static const QSet<QString> funcs{QStringLiteral("min"), QStringLiteral("max"), QStringLiteral("abs"),
                                              QStringLiteral("round"), QStringLiteral("int"), QStringLiteral("float"),
-                                             QStringLiteral("floor"), QStringLiteral("ceil")};
+                                             QStringLiteral("floor"), QStringLiteral("ceil"), QStringLiteral("sin"),
+                                             QStringLiteral("cos")};
             if (isOp("(")) {
                 if (!funcs.contains(t.text))
                     bad();
@@ -825,6 +831,10 @@ TimedBlock blockOf(const QJsonValue &v, bool isIn, const QString &actorId)
         if (b.clockActor.isEmpty() || !channelNames().contains(b.clockChannel))
             fail(QStringLiteral("%1: clock needs an actor and a channel").arg(actorId));
     }
+    if (o.contains(QStringLiteral("delay")))
+        b.delay = numberOf(o.value(QStringLiteral("delay")), actorId + QStringLiteral(": delay"));
+    if (isIn && o.contains(QStringLiteral("arc")))
+        b.arc = numberOf(o.value(QStringLiteral("arc")), actorId + QStringLiteral(": arc"));
     const QString key = isIn ? QStringLiteral("from") : QStringLiteral("to");
     const QJsonObject vals = o.contains(key) ? o.value(key).toObject()
                                              : QJsonObject{{QStringLiteral("opacity"), 0}};
@@ -938,6 +948,12 @@ struct Loader
             a.rowGap = row.value(QStringLiteral("gap")).toDouble();
             a.rowWidth = numberOf(row.value(QStringLiteral("width")), a.id + QStringLiteral(": row.width"));
             a.rowBaseline = numberOf(row.value(QStringLiteral("baseline")), a.id + QStringLiteral(": row.baseline"));
+            a.rowRoundLeft = row.contains(QStringLiteral("roundLeft")) ? row.value(QStringLiteral("roundLeft")).toBool() : true;
+            if (row.contains(QStringLiteral("enter"))) {
+                QJsonObject e = row.value(QStringLiteral("enter")).toObject();
+                e.insert(QStringLiteral("from"), QJsonObject{{QStringLiteral("dx"), 0}});
+                a.rowEnter = blockOf(e, true, a.id + QStringLiteral(": row.enter"));
+            }
         }
         a.alpha = r.contains(QStringLiteral("alpha")) ? r.value(QStringLiteral("alpha")).toDouble() : 1.0;
         a.supersample = r.value(QStringLiteral("supersample")).toInt();
@@ -1177,6 +1193,28 @@ struct Loader
                     fail(QStringLiteral("actor %1 is disabled but not optional").arg(id));
                 continue;
             }
+            if (type == QLatin1String("repeat") && a.contains(QStringLiteral("over"))) {
+                // one copy per character of the formatted text (Stage11 Arc Resolve)
+                const QString over = formatTextOrFail(a.value(QStringLiteral("over")).toString(), env);
+                const QString var = a.value(QStringLiteral("as")).toString(QStringLiteral("i"));
+                const QString cvar = a.value(QStringLiteral("char")).toString(QStringLiteral("c"));
+                qlonglong i = 0;
+                for (int k = 0; k < over.size(); ++k, ++i) {
+                    const int len = (over.at(k).isHighSurrogate() && k + 1 < over.size()) ? 2 : 1;
+                    const QString ch = over.mid(k, len);
+                    k += len - 1;
+                    QJsonObject sub = a.value(QStringLiteral("actor")).toObject();
+                    QVariantMap inner = local;
+                    inner.insert(var, i);
+                    inner.insert(cvar, ch);
+                    QVariantMap localEnv = env;
+                    localEnv.insert(var, i);
+                    localEnv.insert(cvar, ch);
+                    sub.insert(QStringLiteral("id"), formatTextOrFail(sub.value(QStringLiteral("id")).toString(), localEnv));
+                    expand(QJsonArray{sub}, inner, parent);
+                }
+                continue;
+            }
             if (type == QLatin1String("repeat")) {
                 const QJsonValue c = a.value(QStringLiteral("count"));
                 const QVariant n = c.isObject() ? evalOrFail(c.toObject().value(QStringLiteral("expr")).toString(), env)
@@ -1301,6 +1339,10 @@ struct Loader
 
 double phase(double t, const TimedBlock &b)
 {
+    if (b.delay != 0.0) { // ((t − start) − delay) / dur, as the Arc Resolve stagger was written
+        const double x = (t - b.start) - b.delay;
+        return b.dur <= 0.0 ? (x >= 0.0 ? 1.0 : 0.0) : b.ease(x / b.dur);
+    }
     if (b.dur <= 0.0)
         return t >= b.start ? 1.0 : 0.0;
     return b.ease((t - b.start) / b.dur);
@@ -1719,6 +1761,8 @@ Channels channelsWith(const Actor &actor, double t, const std::function<double(c
                 *off += isIn ? v * (1.0 - p) : v * p;
             }
         }
+        if (isIn && b.arc != 0.0)
+            ch.dy += b.arc * std::sin(3.14159265358979323846 * p) * (1.0 - p);
     };
     apply(actor.in, true);
     for (const TimedBlock &b : actor.inMore)
