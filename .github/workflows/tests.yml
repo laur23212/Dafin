@@ -358,6 +358,7 @@ jobs:
         run: |
           python3 -I tools/scene-ref/test_scene_ref.py
           python3 -I tools/scene-ref/test_smart_utilities.py
+          python3 -I tools/scene-ref/test_keycaps.py
 
   macos:
     name: CTest (macOS)
