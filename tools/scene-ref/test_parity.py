@@ -169,6 +169,220 @@ def check_stage03b_crev(src: Path, frames):
     return [check_layer(n, lambda t: m.design_c(d, t), frames) for n in ('03b_LT_C_25_REV', '03b_LT_C_60_REV')]
 
 
+def plate_adapter(script: Path, name: str):
+    """Part5 Stage05/06 read a photo plate (Dafin_clean_source_check.png) that is not in the
+    archives. TEST-ONLY adapter: the script is loaded with a generated plate instead; both sides
+    then draw over the same base."""
+    import tempfile
+    from PIL import Image
+    tmp = Path(tempfile.mkdtemp())
+    y, x = np.mgrid[0:1080, 0:1920]
+    plate = np.dstack([(40 + x / 1920 * 90 + y / 1080 * 30) % 256, (110 + np.sin(x / 90) * 30) % 256, (70 + y / 1080 * 80) % 256])
+    Image.fromarray(plate.astype(np.uint8)).save(tmp / 'plate.png')
+    code = script.read_text().replace("SOURCE=Path('/mnt/data/Dafin_clean_source_check.png')", f"SOURCE=Path({str(tmp / 'plate.png')!r})")
+    (tmp / f'{name}.py').write_text(code)
+    return load_module(tmp / f'{name}.py', name)
+
+
+def check_pil(m, pairs, frames):
+    out = []
+    for name, fn in pairs:
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(np.array(fn(i / 25)), np.array(r.draw(i / 25, m.BASE)))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
+def check_stage05(src: Path, frames):
+    m = plate_adapter(src / 'render_stage05.py', 'stage05_adapter')
+    return check_pil(m, (('05_TutorialStep', m.a_frame), ('05_PrecisionCallout', m.b_frame), ('05_PullQuote', m.c_frame)), frames)
+
+
+def check_stage06(src: Path, frames):
+    m = plate_adapter(src / 'render_stage06.py', 'stage06_adapter')
+    return check_pil(m, (('06_Metric', m.frame_a), ('06_Location', m.frame_c)), frames)
+
+
+def check_stage07(src: Path, frames):
+    """Part5 Stage07 (pil1x) through the plate adapter. Kinetic is frame_a as rendered; Numbered
+    Insights v2 and Question & Answer v3 are frame_b/frame_c with the typography passes'
+    fonts (render_typography_v2.py, then render_targeted_fixes_v3.py), set here as those scripts
+    set them. The frame's matte is the port's base layer; its footage crops are the test start."""
+    from PIL import Image, ImageFont
+    s7 = plate_adapter(next(src.glob('*render_stage07.py')), 'stage07_adapter')
+    PT, f = '/usr/share/fonts/truetype/paratype/', ImageFont.truetype
+    s7.B_S.update({'eyebrow': s7.spr('DE ȚINUT MINTE', f(PT + 'PTS75F.ttf', 26), s7.TEAL),
+                   'title': s7.spr('3 PRINCIPII', f('/usr/share/fonts/opentype/roboto/slab/RobotoSlab-Bold.otf', 80), s7.PAPER),
+                   'sub': s7.spr('Un ghid scurt, fără complicații.', f(PT + 'PTC55F.ttf', 28), (204, 213, 213, 255)),
+                   'idxs': [s7.spr(x, f(PT + 'PTC55F.ttf', 28), (153, 195, 195, 255)) for x in ('01', '02', '03')],
+                   'rows': [s7.spr(x, f(PT + 'PTS75F.ttf', 62), s7.PAPER) for x in ('CLARITATE', 'RITM', 'CONSECVENȚĂ')]})
+    s7.C_S.update({'eyebrow': s7.spr('O ÎNTREBARE ESENȚIALĂ', f(PT + 'PTC75F.ttf', 27), s7.GOLD),
+                   'answer_tag': s7.spr('RĂSPUNSUL', f(PT + 'PTC55F.ttf', 27), (27, 31, 33, 255)),
+                   'sub': s7.spr('Dincolo de prima impresie.', f(PT + 'PTC55F.ttf', 27), (186, 194, 193, 255)),
+                   'line1': s7.spr('CUM FACEM', f(PT + 'PTF55F.ttf', 130), s7.PAPER),
+                   'line2': s7.spr('SĂ CONTEZE?', f(PT + 'PTF55F.ttf', 130), s7.PAPER),
+                   'answer': s7.spr('PRIN DETALII.', f(PT + 'PTF75F.ttf', 74), s7.PAPER)})
+    W, H = 1920, 1080
+    a0 = Image.new('RGBA', (W, H), (17, 23, 28, 255)); a0.alpha_composite(s7.photo.crop((520, 0, 1420, 1080)).convert('RGBA'), (1020, 0))
+    b0 = Image.new('RGBA', (W, H), (15, 21, 27, 255)); b0.alpha_composite(s7.photo.crop((446, 0, 1496, 1080)).convert('RGBA'), (0, 0))
+    c0 = Image.new('RGBA', (W, H), (20, 22, 25, 255))
+    out = []
+    for name, fn, start in (('07_Kinetic', s7.frame_a, a0), ('07_Insights_v2', s7.frame_b, b0), ('07_QA_v3', s7.frame_c, c0)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:  # the proofs were encoded from RGB: compare RGB
+            mx, n = diff(np.array(fn(i / 25).convert('RGB')), np.array(r.draw(i / 25, start).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
+def check_stage08_cinematic(src: Path, frames):
+    """Stage08 Cinematic Statement, four typefaces: overlay_fast on the script's own charcoal BG."""
+    m = load_module(src / 'render_font_alternatives.py', 'stage08_cinematic')
+    out = []
+    for k, key in (('Garamond', 'A_EB_Garamond_Regular'), ('Inter', 'B_Inter_Display_Medium'),
+                   ('RobotoSlab', 'C_Roboto_Slab_Bold'), ('Lato', 'D_Lato_Heavy')):
+        spr, _ = m.glyph_sprite(m.CHOSEN[key])
+        name = '08_Cinematic_' + k
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(m.overlay_fast(m.BACKGROUND, spr, i / 25)[:, :, ::-1], np.array(r.draw(i / 25, m.BG).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
+def check_dark_chapter_a(src: Path, frames):
+    """Editorial Chapter A Dark v2 over the script's own backdrop. TEST-ONLY adapter: its QA output
+    folder is moved to a temporary one (the script writes text_bounds.json on import)."""
+    import tempfile
+    tmp = Path(tempfile.mkdtemp())
+    code = (src / 'render_a_dark_v2.py').read_text().replace(
+        "BASE=Path('/mnt/data/Dafin_Chapter_A_Dark_v2_Corrected')", f"BASE=Path({str(tmp)!r})")
+    (tmp / 'render_a_dark_v2_adapter.py').write_text(code)
+    m = load_module(tmp / 'render_a_dark_v2_adapter.py', 'dark_a_v2')
+    r = render.Pil1x(core.load_scene(HERE / 'scenes' / '04_Dark_Chapter_A_v2.scene.json'))
+    bad = []
+    for i in frames:
+        mx, n = diff(np.array(m.draw_frame(i / 25).convert('RGB')), np.array(r.draw(i / 25, m.BASE_IMAGE).convert('RGB')))
+        if mx:
+            bad.append({'frame': i, 'max': mx, 'pixels': n})
+    return [{'example': '04_Dark_Chapter_A_v2', 'frames': len(frames), 'mismatched': bad}]
+
+
+def check_stage09(src: Path, frames):
+    """Stage09 A_Crisp and C_Noto (render_stage09_refinements.py over reference_render_stage09.py)
+    and B7 (the B Art Direction v4 render.py), each over its own plate. `src` holds the three
+    scripts. TEST-ONLY adapters: the portrait photo is a generated plate, the scripts' import paths
+    point into a temporary folder, and B7's candidate list leaves out B6 (Clear Sans) when that
+    font is not installed (the script asserts every candidate's font)."""
+    import tempfile, re
+    from PIL import Image
+    tmp = Path(tempfile.mkdtemp())
+    y, x = np.mgrid[0:1080, 0:1920]
+    plate = np.dstack([(40 + x / 1920 * 90 + y / 1080 * 30) % 256, (110 + np.sin(x / 90) * 30) % 256, (70 + y / 1080 * 80) % 256])
+    Image.fromarray(plate.astype(np.uint8)).save(tmp / 'plate.png')
+    o = (src / 'reference_render_stage09.py').read_text().replace(
+        "CLEAN='/mnt/data/Dafin_clean_source_check.png'", f"CLEAN={str(tmp / 'plate.png')!r}")
+    (tmp / 'stage09_orig.py').write_text(o)
+    r9 = (src / 'render_stage09_refinements.py').read_text().replace(
+        "ORIGINAL='/mnt/data/Dafin_Part5_Stage09_ExpressiveTitles_16x9/scripts/render_stage09.py'", f"ORIGINAL={str(tmp / 'stage09_orig.py')!r}")
+    (tmp / 'stage09_ref.py').write_text(r9)
+    b7 = (src / 'render.py').read_text().replace(
+        "SRC='/mnt/data/Dafin_Stage09_TypographyRefinement_v2/scripts/reference_render_stage09.py'", f"SRC={str(tmp / 'stage09_orig.py')!r}")
+    if not Path('/usr/share/fonts/truetype/clear-sans/ClearSans-Bold.ttf').exists():
+        b7 = re.sub(r"\n    'B6_Clear_Sans_Bold':[^\n]*", '', b7, count=1)
+    (tmp / 'stage09_b7.py').write_text(b7)
+    m = load_module(tmp / 'stage09_ref.py', 'stage09_ref')
+    mb = load_module(tmp / 'stage09_b7.py', 'stage09_b7')
+    out = []
+    for name, fn, bg in (('09_WordRelay_A1', m.VARIANTS['A_Crisp'], m.orig.A_BG),
+                         ('09_SplitMotion_C1', m.VARIANTS['C_Noto'], m.orig.C_BG),
+                         ('09_WordShift_B7', lambda t: mb.frame_b(t, 'B7_Noto_Display_Black_Optical'), mb.orig.B_BG)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(np.array(fn(i / 25).convert('RGB')), np.array(r.draw(i / 25, bg).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
+def check_stage11(src: Path, frames):
+    """Stage11 A Arc Resolve and B Phrase Reflow (render_stage11.py frame_a / frame_b, pil1x over
+    the script's own gradients). TEST-ONLY adapter: the script makes output folders next to its
+    parent folder on import, so it runs from a temporary copy."""
+    import tempfile, shutil
+    tmp = Path(tempfile.mkdtemp()) / 'scripts'
+    tmp.mkdir()
+    shutil.copy(src / 'render_stage11.py', tmp / 'render_stage11.py')
+    m = load_module(tmp / 'render_stage11.py', 'stage11')
+    out = []
+    for name, fn, bg in (('11_ArcResolve', m.frame_a, m.BG_A), ('11_PhraseReflow', m.frame_b, m.BG_B)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(np.array(fn(i / 25)), np.array(r.draw(i / 25, bg.convert('RGBA')).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
+def check_stage10(src: Path, frames):
+    """Stage10 Typography Morph, Masked Light Reveal and Precision Focus (render_stage10.py frame_a/b/c,
+    fx1x over the script's backgrounds). TEST-ONLY adapter: the script makes output folders next to
+    its parent folder on import, so it runs from a temporary copy."""
+    import tempfile, shutil
+    tmp = Path(tempfile.mkdtemp()) / 'scripts'
+    tmp.mkdir()
+    shutil.copy(src / 'render_stage10.py', tmp / 'render_stage10.py')
+    m = load_module(tmp / 'render_stage10.py', 'stage10')
+    out = []
+    for name, fn, bg in (('10_TypographyMorph', m.frame_a, m.BG_A), ('10_MaskedLightReveal', m.frame_b, m.BG_B),
+                         ('10_PrecisionFocus', m.frame_c, m.BG_C)):
+        r = render.Fx1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            got = bg.copy()
+            r.draw_direct(got, i / 25)
+            mx, n = diff(fn(i / 25), got)
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
+def check_chapters_v4(src: Path, frames):
+    """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
+    as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
+    from PIL import Image
+    m = load_module(src / 'dafin_chapters_v4_recon.py', 'chapters_v4_recon')
+    plain = np.full((1080, 1920, 3), (34, 36, 40), np.uint8)
+    res = []
+    for w in 'AB':
+        sc = m.load_scene(w)
+        r = render.Cov1x(core.load_scene(HERE / 'scenes' / f'04_Chapter_{w}_v4.scene.json'))
+        bad = []
+        for i in frames:
+            t = i / 25
+            mx, n = diff(m.render(sc, t, plain).astype(np.uint8), np.array(r.draw(t, Image.fromarray(plain))))
+            ma, na = diff(m.render(sc, t, alpha_out=True), np.array(r.draw(t)))
+            if mx or ma:
+                bad.append({'frame': i, 'max': max(mx, ma), 'pixels': n + na})
+        res.append({'example': f'04_Chapter_{w}_v4', 'frames': len(frames), 'mismatched': bad})
+    return res
+
+
 def check_stage13_primitives(src: Path):
     """Shapes the two ports do not use, against the frozen Stage13 helpers (and Stage15's plate)."""
     b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_frozen')
@@ -334,7 +548,15 @@ def main():
     ap.add_argument('--stage03b', type=Path)
     ap.add_argument('--stage13', type=Path, help='folder with frozen_stage13_approved_renderer_reference.py')
     ap.add_argument('--stage03b-crev', type=Path, help='folder with C_25fps_refined_source.py')
-    ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
+    ap.add_argument('--stage05', type=Path, help='folder with render_stage05.py')
+    ap.add_argument('--stage06', type=Path, help='folder with render_stage06.py')
+    ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
+    ap.add_argument('--dark-chapter-a', type=Path, help='folder with render_a_dark_v2.py')
+    ap.add_argument('--stage09', type=Path, help='folder with reference_render_stage09.py, render_stage09_refinements.py, render.py (B7)')
+    ap.add_argument('--stage11', type=Path, help='folder with render_stage11.py')
+    ap.add_argument('--stage10', type=Path, help='folder with render_stage10.py')
+    ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
+    ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--keycaps13', type=Path, help='Stage13_PracticalOverlays .../source (render_stage13_practical_overlays.py)')
     ap.add_argument('--keycaps13c', type=Path, help='Stage13C_UniversalShortcut .../source (render_stage13C_universal_shortcut.py + frozen copy)')
@@ -353,6 +575,24 @@ def main():
         res.extend(check_stage15(o.stage15, frames))
     if o.stage14:
         res.extend(check_stage14(o.stage14, frames))
+    if o.stage05:
+        res.extend(check_stage05(o.stage05, frames))
+    if o.stage06:
+        res.extend(check_stage06(o.stage06, frames))
+    if o.stage07:
+        res.extend(check_stage07(o.stage07, frames))
+    if o.stage09:
+        res.extend(check_stage09(o.stage09, frames))
+    if o.stage11:
+        res.extend(check_stage11(o.stage11, frames))
+    if o.stage10:
+        res.extend(check_stage10(o.stage10, frames))
+    if o.chapters_v4:
+        res.extend(check_chapters_v4(o.chapters_v4, frames))
+    if o.dark_chapter_a:
+        res.extend(check_dark_chapter_a(o.dark_chapter_a, frames))
+    if o.stage08_cinematic:
+        res.extend(check_stage08_cinematic(o.stage08_cinematic, frames))
     if o.stage13c:
         res.extend(check_stage13c(o.stage13c, frames))
     if o.stage12 or o.stage12b or o.anchor_v4:

@@ -1,0 +1,169 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.split-motion",
+ "label": "Split Motion",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "09_SplitMotion_C1",
+  "sha256": "0b291b381dd00a7c6a2ce2dc75534078d9fbf278f8b75d509dc4327bd7666ba9",
+  "script": "render_stage09_refinements.py (on reference_render_stage09.py)",
+  "status": "POSITIVE_HISTORICAL_CREATOR_RATING_NOT_PROFESSIONAL"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x",
+  "minOpacity": 0.001,
+  "skipCompare": "le",
+  "fullOpacity": 0.999,
+  "alphaTable": "trunc"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "NotoSansDisplay-SemiCondensedBold.ttf",
+   "sha256": "7b2e466a506a2f6ce6ee807dd97fc157acc11d5c7c88dcb4c7af5729ae427906",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "line1",
+   "type": "text",
+   "default": "PRIVEȘTE",
+   "label": "Line 1"
+  },
+  {
+   "id": "line2",
+   "type": "text",
+   "default": "ALTFEL",
+   "label": "Line 2"
+  }
+ ],
+ "actors": [
+  {
+   "id": "line1",
+   "role": "title",
+   "type": "text",
+   "text": "{line1}",
+   "font": "sans",
+   "size": 112,
+   "color": [
+    245,
+    242,
+    235
+   ],
+   "spritePad": 11,
+   "at": {
+    "left": 1070,
+    "top": 402
+   },
+   "offsetSnap": "trunc",
+   "clipRect": {
+    "box": [
+     970,
+     0,
+     1920,
+     1080
+    ]
+   },
+   "in": {
+    "start": 0.16,
+    "dur": 0.63,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "dx": -62
+    }
+   },
+   "out": [
+    {
+     "start": 5.02,
+     "dur": 0.54,
+     "ease": "smoothstep",
+     "to": {
+      "opacity": 0
+     }
+    },
+    {
+     "start": 4.99,
+     "dur": 0.6,
+     "ease": "easeInCubic",
+     "to": {
+      "dx": 20
+     }
+    }
+   ]
+  },
+  {
+   "id": "line2",
+   "role": "title",
+   "type": "text",
+   "text": "{line2}",
+   "font": "sans",
+   "size": 166,
+   "color": [
+    209,
+    176,
+    133
+   ],
+   "spritePad": 11,
+   "at": {
+    "left": 1070,
+    "top": 550
+   },
+   "offsetSnap": "trunc",
+   "clipRect": {
+    "box": [
+     970,
+     0,
+     1920,
+     1080
+    ]
+   },
+   "in": {
+    "start": 0.42,
+    "dur": 0.7,
+    "ease": "easeOutCubic",
+    "from": {
+     "opacity": 0,
+     "dx": 68
+    }
+   },
+   "out": [
+    {
+     "start": 5.08,
+     "dur": 0.54,
+     "ease": "smoothstep",
+     "to": {
+      "opacity": 0
+     }
+    },
+    {
+     "start": 5.1,
+     "dur": 0.58,
+     "ease": "easeInCubic",
+     "to": {
+      "dx": -22
+     }
+    }
+   ]
+  }
+ ]
+}

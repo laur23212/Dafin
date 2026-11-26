@@ -24,7 +24,7 @@ struct KeycapsPlan; // core/scene/SceneKeycaps.h
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
 
-enum class Profile { Sprite2x, Mask1x };
+enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x, Fx1x };
 
 struct Rgba
 {
@@ -34,7 +34,7 @@ struct Rgba
 
 struct Ease
 {
-    enum Kind { Linear, Smoothstep, OutCubic, OutQuart, Smootherstep, Bezier };
+    enum Kind { Linear, Smoothstep, OutCubic, OutQuart, Smootherstep, InCubic, Bezier };
     Kind kind = Smoothstep;
     double x1 = 0, y1 = 0, x2 = 1, y2 = 1;
     double operator()(double u) const;
@@ -48,15 +48,19 @@ struct TimedBlock
     double dur = 0.0;
     Ease ease;
     QList<QPair<QString, double>> values;
+    QString clockActor, clockChannel; // "clock": the phase runs on another actor's channel, not t
+    double delay = 0.0; // a per-copy stagger: phase ((t − start) − delay) / dur
+    double arc = 0.0; // in-blocks: dy += arc·sin(πp)·(1 − p) (Stage11 Arc Resolve's lift)
 };
 
 struct Channels
 {
     double opacity = 1.0, wipe = 1.0, progress = 1.0, scale = 1.0, dx = 0.0, dy = 0.0;
+    double vscale = 1.0; // collapse to the vertical centre (pil1x accents and rules)
     bool operator==(const Channels &o) const
     {
         return opacity == o.opacity && wipe == o.wipe && progress == o.progress && scale == o.scale
-            && dx == o.dx && dy == o.dy;
+            && dx == o.dx && dy == o.dy && vscale == o.vscale;
     }
 };
 
@@ -68,6 +72,7 @@ struct Actor
     bool hidden = false;    // "_hidden": not drawn (Smart Keycaps: a "+" that would start a wrapped row)
     bool snapTrunc = false; // "snap" (or "offsetSnap"): "trunc": the offsets are truncated to whole px, not rounded
     TimedBlock in, out;
+    QList<TimedBlock> inMore, outMore; // "in"/"out" given as arrays: one curve per channel group
     QStringList dependsOn;
     // "ss", one field: text 1 (sprite1x, no reduction) or 2 (sprite2x); a flattened group's sprite factor
     // 2 or 3 (the Mac keycaps, the 13C/14 tags; "supersample" is its older spelling on groups).
@@ -75,6 +80,54 @@ struct Actor
     // "after": {"actor": id, "gap": n}: x = the target's right edge + gap (resolveLayout).
     QString afterActor;
     double afterGap = 0.0;
+    // pil1x
+    struct Condition { QString actor; QString channel; double gt = 0.0; }; // actor empty = self
+    QList<Condition> visibleWhen;
+    QString reveal;           // text: "x" (from the left) or "y" (from the bottom), driven by wipe
+    bool wipeSnapInt1 = false; // rect: x1 = x0 + max(1, int(w·wipe)) (Stage05 A)
+    bool collapseEnds = false; // line: vscale trims both ends of the rest line (Stage05 A)
+    QList<double> segmentWeights; // route: share of progress per segment
+    bool hasCenter = false;    // ellipse/ring given as center + radius; radius scales with "scale"
+    double circleRadius = 0.0;
+    bool pane = false;         // group: children drawn into one layer, composited once
+    bool drawDirect = false;   // "draw": "direct" (Stage07): written straight on the frame; opaque
+    bool layerBase = false;    // "layer": "base" (Stage07 matte): drawn first, never wiped
+    bool tracked = false;      // text "tracking" (Stage08): glyph by glyph at round(pen), + tracking
+    double tracking = 0.0;
+    bool spriteChapter = false; // "sprite": "chapter" (Dark Chapter A v2): float pens + letterSpacing,
+                                // 4 px padding; wipe crops round(w·v) px of that sprite
+    bool anchorCenter = false; // at: {"center": [x, y]}: the tracked sprite centred there
+    // pil1x Stage09: at {left, top} places the sprite's corner; spritePad (default 8) its padding;
+    // a group "row" lays its texts out pen-to-pen (getlength + gap), centred in rowWidth
+    QJsonObject effect; // fx1x: sdfMorph / maskedLight / focusMix and their own timing (Stage10)
+    bool anchorLeft = false;
+    double anchorLeftX = 0.0;
+    double spritePad = 8.0;
+    bool hasRow = false;
+    double rowGap = 0.0, rowWidth = 0.0, rowBaseline = 0.0;
+    bool rowRoundLeft = true;
+    TimedBlock rowEnter; // row.enter: each text slides in from its own centred position
+    // cov1x (Chapter A/B v4): at.ascender, a constant alpha, a crop wipe from wipeRange[0] to [1]
+    bool anchorAscender = false;
+    QPointF ascender;
+    double covAlpha = 1.0; // cov1x "alpha": a constant opacity
+    bool hasWipeRange = false;
+    double wipeRange[2] = {0.0, 0.0};
+    QPointF centerAt;
+    bool wipeSnapRound = false;     // rect: x1 = x0 + round(w·wipe) (Stage06)
+    bool progressSnapRound = false; // line: end.x = base + round((to.x - base)·progress) (Stage06)
+    double progressBase = 0.0;
+    bool hasProgressBase = false;
+    // text "counter": the text is str(round(to·phase)) (Stage06 Metric), its sprite right-anchored
+    bool hasCounter = false;
+    TimedBlock counter;
+    int counterTo = 0;
+    bool anchorRight = false;  // at: {"right": x, "top": y}: the PIL sprite's right edge and top
+    double anchorRightX = 0.0, anchorTopY = 0.0;
+    // pin (Stage06 Location): ring (radius·scale), dot, stem (stem·scale) below the ring
+    double pinStem = 0.0, pinDot = 4.0;
+    Rgba ringColor, dotColor, stemColor;
+    bool truncOffsets = false; // "offsetSnap": "trunc" — the Stage13 keycaps snapped dy with int()
 
     // text
     QString text, font;
@@ -173,6 +226,20 @@ struct Scene
     double holdStart = 0.0, holdEnd = 0.0;
     // Smart Keycaps: what phase A expanded, for phase B (layoutKeycaps). Null without keycaps actors.
     std::shared_ptr<const KeycapsPlan> keycaps;
+    // exitWipe: the whole title is cut from the right as it closes (pil1x Stage05)
+    TimedBlock exitWipe;
+    double exitWipeLeft = 0.0, exitWipeRight = 0.0;
+    // exitSlide (Stage06): the title as it stood at `hold`, cropped to rect, slides down by distance
+    TimedBlock exitSlide;
+    double exitSlideRect[4] = {0, 0, 0, 0}; // x, y, w, h
+    double exitSlideDistance = 0.0, exitSlideHold = 0.0;
+    // pil1x render options (render.minOpacity, minReveal, fullOpacity, alphaTable, skipEmptyRects)
+    double minOpacity = 0.001, minReveal = 0.0, fullOpacity = 1.0, fullReveal = 1.0;
+    int supersample = 1; // cov1x render.ss: text drawn at this factor, then BOX-reduced (an actor's "ss" overrides it)
+    bool alphaTrunc = false, skipEmptyRects = false;
+    bool skipAtThreshold = false; // skipCompare "le" (Stage06) vs "lt" (Stage05/07)
+    bool revealCrop = false;      // revealMode "crop" (Stage07): max(1, int(w·v)) px of the sprite
+    QString exitWipeMode;         // "span" (Stage05 left/right), "right", "left", "top" (Stage07)
 
     const Actor *actor(const QString &id) const;
     int indexOf(const QString &id) const;

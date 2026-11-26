@@ -24,7 +24,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import scene_core as core  # noqa: E402
@@ -649,7 +649,7 @@ class Mask1x:
                     m = Image.composite(m, Image.new('L', m.size), cm)
                 cr = a.get('clipRect')
                 if cr:  # a fixed window whose top rises with the entrance (Stage03b A/C)
-                    blk = a.get('in')
+                    blk = (core.blocks(a.get('in')) or [None])[0]
                     p = core.phase(t, float(blk['start']), float(blk.get('dur', 0)), blk.get('ease')) if blk else 1.0
                     rise = (1 - p) * cr.get('rise', 0)
                     x0, y0, x1, y1 = cr['box']
@@ -679,8 +679,683 @@ class Mask1x:
         return boxes
 
 
+class Pil1x:
+    """The Part5 Stage05-08 scripts: 1x PIL text sprites (8 px padding, basic layout) and shapes,
+    each drawn on its own transparent pane and alpha_composited in order; a scene-wide exitWipe."""
+
+    PAD = 8
+
+    def __init__(self, sc, font_dirs=()):
+        self.sc, self.font_dirs = sc, font_dirs
+        self.by_id = {a['id']: a for a in sc.actors}
+        self.cache = {}
+        self.mix_color = core.parse_color(sc.raw.get('render', {}).get('mixColor', [9, 12, 17]), sc.palette)
+        r = sc.raw.get('render', {})
+        # Stage05 composite_sprite vs Stage06 put(): thresholds and the opacity table differ.
+        self.min_opacity = float(r.get('minOpacity', 0.001))   # skip at or below (Stage06: <= .002)
+        self.min_reveal = float(r.get('minReveal', 0.0))       # Stage06: reveal <= .002 skips
+        self.full_opacity = float(r.get('fullOpacity', 1.0))   # table applied below this (Stage06 .999)
+        self.alpha_trunc = r.get('alphaTable') == 'trunc'      # int(a·p) instead of round
+        self.skip_empty = bool(r.get('skipEmptyRects'))        # pane(): x1 <= x0 or y1 <= y0 draws nothing
+        # Stage07 put(): skips below (not at) .002, reveals by cropping int(w·v) px when v < .999
+        self.skip_le = r.get('skipCompare', 'le' if self.min_opacity > 0.001 else 'lt') == 'le'
+        self.reveal_crop = r.get('revealMode') == 'crop'
+        self.full_reveal = float(r.get('fullReveal', 1.0))
+        for g in sc.actors:  # "row" (Stage09 A_Crisp word relay): pens getlength + gap apart, centred
+            row = g.get('row') if g['type'] == 'group' else None
+            if not row:
+                continue
+            kids = [a for a in sc.actors if a.get('_parent') == g['id'] and a['type'] == 'text']
+            ls = [float(self.font(k['font'], k['size']).getlength(k['text'])) for k in kids]
+            gap = float(row.get('gap', 0))
+            cur = (float(row['width']) - (sum(ls) + gap * (len(ls) - 1))) / 2
+            if row.get('roundLeft', True):
+                cur = round(cur)
+            ent = row.get('enter')  # Stage11 Phrase Reflow: each word slides from centred alone
+            for k, n in zip(kids, ls):
+                k['at'] = {'baseline': [cur, row['baseline']]}
+                if ent:
+                    blk = {'start': ent['start'], 'dur': ent['dur'], 'ease': ent.get('ease'),
+                           'from': {'dx': (float(row['width']) / 2 - n / 2) - cur}}
+                    k['in'] = [*core.blocks(k.get('in')), blk]
+                cur += n + gap
+
+    def font(self, key, size):
+        return _truetype(font_path(self.sc, key, self.font_dirs), int(size), False)
+
+    def rgba(self, a, key='color'):
+        c = core.parse_color(a[key], self.sc.palette)
+        return tuple(c) if len(c) == 4 else (*c, 255)
+
+    def chapter_sprite(self, a):
+        """Dark Chapter A v2: pen = 4 + Σ(getlength(c) + tracking) at float x, ink rows from
+        getbbox; sprite ceil(Σ(adv + tracking) − tracking) + 11 wide, bbox height + 11 tall."""
+        key = ('chapter', a['id'], a['text'], a['font'], a['size'], a.get('letterSpacing', 0))
+        if key not in self.cache:
+            f, txt, trk, pad = self.font(a['font'], a['size']), a['text'], a.get('letterSpacing', 0), 4
+            width = int(math.ceil(sum(f.getlength(ch) + trk for ch in txt) - (trk if txt else 0)))
+            x1, y1, x2, y2 = f.getbbox(txt)
+            im = Image.new('RGBA', (width + 2 * pad + 3, y2 - y1 + 2 * pad + 3), (0, 0, 0, 0))
+            d = ImageDraw.Draw(im)
+            cur = pad
+            for ch in txt:
+                d.text((cur, pad - y1), ch, font=f, fill=self.rgba(a))
+                cur += f.getlength(ch) + trk
+            bx, by = a['at']['baseline']  # pen origin at sprite x + 4, baseline at sprite y + 4 − y1 + ascent
+            xy = (bx - pad, by - pad + y1 - f.getmetrics()[0])
+            self.cache[key] = (im, xy)
+        return self.cache[key]
+
+    def draw_chapter(self, c, a, ch):
+        im, (x, y) = self.chapter_sprite(a)
+        op, v = ch['opacity'], ch['wipe']
+        if op <= 0 or v <= 0 or op < self.min_opacity or (self.skip_le and op <= self.min_opacity):
+            return
+        cw = max(0, min(im.width, round(im.width * v)))
+        if cw < 1:
+            return
+        sub = im.crop((0, 0, cw, im.height))
+        if op < min(0.999, self.full_opacity):  # Stage09 B7 place(): int(a·op) below .999
+            sub.putalpha(sub.getchannel('A').point((lambda q: int(q * op)) if self.alpha_trunc else (lambda q: round(q * op))))
+        c.alpha_composite(sub, dest=(round(x + ch['dx']), round(y + ch['dy'])))
+
+    def sprite(self, a, text=None):
+        text = a['text'] if text is None else text
+        key = ('sprite', a['id'], text, a['font'], a['size'], json.dumps(a['at']))
+        if key not in self.cache:
+            f = self.font(a['font'], a['size'])
+            d = ImageDraw.Draw(Image.new('RGBA', (20, 20)))
+            b = d.textbbox((0, 0), text, font=f)
+            px = py = int(a.get('spritePad', self.PAD))
+            im = Image.new('RGBA', (max(1, b[2] - b[0] + px * 2), max(1, b[3] - b[1] + py * 2)), (0, 0, 0, 0))
+            ImageDraw.Draw(im).text((px - b[0], py - b[1]), text, font=f, fill=self.rgba(a))
+            if 'left' in a['at']:  # Stage09 text_layer(): the sprite's top-left corner is placed
+                x, y = a['at']['left'], a['at']['top']
+            elif 'right' in a['at']:  # Stage06 counter: the sprite's right edge is fixed
+                x = a['at']['right'] - im.width
+                y = a['at']['top']
+            else:
+                bx, by = a['at']['baseline']
+                x, y = bx - px + b[0], by - f.getmetrics()[0] - py + b[1]
+            self.cache[key] = (im, (x, y))
+        return self.cache[key]
+
+    def tracked_sprite(self, a):
+        """Stage08 Cinematic: glyph by glyph at round(pen), pen += textlength(ch) + tracking, on a
+        sprite ceil(Σadvances + tracking·(n−1)) + 16 wide, int(bbox height) + 20 tall."""
+        key = ('tracked', a['id'], a['text'], a['font'], a['size'], a['tracking'])
+        if key not in self.cache:
+            f = self.font(a['font'], a['size'])
+            td = ImageDraw.Draw(Image.new('RGBA', (4, 4), (0, 0, 0, 0)))
+            text = a['text']
+            adv = [td.textlength(ch, font=f) for ch in text]
+            bb = td.textbbox((0, 0), text, font=f)
+            tw = int(math.ceil(sum(adv) + a['tracking'] * (len(text) - 1))) + 16
+            th = int(bb[3] - bb[1]) + 20
+            im = Image.new('RGBA', (tw, th), (0, 0, 0, 0))
+            d = ImageDraw.Draw(im)
+            x = 8.0
+            for ch, w in zip(text, adv):
+                d.text((round(x), 9 - bb[1]), ch, font=f, fill=self.rgba(a), stroke_width=0)
+                x += w + a['tracking']
+            self.cache[key] = im
+        return self.cache[key]
+
+    def draw_tracked(self, c, a, ch):
+        im = self.tracked_sprite(a)
+        ent, alpha = ch['wipe'], ch['opacity']  # alpha = 1 − ex (the exit's opacity)
+        if ent <= 0 or alpha <= 0:
+            return
+        cx, cy = a['at']['center']
+        x = int(cx - im.width / 2)
+        y = int(round(cy - im.height / 2 + ch['dy']))
+        vis = int(im.width * ent)
+        if vis <= 0:
+            return
+        src = im.crop((0, 0, vis, im.height))
+        if self.alpha_mode or a.get('composite') != 'numpy':
+            sp = src.copy()
+            sp.putalpha(src.getchannel('A').point(lambda q: round(q * alpha)))
+            c.alpha_composite(sp, (x, y), (max(0, -x), max(0, -y))) if x < 0 or y < 0 else c.alpha_composite(sp, (x, y))
+            return
+        # The script's numpy blend on its BGR frame: trunc(t·(1−a)) + round(c·a), uint8.
+        arr = np.array(c)
+        sr = np.asarray(src, dtype=np.uint8)
+        h, w = sr.shape[:2]
+        W, H = self.sc.width, self.sc.height
+        x1, y1, x2, y2 = max(0, x), max(0, y), min(W, x + w), min(H, y + h)
+        if x2 <= x1 or y2 <= y1:
+            return
+        s = sr[y1 - y:y2 - y, x1 - x:x2 - x]
+        av = (s[:, :, 3:4].astype(np.float32) / 255.0) * alpha
+        tgt = arr[y1:y2, x1:x2, :3]
+        np.multiply(tgt, 1.0 - av, out=tgt, casting='unsafe')
+        tgt += np.round(s[:, :, :3].astype(np.float32) * av).astype(np.uint8)
+        c.paste(Image.fromarray(arr, 'RGBA'))
+
+    def counter_text(self, a, t):
+        """counter: {start, dur, ease, to}: the text is str(round(to·phase)) (Stage06 Metric)."""
+        c = a['counter']
+        return str(round(c['to'] * core.phase(t, float(c['start']), float(c['dur']), c.get('ease'))))
+
+    # -- visibility -------------------------------------------------------------------------
+    def chan(self, a, t):
+        """The actor's channels with its plain groups folded in (as Sprite2x.walk does)."""
+        clock = lambda aid, name: self.chan(self.by_id[aid], t)[name]
+        ch = core.channels(a, t, clock)
+        p = a.get('_parent')
+        while p:
+            g = self.by_id[p]
+            gc = core.channels(g, t, clock)
+            for k in ('opacity', 'wipe', 'progress', 'scale', 'vscale'):
+                ch[k] *= gc[k]
+            ch['dx'] += gc['dx']
+            ch['dy'] += gc['dy']
+            p = g.get('_parent')
+        return ch
+
+    def visible(self, a, t):
+        """visibleWhen: the scripts drew some parts only past a threshold (`if p > .01`)."""
+        node = a
+        while node is not None:
+            for c in node.get('visibleWhen', []):
+                other = self.by_id[c['actor']] if c.get('actor') else node
+                if not self.chan(other, t)[c['channel']] > c['gt']:
+                    return False
+            node = self.by_id.get(node.get('_parent')) if node.get('_parent') else None
+        return True
+
+    # -- drawing ----------------------------------------------------------------------------
+    def draw(self, t, canvas=None):
+        W, H = self.sc.width, self.sc.height
+        c = canvas.copy() if canvas is not None else Image.new('RGBA', (W, H), (0, 0, 0, 0))
+        self.alpha_mode = canvas is None
+        # layer "base": Stage07's matte composition, drawn first and never wiped
+        base = [a for a in self.sc.actors if a.get('layer') == 'base' or
+                (a.get('_parent') and self.by_id[a['_parent']].get('layer') == 'base')]
+        rest = [a for a in self.sc.actors if a not in base]
+        self._draw_list(c, base, t)
+        before = c.copy()
+        self._draw_list(c, rest, t)
+        return self._exits(c, before, t, canvas)
+
+    def _draw_list(self, c, actors, t):
+        W, H = self.sc.width, self.sc.height
+        for a in actors:
+            if a.get('_parent') and self.by_id[a['_parent']].get('pane'):
+                continue  # drawn with its pane group
+            if a['type'] == 'group' and not a.get('pane'):
+                continue
+            if not self.visible(a, t):
+                if a['type'] == 'group':
+                    c.alpha_composite(Image.new('RGBA', (W, H), (0, 0, 0, 0)))
+                continue
+            ch = self.chan(a, t)
+            if a['type'] == 'text' and 'tracking' in a:
+                self.draw_tracked(c, a, ch)
+            elif a['type'] == 'text' and a.get('sprite') == 'chapter':
+                self.draw_chapter(c, a, ch)
+            elif a['type'] == 'text':
+                self.draw_text(c, a, ch, self.counter_text(a, t) if a.get('counter') else None)
+            elif a['type'] == 'group':
+                pane = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+                d = ImageDraw.Draw(pane)
+                for k in [x for x in self.sc.actors if x.get('_parent') == a['id']]:
+                    if self.visible(k, t):
+                        self.draw_shape(d, k, self.chan(k, t))
+                c.alpha_composite(pane)
+            elif a.get('draw') == 'direct':  # Stage07: ImageDraw straight on the frame (replaces)
+                self.draw_shape(ImageDraw.Draw(c), a, ch, opaque=self.alpha_mode)
+            else:
+                pane = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+                self.draw_shape(ImageDraw.Draw(pane), a, ch)
+                c.alpha_composite(pane)
+
+    def _exits(self, c, before, t, canvas):
+        W, H = self.sc.width, self.sc.height
+        es = self.sc.raw.get('exitSlide')
+        if es and t >= float(es['start']):
+            # Stage06 rigid exit: the title as it stood at `hold`, cropped to `rect`, slides down.
+            if t >= float(es['start']) + float(es['dur']):
+                return before
+            x, y, w, h = es['rect']
+            frozen = self.draw(float(es['hold']), canvas if canvas is not None else None).crop((x, y, x + w, y + h))
+            dy = round(es['distance'] * core.phase(t, float(es['start']), float(es['dur']), es.get('ease')))
+            out = before.copy()
+            vis = max(0, min(h, self.sc.height - (y + dy)))
+            if vis > 0:
+                out.alpha_composite(frozen.crop((0, 0, w, vis)), (x, y + dy))
+            return out
+        ew = self.sc.raw.get('exitWipe')
+        if ew:
+            p = core.phase(t, float(ew['start']), float(ew['dur']), ew.get('ease'))
+            if p >= 1:
+                return before
+            if p > 0:
+                m = Image.new('L', (W, H), 0)
+                md = ImageDraw.Draw(m)
+                mode = ew.get('mode', 'span')
+                if mode == 'right':    # Stage07 A: keep x <= round(W·(1 - q))
+                    md.rectangle((0, 0, round(W * (1 - p)), H), fill=255)
+                elif mode == 'left':   # Stage07 C: keep x >= round(W·q)
+                    md.rectangle((round(W * p), 0, W, H), fill=255)
+                elif mode == 'top':    # Stage07 B: keep y >= round(H·q)
+                    md.rectangle((0, round(H * p), W, H), fill=255)
+                else:                  # Stage05: keep x <= round(right - (right - left)·p)
+                    md.rectangle((0, 0, max(0, round(ew['right'] - (ew['right'] - ew['left']) * p)), H), fill=255)
+                c = Image.composite(c, before, m)
+        return c
+
+    def draw_text(self, c, a, ch, text=None):
+        im, (x, y) = self.sprite(a, text)
+        op = max(0.0, min(1.0, ch['opacity']))
+        if op < self.min_opacity or (self.skip_le and op <= self.min_opacity):
+            return
+        rev = a.get('reveal')
+        if rev and self.reveal_crop:  # Stage07 put(): crop to max(1, int(w·v)) px
+            v = max(0.0, min(1.0, ch['wipe']))
+            if v < self.min_reveal:
+                return
+            img = im.crop((0, 0, max(1, int(im.width * v)), im.height)) if v < self.full_reveal else im
+            if op < self.full_opacity:
+                img = img.copy()
+                img.putalpha(img.getchannel('A').point(lambda q: round(q * op)))
+            c.alpha_composite(img, (round(x + ch['dx']), round(y + ch['dy'])))
+            return
+        alpha = im.getchannel('A')
+        if rev:
+            v = max(0.0, min(1.0, ch['wipe']))
+            if v == 0 or (self.min_reveal and ch['wipe'] <= self.min_reveal):
+                return
+            m = Image.new('L', im.size, 0)
+            md = ImageDraw.Draw(m)
+            if rev == 'x':
+                md.rectangle((0, 0, max(0, round(im.width * v) - 1), im.height), fill=255)
+            else:
+                md.rectangle((0, im.height - max(0, round(im.height * v)), im.width, im.height), fill=255)
+            alpha = ImageChops.multiply(alpha, m)
+        if op < self.full_opacity:
+            if self.alpha_trunc:
+                alpha = alpha.point(lambda p: int(p * op))
+            else:
+                alpha = alpha.point(lambda p: max(0, min(255, round(p * op))))
+        src = im.copy(); src.putalpha(alpha)
+        trunc = a.get('offsetSnap') == 'trunc'
+        sx = int(x + int(ch['dx'])) if trunc else round(x + ch['dx'])
+        sy = int(y + int(ch['dy'])) if trunc else round(y + ch['dy'])
+        cr = a.get('clipRect')
+        if cr:  # Stage09 C: the sprite cropped to a canvas rect (x1, y1 exclusive)
+            x0, y0, x1, y1 = cr['box']
+            bx0, by0 = max(0, x0 - sx), max(0, y0 - sy)
+            bx1, by1 = min(src.width, x1 - sx), min(src.height, y1 - sy)
+            if bx1 <= bx0 or by1 <= by0:
+                return
+            src, sx, sy = src.crop((bx0, by0, bx1, by1)), sx + bx0, sy + by0
+        c.alpha_composite(src, (sx, sy))
+
+    def ink(self, a, ch, key='color'):
+        r, g, b, A = self.rgba(a, key)
+        return (r, g, b, round(A * ch['opacity']))
+
+    def draw_shape(self, d, a, ch, opaque=False):
+        tp = a['type']
+        if opaque:  # direct draws ended up opaque in the RGB proofs; the alpha layer keeps them so
+            ch = dict(ch, opacity=1.0)
+            a = {**a, **{k: list(core.parse_color(a[k], self.sc.palette)[:3]) + [255]
+                          for k in ('color', 'fill', 'strokeColor') if k in a}}
+        if tp in ('rect', 'roundRect'):
+            x0, y0, x1, y1 = a['box']
+            w, h = x1 - x0, y1 - y0
+            if a.get('wipeDir') == 'down' and a.get('wipeSnap') == 'round':  # Stage09 B guide: y0 + round(h·p)
+                y1 = y0 + round(h * ch['wipe'])
+            elif a.get('wipeSnap') == 'int1':  # Stage05 A: x0 + max(1, int(w·p))
+                x1 = x0 + max(1, int(w * ch['wipe']))
+            elif a.get('wipeSnap') == 'round':  # Stage06: x0 + round(w·p)
+                x1 = x0 + round(w * ch['wipe'])
+            elif ch['wipe'] != 1:
+                x1 = x0 + w * ch['wipe']
+            if ch['vscale'] != 1:  # collapse to the vertical centre
+                trim = h * (1 - ch['vscale']) / 2
+                y0, y1 = y0 + trim, y1 - trim
+            if 'strokeColor' in a and 'color' not in a and 'fill' not in a:  # outline only (Stage07 C frame)
+                d.rectangle((x0, y0, x1, y1), outline=self.ink(a, ch, 'strokeColor'), width=int(a.get('stroke', 1)))
+                return
+            fill = self.ink(a, ch, 'fill' if tp == 'roundRect' else 'color')
+            if self.skip_empty and (x1 <= x0 or y1 <= y0):
+                return
+            if a.get('radius') and 'strokeColor' in a:  # Dark Chapter A v2's plate: fill and hairline
+                d.rounded_rectangle((x0, y0, x1, y1), radius=a['radius'], fill=fill,
+                                    outline=self.ink(a, ch, 'strokeColor'), width=int(a.get('stroke', 1)))
+            elif a.get('radius'):
+                d.rounded_rectangle((x0, y0, x1, y1), radius=a['radius'], fill=fill)
+            else:
+                d.rectangle((x0, y0, x1, y1), fill=fill)
+        elif tp == 'line':
+            (ax, ay), (bx, by) = a['from'], a['to']
+            p, v = ch['progress'], ch['vscale']
+            if a.get('collapse') == 'ends':  # Stage05 A: y0+43+L(1-v)/2 … y1-43-L(1-v)/2
+                L = by - ay
+                ay, by = ay + L * (1 - v) / 2, by - L * (1 - v) / 2
+            elif a.get('progressSnap') == 'round':  # Stage06: horizontal, end = base + round(L·p)
+                base = a.get('progressBase', ax)
+                bx = base + round((bx - base) * p)
+            elif p != 1 or v != 1:  # Stage05 C: y + (L·p)(1-v)/2 … y + (L·p)(1+v)/2
+                L = by - ay
+                ay, by = ay + (L * p) * (1 - v) / 2, ay + (L * p) * (1 + v) / 2
+            d.line((ax, ay, bx, by), fill=self.ink(a, ch), width=int(a.get('width', 1)))
+        elif tp == 'route':
+            pts = [tuple(p) for p in a['points']]
+            wts = a.get('segmentWeights')
+            p = max(0.0, min(1.0, ch['progress']))
+            fill = self.ink(a, ch)
+            start = 0.0
+            for i, (q0, q1) in enumerate(zip(pts, pts[1:])):
+                wgt = wts[i] if wts else 1 / (len(pts) - 1)
+                if i == len(pts) - 2 or p <= start + wgt:
+                    q = (p - start) / wgt if i else p / wgt
+                    d.line((*q0, q0[0] + (q1[0] - q0[0]) * q, q0[1] + (q1[1] - q0[1]) * q), fill=fill, width=int(a.get('width', 1)))
+                    break
+                d.line((*q0, *q1), fill=fill, width=int(a.get('width', 1)))
+                start += wgt
+        elif tp == 'pin':  # Stage06 Location: ring, dot and stem, one scaled motif
+            cx, cy = a['center']
+            s = ch['scale']
+            r = round(a['radius'] * s)
+            d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=self.ink(a, ch, 'ringColor'), width=int(a.get('stroke', 3)))
+            dr = a.get('dotRadius', 4)
+            d.ellipse((cx - dr, cy - dr, cx + dr, cy + dr), fill=self.ink(a, ch, 'dotColor'))
+            d.line((cx, cy + r, cx, cy + r + round(a['stem'] * s)), fill=self.ink(a, ch, 'stemColor'), width=int(a.get('stroke', 3)))
+        elif tp in ('ellipse', 'ring'):
+            cx, cy = a['center']
+            r = round(a['radius'] * ch['scale'])
+            bb = (cx - r, cy - r, cx + r, cy + r)
+            if tp == 'ring':
+                d.ellipse(bb, outline=self.ink(a, ch), width=int(a.get('stroke', 1)))
+            else:
+                d.ellipse(bb, fill=self.ink(a, ch, 'fill'))
+        else:
+            raise SceneError(f'{a["id"]}: {tp} is not drawn by the pil1x profile')
+
+    def draw_alpha(self, t):
+        return np.array(self.draw(t))
+
+
+class Cov1x:
+    """Chapter A v4 / B v4 (RECONSTRUCTED_APPROX, dafin_chapters_v4_recon.py): every actor is a float
+    coverage map over the frame, composited in order as out·(1 − m) + colour·m.
+    Text: advance-rounded glyphs (round(pen), anchor 'la', pen += getlength + tracking) drawn at
+    `render.ss`× (or the actor's own `ss`) and BOX-reduced. Boxes: a rounded rect drawn at 4× and BOX-reduced. A wipe is a
+    crop edge from wipeRange[0] to wipeRange[1] with a 1 px anti-aliased edge (corners are not
+    re-rounded); `clipTo` limits an actor to another's wiped coverage."""
+
+    def __init__(self, sc, font_dirs=()):
+        self.sc, self.font_dirs = sc, font_dirs
+        self.by_id = {a['id']: a for a in sc.actors}
+        self.cache = {}
+        self.ss = int(sc.raw.get('render', {}).get('ss', 1))
+
+    def font(self, key, size):
+        return _truetype(font_path(self.sc, key, self.font_dirs), size, False)
+
+    def cov(self, a):
+        W, H = self.sc.width, self.sc.height
+        key = (a['id'], a.get('text'), a.get('size'), json.dumps(a.get('at')), json.dumps(a.get('box')))
+        if key in self.cache:
+            return self.cache[key]
+        if a['type'] == 'text':
+            ss = int(a.get('ss', self.ss))
+            f = self.font(a['font'], int(round(a['size'] * ss)))
+            im = Image.new('L', (W * ss, H * ss), 0)
+            d = ImageDraw.Draw(im)
+            x, y = a['at']['ascender']
+            pen = float(round(x * ss))
+            for ch in a['text']:
+                d.text((round(pen), round(y * ss)), ch, font=f, fill=255, anchor='la')
+                pen += f.getlength(ch) + a.get('letterSpacing', 0.0) * ss
+            if ss > 1:
+                im = im.resize((W, H), Image.Resampling.BOX)
+        else:
+            x0, y0, x1, y1 = a['box']
+            r, S = a.get('radius', 0), 4
+            im = Image.new('L', (W, H), 0)
+            big = Image.new('L', ((x1 - x0 + 1) * S, (y1 - y0 + 1) * S), 0)
+            ImageDraw.Draw(big).rounded_rectangle((0, 0, big.width - 1, big.height - 1), radius=r * S, fill=255)
+            im.paste(big.resize((x1 - x0 + 1, y1 - y0 + 1), Image.Resampling.BOX), (x0, y0))
+        self.cache[key] = np.asarray(im, np.float32) / 255.0
+        return self.cache[key]
+
+    def wipe_mask(self, a, ch):
+        x0, x1 = a['wipeRange']
+        edge = x0 + (x1 - x0) * ch['wipe']
+        xs = np.arange(0, self.sc.width, dtype=np.float32)
+        return np.clip(edge - (xs + 0.5) + 0.5, 0, 1)[None, :]
+
+    def draw(self, t, canvas=None):
+        W, H = self.sc.width, self.sc.height
+        out = None if canvas is None else np.asarray(canvas.convert('RGB'), np.float32).copy()
+        acc_a = np.zeros((H, W), np.float32)
+        acc_c = np.zeros((H, W, 3), np.float32)
+        for a in self.sc.actors:
+            if a['type'] == 'group':
+                continue
+            ch = core.channels(a, t)
+            op, dy = float(a.get('alpha', 1.0)), ch['dy']
+            node = self.by_id.get(a.get('_parent'))
+            while node is not None:  # the group exit: op · group · own fade, as the recon multiplied
+                g = core.channels(node, t)
+                op *= g['opacity']
+                dy += g['dy']
+                node = self.by_id.get(node.get('_parent'))
+            op *= ch['opacity']
+            if op <= 0:
+                continue
+            m = self.cov(a)
+            dy = int(round(dy))
+            if dy:
+                m = np.roll(m, dy, axis=0)
+            m = m * op
+            if 'wipeRange' in a:
+                m = m * self.wipe_mask(a, ch)
+            if a.get('clipTo'):
+                c = self.by_id[a['clipTo']['actor']]
+                m = m * self.wipe_mask(c, core.channels(c, t)) * (self.cov(c) > 0)
+            col = np.array(core.parse_color(a['fill'] if a['type'] == 'roundRect' else a['color'], self.sc.palette)[:3], np.float32)
+            if out is not None:
+                out = out * (1 - m[..., None]) + col * m[..., None]
+            acc_c = acc_c * (1 - m[..., None]) + col * m[..., None]
+            acc_a = acc_a * (1 - m) + m
+        if out is not None:
+            return Image.fromarray(out.clip(0, 255).astype(np.uint8), 'RGB')
+        rgb = np.where(acc_a[..., None] > 0, acc_c / np.maximum(acc_a[..., None], 1e-6), 0)
+        return Image.fromarray(np.dstack([rgb, acc_a * 255]).clip(0, 255).astype(np.uint8), 'RGBA')
+
+
+def _ease_block(b, t):
+    """A Stage10 effect timing block: ease((t − start) / dur) with the script's own clamp."""
+    x = max(0., min(1., float((t - b['start']) / b['dur'])))
+    return x * x * (3 - 2 * x) if b.get('ease', 'smoothstep') == 'smoothstep' else 1 - (1 - x) ** 3
+
+
+class Fx1x:
+    """The Stage10 effects, as render_stage10.py computed them (float32 masks over an opaque RGB
+    frame, uint8 after each composite). Each text actor carries `effect` with its own timing blocks
+    (`{start, dur, ease}`, smoothstep or easeOutCubic), since the effects mix their phases in ways
+    a plain opacity channel cannot.
+    - sdfMorph: every glyph in a cell (`cell`, pen at `origin`) in `font` and `fontTo`; signed
+      distance fields (exact EDT) mixed by shape = morph·(1 − leave) + leaveShape·leave; advances and
+      tracking mixed too, the word centred on centerX at baselineY + mix(rise, 0, enter) + mix(0, lift, leave).
+    - maskedLight: the text mask revealed behind a beam sweeping from `beam[0]` to the text end +
+      `beam[1]`, ink warmed around it; the background gains the blurred mask's halo.
+    - focusMix: per word, mix(blurred(σ), sharp, f)·(0.57 + 0.43 f), colour mixed soft → ink by f."""
+
+    def __init__(self, sc, font_dirs=()):
+        self.sc, self.font_dirs = sc, font_dirs
+        self.cache = {}
+
+    def font(self, key, size):
+        return _truetype(font_path(self.sc, key, self.font_dirs), int(size), False)
+
+    @staticmethod
+    def composite(base, x, y, alpha, color):
+        H, W = base.shape[:2]
+        h, w = alpha.shape
+        x, y = int(round(x)), int(round(y))
+        x0, y0, x1, y1 = max(0, x), max(0, y), min(W, x + w), min(H, y + h)
+        if x1 <= x0 or y1 <= y0:
+            return
+        a = alpha[y0 - y:y1 - y, x0 - x:x1 - x].astype(np.float32)
+        if np.max(a) <= 0:
+            return
+        roi = base[y0:y1, x0:x1]
+        for ch, val in enumerate(color):
+            roi[:, :, ch] = np.clip(roi[:, :, ch].astype(np.float32) * (1 - a) + val * a, 0, 255).astype(np.uint8)
+
+    # -- sdfMorph -----------------------------------------------------------------------------
+    def morph_fields(self, a):
+        key = ('sdf', a['id'], a['text'])
+        if key not in self.cache:
+            from scipy.ndimage import distance_transform_edt
+            e = a['effect']
+            cw, chh = e['cell']
+            gx, gb = e['origin']
+            fonts = [self.font(a['font'], a['size']), self.font(e['fontTo'], a['size'])]
+            fields = {}
+            for letter in sorted(set(a['text'])):
+                g = []
+                for f in fonts:
+                    m = Image.new('L', (cw, chh), 0)
+                    ImageDraw.Draw(m).text((gx, gb), letter, fill=255, font=f, anchor='ls', stroke_width=0)
+                    p = np.asarray(m).astype(np.float32) / 255.
+                    inside = p > 0.5
+                    g.append((distance_transform_edt(inside) - distance_transform_edt(~inside)).astype(np.float32))
+                fields[letter] = g
+            adv = ([f.getlength(c) for c in a['text']] for f in fonts)
+            self.cache[key] = (fields, *adv)
+        return self.cache[key]
+
+    def draw_morph(self, base, a, t):
+        e = a['effect']
+        fields, start_adv, end_adv = self.morph_fields(a)
+        mix = lambda p, q, u: p + (q - p) * u
+        enter = _ease_block(e['enter'], t)
+        morph = _ease_block(e['morph'], t)
+        leave = _ease_block(e['leave'], t)
+        shape = morph * (1 - leave) + leave * e['leaveShape']
+        tracking = mix(e['tracking'][0], e['tracking'][1], shape)
+        advances = [mix(x, y, shape) for x, y in zip(start_adv, end_adv)]
+        word_w = sum(advances) + tracking * (len(a['text']) - 1)
+        startx = e['centerX'] - word_w / 2
+        offsety = mix(e['rise'], 0, enter) + mix(0, e['lift'], leave)
+        baseline = e['baselineY'] + offsety
+        opacity = enter * (1 - _ease_block(e['fade'], t))
+        gx, gb = e['origin']
+        col = tuple(core.parse_color(a['color'], self.sc.palette)[:3])
+        for letter, adv in zip(a['text'], advances):
+            s0, s1 = fields[letter]
+            sdf = s0 * (1 - shape) + s1 * shape
+            aa = np.clip((sdf + 0.8) / 1.6, 0, 1).astype(np.float32) * opacity
+            self.composite(base, startx - gx, baseline - gb, aa, col)
+            startx += adv + tracking
+
+    # -- maskedLight --------------------------------------------------------------------------
+    def light_masks(self, a):
+        key = ('light', a['id'], a['text'])
+        if key not in self.cache:
+            W, H = self.sc.width, self.sc.height
+            e = a['effect']
+            f = self.font(a['font'], a['size'])
+            layer = Image.new('L', (W, H), 0)
+            x, y = a['at']['baseline']
+            ImageDraw.Draw(layer).text((x, y), a['text'], font=f, anchor='ls', fill=255)
+            mask = np.asarray(layer, dtype=np.uint8).astype(np.float32) / 255.
+            halo = cv2.GaussianBlur(mask, (0, 0), sigmaX=float(e['haloSigma']), sigmaY=float(e['haloSigma']))
+            xmax = int(x + f.getlength(a['text']) + e['beam'][1])
+            self.cache[key] = (mask, halo, xmax)
+        return self.cache[key]
+
+    def draw_light(self, out, a, t):
+        e = a['effect']
+        mask, halo, xmax = self.light_masks(a)
+        xv = np.arange(self.sc.width, dtype=np.float32)[None, :]
+        reveal = _ease_block(e['reveal'], t)
+        beam = e['beam'][0] + (xmax - e['beam'][0]) * reveal
+        v = np.clip((beam - xv) / float(e['edge']) + float(e['edgeBias']), 0, 1)
+        glow = np.exp(-.5 * ((xv - beam) / float(e['glowSigma'])) ** 2)
+        opacity = 1 - _ease_block(e['fade'], t)
+        alpha = mask * v * opacity
+        warm = glow * float(e['warm'])
+        y0, y1, x0, x1 = e['roi']
+        ys, xs = slice(y0, y1), slice(x0, x1)
+        aa, g, roi = alpha[ys, xs], warm[:, xs], out[ys, xs]
+        bg_light = halo[ys, xs] * np.exp(-0.5 * ((xv[:, xs] - beam) / float(e['haloSpread'])) ** 2)
+        for ch, boost in enumerate(e['haloAdd']):
+            roi[:, :, ch] = np.clip(roi[:, :, ch].astype(np.float32) + float(boost) * bg_light, 0, 255).astype(np.uint8)
+        lo, hi = core.parse_color(a['color'], self.sc.palette)[:3], core.parse_color(e['lit'], self.sc.palette)[:3]
+        for ch in range(3):
+            val = lo[ch] + (hi[ch] - lo[ch]) * g
+            roi[:, :, ch] = np.clip(roi[:, :, ch] * (1 - aa) + val * aa, 0, 255).astype(np.uint8)
+
+    # -- focusMix -----------------------------------------------------------------------------
+    def focus_masks(self, a):
+        key = ('focus', a['id'], a['text'])
+        if key not in self.cache:
+            e = a['effect']
+            f = self.font(a['font'], a['size'])
+            w, h = e['cell']
+            px, pb = e['origin']
+            m = Image.new('L', (w, h), 0)
+            ImageDraw.Draw(m).text((px, pb), a['text'], font=f, anchor='ls', fill=255)
+            raw = np.asarray(m).astype(np.float32) / 255.
+            blur = cv2.GaussianBlur(raw, (0, 0), sigmaX=float(e['sigma']), sigmaY=float(e['sigma']))
+            self.cache[key] = (raw, blur)
+        return self.cache[key]
+
+    def draw_focus(self, out, a, t):
+        e = a['effect']
+        raw, blur = self.focus_masks(a)
+        enter = _ease_block(e['enter'], t)
+        move = _ease_block(e['move'], t)
+        resolve = _ease_block(e['resolve'], t)
+        outfade = 1 - _ease_block(e['fade'], t)
+        fc = (1 - move) * (1 - resolve) + resolve if e.get('order', 0) == 0 else move * (1 - resolve) + resolve
+        al = (blur * (1 - fc) + raw * fc) * enter * outfade
+        factor = 0.57 + 0.43 * fc
+        soft = core.parse_color(e['soft'], self.sc.palette)[:3]
+        ink = core.parse_color(a['color'], self.sc.palette)[:3]
+        color = tuple(int(soft[k] + (ink[k] - soft[k]) * fc) for k in range(3))
+        x, y = a['at']['baseline']
+        self.composite(out, x - e['origin'][0], y - e['origin'][1], al * factor, color)
+
+    def draw_direct(self, canvas, t):
+        for a in self.sc.actors:
+            kind = a.get('effect', {}).get('type')
+            if kind == 'sdfMorph':
+                self.draw_morph(canvas, a, t)
+            elif kind == 'maskedLight':
+                self.draw_light(canvas, a, t)
+            elif kind == 'focusMix':
+                self.draw_focus(canvas, a, t)
+
+    def draw(self, t, canvas=None):
+        """Alpha layer: the effects drawn over black and white, alpha solved from the difference."""
+        W, H = self.sc.width, self.sc.height
+        if canvas is not None:
+            out = np.array(canvas.convert('RGB'))
+            self.draw_direct(out, t)
+            return Image.fromarray(out, 'RGB')
+        k = np.zeros((H, W, 3), np.uint8)
+        w = np.full((H, W, 3), 255, np.uint8)
+        self.draw_direct(k, t)
+        self.draw_direct(w, t)
+        a = 255 - (w.astype(np.int32) - k.astype(np.int32)).max(axis=2)
+        a = np.clip(a, 0, 255)
+        rgb = np.where(a[..., None] > 0, np.clip(k.astype(np.float32) * 255 / np.maximum(a[..., None], 1), 0, 255), 0)
+        return Image.fromarray(np.dstack([rgb, a]).astype(np.uint8), 'RGBA')
+
+
 def make_renderer(sc, font_dirs=()):
-    return (Sprite2x if sc.profile == 'sprite2x' else Mask1x)(sc, font_dirs)
+    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x,
+            'fx1x': Fx1x}[sc.profile](sc, font_dirs)
 
 
 # ----------------------------------------------------------------------------------------------

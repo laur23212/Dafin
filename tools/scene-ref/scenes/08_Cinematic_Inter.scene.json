@@ -1,0 +1,92 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.cinematic.statement-inter",
+ "label": "Cinematic Statement B Inter Display",
+ "category": "Cinematic Titles",
+ "source": {
+  "asset": "08_Cinematic_Inter",
+  "sha256": "3c7b83ba290a640a665db3c3e1fd2ce48bda7435cc2b9a238240e08446c0ccec",
+  "script": "Dafin_Part5_Stage08 :: render_font_alternatives.py overlay_fast",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "title",
+   "type": "text",
+   "default": "TOTUL SE SCHIMBĂ",
+   "label": "Statement"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "title",
+   "size": 141,
+   "tracking": 8.0,
+   "color": [
+    238,
+    233,
+    223,
+    255
+   ],
+   "at": {
+    "center": [
+     960,
+     540
+    ]
+   },
+   "reveal": "x",
+   "composite": "numpy",
+   "in": {
+    "start": 0.2,
+    "dur": 1.05,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0,
+     "dy": 23
+    }
+   },
+   "out": {
+    "start": 5.05,
+    "dur": 0.66,
+    "ease": "easeInCubic",
+    "to": {
+     "opacity": 0,
+     "dy": 12
+    }
+   }
+  }
+ ]
+}
