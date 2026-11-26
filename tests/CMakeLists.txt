@@ -823,7 +823,8 @@ qt_add_executable(tst_linkedlibraries
     ../src/engine/packages/linked/FilmoraLibraryImporter.cpp
     ../src/engine/packages/linked/FilmoraTitleConverter.cpp
     ../src/engine/packages/linked/FilmoraTextArt.cpp
-    ../src/core/scene/SceneTitle.cpp)
+    ../src/core/scene/SceneTitle.cpp
+    ../src/core/scene/SceneKeycaps.cpp)
 target_include_directories(tst_linkedlibraries PRIVATE ../src)
 target_compile_definitions(tst_linkedlibraries PRIVATE DAFIN_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(tst_linkedlibraries PRIVATE Qt6::Test Qt6::Core)

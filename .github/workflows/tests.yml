@@ -353,7 +353,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends fonts-noto-core fonts-noto-extra fonts-inter libraqm0
-          python3 -m pip install --break-system-packages pillow numpy opencv-python-headless
+          # Dafin: system-wide (sudo), because `python3 -I` below ignores the per-user site-packages
+          sudo python3 -m pip install --break-system-packages pillow numpy opencv-python-headless
       - name: Reference tests
         run: |
           python3 -I tools/scene-ref/test_scene_ref.py
