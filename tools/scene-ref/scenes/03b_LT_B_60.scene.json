@@ -1,0 +1,277 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.lower-third.broadcast-strap-60",
+ "label": "Lower Third B Broadcast Strap 60 fps",
+ "category": "Lower Thirds",
+ "source": {
+  "asset": "03b_LT_B_60",
+  "sha256": "ae1307d8769bf2ddc95adbb33532e2f90c0a7e4d3571e3e07488987c79af9ac4",
+  "script": "Dafin Stage03b 60fps :: source/render_60fps.py (same design function at t = i/60)",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 60,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "mask1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "video",
+   "file": "16x9_SIMULATED_PAN_60fps.mp4",
+   "overlays": [
+    "16x9_STATIC_FEATHERED_SCRIM.png"
+   ]
+  },
+  "encode": {
+   "preset": "ultrafast",
+   "crf": 20
+  },
+  "legacy": {
+   "overlayRect": [
+    118,
+    745,
+    1100,
+    250
+   ]
+  }
+ },
+ "palette": {
+  "INK": [
+   12,
+   22,
+   30
+  ],
+  "OFFWHITE": [
+   249,
+   248,
+   243
+  ],
+  "CORAL": [
+   220,
+   112,
+   85
+  ],
+  "STRAP": [
+   20,
+   38,
+   48,
+   239
+  ],
+  "ROLESTRAP": [
+   230,
+   221,
+   206,
+   252
+  ],
+  "SEAM": [
+   220,
+   112,
+   85,
+   247
+  ]
+ },
+ "fonts": {
+  "name": {
+   "family": "Inter Display",
+   "weight": 600,
+   "file": "InterDisplay-SemiBold.otf",
+   "package": "fonts-inter 4.0+ds-1",
+   "sha256": "12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f"
+  },
+  "role": {
+   "family": "Inter",
+   "weight": 400,
+   "file": "Inter-Regular.otf",
+   "package": "fonts-inter 4.0+ds-1",
+   "sha256": "be6d709dcb730ddaf050cbdae6fe89bd56d5d14dc66885639bbf6f06bd03521b"
+  }
+ },
+ "params": [
+  {
+   "id": "name",
+   "type": "text",
+   "default": "Ștefania Țăranu",
+   "label": "Name"
+  },
+  {
+   "id": "role",
+   "type": "text",
+   "default": "Regizoare de documentare",
+   "label": "Role"
+  }
+ ],
+ "actors": [
+  {
+   "id": "strapMain",
+   "role": "carrier",
+   "type": "rect",
+   "box": [
+    127,
+    763,
+    717,
+    870
+   ],
+   "color": "STRAP",
+   "fitTo": {
+    "actor": "nameText",
+    "pad": 45,
+    "min": 590
+   },
+   "in": {
+    "start": 0.38,
+    "dur": 0.45999999999999996,
+    "ease": "easeOutQuart",
+    "from": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 5.12,
+    "dur": 0.3099999999999996,
+    "ease": "smoothstep",
+    "to": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "strapRole",
+   "role": "carrier",
+   "type": "rect",
+   "box": [
+    127,
+    871,
+    607,
+    940
+   ],
+   "color": "ROLESTRAP",
+   "fitTo": {
+    "actor": "roleText",
+    "pad": 37,
+    "min": 480
+   },
+   "in": {
+    "start": 0.62,
+    "dur": 0.41000000000000003,
+    "ease": "easeOutQuart",
+    "from": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.95,
+    "dur": 0.3199999999999994,
+    "ease": "smoothstep",
+    "to": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "seam",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    127,
+    868,
+    607,
+    873
+   ],
+   "color": "SEAM",
+   "widthOf": [
+    "strapMain",
+    "strapRole"
+   ],
+   "dependsOn": [
+    "strapMain",
+    "strapRole"
+   ],
+   "in": {
+    "start": 0.65,
+    "dur": 0.36,
+    "ease": "easeOutQuart",
+    "from": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.95,
+    "dur": 0.28000000000000025,
+    "ease": "smoothstep",
+    "to": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "nameText",
+   "role": "name",
+   "type": "text",
+   "text": "{name}",
+   "font": "name",
+   "size": 64,
+   "color": "OFFWHITE",
+   "at": {
+    "baseline": [
+     157,
+     826
+    ]
+   },
+   "sync": "strapMain",
+   "dependsOn": [
+    "strapMain"
+   ],
+   "clipTo": {
+    "actor": "strapMain",
+    "inset": [
+     0,
+     0,
+     18,
+     0
+    ]
+   }
+  },
+  {
+   "id": "roleText",
+   "role": "role",
+   "type": "text",
+   "text": "{role}",
+   "font": "role",
+   "size": 36,
+   "color": "INK",
+   "at": {
+    "baseline": [
+     158,
+     916
+    ]
+   },
+   "sync": "strapRole",
+   "dependsOn": [
+    "strapRole"
+   ],
+   "clipTo": {
+    "actor": "strapRole",
+    "inset": [
+     0,
+     0,
+     8,
+     1
+    ]
+   }
+  }
+ ]
+}

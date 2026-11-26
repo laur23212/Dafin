@@ -764,7 +764,7 @@ private:
         if (!art.image || ch.opacity <= 0.0)
             return;
         c.save();
-        if (!clipToActor(c, a, false)) {
+        if (!clipToActor(c, a, false) || !clipToRect(c, a)) {
             c.restore();
             return;
         }
@@ -790,6 +790,26 @@ private:
         c.drawImage(img, SkScalar(art.origin.x() + ch.dx), SkScalar(art.origin.y() + ch.dy),
                     whole ? SkSamplingOptions() : SkSamplingOptions(SkCubicResampler::CatmullRom()), &paint);
         c.restore();
+    }
+
+    // clipRect: a fixed window whose top rises as the actor enters (Stage03b A/C). The phase is the
+    // entrance's alone, so the window stays open through the exit, as in the scripts.
+    bool clipToRect(SkCanvas &c, const Actor &a) const
+    {
+        if (!a.hasClipRect)
+            return true;
+        double p = 1.0;
+        if (a.in.present)
+            p = a.in.dur <= 0.0 ? (t >= a.in.start ? 1.0 : 0.0) : a.in.ease((t - a.in.start) / a.in.dur);
+        const double rise = (1.0 - p) * a.clipRise;
+        const double cy0 = a.clipRect[1] + (a.clipRiseRound ? roundHalfEven(rise) : std::trunc(rise));
+        if (cy0 > a.clipRect[3] || a.clipRect[2] < a.clipRect[0]) {
+            c.clipRect(SkRect::MakeEmpty());
+            return false;
+        }
+        c.clipRect(SkRect::MakeLTRB(SkScalar(std::trunc(a.clipRect[0])), SkScalar(std::trunc(cy0)),
+                                    SkScalar(std::trunc(a.clipRect[2]) + 1), SkScalar(std::trunc(a.clipRect[3]) + 1)));
+        return true;
     }
 
     // clipTo: the text shows only inside the target's current box, shrunk by the inset. PIL's

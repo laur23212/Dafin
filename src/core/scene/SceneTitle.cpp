@@ -781,6 +781,8 @@ Ease easeOf(const QJsonValue &v, const QString &what)
         e.kind = Ease::OutCubic;
     else if (s == QLatin1String("easeOutQuart"))
         e.kind = Ease::OutQuart;
+    else if (s == QLatin1String("smootherstep"))
+        e.kind = Ease::Smootherstep;
     else {
         static const QRegularExpression re(QStringLiteral(R"(^cubic-bezier\(([^)]*)\)$)"));
         const QRegularExpressionMatch m = re.match(QString(s).remove(QLatin1Char(' ')));
@@ -908,6 +910,21 @@ struct Loader
                 for (int i = 0; i < 4 && i < inset.size(); ++i)
                     a.clipInset[i] = inset.at(i).toDouble();
             }
+            const QJsonObject cr = r.value(QStringLiteral("clipRect")).toObject();
+            if (!cr.isEmpty()) {
+                const QJsonArray box = cr.value(QStringLiteral("box")).toArray();
+                if (box.size() != 4)
+                    fail(QStringLiteral("%1: clipRect.box needs 4 numbers").arg(a.id));
+                a.hasClipRect = true;
+                for (int i = 0; i < 4; ++i)
+                    a.clipRect[i] = box.at(i).toDouble();
+                a.clipRise = cr.value(QStringLiteral("rise")).toDouble();
+                const QString snap = cr.value(QStringLiteral("riseSnap")).toString();
+                if (snap == QLatin1String("round"))
+                    a.clipRiseRound = true;
+                else if (!snap.isEmpty() && snap != QLatin1String("trunc"))
+                    fail(QStringLiteral("%1: clipRect.riseSnap must be \"trunc\" or \"round\"").arg(a.id));
+            }
             const QJsonObject al = r.value(QStringLiteral("align")).toObject();
             if (al.value(QStringLiteral("h")).toString() == QLatin1String("center")
                 && al.value(QStringLiteral("v")).toString() == QLatin1String("center")) {
@@ -953,7 +970,14 @@ struct Loader
                 a.fitActor = fit.value(QStringLiteral("actor")).toString();
                 a.fitPad = fit.value(QStringLiteral("pad")).toDouble();
                 a.fitMin = fit.value(QStringLiteral("min")).toDouble();
+                if (fit.contains(QStringLiteral("max")))
+                    a.fitMax = fit.value(QStringLiteral("max")).toDouble();
             }
+            const QString wipeDir = r.value(QStringLiteral("wipeDir")).toString();
+            if (wipeDir == QLatin1String("down"))
+                a.wipeDown = true;
+            else if (!wipeDir.isEmpty() && wipeDir != QLatin1String("right"))
+                fail(QStringLiteral("%1: wipeDir must be \"right\" or \"down\"").arg(a.id));
             for (const QJsonValue &w : r.value(QStringLiteral("widthOf")).toArray())
                 a.widthOf << w.toString();
         } else if (t == QLatin1String("line")) {
@@ -1167,6 +1191,8 @@ double Ease::operator()(double u) const
         const double v = 1.0 - u;
         return 1.0 - v * v * v * v;
     }
+    case Smootherstep: // same operation order as the Stage03b C revision's ease5
+        return u * u * u * (u * (6.0 * u - 15.0) + 10.0);
     case Bezier:
         if (u == 0.0 || u == 1.0)
             return u;
@@ -1582,6 +1608,8 @@ bool resolveConstraints(Scene &scene, const InkFn &ink, QString *error)
             }
             w = m;
         }
+        if (a.fitMax >= 0.0 && !a.fitActor.isEmpty())
+            w = qMin(a.fitMax, w);
         busy.remove(a.id);
         widths.insert(a.id, w);
         return w;
@@ -1603,6 +1631,9 @@ bool resolveConstraints(Scene &scene, const InkFn &ink, QString *error)
 
 QRectF currentBox(const Actor &actor, const Channels &ch)
 {
+    if (actor.wipeDown)
+        return QRectF(QPointF(actor.box[0], actor.box[1]),
+                      QPointF(actor.box[0] + actor.boxWidth(), actor.box[1] + (actor.box[3] - actor.box[1]) * ch.wipe));
     return QRectF(QPointF(actor.box[0], actor.box[1]), QPointF(actor.box[0] + actor.boxWidth() * ch.wipe, actor.box[3]));
 }
 

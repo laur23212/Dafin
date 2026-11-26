@@ -12,7 +12,8 @@ this folder to `<appDir>/scene-fonts` (`Contents/Resources/scene-fonts` on macOS
 ship it.
 
 All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open Font License 1.1
-(`OFL-Noto.txt`, `OFL-Inter.txt`).
+(`OFL-Noto.txt`, `OFL-Inter.txt`), except FreeSerif (GNU FreeFont: GPL-3+ with the font exception,
+which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
 
 | File | sha256 | Package |
 |---|---|---|
@@ -22,6 +23,11 @@ All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open
 | InterDisplay-SemiBold.otf | 12aec2b9f93d2c7a977dad5dac3427516b15e7041b578052b0aba9f9a9b0774f | fonts-inter 4.0+ds-1 |
 | Inter-Regular.otf | be6d709dcb730ddaf050cbdae6fe89bd56d5d14dc66885639bbf6f06bd03521b | fonts-inter 4.0+ds-1 |
 | NotoSansSymbols2-Regular.ttf | 876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688 | fonts-noto-core 20201225-2 (the ⌘ ⌥ keys of Stage13C) |
+| Inter-Medium.otf | 1e65171fccd6f445b7742728454620ec2867356c849af78e71bf2c4f0e3d97ba | fonts-inter 4.0+ds-1 |
+| NotoSansDisplay-Medium.ttf | 0d7de6c6a264dfa9b0e93efc1338414bff20f79aaf9ff85e3a9fc901bdf9dbea | fonts-noto-extra 20201225-2 |
+| NotoSansDisplay-SemiCondensedExtraBold.ttf | b224e7ec937a28e4b7f4925acf5be35ac480489fac28f598185f3e1af91473a4 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
+| NotoSansDisplay-SemiCondensedMedium.ttf | 1d1ab248177e1fd53daf9f481215e27ddf948578b8d99c51962de399f7a77e96 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
+| FreeSerif.ttf | c57bf5de095af4e070c2acb5bce634316409ed4203b5098f4fdadb691dc7b3d2 | fonts-freefont-ttf 20211204+svn4273-2 (Stage03b A); GPL-3+ with the font exception, `COPYING-FreeFont.txt` |
 
 Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
 reserved effects, which v1 refuses.

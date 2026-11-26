@@ -80,20 +80,56 @@ def check_stage13c(src: Path, frames):
     return out
 
 
-def check_stage03b(src: Path, frames):
-    m = load_module(src / 'render.py', 'stage03b_original')
-    sc = core.load_scene(HERE / 'scenes' / '03b_LT_B_25.scene.json')
+def check_layer(name, draw, frames):
+    """Stage03b: `draw(t)` = the script's RGBA overlay layer; the port's alpha frame must equal it
+    inside the overlay rectangle and be empty outside."""
+    sc = core.load_scene(HERE / 'scenes' / f'{name}.scene.json')
     job = render.Job(sc)
     x, y, w, h = sc.raw['preview']['legacy']['overlayRect']
+    fps = sc.design_fps
     bad = []
-    for i in frames:
-        a = np.array(m.design_b(m.D['16x9'], i / 25))
+    for i in frames(fps):
+        a = np.array(draw(i / fps))
         b = job.alpha_frame(i)
         outside = b.copy(); outside[y:y + h, x:x + w] = 0
         mx, n = diff(a, b[y:y + h, x:x + w])
         if mx or outside[:, :, 3].any():
             bad.append({'frame': i, 'max': mx, 'pixels': n, 'inkOutsideLayer': bool(outside[:, :, 3].any())})
-    return {'example': '03b_LT_B_25', 'frames': len(frames), 'mismatched': bad}
+    return {'example': name, 'frames': len(list(frames(fps))), 'mismatched': bad}
+
+
+def safe_clip(m):
+    """render_60fps.py / render_C_typography.py skip a text whose clip rectangle is empty."""
+    orig = m.colored
+
+    def colored(*args, **kw):
+        clip = kw.get('clip')
+        if clip and (clip[2] <= clip[0] or clip[3] <= clip[1]):
+            return
+        return orig(*args, **kw)
+    m.colored = colored
+    return m
+
+
+def check_stage03b(src: Path, frames):
+    m = load_module(src / 'render.py', 'stage03b_original')
+    m60 = safe_clip(load_module(src / 'render.py', 'stage03b_60fps'))
+    d = m.D['16x9']
+    return [check_layer('03b_LT_A_25', lambda t: m.design_a(d, t), frames),
+            check_layer('03b_LT_B_25', lambda t: m.design_b(d, t), frames),
+            check_layer('03b_LT_A_60', lambda t: m60.design_a(d, t), frames),
+            check_layer('03b_LT_B_60', lambda t: m60.design_b(d, t), frames)]
+
+
+def check_stage03b_crev(src: Path, frames):
+    """Folder with C_25fps_refined_source.py (the C revision's choreography); the font revision
+    swaps in Noto Sans Display SemiCondensed ExtraBold/Medium and Noto Sans Display Medium."""
+    m = safe_clip(load_module(src / 'C_25fps_refined_source.py', 'stage03b_c_rev'))
+    noto = '/usr/share/fonts/truetype/noto/'
+    m.F.update({'bold': noto + 'NotoSansDisplay-SemiCondensedExtraBold.ttf',
+                'regular': noto + 'NotoSansDisplay-SemiCondensedMedium.ttf', 'medium': noto + 'NotoSansDisplay-Medium.ttf'})
+    d = m.D['16x9']
+    return [check_layer(n, lambda t: m.design_c(d, t), frames) for n in ('03b_LT_C_25_REV', '03b_LT_C_60_REV')]
 
 
 def check_stage13_primitives(src: Path):
@@ -142,11 +178,15 @@ def main():
     ap.add_argument('--stage15', type=Path)
     ap.add_argument('--stage03b', type=Path)
     ap.add_argument('--stage13', type=Path, help='folder with frozen_stage13_approved_renderer_reference.py')
+    ap.add_argument('--stage03b-crev', type=Path, help='folder with C_25fps_refined_source.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--frames', default='all')
     o = ap.parse_args()
     frames = list(range(150)) if o.frames == 'all' else [int(v) for v in o.frames.split(',')]
+
+    def fps_frames(fps):  # the 60 fps proofs have 360 frames
+        return range(int(round(6 * fps))) if o.frames == 'all' else frames
     res = []
     if o.stage15:
         res.extend(check_stage15(o.stage15, frames))
@@ -155,7 +195,9 @@ def main():
     if o.stage13c:
         res.extend(check_stage13c(o.stage13c, frames))
     if o.stage03b:
-        res.append(check_stage03b(o.stage03b, frames))
+        res.extend(check_stage03b(o.stage03b, fps_frames))
+    if o.stage03b_crev:
+        res.extend(check_stage03b_crev(o.stage03b_crev, fps_frames))
     if o.stage13:
         res.append(check_stage13_primitives(o.stage13))
         res.extend(check_stage13_scenes(o.stage13, frames))

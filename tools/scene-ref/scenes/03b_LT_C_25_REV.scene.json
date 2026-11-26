@@ -1,0 +1,282 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "id": "dafin.lower-third.identity-grid",
+ "label": "Lower Third C Identity Grid",
+ "category": "Lower Thirds",
+ "source": {
+  "asset": "03b_LT_C_25_REV",
+  "sha256": "c9d9d010096b75585a370e18a0fb5a3552ecac5e940463e38e1654cab96fd4ec",
+  "script": "Dafin_Stage03b_C_FontRevision :: render_C_typography.py over C_25fps_refined_source.py design_c (16x9)",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "mask1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "video",
+   "file": "16x9_SIMULATED_PHOTO_PAN.mp4",
+   "overlays": [
+    "16x9_STATIC_FEATHERED_SCRIM.png"
+   ]
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  },
+  "legacy": {
+   "overlayRect": [
+    118,
+    745,
+    1100,
+    250
+   ]
+  }
+ },
+ "palette": {
+  "OFFWHITE": [
+   249,
+   248,
+   243
+  ],
+  "SEA": [
+   150,
+   201,
+   189
+  ],
+  "GOLD": [
+   214,
+   189,
+   139
+  ]
+ },
+ "fonts": {
+  "bold": {
+   "family": "Noto Sans Display SemiCondensed",
+   "weight": 800,
+   "file": "NotoSansDisplay-SemiCondensedExtraBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "b224e7ec937a28e4b7f4925acf5be35ac480489fac28f598185f3e1af91473a4"
+  },
+  "regular": {
+   "family": "Noto Sans Display SemiCondensed",
+   "weight": 500,
+   "file": "NotoSansDisplay-SemiCondensedMedium.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "1d1ab248177e1fd53daf9f481215e27ddf948578b8d99c51962de399f7a77e96"
+  },
+  "medium": {
+   "family": "Noto Sans Display",
+   "weight": 500,
+   "file": "NotoSansDisplay-Medium.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "0d7de6c6a264dfa9b0e93efc1338414bff20f79aaf9ff85e3a9fc901bdf9dbea"
+  }
+ },
+ "params": [
+  {
+   "id": "first",
+   "type": "text",
+   "default": "Ștefania",
+   "label": "First name"
+  },
+  {
+   "id": "last",
+   "type": "text",
+   "default": "Țăranu",
+   "label": "Last name"
+  },
+  {
+   "id": "role",
+   "type": "text",
+   "default": "Regizoare de documentare",
+   "label": "Role"
+  }
+ ],
+ "actors": [
+  {
+   "id": "stem",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    125,
+    763,
+    129,
+    929
+   ],
+   "wipeDir": "down",
+   "color": [
+    150,
+    201,
+    189,
+    245
+   ],
+   "in": {
+    "start": 0.28,
+    "dur": 0.64,
+    "ease": "smootherstep",
+    "from": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 5.12,
+    "dur": 0.3200000000000003,
+    "ease": "smootherstep",
+    "to": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "firstName",
+   "role": "name",
+   "type": "text",
+   "text": "{first}",
+   "font": "bold",
+   "size": 77,
+   "color": "OFFWHITE",
+   "at": {
+    "baseline": [
+     140.0,
+     816.0
+    ]
+   },
+   "in": {
+    "start": 0.52,
+    "dur": 0.53,
+    "ease": "smootherstep",
+    "from": {
+     "opacity": 0,
+     "dy": 6
+    }
+   },
+   "out": {
+    "start": 5.04,
+    "dur": 0.2699999999999996,
+    "ease": "smootherstep",
+    "to": {
+     "opacity": 0,
+     "dy": 6
+    }
+   }
+  },
+  {
+   "id": "lastName",
+   "role": "name",
+   "type": "text",
+   "text": "{last}",
+   "font": "regular",
+   "size": 77,
+   "color": "OFFWHITE",
+   "at": {
+    "baseline": [
+     140.0,
+     898.0
+    ]
+   },
+   "in": {
+    "start": 0.62,
+    "dur": 0.5199999999999999,
+    "ease": "smootherstep",
+    "from": {
+     "opacity": 0,
+     "dy": 6
+    }
+   },
+   "out": {
+    "start": 5.04,
+    "dur": 0.2699999999999996,
+    "ease": "smootherstep",
+    "to": {
+     "opacity": 0,
+     "dy": 6
+    }
+   }
+  },
+  {
+   "id": "indexMark",
+   "role": "accent",
+   "type": "rect",
+   "box": [
+    633,
+    862,
+    650,
+    864
+   ],
+   "color": [
+    214,
+    189,
+    139,
+    225
+   ],
+   "in": {
+    "start": 0.79,
+    "dur": 0.5,
+    "ease": "smootherstep",
+    "from": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.94,
+    "dur": 0.2599999999999998,
+    "ease": "smootherstep",
+    "to": {
+     "wipe": 0,
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "roleText",
+   "role": "role",
+   "type": "text",
+   "text": "{role}",
+   "font": "medium",
+   "size": 40,
+   "color": [
+    239,
+    238,
+    233
+   ],
+   "at": {
+    "baseline": [
+     658.0,
+     879.0
+    ]
+   },
+   "in": {
+    "start": 0.79,
+    "dur": 0.5,
+    "ease": "smootherstep",
+    "from": {
+     "opacity": 0,
+     "dy": 4
+    }
+   },
+   "out": {
+    "start": 4.94,
+    "dur": 0.2599999999999998,
+    "ease": "smootherstep",
+    "to": {
+     "opacity": 0,
+     "dy": 4
+    }
+   }
+  }
+ ]
+}
