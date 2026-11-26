@@ -987,7 +987,7 @@ std::vector<float> edt(const std::vector<quint8> &feature, int w, int h)
 std::vector<float> gaussBlur(const std::vector<float> &src, int w, int h, double sigma)
 {
     const int k = int(std::lround(sigma * 8.0 + 1.0)) | 1, r = k / 2;
-    std::vector<double> ker(size_t(k));
+    std::vector<double> ker(static_cast<size_t>(k));
     double sum = 0.0;
     for (int i = 0; i < k; ++i) {
         const double x = i - r;
