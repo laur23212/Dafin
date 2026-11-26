@@ -14,6 +14,9 @@
 #include "include/core/SkSamplingOptions.h"
 #include "include/core/SkSurface.h"
 #include "include/core/SkTypeface.h"
+#if defined(SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE)
+#include "include/ports/SkFontMgr_empty.h"
+#endif
 #include "modules/skshaper/include/SkShaper.h"
 #include "modules/skshaper/include/SkShaper_harfbuzz.h"
 #include "modules/skunicode/include/SkUnicode_icu.h"
@@ -273,8 +276,9 @@ struct GlyphRun
 {
     SkFont font;
     std::vector<SkGlyphID> glyphs;
-    std::vector<SkPoint> pos; // pen positions relative to the text's origin
+    std::vector<SkPoint> pos; // glyph positions relative to the text's origin (pen + offset)
     SkScalar end = 0;         // pen position after the run's last advance
+    std::vector<SkPoint> offsets; // HarfBuzz glyph offsets (marks); folded into pos by the shaper
 };
 
 class CollectRuns final : public SkShaper::RunHandler
@@ -288,9 +292,12 @@ public:
     void commitRunInfo() override {}
     Buffer runBuffer(const RunInfo &info) override
     {
-        GlyphRun run{info.fFont, std::vector<SkGlyphID>(info.glyphCount), std::vector<SkPoint>(info.glyphCount)};
+        GlyphRun run{info.fFont, std::vector<SkGlyphID>(info.glyphCount), std::vector<SkPoint>(info.glyphCount), 0,
+                     std::vector<SkPoint>(info.glyphCount)};
         runs.push_back(std::move(run));
-        return {runs.back().glyphs.data(), runs.back().pos.data(), nullptr, nullptr, {x, 0}};
+        // With an offsets buffer SkShaper writes the bare pen positions and the offsets apart, so the
+        // advances can be read back from consecutive pens (quantizeLikeHbFt).
+        return {runs.back().glyphs.data(), runs.back().pos.data(), runs.back().offsets.data(), nullptr, {x, 0}};
     }
     void commitRunBuffer(const RunInfo &info) override
     {
@@ -300,21 +307,72 @@ public:
     void commitLine() override {}
 };
 
+// The scene fonts as FreeType faces on every platform. The reference measures and draws with PIL,
+// which is FreeType; the platform manager would be DirectWrite on Windows and CoreText on macOS,
+// whose hinting and glyph boxes are not PIL's (13C U3 moved 0.501 px on Windows only). Builds
+// without Skia's FreeType typeface (no SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE) keep the platform one.
+sk_sp<SkFontMgr> sceneFontMgr()
+{
+#if defined(SK_FONTMGR_FREETYPE_EMPTY_AVAILABLE)
+    static const sk_sp<SkFontMgr> mgr = SkFontMgr_New_Custom_Empty();
+    if (mgr)
+        return mgr;
+#endif
+    return systemFontMgr();
+}
+
 SkFont pixelFont(const sk_sp<SkTypeface> &tf, double size)
 {
     SkFont f(tf, SkScalar(size));
     f.setHinting(SkFontHinting::kNormal);
     f.setSubpixel(false);
-    // PIL lays glyphs out with unhinted (linear) advances and puts each one on a whole pixel.
+    // PIL lays glyphs out with unhinted (linear) advances, in 26.6 (quantizeLikeHbFt), and puts
+    // each one on a whole pixel.
     f.setLinearMetrics(true);
     f.setEdging(SkFont::Edging::kAntiAlias);
     f.setBaselineSnap(true);
     return f;
 }
 
-// Both profiles shape with HarfBuzz and the font's linear advances. sprite2x is PIL's basic
-// layout: cmap glyphs and pair kerning (FreeType reads GPOS pair adjustments), no ligatures or
-// contextual forms, so those features are off. mask1x is RAQM: HarfBuzz's default features.
+// PIL's Raqm layout keeps every advance in FreeType's 26.6: HarfBuzz runs on hb-ft, so a glyph
+// advances by its linear advance rounded to 1/64 px, (v + 512) >> 10 of the 16.16 value, plus its
+// GPOS adjustment scaled to 26.6 by HarfBuzz (em_mult: (units * mult + 32768) >> 16, mult =
+// (px * 64 << 16) / upem). The pens are summed as integers and put on whole pixels with PIXEL().
+// SkShaper keeps 16.16 instead, and the difference decides ties: ALT at 43 px ends at 72.498 px in
+// Skia (key 162 px) but at 4640/64 = 72.5 px in PIL, PIXEL() 73 (key 164 px, 13A relayout). So the
+// shaped run is put back on PIL's grid: the unkerned advance is Skia's linear width (FreeType's
+// linearHoriAdvance), the kerning is whatever the shaper added to it, in font units.
+// Returns the pen after the run, relative to `atX`, in 26.6.
+qint64 quantizeLikeHbFt(GlyphRun &r, const SkFont &shapedWith, SkScalar atX, qint64 pen26)
+{
+    const size_t n = r.glyphs.size();
+    if (n == 0)
+        return pen26;
+    const double size = double(shapedWith.getSize());
+    const int upem = shapedWith.getTypeface() ? shapedWith.getTypeface()->getUnitsPerEm() : 0;
+    if (size <= 0 || upem <= 0)
+        return std::llround(double(r.end - atX) * 64.0); // nothing to scale with: leave the run as shaped
+    std::vector<SkScalar> widths(n);
+    shapedWith.getWidths({r.glyphs.data(), n}, {widths.data(), n});
+    const qint64 mult = (qint64(std::llround(size * 64.0)) << 16) / upem;
+    const auto emMult = [mult](qint64 units) { return (units * mult + 32768) >> 16; };
+    const auto units = [&](double px) { return qint64(std::llround(px * upem / size)); };
+    for (size_t i = 0; i < n; ++i) {
+        const double shaped = double((i + 1 < n ? r.pos[i + 1].fX : r.end) - r.pos[i].fX);
+        const qint64 linear16 = std::llround(double(widths[i]) * 65536.0);
+        const qint64 adv26 = ((linear16 + 512) >> 10) + emMult(units(shaped - double(widths[i])));
+        const qint64 off26 = emMult(units(double(r.offsets[i].fX)));
+        r.pos[i].fX = atX + SkScalar(double(pen26 + off26) / 64.0);
+        r.pos[i].fY += r.offsets[i].fY;
+        pen26 += adv26;
+    }
+    r.end = atX + SkScalar(double(pen26) / 64.0);
+    return pen26;
+}
+
+// Both profiles shape with HarfBuzz and the font's linear advances, on PIL's 26.6 grid
+// (quantizeLikeHbFt). sprite2x: cmap glyphs and pair kerning, no ligatures or contextual forms, so
+// those features are off. mask1x is RAQM: HarfBuzz's default features.
 // letterSpacing draws one character at a time, as the proofs did.
 std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, double letterSpacing, bool ligatures)
 {
@@ -344,11 +402,13 @@ std::vector<GlyphRun> shapedLayout(const SkFont &font, const QString &text, doub
             for (const char *tag : {"liga", "clig", "calt", "rlig", "dlig"})
                 features.push_back({SkSetFourByteTag(tag[0], tag[1], tag[2], tag[3]), 0, 0, n});
         shaper->shape(utf8.constData(), n, fonts, bidi, *script, language, features.data(), features.size(), 1e9f, &h);
+        qint64 pen26 = 0;
         for (GlyphRun &r : h.runs) {
+            pen26 = quantizeLikeHbFt(r, unhinted, SkScalar(atX), pen26);
             r.font = font;
             out.push_back(std::move(r));
         }
-        return double(h.x);
+        return h.runs.empty() ? double(h.x) : atX + double(pen26) / 64.0;
     };
     if (letterSpacing == 0.0) {
         shapeOne(text, 0.0);
@@ -491,12 +551,13 @@ TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color,
     const std::vector<GlyphRun> runs = basicLayout(font2x, text);
     const SkIRect bounds = layoutBounds(runs, {0, 0});
     const SkBitmap cov = coverage(runs, {0, 0}, bounds);
-    SkIRect ink = alphaBox(cov);
+    // The sprite is sized by PIL's getbbox (render.py text_sprite), which spans the pen origin and
+    // the advance, not by the drawn ink: with the ink, an odd width made (w + 14 ss) / ss truncate,
+    // the reduction was no longer exactly ss : 1 and a long line drifted (15_B line1, 0.55 px).
+    SkIRect ink = pilBBox(font2x, text);
     if (ink.isEmpty())
         ink = SkIRect::MakeXYWH(0, 0, 1, 1);
-    else
-        ink.offset(bounds.left(), bounds.top());
-    // L, T: ink box relative to the pen at 2x (PIL's getbbox, ascender cancelled out).
+    // L, T: PIL's getbbox relative to the pen at 2x (ascender cancelled out).
     const int L = ink.left(), T = ink.top();
     const double pen2x = pen.x() * ss, base2x = pen.y() * ss;
     // Sprite top-left at ss x = pen2x - (padL - L); it must be a multiple of ss so the 1x sprite is whole.
@@ -507,6 +568,8 @@ TextArt spriteText(const SkFont &font2x, const QString &text, const Rgba &color,
     for (int y = 0; y < ink.height(); ++y)
         for (int x = 0; x < ink.width(); ++x) {
             const int cx = ink.left() - bounds.left() + x, cy = ink.top() - bounds.top() + y;
+            if (cx < 0 || cy < 0 || cx >= cov.width() || cy >= cov.height())
+                continue; // inside PIL's box but outside every glyph: blank, as in PIL
             const quint8 a = *static_cast<const quint8 *>(cov.getAddr(cx, cy));
             quint8 *p = spr.at(x + padL, y + padT);
             p[0] = quint8(color.r);
@@ -583,7 +646,7 @@ public:
             const QString path = resolveFont(it.value(), dirs, error);
             if (path.isEmpty())
                 return;
-            sk_sp<SkTypeface> tf = systemFontMgr()->makeFromFile(QFile::encodeName(path).constData());
+            sk_sp<SkTypeface> tf = sceneFontMgr()->makeFromFile(QFile::encodeName(path).constData());
             if (!tf) {
                 *error = QStringLiteral("font %1 could not be read").arg(path);
                 return;
@@ -738,7 +801,11 @@ void drawLine(SkCanvas &c, const Actor &a, const Channels &ch, bool snap)
 
 // PIL draws a box shape at ss x with its right/bottom pixel included: 1/ss px past x1, y1 at 1x
 // (ss = 2 for a shape sprite, a flattened group's own "ss" inside it).
-void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, double ox, double oy, int ss = kSS)
+// `replace`: inside a flattened group, as render.py's ImageDraw on the group's RGBA sprite, a shape
+// replaces what is under it instead of blending over it (a stroke over its own fill, a line over a
+// plate). kSrc does that, and its coverage lerp stands in for the 2x edge after the Lanczos.
+void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, double ox, double oy, int ss = kSS,
+                  bool replace = false)
 {
     const double dx = (snap ? roundHalfEven(ch.dx) : ch.dx) + ox;
     const double dy = (snap ? roundHalfEven(ch.dy) : ch.dy) + oy;
@@ -752,6 +819,8 @@ void drawBoxShape(SkCanvas &c, const Actor &a, const Channels &ch, bool snap, do
     const SkRRect outer = ellipse ? SkRRect::MakeOval(r) : SkRRect::MakeRectXY(r, SkScalar(a.radius), SkScalar(a.radius));
     SkPaint paint;
     paint.setAntiAlias(true);
+    if (replace)
+        paint.setBlendMode(SkBlendMode::kSrc);
     if (a.hasFill && a.type != QLatin1String("ring")) {
         paint.setColor(skColor(a.fill, ch.opacity));
         c.drawRRect(outer, paint);
@@ -940,6 +1009,35 @@ private:
         }
     }
 
+    // A line in a flattened group is render.py's ImageDraw.line at the group's ss: `width` * ss whole
+    // pixels, rows Y - (W-1)/2 .. Y + W/2 (integer halves) and columns x0 * ss .. x1 * ss inclusive, in `color` with
+    // its own `alpha`, replacing the plate under it. Horizontal and vertical lines only; false for
+    // any other, which keeps the cv2 line.
+    static bool drawGroupLine(SkCanvas &c, const Actor &k, double x, double y, int ss)
+    {
+        const bool horizontal = k.from.y() == k.to.y(), vertical = k.from.x() == k.to.x();
+        if (!horizontal && !vertical)
+            return false;
+        ss = qMax(1, ss);
+        const int W = qMax(1, int(k.width * ss));
+        const auto across = [&](double v) { // v in group px -> [first, last + 1) in group px
+            const int Y = int(std::llround(v * ss));
+            return std::pair<double, double>{double(Y - (W - 1) / 2) / ss, double(Y + W / 2 + 1) / ss};
+        };
+        const auto along = [&](double a, double b) {
+            const int A = int(std::llround(qMin(a, b) * ss)), B = int(std::llround(qMax(a, b) * ss));
+            return std::pair<double, double>{double(A) / ss, double(B + 1) / ss};
+        };
+        const auto [a0, a1] = horizontal ? along(k.from.x(), k.to.x()) : across(k.from.x());
+        const auto [b0, b1] = horizontal ? across(k.from.y()) : along(k.from.y(), k.to.y());
+        SkPaint paint;
+        paint.setAntiAlias(true);
+        paint.setBlendMode(SkBlendMode::kSrc);
+        paint.setColor(SkColorSetARGB(U8CPU(k.alpha), U8CPU(k.color.r), U8CPU(k.color.g), U8CPU(k.color.b)));
+        c.drawRect(SkRect::MakeLTRB(SkScalar(x + a0), SkScalar(y + b0), SkScalar(x + a1), SkScalar(y + b1)), paint);
+        return true;
+    }
+
     // A flattened group is one sprite: its children at rest, then the group's own channels.
     void drawFlatGroup(SkCanvas &c, const Actor &g, const Channels &ch, const SkSamplingOptions &sampling) const
     {
@@ -959,8 +1057,8 @@ private:
             else if (k.type == QLatin1String("rect"))
                 drawSpriteRect(c, k, rest, x, y);
             else if (k.hasBox)
-                drawBoxShape(c, k, rest, true, x, y, g.ss);
-            else if (k.type == QLatin1String("line")) {
+                drawBoxShape(c, k, rest, true, x, y, g.ss, true);
+            else if (k.type == QLatin1String("line") && !drawGroupLine(c, k, x, y, g.ss)) {
                 c.save();
                 c.translate(SkScalar(x), SkScalar(y));
                 drawLine(c, k, rest, true);

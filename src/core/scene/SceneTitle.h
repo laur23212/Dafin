@@ -110,6 +110,7 @@ struct Actor
     QPointF from, to;
     QList<QPointF> points;
     double width = 1.0;
+    int alpha = 255;        // line "alpha": its ink alpha in a flattened group (PIL replaces, it does not blend)
     bool mixWith = false;
 
     // group

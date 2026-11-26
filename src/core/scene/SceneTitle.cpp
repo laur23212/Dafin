@@ -761,6 +761,24 @@ QPointF pointOf(const QJsonValue &v, const QString &what)
     return {numberOf(a.at(0), what), numberOf(a.at(1), what)};
 }
 
+// Whether a colour spells its own alpha ([r, g, b, a], #rrggbbaa, or a palette name for one): render.py's
+// _rgba lets that alpha win over a line's "alpha" key.
+bool colorCarriesAlpha(const QVariant &value, const QVariantMap &palette, int depth = 0)
+{
+    if (kindOf(value) == VK::List)
+        return value.toList().size() == 4;
+    if (kindOf(value) != VK::Str || depth > 8)
+        return false;
+    const QString s = value.toString();
+    const auto it = palette.constFind(s);
+    if (it != palette.constEnd())
+        return colorCarriesAlpha(it.value(), palette, depth + 1);
+    QString hex = s;
+    while (hex.startsWith(QLatin1Char('#')))
+        hex.remove(0, 1);
+    return hex.size() == 8;
+}
+
 Rgba colorOf(const QJsonValue &v, const QVariantMap &palette, const QString &what)
 {
     const std::optional<Rgba> c = parseColor(jsonToValue(v), palette);
@@ -993,7 +1011,14 @@ struct Loader
             a.from = pointOf(r.value(QStringLiteral("from")), a.id + QStringLiteral(": from"));
             a.to = pointOf(r.value(QStringLiteral("to")), a.id + QStringLiteral(": to"));
             a.width = r.contains(QStringLiteral("width")) ? r.value(QStringLiteral("width")).toDouble() : 1.0;
+            if (r.contains(QStringLiteral("alpha"))) {
+                a.alpha = int(numberOf(r.value(QStringLiteral("alpha")), a.id + QStringLiteral(": alpha")));
+                if (a.alpha < 0 || a.alpha > 255)
+                    fail(QStringLiteral("%1: alpha must be 0..255").arg(a.id));
+            }
             a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
+            if (colorCarriesAlpha(jsonToValue(r.value(QStringLiteral("color"))), palette))
+                a.alpha = a.color.a;
             a.mixWith = r.value(QStringLiteral("opacityMode")).toString() == QLatin1String("mixWith");
         } else if (t == QLatin1String("route")) {
             for (const QJsonValue &p : r.value(QStringLiteral("points")).toArray())

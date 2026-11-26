@@ -195,7 +195,7 @@ Fields of each type:
 | `text` | `text` (may hold `{param}` slots), `font` (key into `fonts`), `size` (px at 1×), `color`, `at`, `letterSpacing` (mask1x), `clipTo`, `clipRect` (mask1x) |
 | `rect` | `box`, `color` (RGBA alpha allowed), `fitTo` (`max` caps the fitted width), `widthOf`, `wipeDir` (`"right"` default, `"down"` grows the height: the Stage03b C stem) |
 | `roundRect` | `box`, `radius`, `fill`, `strokeColor`, `stroke` |
-| `line` | `from`, `to`, `width`, `color`, `opacityMode` (`"mixWith"`: see profiles) |
+| `line` | `from`, `to`, `width`, `color`, `opacityMode` (`"mixWith"`: see profiles), `alpha` (0–255, a line inside a flattened group: its ink alpha when `color` has none of its own; like render.py's ImageDraw it replaces the plate under it instead of blending) |
 | `route` | `points` (polyline traced by `progress`), `width`, `color` |
 | `ellipse` | `box`, `fill`, `strokeColor`, `stroke` |
 | `ring` | `box`, `color`, `stroke` (outline only) |

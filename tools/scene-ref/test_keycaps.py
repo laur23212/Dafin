@@ -239,7 +239,11 @@ class Layout(unittest.TestCase):
 @unittest.skipUnless(fonts_ok(), 'scene-fonts missing')
 class Scenes(unittest.TestCase):
     def test_every_keycap_scene_loads_renders_and_holds_still(self):
-        files = sorted(SCENES.glob('13*.scene.json')) + sorted(SCENES.glob('T*.scene.json'))
+        # The keycap scenes are the ones with a keycaps actor: 13_B / 13_C (the Stage13 ports) share
+        # the "13" prefix but are not shortcut titles.
+        def has_keycaps(f):
+            return any(a.get('type') == 'keycaps' for a in json.loads(f.read_text(encoding='utf-8'))['actors'])
+        files = [f for f in sorted(SCENES.glob('13*.scene.json')) + sorted(SCENES.glob('T*.scene.json')) if has_keycaps(f)]
         self.assertEqual(len(files), 4 + 18)
         for f in files:
             raw = load_raw(f.name)
