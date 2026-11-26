@@ -931,6 +931,18 @@ struct Loader
                                 "ask for the extension")
                      .arg(a.id, effType));
 
+        a.alpha = r.contains(QStringLiteral("alpha")) ? r.value(QStringLiteral("alpha")).toDouble() : 1.0;
+        a.supersample = r.value(QStringLiteral("supersample")).toInt();
+        if (a.supersample < 0 || a.supersample > 4)
+            fail(QStringLiteral("%1: supersample must be 1…4").arg(a.id));
+        const QJsonArray wr = r.value(QStringLiteral("wipeRange")).toArray();
+        if (r.contains(QStringLiteral("wipeRange"))) {
+            if (wr.size() != 2)
+                fail(QStringLiteral("%1: wipeRange must be [x0, x1]").arg(a.id));
+            a.hasWipeRange = true;
+            a.wipeRange[0] = wr.at(0).toDouble();
+            a.wipeRange[1] = wr.at(1).toDouble();
+        }
         if (t == QLatin1String("text")) {
             a.text = formatTextOrFail(r.value(QStringLiteral("text")).toString(), env);
             a.font = r.value(QStringLiteral("font")).toString();
@@ -942,6 +954,10 @@ struct Loader
             const QJsonObject at = r.value(QStringLiteral("at")).toObject();
             if (at.contains(QStringLiteral("baseline"))) {
                 a.baseline = pointOf(at.value(QStringLiteral("baseline")), a.id + QStringLiteral(": at"));
+            } else if (at.contains(QStringLiteral("ascender"))) {
+                a.anchorAscender = true;
+                a.ascender = pointOf(at.value(QStringLiteral("ascender")), a.id + QStringLiteral(": at.ascender"));
+                a.baseline = a.ascender;
             } else if (at.contains(QStringLiteral("center"))) {
                 a.anchorCenter = true;
                 a.centerAt = pointOf(at.value(QStringLiteral("center")), a.id + QStringLiteral(": at.center"));
@@ -1461,6 +1477,13 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Mask1x;
         else if (profile == QLatin1String("pil1x"))
             sc.profile = Profile::Pil1x;
+        else if (profile == QLatin1String("cov1x"))
+            sc.profile = Profile::Cov1x;
+        else
+            fail(QStringLiteral("unknown render profile '%1'").arg(profile));
+        sc.supersample = render.contains(QStringLiteral("supersample")) ? render.value(QStringLiteral("supersample")).toInt() : 1;
+        if (sc.supersample < 1 || sc.supersample > 4)
+            fail(QStringLiteral("render.supersample must be 1…4"));
         sc.minOpacity = render.contains(QStringLiteral("minOpacity")) ? render.value(QStringLiteral("minOpacity")).toDouble() : 0.001;
         sc.minReveal = render.value(QStringLiteral("minReveal")).toDouble();
         sc.fullOpacity = render.contains(QStringLiteral("fullOpacity")) ? render.value(QStringLiteral("fullOpacity")).toDouble() : 1.0;
@@ -1470,8 +1493,6 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
         sc.revealCrop = render.value(QStringLiteral("revealMode")).toString() == QLatin1String("crop");
         sc.skipAtThreshold = render.value(QStringLiteral("skipCompare")).toString(sc.minOpacity > 0.001 ? QStringLiteral("le") : QStringLiteral("lt"))
                              == QLatin1String("le");
-        else
-            fail(QStringLiteral("unknown render profile '%1'").arg(profile));
 
         const QJsonObject fonts = doc.value(QStringLiteral("fonts")).toObject();
         for (auto it = fonts.begin(); it != fonts.end(); ++it) {

@@ -241,6 +241,27 @@ def check_dark_chapter_a(src: Path, frames):
     return [{'example': '04_Dark_Chapter_A_v2', 'frames': len(frames), 'mismatched': bad}]
 
 
+def check_chapters_v4(src: Path, frames):
+    """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
+    as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
+    from PIL import Image
+    m = load_module(src / 'dafin_chapters_v4_recon.py', 'chapters_v4_recon')
+    plain = np.full((1080, 1920, 3), (34, 36, 40), np.uint8)
+    res = []
+    for w in 'AB':
+        sc = m.load_scene(w)
+        r = render.Cov1x(core.load_scene(HERE / 'scenes' / f'04_Chapter_{w}_v4.scene.json'))
+        bad = []
+        for i in frames:
+            t = i / 25
+            mx, n = diff(m.render(sc, t, plain).astype(np.uint8), np.array(r.draw(t, Image.fromarray(plain))))
+            ma, na = diff(m.render(sc, t, alpha_out=True), np.array(r.draw(t)))
+            if mx or ma:
+                bad.append({'frame': i, 'max': max(mx, ma), 'pixels': n + na})
+        res.append({'example': f'04_Chapter_{w}_v4', 'frames': len(frames), 'mismatched': bad})
+    return res
+
+
 def check_stage13_primitives(src: Path):
     """Shapes the two ports do not use, against the frozen Stage13 helpers (and Stage15's plate)."""
     b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_frozen')
@@ -292,6 +313,7 @@ def main():
     ap.add_argument('--stage06', type=Path, help='folder with render_stage06.py')
     ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
     ap.add_argument('--dark-chapter-a', type=Path, help='folder with render_a_dark_v2.py')
+    ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
@@ -312,6 +334,8 @@ def main():
         res.extend(check_stage06(o.stage06, frames))
     if o.stage07:
         res.extend(check_stage07(o.stage07, frames))
+    if o.chapters_v4:
+        res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:
         res.extend(check_dark_chapter_a(o.dark_chapter_a, frames))
     if o.stage08_cinematic:

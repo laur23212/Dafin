@@ -21,7 +21,7 @@ namespace drift::scene {
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
 
-enum class Profile { Sprite2x, Mask1x, Pil1x };
+enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x };
 
 struct Rgba
 {
@@ -84,6 +84,13 @@ struct Actor
     bool spriteChapter = false; // "sprite": "chapter" (Dark Chapter A v2): float pens + letterSpacing,
                                 // 4 px padding; wipe crops round(w·v) px of that sprite
     bool anchorCenter = false; // at: {"center": [x, y]}: the tracked sprite centred there
+    // cov1x (Chapter A/B v4): at.ascender, a constant alpha, a crop wipe from wipeRange[0] to [1]
+    bool anchorAscender = false;
+    QPointF ascender;
+    double alpha = 1.0;
+    bool hasWipeRange = false;
+    double wipeRange[2] = {0.0, 0.0};
+    int supersample = 0; // 0: the scene's render.supersample
     QPointF centerAt;
     bool wipeSnapRound = false;     // rect: x1 = x0 + round(w·wipe) (Stage06)
     bool progressSnapRound = false; // line: end.x = base + round((to.x - base)·progress) (Stage06)
@@ -189,6 +196,7 @@ struct Scene
     double exitSlideDistance = 0.0, exitSlideHold = 0.0;
     // pil1x render options (render.minOpacity, minReveal, fullOpacity, alphaTable, skipEmptyRects)
     double minOpacity = 0.001, minReveal = 0.0, fullOpacity = 1.0, fullReveal = 1.0;
+    int supersample = 1; // cov1x: text drawn at this factor, then BOX-reduced
     bool alphaTrunc = false, skipEmptyRects = false;
     bool skipAtThreshold = false; // skipCompare "le" (Stage06) vs "lt" (Stage05/07)
     bool revealCrop = false;      // revealMode "crop" (Stage07): max(1, int(w·v)) px of the sprite

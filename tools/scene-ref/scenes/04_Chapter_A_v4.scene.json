@@ -1,0 +1,267 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.chapter.editorial-v4",
+ "label": "Editorial Chapter A v4",
+ "category": "Chapter Titles",
+ "source": {
+  "asset": "04_Chapter_A_v4",
+  "sha256": "0d95e99025233bbbf8b5bfe2687070d6c730db9d5a824964511bd10fa2cef663",
+  "script": "RECONSTRUCTED_APPROX :: dafin_chapters_v4_recon.py + chapters_v4_params.json (measured from the approved MP4; the original v4 script is SOURCE_MISSING)",
+  "status": "APPROVED_RECONSTRUCTED_APPROX"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "cov1x",
+  "supersample": 3
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "InterDisplay-Medium.otf",
+   "sha256": "cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c"
+  },
+  "serif": {
+   "file": "EBGaramond12-Bold.ttf",
+   "sha256": "3209fd31257e096b80c84e49d611ddb513d57d3b2f4dd20719d2ae102906fe1e",
+   "package": "fonts-ebgaramond-extra 0.016+git20210310.42d4f9f2-1"
+  }
+ },
+ "params": [
+  {
+   "id": "label",
+   "type": "text",
+   "default": "CAPITOLUL 03",
+   "label": "Chapter"
+  },
+  {
+   "id": "line1",
+   "type": "text",
+   "default": "DINCOLO DE",
+   "label": "Title, line 1"
+  },
+  {
+   "id": "line2",
+   "type": "text",
+   "default": "ORIZONT",
+   "label": "Title, line 2"
+  },
+  {
+   "id": "subtitle",
+   "type": "text",
+   "default": "Un drum spre necunoscut",
+   "label": "Subtitle"
+  }
+ ],
+ "actors": [
+  {
+   "id": "card",
+   "role": "carrierMotion",
+   "type": "group",
+   "at": [
+    0,
+    0
+   ],
+   "out": {
+    "start": 4.9238790762424465,
+    "dur": 0.6473017200082554,
+    "ease": "easeOutCubic",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "rule",
+     "type": "rect",
+     "box": [
+      130,
+      398,
+      245,
+      399
+     ],
+     "role": "accent",
+     "color": [
+      225,
+      228,
+      232
+     ],
+     "alpha": 0.72,
+     "in": [
+      {
+       "start": 0.08447857666015623,
+       "dur": 0.4589298248291018,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      130,
+      246
+     ]
+    },
+    {
+     "id": "label",
+     "type": "text",
+     "text": "{label}",
+     "font": "sans",
+     "size": 27.666666666666668,
+     "letterSpacing": 1.0,
+     "at": {
+      "ascender": [
+       129,
+       349
+      ]
+     },
+     "role": "eyebrow",
+     "color": [
+      224,
+      223,
+      220
+     ],
+     "alpha": 1.0,
+     "in": [
+      {
+       "start": 0.10759862899780273,
+       "dur": 0.3933886528015138,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      },
+      {
+       "start": 0.1,
+       "dur": 0.45,
+       "ease": "easeOutCubic",
+       "from": {
+        "dy": 6
+       }
+      }
+     ],
+     "optional": true
+    },
+    {
+     "id": "title1",
+     "type": "text",
+     "text": "{line1}",
+     "font": "serif",
+     "size": 79.66666666666667,
+     "letterSpacing": 6.666666666666667,
+     "at": {
+      "ascender": [
+       128,
+       413
+      ]
+     },
+     "role": "title",
+     "color": [
+      245,
+      243,
+      238
+     ],
+     "alpha": 1.0,
+     "in": [
+      {
+       "start": 0.28776585102081287,
+       "dur": 0.8099187850952112,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      120,
+      690
+     ]
+    },
+    {
+     "id": "title2",
+     "type": "text",
+     "text": "{line2}",
+     "font": "serif",
+     "size": 79.66666666666667,
+     "letterSpacing": 6.666666666666667,
+     "at": {
+      "ascender": [
+       128,
+       493
+      ]
+     },
+     "role": "title",
+     "color": [
+      245,
+      243,
+      238
+     ],
+     "alpha": 1.0,
+     "in": [
+      {
+       "start": 0.28776585102081287,
+       "dur": 0.8099187850952112,
+       "ease": "easeOutCubic",
+       "from": {
+        "wipe": 0
+       }
+      }
+     ],
+     "wipeRange": [
+      120,
+      690
+     ],
+     "optional": true
+    },
+    {
+     "id": "subtitle",
+     "type": "text",
+     "text": "{subtitle}",
+     "font": "sans",
+     "size": 25.666666666666668,
+     "letterSpacing": 0.3333333333333333,
+     "at": {
+      "ascender": [
+       131.33333333333334,
+       575.6666666666666
+      ]
+     },
+     "role": "description",
+     "color": [
+      212,
+      210,
+      208
+     ],
+     "alpha": 1.0,
+     "in": [
+      {
+       "start": 0.7878830080032353,
+       "dur": 0.3054533100128177,
+       "ease": "easeOutCubic",
+       "from": {
+        "opacity": 0
+       }
+      }
+     ],
+     "optional": true
+    }
+   ]
+  }
+ ]
+}

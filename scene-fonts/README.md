@@ -38,6 +38,7 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the P
 | PTF75F.ttf | 71a57caa616bec6f7266bddb176defd481f4edfca357123d4d3d8bb942b10f26 | fonts-paratype 20181108-3 (PT Serif Bold) |
 | RobotoSlab-Bold.otf | f860d0a2b4323863d94f76d579d4ddb54048c87d07f3bff936f40c22d7cb49dd | fonts-roboto-slab 1.100263+20170512-2 |
 | EBGaramond12-Regular.ttf | 689aa494b0eb1913085eaeb84d28b18e3b788b45dddbb3083a676d2e8896b5a4 | fonts-ebgaramond-extra 0.016+git20210310.42d4f9f2-1 (OFL) |
+| EBGaramond12-Bold.ttf | 3209fd31257e096b80c84e49d611ddb513d57d3b2f4dd20719d2ae102906fe1e | fonts-ebgaramond-extra 0.016+git20210310.42d4f9f2-1 (OFL; Dark Chapter A v2, Chapter A v4) |
 | Lato-Heavy.ttf | 4ce7ec20cd9c391b271b4149ad8cf5a71301d98965403f14fc5530d017146dbb | fonts-lato 2.015-1 (OFL) |
 
 Stage10 (Light, Black) is not here yet: those scenes use the

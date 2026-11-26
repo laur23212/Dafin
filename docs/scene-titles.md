@@ -339,6 +339,22 @@ Source: `render_stage05.py` and its siblings.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
   slide on another). Reveal channels multiply across blocks; offsets add.
 
+### cov1x (Chapter A v4 / B v4, RECONSTRUCTED_APPROX)
+
+The original v4 scripts are SOURCE_MISSING; the reference is `dafin_chapters_v4_recon.py`, rebuilt
+from measurements of the approved MP4s (`claude/chapters-v4-reconstruction.md` in the project).
+Every actor is a float coverage map over the frame, composited in order as
+`colour·(1 − m) + ink·m` with `m = coverage · alpha · group opacity · own fade · wipe`.
+
+- `render.supersample` (1–4; an actor may override it with `supersample`): text is laid out at
+  that factor and BOX-reduced. Layout is advance-rounded: each glyph at `(round(pen), y)` with
+  PIL's anchor `la`, `at: {"ascender": [x, y]}` the ascender line, `pen += getlength(ch) + letterSpacing`.
+- `rect` / `roundRect` (`fill`): the inclusive pixel box drawn at 4× and BOX-reduced.
+- `alpha`: a constant opacity. `wipeRange: [x0, x1]` with a `wipe` channel: a crop edge moving
+  from x0 to x1 with a 1 px anti-aliased edge, so a wiped box is cropped, not re-rounded.
+- `clipTo: {"actor": id}`: the actor only shows where that actor's box has coverage and its wipe
+  has passed (the B tag text in its tag, the subtitle in its panel).
+
 ## Preview and matte
 
 - `preview.background` is the matte the proof was judged on. It is used only for previews and
@@ -396,6 +412,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 07_Kinetic, 07_Insights_v2, 07_QA_v3 (pil1x, RGB over the scripts' footage crops) | 150/150 frames identical |
   | 08_Cinematic_Garamond / Inter / RobotoSlab / Lato (pil1x over the script's charcoal) | 150/150 frames identical |
   | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
+  | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the

@@ -907,8 +907,98 @@ class Pil1x:
         return np.array(self.draw(t))
 
 
+class Cov1x:
+    """Chapter A v4 / B v4 (RECONSTRUCTED_APPROX, dafin_chapters_v4_recon.py): every actor is a float
+    coverage map over the frame, composited in order as out·(1 − m) + colour·m.
+    Text: advance-rounded glyphs (round(pen), anchor 'la', pen += getlength + tracking) drawn at
+    `supersample`× and BOX-reduced. Boxes: a rounded rect drawn at 4× and BOX-reduced. A wipe is a
+    crop edge from wipeRange[0] to wipeRange[1] with a 1 px anti-aliased edge (corners are not
+    re-rounded); `clipTo` limits an actor to another's wiped coverage."""
+
+    def __init__(self, sc, font_dirs=()):
+        self.sc, self.font_dirs = sc, font_dirs
+        self.by_id = {a['id']: a for a in sc.actors}
+        self.cache = {}
+        self.ss = int(sc.raw.get('render', {}).get('supersample', 1))
+
+    def font(self, key, size):
+        return _truetype(font_path(self.sc, key, self.font_dirs), size, False)
+
+    def cov(self, a):
+        W, H = self.sc.width, self.sc.height
+        key = (a['id'], a.get('text'), a.get('size'), json.dumps(a.get('at')), json.dumps(a.get('box')))
+        if key in self.cache:
+            return self.cache[key]
+        if a['type'] == 'text':
+            ss = int(a.get('supersample', self.ss))
+            f = self.font(a['font'], int(round(a['size'] * ss)))
+            im = Image.new('L', (W * ss, H * ss), 0)
+            d = ImageDraw.Draw(im)
+            x, y = a['at']['ascender']
+            pen = float(round(x * ss))
+            for ch in a['text']:
+                d.text((round(pen), round(y * ss)), ch, font=f, fill=255, anchor='la')
+                pen += f.getlength(ch) + a.get('letterSpacing', 0.0) * ss
+            if ss > 1:
+                im = im.resize((W, H), Image.Resampling.BOX)
+        else:
+            x0, y0, x1, y1 = a['box']
+            r, S = a.get('radius', 0), 4
+            im = Image.new('L', (W, H), 0)
+            big = Image.new('L', ((x1 - x0 + 1) * S, (y1 - y0 + 1) * S), 0)
+            ImageDraw.Draw(big).rounded_rectangle((0, 0, big.width - 1, big.height - 1), radius=r * S, fill=255)
+            im.paste(big.resize((x1 - x0 + 1, y1 - y0 + 1), Image.Resampling.BOX), (x0, y0))
+        self.cache[key] = np.asarray(im, np.float32) / 255.0
+        return self.cache[key]
+
+    def wipe_mask(self, a, ch):
+        x0, x1 = a['wipeRange']
+        edge = x0 + (x1 - x0) * ch['wipe']
+        xs = np.arange(0, self.sc.width, dtype=np.float32)
+        return np.clip(edge - (xs + 0.5) + 0.5, 0, 1)[None, :]
+
+    def draw(self, t, canvas=None):
+        W, H = self.sc.width, self.sc.height
+        out = None if canvas is None else np.asarray(canvas.convert('RGB'), np.float32).copy()
+        acc_a = np.zeros((H, W), np.float32)
+        acc_c = np.zeros((H, W, 3), np.float32)
+        for a in self.sc.actors:
+            if a['type'] == 'group':
+                continue
+            ch = core.channels(a, t)
+            op, dy = float(a.get('alpha', 1.0)), ch['dy']
+            node = self.by_id.get(a.get('_parent'))
+            while node is not None:  # the group exit: op · group · own fade, as the recon multiplied
+                g = core.channels(node, t)
+                op *= g['opacity']
+                dy += g['dy']
+                node = self.by_id.get(node.get('_parent'))
+            op *= ch['opacity']
+            if op <= 0:
+                continue
+            m = self.cov(a)
+            dy = int(round(dy))
+            if dy:
+                m = np.roll(m, dy, axis=0)
+            m = m * op
+            if 'wipeRange' in a:
+                m = m * self.wipe_mask(a, ch)
+            if a.get('clipTo'):
+                c = self.by_id[a['clipTo']['actor']]
+                m = m * self.wipe_mask(c, core.channels(c, t)) * (self.cov(c) > 0)
+            col = np.array(core.parse_color(a['fill'] if a['type'] == 'roundRect' else a['color'], self.sc.palette)[:3], np.float32)
+            if out is not None:
+                out = out * (1 - m[..., None]) + col * m[..., None]
+            acc_c = acc_c * (1 - m[..., None]) + col * m[..., None]
+            acc_a = acc_a * (1 - m) + m
+        if out is not None:
+            return Image.fromarray(out.clip(0, 255).astype(np.uint8), 'RGB')
+        rgb = np.where(acc_a[..., None] > 0, acc_c / np.maximum(acc_a[..., None], 1e-6), 0)
+        return Image.fromarray(np.dstack([rgb, acc_a * 255]).clip(0, 255).astype(np.uint8), 'RGBA')
+
+
 def make_renderer(sc, font_dirs=()):
-    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x}[sc.profile](sc, font_dirs)
+    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x}[sc.profile](sc, font_dirs)
 
 
 # ----------------------------------------------------------------------------------------------

@@ -639,6 +639,99 @@ TrackedArt chapterText(const SkFont &font, const QString &text, double tracking,
     return out;
 }
 
+// ---- cov1x (Chapter A/B v4, RECONSTRUCTED_APPROX): float coverage maps, composited in order ----
+struct CovMap
+{
+    SkIRect rect = SkIRect::MakeEmpty(); // design px
+    std::vector<quint8> px;              // rect.width() × rect.height(), row-major
+    quint8 at(int x, int y) const
+    {
+        if (!rect.contains(x, y))
+            return 0;
+        return px[size_t(y - rect.top()) * size_t(rect.width()) + size_t(x - rect.left())];
+    }
+};
+
+// An A8 bitmap whose (0, 0) is at `origin` (supersampled px), reduced by `ss` with a box filter
+// onto the design grid, as PIL's resize(BOX) of the whole ss× frame did.
+CovMap boxReduce(const SkBitmap &bm, SkIPoint origin, int ss)
+{
+    CovMap m;
+    if (bm.width() <= 0 || bm.height() <= 0)
+        return m;
+    const auto fdiv = [](int v, int d) { return v >= 0 ? v / d : -((-v + d - 1) / d); };
+    const int x0 = fdiv(origin.x(), ss), y0 = fdiv(origin.y(), ss);
+    const int x1 = fdiv(origin.x() + bm.width() + ss - 1, ss), y1 = fdiv(origin.y() + bm.height() + ss - 1, ss);
+    m.rect = SkIRect::MakeLTRB(x0, y0, x1, y1);
+    m.px.assign(size_t(m.rect.width()) * size_t(m.rect.height()), 0);
+    const int n = ss * ss;
+    for (int Y = y0; Y < y1; ++Y)
+        for (int X = x0; X < x1; ++X) {
+            int sum = 0;
+            for (int j = 0; j < ss; ++j) {
+                const int by = Y * ss + j - origin.y();
+                if (by < 0 || by >= bm.height())
+                    continue;
+                const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, by));
+                for (int i = 0; i < ss; ++i) {
+                    const int bx = X * ss + i - origin.x();
+                    if (bx >= 0 && bx < bm.width())
+                        sum += row[bx];
+                }
+            }
+            m.px[size_t(Y - y0) * size_t(m.rect.width()) + size_t(X - x0)] = quint8((sum + n / 2) / n);
+        }
+    return m;
+}
+
+// Advance-rounded text: each glyph at (round(pen), ascender line), pen += advance + tracking,
+// all on an ss× grid; PIL's anchor 'la' puts the baseline one (whole-px) ascender lower.
+CovMap covText(const sk_sp<SkTypeface> &tf, const Actor &a, int ss)
+{
+    const SkFont font = pixelFont(tf, roundHalfEven(a.size * ss));
+    SkFontMetrics fm;
+    font.getMetrics(&fm);
+    std::vector<GlyphRun> runs;
+    double pen = roundHalfEven(a.ascender.x() * ss);
+    for (int i = 0; i < a.text.size(); ++i) {
+        const int len = (a.text.at(i).isHighSurrogate() && i + 1 < a.text.size()) ? 2 : 1;
+        std::vector<GlyphRun> one = basicLayout(font, a.text.mid(i, len));
+        i += len - 1;
+        const double px = roundHalfEven(pen);
+        double adv = 0.0;
+        for (GlyphRun &g : one) {
+            std::vector<SkScalar> w(g.glyphs.size());
+            g.font.getWidths({g.glyphs.data(), g.glyphs.size()}, {w.data(), w.size()});
+            for (SkScalar v : w)
+                adv += v;
+            for (SkPoint &p : g.pos)
+                p.fX += SkScalar(px);
+            runs.push_back(std::move(g));
+        }
+        pen += adv + a.letterSpacing * ss;
+    }
+    const SkPoint origin{0, SkScalar(roundHalfEven(a.ascender.y() * ss) + std::ceil(-fm.fAscent))};
+    const SkIRect bounds = layoutBounds(runs, origin);
+    return boxReduce(coverage(runs, origin, bounds), {bounds.left(), bounds.top()}, ss);
+}
+
+// A box: the (inclusive) pixel rect as a rounded rect drawn at 4×, box-reduced.
+CovMap covBox(const Actor &a)
+{
+    const int x0 = int(a.box[0]), y0 = int(a.box[1]);
+    const int w = int(a.box[2]) - x0 + 1, h = int(a.box[3]) - y0 + 1;
+    SkBitmap bm;
+    bm.allocPixels(SkImageInfo::MakeA8(qMax(1, w * 4), qMax(1, h * 4)));
+    bm.eraseColor(SK_ColorTRANSPARENT);
+    SkCanvas canvas(bm);
+    SkPaint paint;
+    paint.setAntiAlias(false);
+    paint.setColor(SK_ColorBLACK);
+    const SkRect r = SkRect::MakeWH(SkScalar(w * 4), SkScalar(h * 4));
+    canvas.drawRRect(SkRRect::MakeRectXY(r, SkScalar(a.radius * 4), SkScalar(a.radius * 4)), paint);
+    return boxReduce(bm, {x0 * 4, y0 * 4}, 4);
+}
+
 // PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
 // coordinates. Width 1 is a thin line.
 void pilLine(SkCanvas &c, double ax, double ay, double bx, double by, double width, SkColor color)
@@ -667,6 +760,7 @@ public:
     quint64 key = 0;
     QHash<QString, TextArt> texts;
     QHash<QString, QSizeF> trackedSprites; // Stage08: the sprite size the centring uses
+    QHash<QString, CovMap> covs;           // cov1x: each actor's coverage on the design grid
 
     void build(const QStringList &dirs, QString *error)
     {
@@ -682,8 +776,16 @@ public:
             }
             faces.insert(it.key(), tf);
         }
+        if (scene.profile == Profile::Cov1x) {
+            for (const Actor &a : std::as_const(scene.actors)) {
+                if (a.type == QLatin1String("text"))
+                    covs.insert(a.id, covText(faces.value(a.font), a, a.supersample > 0 ? a.supersample : scene.supersample));
+                else if (a.type == QLatin1String("rect") || a.type == QLatin1String("roundRect"))
+                    covs.insert(a.id, covBox(a));
+            }
+        }
         for (const Actor &a : std::as_const(scene.actors)) {
-            if (a.type != QLatin1String("text"))
+            if (a.type != QLatin1String("text") || scene.profile == Profile::Cov1x)
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
             if (scene.profile == Profile::Pil1x && a.spriteChapter) {
@@ -887,6 +989,11 @@ public:
             c.restore();
             return;
         }
+        if (sc.profile == Profile::Cov1x) {
+            paintCov(c, sampling);
+            c.restore();
+            return;
+        }
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
             bool skip = false;
@@ -911,6 +1018,95 @@ public:
     }
 
 private:
+    // cov1x: m = coverage · alpha · group · fade · crop wipe (· the clipTo actor's wiped box);
+    // colour = c·(1 − m) + ink·m in actor order; drawn as one unpremultiplied image.
+    void paintCov(SkCanvas &c, const SkSamplingOptions &sampling) const
+    {
+        const Scene &sc = r->scene;
+        struct Layer
+        {
+            const CovMap *map;
+            const CovMap *clip;
+            double op, edge, clipEdge;
+            bool wipe, clipWipe;
+            int dy;
+            float rgb[3];
+        };
+        std::vector<Layer> layers;
+        SkIRect all = SkIRect::MakeEmpty();
+        const auto edgeOf = [](const Actor &a, const Channels &ch) {
+            return a.wipeRange[0] + (a.wipeRange[1] - a.wipeRange[0]) * ch.wipe;
+        };
+        for (const Actor &a : sc.actors) {
+            const auto it = r->covs.constFind(a.id);
+            if (it == r->covs.constEnd() || it->rect.isEmpty())
+                continue;
+            const Channels ch = scene::drawChannels(sc, a, t, nullptr);
+            const double op = a.alpha * ch.opacity;
+            if (op <= 0.0)
+                continue;
+            Layer l{&*it, nullptr, op, 0.0, 0.0, a.hasWipeRange, false, int(roundHalfEven(ch.dy)),
+                    {float(a.color.r), float(a.color.g), float(a.color.b)}};
+            if (a.type != QLatin1String("text"))
+                l.rgb[0] = float(a.fill.r), l.rgb[1] = float(a.fill.g), l.rgb[2] = float(a.fill.b);
+            if (a.type == QLatin1String("rect")) // a rect keeps its colour in both fields
+                l.rgb[0] = float(a.color.r), l.rgb[1] = float(a.color.g), l.rgb[2] = float(a.color.b);
+            if (l.wipe)
+                l.edge = edgeOf(a, ch);
+            if (!a.clipActor.isEmpty()) {
+                const Actor *ca = sc.actor(a.clipActor);
+                const auto ct = r->covs.constFind(a.clipActor);
+                if (ca && ct != r->covs.constEnd()) {
+                    l.clip = &*ct;
+                    l.clipWipe = ca->hasWipeRange;
+                    if (l.clipWipe)
+                        l.clipEdge = edgeOf(*ca, scene::drawChannels(sc, *ca, t, nullptr));
+                }
+            }
+            all.join(it->rect.makeOffset(0, l.dy));
+            layers.push_back(l);
+        }
+        if (!all.intersect(SkIRect::MakeWH(sc.width, sc.height)) || layers.empty())
+            return;
+        const int w = all.width(), h = all.height();
+        std::vector<float> accA(size_t(w) * size_t(h), 0.0f), accC(size_t(w) * size_t(h) * 3, 0.0f);
+        for (const Layer &l : layers) {
+            const SkIRect lr = l.map->rect.makeOffset(0, l.dy);
+            for (int y = qMax(lr.top(), all.top()); y < qMin(lr.bottom(), all.bottom()); ++y)
+                for (int x = qMax(lr.left(), all.left()); x < qMin(lr.right(), all.right()); ++x) {
+                    float m = float(l.map->at(x, y - l.dy)) / 255.0f * float(l.op);
+                    if (l.wipe)
+                        m *= float(qBound(0.0, l.edge - x, 1.0));
+                    if (l.clip) {
+                        if (!l.clip->at(x, y))
+                            continue;
+                        if (l.clipWipe)
+                            m *= float(qBound(0.0, l.clipEdge - x, 1.0));
+                    }
+                    if (m <= 0.0f)
+                        continue;
+                    const size_t i = size_t(y - all.top()) * size_t(w) + size_t(x - all.left());
+                    for (int k = 0; k < 3; ++k)
+                        accC[i * 3 + k] = accC[i * 3 + k] * (1.0f - m) + l.rgb[k] * m;
+                    accA[i] = accA[i] * (1.0f - m) + m;
+                }
+        }
+        SkBitmap bm;
+        bm.allocPixels(SkImageInfo::Make(w, h, kRGBA_8888_SkColorType, kUnpremul_SkAlphaType));
+        for (int y = 0; y < h; ++y) {
+            auto *row = static_cast<quint8 *>(bm.getAddr(0, y));
+            for (int x = 0; x < w; ++x) {
+                const size_t i = size_t(y) * size_t(w) + size_t(x);
+                const float a = accA[i];
+                for (int k = 0; k < 3; ++k)
+                    row[x * 4 + k] = a > 0.0f ? quint8(qBound(0.0f, accC[i * 3 + k] / qMax(a, 1e-6f), 255.0f)) : 0;
+                row[x * 4 + 3] = quint8(qBound(0.0f, a * 255.0f, 255.0f));
+            }
+        }
+        bm.setImmutable();
+        c.drawImage(bm.asImage(), SkScalar(all.left()), SkScalar(all.top()), sampling, nullptr);
+    }
+
     // ---- pil1x (Part5 Stage05-08): every part on its own layer, in order; scene exitWipe ----
     static double channelValue(const Channels &ch, const QString &name)
     {
@@ -1561,7 +1757,10 @@ QHash<QString, QRectF> sceneRestBoxes(const SceneRenderer &renderer)
     QHash<QString, QRectF> boxes;
     const Channels rest;
     for (const Actor &a : renderer.scene.actors) {
-        if (a.type == QLatin1String("text")) {
+        if (renderer.covs.contains(a.id)) { // cov1x: the actor's coverage rect
+            const SkIRect c = renderer.covs.value(a.id).rect;
+            boxes.insert(a.id, QRectF(c.left(), c.top(), c.width(), c.height()));
+        } else if (a.type == QLatin1String("text")) {
             boxes.insert(a.id, renderer.texts.value(a.id).ink);
         } else if (a.hasBox) {
             boxes.insert(a.id, scene::currentBox(a, rest));
