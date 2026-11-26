@@ -21,7 +21,7 @@ namespace drift::scene {
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
 
-enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x, Cv1x };
+enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x, Cv1x, Fx1x };
 
 struct Rgba
 {
@@ -88,6 +88,7 @@ struct Actor
     bool anchorCenter = false; // at: {"center": [x, y]}: the tracked sprite centred there
     // pil1x Stage09: at {left, top} places the sprite's corner; spritePad (default 8) its padding;
     // a group "row" lays its texts out pen-to-pen (getlength + gap), centred in rowWidth
+    QJsonObject effect; // fx1x: sdfMorph / maskedLight / focusMix and their own timing (Stage10)
     bool anchorLeft = false;
     double anchorLeftX = 0.0;
     double spritePad = 8.0;

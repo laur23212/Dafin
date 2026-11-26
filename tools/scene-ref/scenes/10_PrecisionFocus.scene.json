@@ -1,0 +1,171 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.precision-focus",
+ "label": "Precision Focus",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "10_PrecisionFocus",
+  "sha256": "bdb4c4786b0f3d2da5f9bd6a50ae9583b4c8bd8d5656c351669f0a8b8d9392ad",
+  "script": "render_stage10.py :: frame_c",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "fx1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "sans": {
+   "file": "NotoSansDisplay-Medium.ttf",
+   "sha256": "0d7de6c6a264dfa9b0e93efc1338414bff20f79aaf9ff85e3a9fc901bdf9dbea",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word1",
+   "type": "text",
+   "default": "PRIVEȘTE",
+   "label": "Word 1"
+  },
+  {
+   "id": "word2",
+   "type": "text",
+   "default": "ALTFEL",
+   "label": "Word 2"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word1",
+   "role": "title",
+   "type": "text",
+   "text": "{word1}",
+   "font": "sans",
+   "size": 142,
+   "color": [
+    32,
+    43,
+    48
+   ],
+   "at": {
+    "baseline": [
+     214,
+     494
+    ]
+   },
+   "effect": {
+    "type": "focusMix",
+    "order": 0,
+    "cell": [
+     950,
+     192
+    ],
+    "origin": [
+     8,
+     159
+    ],
+    "sigma": 2.1,
+    "soft": [
+     91,
+     100,
+     107
+    ],
+    "enter": {
+     "start": 0.23,
+     "dur": 0.65,
+     "ease": "easeOutCubic"
+    },
+    "move": {
+     "start": 1.8,
+     "dur": 1.13,
+     "ease": "smoothstep"
+    },
+    "resolve": {
+     "start": 3.6,
+     "dur": 0.8,
+     "ease": "smoothstep"
+    },
+    "fade": {
+     "start": 5.08,
+     "dur": 0.68,
+     "ease": "smoothstep"
+    }
+   }
+  },
+  {
+   "id": "word2",
+   "role": "title",
+   "type": "text",
+   "text": "{word2}",
+   "font": "sans",
+   "size": 142,
+   "color": [
+    32,
+    43,
+    48
+   ],
+   "at": {
+    "baseline": [
+     214,
+     694
+    ]
+   },
+   "effect": {
+    "type": "focusMix",
+    "order": 1,
+    "cell": [
+     950,
+     192
+    ],
+    "origin": [
+     8,
+     159
+    ],
+    "sigma": 2.1,
+    "soft": [
+     91,
+     100,
+     107
+    ],
+    "enter": {
+     "start": 0.23,
+     "dur": 0.65,
+     "ease": "easeOutCubic"
+    },
+    "move": {
+     "start": 1.8,
+     "dur": 1.13,
+     "ease": "smoothstep"
+    },
+    "resolve": {
+     "start": 3.6,
+     "dur": 0.8,
+     "ease": "smoothstep"
+    },
+    "fade": {
+     "start": 5.08,
+     "dur": 0.68,
+     "ease": "smoothstep"
+    }
+   }
+  }
+ ]
+}

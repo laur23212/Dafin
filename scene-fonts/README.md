@@ -42,7 +42,7 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the P
 | NotoSansDisplay-Black.ttf | 4bf498b3b6a4b3fe311b8771c001cef5077a339f329649542d237cc284d3b13d | fonts-noto-extra 20201225-2 (Stage09 Word Shift B7) |
 | NotoSansDisplay-SemiCondensedBold.ttf | 7b2e466a506a2f6ce6ee807dd97fc157acc11d5c7c88dcb4c7af5729ae427906 | fonts-noto-extra 20201225-2 (Stage09 Split Motion C1) |
 | NotoSerifDisplay-SemiBold.ttf | 74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40 | fonts-noto-extra 20201225-2 (Stage11 Phrase Reflow) |
+| NotoSansDisplay-Light.ttf | b2938eecdbdacbbcc9fab3641268d02afb0c0896335ab12331793195de019197 | fonts-noto-extra 20201225-2 (Stage10 Typography Morph) |
 | Lato-Heavy.ttf | 4ce7ec20cd9c391b271b4149ad8cf5a71301d98965403f14fc5530d017146dbb | fonts-lato 2.015-1 (OFL) |
 
-Stage10 (Light, Black) is not here yet: those scenes use the
-reserved effects, which v1 refuses.
+Stage10's effects run in the fx1x profile (docs/scene-titles.md).

@@ -19,7 +19,7 @@ FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
 ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat', 'pin'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
-PROFILES = {'sprite2x', 'mask1x', 'pil1x', 'cov1x', 'cv1x'}
+PROFILES = {'sprite2x', 'mask1x', 'pil1x', 'cov1x', 'cv1x', 'fx1x'}
 
 
 class SceneError(ValueError):
@@ -356,9 +356,10 @@ def expand_actors(actors, sc: Scene, env=None, parent=None, out=None):
         r['_parent'] = parent
         if r['type'] == 'text':
             r['text'] = format_text(r.get('text', ''), env)
-        if 'effect' in r and r['effect'].get('type') in RESERVED_EFFECTS:
+        if 'effect' in r and r['effect'].get('type') in RESERVED_EFFECTS \
+                and sc.raw.get('render', {}).get('profile') != 'fx1x':
             raise SceneError(f'{r["id"]}: effect {r["effect"]["type"]} is reserved for a later '
-                             'version (docs/scene-titles.md, Stage10); ask for the extension')
+                             'version outside the fx1x profile (docs/scene-titles.md, Stage10)')
         if r['type'] == 'group':
             r['_childIds'] = []
             out.append(r)

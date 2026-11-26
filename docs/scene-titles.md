@@ -391,8 +391,13 @@ Every actor is a float coverage map over the frame, composited in order as
 
 ## Reserved effects (Stage10)
 
-`effect.type` values `sdfMorph`, `maskedLight` and `focusMix` are reserved. v1 loaders must refuse
-them ("ask for the extension") rather than fake them. Their mechanisms, from `render_stage10.py`:
+`effect.type` values `sdfMorph`, `maskedLight` and `focusMix` run only in the **fx1x** profile
+(`render.profile: "fx1x"`); every other profile still refuses them. In fx1x each text actor's
+`effect` carries its own timing blocks (`{start, dur, ease}`, smoothstep or easeOutCubic) and the
+numbers below as fields, because the effects mix their phases in ways one opacity channel cannot.
+They draw over an opaque frame as `render_stage10.py` did (float32 masks, uint8 after each
+composite); the alpha layer is solved from a render over black and over white. Native: exact EDT
+(Felzenszwalb), cv2's Gaussian kernel (round(8σ + 1) | 1, reflect-101). Mechanisms:
 
 - **sdfMorph** (Typography Morph): a real weight morph, not a crossfade.
   - Every glyph is drawn in two weights (Light and Black) into a cell, on the same baseline.
@@ -435,6 +440,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 08_Cinematic_Garamond / Inter / RobotoSlab / Lato (pil1x over the script's charcoal) | 150/150 frames identical |
   | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
   | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
+  | 10_TypographyMorph, 10_MaskedLightReveal, 10_PrecisionFocus (fx1x over the script's backgrounds) | 150/150 frames identical |
   | 11_ArcResolve, 11_PhraseReflow (pil1x over the script's gradients) | 150/150 frames identical |
   | 11_AnchorNote_v4, 12_A_Anchor_Bracket, 12_B_Anchor_Measure, 12B_C_Anchor_Index_Manual (cv1x into the scripts' black plate) | 150/150 frames identical |
   | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |

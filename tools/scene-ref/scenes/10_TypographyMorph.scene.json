@@ -1,0 +1,116 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.expressive.typography-morph",
+ "label": "Typography Morph",
+ "category": "Expressive Titles",
+ "source": {
+  "asset": "10_TypographyMorph",
+  "sha256": "08e104e31b5c4cbb2882aac2d525cebe41b4d549fb450752dafaa0242f53f0ce",
+  "script": "render_stage10.py :: frame_a",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "fx1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "light": {
+   "file": "NotoSansDisplay-Light.ttf",
+   "sha256": "b2938eecdbdacbbcc9fab3641268d02afb0c0896335ab12331793195de019197",
+   "package": "fonts-noto-extra 20201225-2"
+  },
+  "black": {
+   "file": "NotoSansDisplay-Black.ttf",
+   "sha256": "4bf498b3b6a4b3fe311b8771c001cef5077a339f329649542d237cc284d3b13d",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "EVOLUȚIE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "light",
+   "size": 174,
+   "color": [
+    33,
+    39,
+    42
+   ],
+   "at": {
+    "baseline": [
+     960,
+     594
+    ]
+   },
+   "effect": {
+    "type": "sdfMorph",
+    "fontTo": "black",
+    "cell": [
+     260,
+     272
+    ],
+    "origin": [
+     7,
+     224
+    ],
+    "tracking": [
+     17,
+     3.2
+    ],
+    "centerX": 960,
+    "baselineY": 594.0,
+    "rise": 18,
+    "lift": -10,
+    "leaveShape": 0.08,
+    "enter": {
+     "start": 0.24,
+     "dur": 0.58,
+     "ease": "easeOutCubic"
+    },
+    "morph": {
+     "start": 1.04,
+     "dur": 1.62,
+     "ease": "smoothstep"
+    },
+    "leave": {
+     "start": 5.08,
+     "dur": 0.7,
+     "ease": "smoothstep"
+    },
+    "fade": {
+     "start": 5.3,
+     "dur": 0.48,
+     "ease": "smoothstep"
+    }
+   }
+  }
+ ]
+}

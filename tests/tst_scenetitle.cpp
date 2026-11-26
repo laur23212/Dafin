@@ -328,6 +328,9 @@ private slots:
         QTest::newRow("08_Cinematic_Inter") << scenePath("08_Cinematic_Inter") << QStringLiteral("08_Cinematic_Inter");
         QTest::newRow("08_Cinematic_RobotoSlab") << scenePath("08_Cinematic_RobotoSlab") << QStringLiteral("08_Cinematic_RobotoSlab");
         QTest::newRow("08_Cinematic_Lato") << scenePath("08_Cinematic_Lato") << QStringLiteral("08_Cinematic_Lato");
+        QTest::newRow("10_TypographyMorph") << scenePath("10_TypographyMorph") << QStringLiteral("10_TypographyMorph");
+        QTest::newRow("10_MaskedLightReveal") << scenePath("10_MaskedLightReveal") << QStringLiteral("10_MaskedLightReveal");
+        QTest::newRow("10_PrecisionFocus") << scenePath("10_PrecisionFocus") << QStringLiteral("10_PrecisionFocus");
         QTest::newRow("11_ArcResolve") << scenePath("11_ArcResolve") << QStringLiteral("11_ArcResolve");
         QTest::newRow("11_PhraseReflow") << scenePath("11_PhraseReflow") << QStringLiteral("11_PhraseReflow");
         QTest::newRow("11_AnchorNote_v4") << scenePath("11_AnchorNote_v4") << QStringLiteral("11_AnchorNote_v4");

@@ -1101,8 +1101,192 @@ class Cv1x(Sprite2x):
         super()._draw(a, ch, canvas, acc)
 
 
+def _ease_block(b, t):
+    """A Stage10 effect timing block: ease((t − start) / dur) with the script's own clamp."""
+    x = max(0., min(1., float((t - b['start']) / b['dur'])))
+    return x * x * (3 - 2 * x) if b.get('ease', 'smoothstep') == 'smoothstep' else 1 - (1 - x) ** 3
+
+
+class Fx1x:
+    """The Stage10 effects, as render_stage10.py computed them (float32 masks over an opaque RGB
+    frame, uint8 after each composite). Each text actor carries `effect` with its own timing blocks
+    (`{start, dur, ease}`, smoothstep or easeOutCubic), since the effects mix their phases in ways
+    a plain opacity channel cannot.
+    - sdfMorph: every glyph in a cell (`cell`, pen at `origin`) in `font` and `fontTo`; signed
+      distance fields (exact EDT) mixed by shape = morph·(1 − leave) + leaveShape·leave; advances and
+      tracking mixed too, the word centred on centerX at baselineY + mix(rise, 0, enter) + mix(0, lift, leave).
+    - maskedLight: the text mask revealed behind a beam sweeping from `beam[0]` to the text end +
+      `beam[1]`, ink warmed around it; the background gains the blurred mask's halo.
+    - focusMix: per word, mix(blurred(σ), sharp, f)·(0.57 + 0.43 f), colour mixed soft → ink by f."""
+
+    def __init__(self, sc, font_dirs=()):
+        self.sc, self.font_dirs = sc, font_dirs
+        self.cache = {}
+
+    def font(self, key, size):
+        return _truetype(font_path(self.sc, key, self.font_dirs), int(size), False)
+
+    @staticmethod
+    def composite(base, x, y, alpha, color):
+        H, W = base.shape[:2]
+        h, w = alpha.shape
+        x, y = int(round(x)), int(round(y))
+        x0, y0, x1, y1 = max(0, x), max(0, y), min(W, x + w), min(H, y + h)
+        if x1 <= x0 or y1 <= y0:
+            return
+        a = alpha[y0 - y:y1 - y, x0 - x:x1 - x].astype(np.float32)
+        if np.max(a) <= 0:
+            return
+        roi = base[y0:y1, x0:x1]
+        for ch, val in enumerate(color):
+            roi[:, :, ch] = np.clip(roi[:, :, ch].astype(np.float32) * (1 - a) + val * a, 0, 255).astype(np.uint8)
+
+    # -- sdfMorph -----------------------------------------------------------------------------
+    def morph_fields(self, a):
+        key = ('sdf', a['id'], a['text'])
+        if key not in self.cache:
+            from scipy.ndimage import distance_transform_edt
+            e = a['effect']
+            cw, chh = e['cell']
+            gx, gb = e['origin']
+            fonts = [self.font(a['font'], a['size']), self.font(e['fontTo'], a['size'])]
+            fields = {}
+            for letter in sorted(set(a['text'])):
+                g = []
+                for f in fonts:
+                    m = Image.new('L', (cw, chh), 0)
+                    ImageDraw.Draw(m).text((gx, gb), letter, fill=255, font=f, anchor='ls', stroke_width=0)
+                    p = np.asarray(m).astype(np.float32) / 255.
+                    inside = p > 0.5
+                    g.append((distance_transform_edt(inside) - distance_transform_edt(~inside)).astype(np.float32))
+                fields[letter] = g
+            adv = ([f.getlength(c) for c in a['text']] for f in fonts)
+            self.cache[key] = (fields, *adv)
+        return self.cache[key]
+
+    def draw_morph(self, base, a, t):
+        e = a['effect']
+        fields, start_adv, end_adv = self.morph_fields(a)
+        mix = lambda p, q, u: p + (q - p) * u
+        enter = _ease_block(e['enter'], t)
+        morph = _ease_block(e['morph'], t)
+        leave = _ease_block(e['leave'], t)
+        shape = morph * (1 - leave) + leave * e['leaveShape']
+        tracking = mix(e['tracking'][0], e['tracking'][1], shape)
+        advances = [mix(x, y, shape) for x, y in zip(start_adv, end_adv)]
+        word_w = sum(advances) + tracking * (len(a['text']) - 1)
+        startx = e['centerX'] - word_w / 2
+        offsety = mix(e['rise'], 0, enter) + mix(0, e['lift'], leave)
+        baseline = e['baselineY'] + offsety
+        opacity = enter * (1 - _ease_block(e['fade'], t))
+        gx, gb = e['origin']
+        col = tuple(core.parse_color(a['color'], self.sc.palette)[:3])
+        for letter, adv in zip(a['text'], advances):
+            s0, s1 = fields[letter]
+            sdf = s0 * (1 - shape) + s1 * shape
+            aa = np.clip((sdf + 0.8) / 1.6, 0, 1).astype(np.float32) * opacity
+            self.composite(base, startx - gx, baseline - gb, aa, col)
+            startx += adv + tracking
+
+    # -- maskedLight --------------------------------------------------------------------------
+    def light_masks(self, a):
+        key = ('light', a['id'], a['text'])
+        if key not in self.cache:
+            W, H = self.sc.width, self.sc.height
+            e = a['effect']
+            f = self.font(a['font'], a['size'])
+            layer = Image.new('L', (W, H), 0)
+            x, y = a['at']['baseline']
+            ImageDraw.Draw(layer).text((x, y), a['text'], font=f, anchor='ls', fill=255)
+            mask = np.asarray(layer, dtype=np.uint8).astype(np.float32) / 255.
+            halo = cv2.GaussianBlur(mask, (0, 0), sigmaX=float(e['haloSigma']), sigmaY=float(e['haloSigma']))
+            xmax = int(x + f.getlength(a['text']) + e['beam'][1])
+            self.cache[key] = (mask, halo, xmax)
+        return self.cache[key]
+
+    def draw_light(self, out, a, t):
+        e = a['effect']
+        mask, halo, xmax = self.light_masks(a)
+        xv = np.arange(self.sc.width, dtype=np.float32)[None, :]
+        reveal = _ease_block(e['reveal'], t)
+        beam = e['beam'][0] + (xmax - e['beam'][0]) * reveal
+        v = np.clip((beam - xv) / float(e['edge']) + float(e['edgeBias']), 0, 1)
+        glow = np.exp(-.5 * ((xv - beam) / float(e['glowSigma'])) ** 2)
+        opacity = 1 - _ease_block(e['fade'], t)
+        alpha = mask * v * opacity
+        warm = glow * float(e['warm'])
+        y0, y1, x0, x1 = e['roi']
+        ys, xs = slice(y0, y1), slice(x0, x1)
+        aa, g, roi = alpha[ys, xs], warm[:, xs], out[ys, xs]
+        bg_light = halo[ys, xs] * np.exp(-0.5 * ((xv[:, xs] - beam) / float(e['haloSpread'])) ** 2)
+        for ch, boost in enumerate(e['haloAdd']):
+            roi[:, :, ch] = np.clip(roi[:, :, ch].astype(np.float32) + float(boost) * bg_light, 0, 255).astype(np.uint8)
+        lo, hi = core.parse_color(a['color'], self.sc.palette)[:3], core.parse_color(e['lit'], self.sc.palette)[:3]
+        for ch in range(3):
+            val = lo[ch] + (hi[ch] - lo[ch]) * g
+            roi[:, :, ch] = np.clip(roi[:, :, ch] * (1 - aa) + val * aa, 0, 255).astype(np.uint8)
+
+    # -- focusMix -----------------------------------------------------------------------------
+    def focus_masks(self, a):
+        key = ('focus', a['id'], a['text'])
+        if key not in self.cache:
+            e = a['effect']
+            f = self.font(a['font'], a['size'])
+            w, h = e['cell']
+            px, pb = e['origin']
+            m = Image.new('L', (w, h), 0)
+            ImageDraw.Draw(m).text((px, pb), a['text'], font=f, anchor='ls', fill=255)
+            raw = np.asarray(m).astype(np.float32) / 255.
+            blur = cv2.GaussianBlur(raw, (0, 0), sigmaX=float(e['sigma']), sigmaY=float(e['sigma']))
+            self.cache[key] = (raw, blur)
+        return self.cache[key]
+
+    def draw_focus(self, out, a, t):
+        e = a['effect']
+        raw, blur = self.focus_masks(a)
+        enter = _ease_block(e['enter'], t)
+        move = _ease_block(e['move'], t)
+        resolve = _ease_block(e['resolve'], t)
+        outfade = 1 - _ease_block(e['fade'], t)
+        fc = (1 - move) * (1 - resolve) + resolve if e.get('order', 0) == 0 else move * (1 - resolve) + resolve
+        al = (blur * (1 - fc) + raw * fc) * enter * outfade
+        factor = 0.57 + 0.43 * fc
+        soft = core.parse_color(e['soft'], self.sc.palette)[:3]
+        ink = core.parse_color(a['color'], self.sc.palette)[:3]
+        color = tuple(int(soft[k] + (ink[k] - soft[k]) * fc) for k in range(3))
+        x, y = a['at']['baseline']
+        self.composite(out, x - e['origin'][0], y - e['origin'][1], al * factor, color)
+
+    def draw_direct(self, canvas, t):
+        for a in self.sc.actors:
+            kind = a.get('effect', {}).get('type')
+            if kind == 'sdfMorph':
+                self.draw_morph(canvas, a, t)
+            elif kind == 'maskedLight':
+                self.draw_light(canvas, a, t)
+            elif kind == 'focusMix':
+                self.draw_focus(canvas, a, t)
+
+    def draw(self, t, canvas=None):
+        """Alpha layer: the effects drawn over black and white, alpha solved from the difference."""
+        W, H = self.sc.width, self.sc.height
+        if canvas is not None:
+            out = np.array(canvas.convert('RGB'))
+            self.draw_direct(out, t)
+            return Image.fromarray(out, 'RGB')
+        k = np.zeros((H, W, 3), np.uint8)
+        w = np.full((H, W, 3), 255, np.uint8)
+        self.draw_direct(k, t)
+        self.draw_direct(w, t)
+        a = 255 - (w.astype(np.int32) - k.astype(np.int32)).max(axis=2)
+        a = np.clip(a, 0, 255)
+        rgb = np.where(a[..., None] > 0, np.clip(k.astype(np.float32) * 255 / np.maximum(a[..., None], 1), 0, 255), 0)
+        return Image.fromarray(np.dstack([rgb, a]).astype(np.uint8), 'RGBA')
+
+
 def make_renderer(sc, font_dirs=()):
-    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x, 'cv1x': Cv1x}[sc.profile](sc, font_dirs)
+    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x, 'cv1x': Cv1x,
+            'fx1x': Fx1x}[sc.profile](sc, font_dirs)
 
 
 # ----------------------------------------------------------------------------------------------

@@ -935,8 +935,11 @@ struct Loader
         const QString &t = a.type;
         const QJsonObject eff = r.value(QStringLiteral("effect")).toObject();
         const QString effType = eff.value(QStringLiteral("type")).toString();
-        if (effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
-            || effType == QLatin1String("focusMix"))
+        const bool reservedEffect = effType == QLatin1String("sdfMorph") || effType == QLatin1String("maskedLight")
+                                    || effType == QLatin1String("focusMix");
+        if (reservedEffect && sc.profile == Profile::Fx1x)
+            a.effect = eff;
+        else if (reservedEffect)
             fail(QStringLiteral("%1: effect %2 is reserved for a later version (docs/scene-titles.md, Stage10); "
                                 "ask for the extension")
                      .arg(a.id, effType));
@@ -1535,6 +1538,8 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Cov1x;
         else if (profile == QLatin1String("cv1x"))
             sc.profile = Profile::Cv1x;
+        else if (profile == QLatin1String("fx1x"))
+            sc.profile = Profile::Fx1x;
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
         sc.supersample = render.contains(QStringLiteral("supersample")) ? render.value(QStringLiteral("supersample")).toInt() : 1;
