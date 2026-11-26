@@ -241,7 +241,7 @@ class Sprite2x:
     def group_sprite(self, g, children):
         key = ('group', g['id'], json.dumps([{k: v for k, v in c.items() if not k.startswith('_')} for c in children], sort_keys=True, default=str))
         if key not in self.cache:
-            f = SS
+            f = int(g.get('supersample', SS))  # Stage14's tags were drawn at 3x
             gw, gh = g['size']
             im = Image.new('RGBA', (gw * f, gh * f))
             d = ImageDraw.Draw(im)
@@ -249,13 +249,18 @@ class Sprite2x:
                 if 'in' in c or 'out' in c:
                     raise SceneError(f'{c["id"]}: children of a flattened group cannot animate on their own')
                 if c['type'] == 'text':
-                    fo = self.font(c['font'], c['size'])
+                    fo = _truetype(font_path(self.sc, c['font'], self.font_dirs), int(c['size']) * f, False)
                     al = c.get('align', {})
                     if al.get('h') == 'center' and al.get('v') == 'center':
                         bb = d.textbbox((0, 0), c['text'], font=fo)
                         tx = (gw * f - (bb[2] - bb[0])) / 2 - bb[0]
                         ty = (gh * f - (bb[3] - bb[1])) / 2 - bb[1] + al.get('dy', 0) * f
                         d.text((tx, ty), c['text'], font=fo, fill=_rgba(self.color(c)))
+                    elif al.get('h') == 'center' and al.get('v') == 'top':
+                        # Ink top at `top` (group px): the Stage13C Mac keys' symbol and name rows.
+                        bb = d.textbbox((0, 0), c['text'], font=fo)
+                        tx = (gw * f - (bb[2] - bb[0])) / 2 - bb[0]
+                        d.text((tx, al['top'] * f - bb[1]), c['text'], font=fo, fill=_rgba(self.color(c)))
                     else:
                         bx, by = c['at']['baseline']
                         d.text((bx * f, by * f), c['text'], font=fo, fill=_rgba(self.color(c)), anchor='ls')
@@ -331,7 +336,10 @@ class Sprite2x:
     def _draw(self, a, ch, canvas, acc):
         if ch['scale'] != 1:
             raise SceneError(f'{a["id"]}: scale is not implemented in the sprite2x profile yet')
-        dx, dy = self._snap(ch['dx']), self._snap(ch['dy'])
+        if a.get('offsetSnap') == 'trunc':  # Stage13 keycaps: dy=int(...)
+            dx, dy = int(ch['dx']), int(ch['dy'])
+        else:
+            dx, dy = self._snap(ch['dx']), self._snap(ch['dy'])
         t = a['type']
         if t in ('text', 'rect', 'roundRect', 'ellipse', 'ring', 'group'):
             if t == 'text':
@@ -451,13 +459,20 @@ class Mask1x:
             tgt = self.by_id[fit['actor']]
             ink_right = self.mask(tgt).getbbox()[2]
             w = max(fit.get('min', 0), ink_right - x0 + fit.get('pad', 0))
+            if 'max' in fit:  # Stage03b A: min(w-55, max(155, nb[2]+8))
+                w = min(fit['max'], w)
         if 'widthOf' in a:
             w = min(self.rest_width(self.by_id[i]) for i in a['widthOf'])
         self._widths[a['id']] = w
         return w
 
-    def current_box(self, a, ch):
+    def current_box(self, a, ch, origin=(0, 0)):
+        """The box as it is now. `origin` makes it relative to a layer (see the rect draw)."""
+        ox, oy = origin
         x0, y0, x1, y1 = a['box']
+        x0, y0, x1, y1 = x0 - ox, y0 - oy, x1 - ox, y1 - oy
+        if a.get('wipeDir') == 'down':  # Stage03b C stem: the height grows
+            return (x0, y0, x0 + self.rest_width(a), y0 + (y1 - y0) * ch['wipe'])
         return (x0, y0, x0 + self.rest_width(a) * ch['wipe'], y1)
 
     def draw(self, t):
@@ -470,8 +485,12 @@ class Mask1x:
                 d = ImageDraw.Draw(c, 'RGBA')
                 col = self.color(a)
                 A = col[3] if len(col) == 4 else 255
-                b = self.current_box(a, ch)
-                d.rounded_rectangle(tuple(map(int, b)), radius=a.get('radius', 0), fill=(*col[:3], round(A * ch['opacity'])))
+                # The scripts built and truncated the box in their overlay layer's own coordinates;
+                # doing it in absolute ones can land a float hair across a whole pixel (Stage03b C
+                # frame 15: 18 + 166·a = 100.99999 in the layer, 846.0 on the canvas).
+                ox, oy = (self.sc.raw.get('preview', {}).get('legacy', {}).get('overlayRect') or [0, 0])[:2]
+                b = tuple(int(v) + o for v, o in zip(self.current_box(a, ch, (ox, oy)), (ox, oy, ox, oy)))
+                d.rounded_rectangle(b, radius=a.get('radius', 0), fill=(*col[:3], round(A * ch['opacity'])))
             elif tp == 'text':
                 alpha = ch['opacity']
                 if alpha <= 0:
@@ -487,6 +506,17 @@ class Mask1x:
                     cx0, cy0, cx1, cy1 = bx0 + l, by0 + tp_, bx1 - r, by1 - bt
                     if cx1 >= cx0 and cy1 >= cy0:  # an empty clip hides the text
                         ImageDraw.Draw(cm).rectangle((cx0, cy0, cx1, cy1), fill=255)
+                    m = Image.composite(m, Image.new('L', m.size), cm)
+                cr = a.get('clipRect')
+                if cr:  # a fixed window whose top rises with the entrance (Stage03b A/C)
+                    blk = a.get('in')
+                    p = core.phase(t, float(blk['start']), float(blk.get('dur', 0)), blk.get('ease')) if blk else 1.0
+                    rise = (1 - p) * cr.get('rise', 0)
+                    x0, y0, x1, y1 = cr['box']
+                    y0 = y0 + (round(rise) if cr.get('riseSnap') == 'round' else int(rise))
+                    cm = Image.new('L', m.size)
+                    if y1 >= y0 and x1 >= x0:
+                        ImageDraw.Draw(cm).rectangle((x0, y0, x1, y1), fill=255)
                     m = Image.composite(m, Image.new('L', m.size), cm)
                 if alpha < 1:
                     m = m.point(lambda p: round(p * alpha))

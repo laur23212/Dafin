@@ -150,6 +150,7 @@ Easing names:
 | `smoothstep` (default) | 3u² − 2u³ | exactly `cubic-bezier(1/3, 0, 2/3, 1)` |
 | `easeOutCubic` | 1 − (1−u)³ | exactly `cubic-bezier(1/3, 1, 2/3, 1)` |
 | `easeOutQuart` | 1 − (1−u)⁴ | **no exact cubic bezier.** `EasingFn` only has Elastic/Bounce, so native needs a polynomial ease function |
+| `smootherstep` | 6u⁵ − 15u⁴ + 10u³ (Stage03b C revision) | no exact cubic bezier; native has the polynomial |
 | `linear` | u | linear |
 | `cubic-bezier(x1,y1,x2,y2)` | Dafin's own curve | same bisection as `core/base/Bezier.h` |
 
@@ -185,19 +186,20 @@ Fields common to every actor:
 | `sync` | Copy `in`/`out` from another actor (for example, a text that must never outlive its strap) |
 | `in`, `out` | Timing, as above |
 | `align` | Static constraint, see Constraints |
+| `offsetSnap` | `"round"` (default, half to even) or `"trunc"`: how `dx`/`dy` snap to whole pixels. The Stage13 keycaps moved by `int(18·(1−p))`, which is `trunc`. |
 
 Fields of each type:
 
 | `type` | Fields |
 |---|---|
-| `text` | `text` (may hold `{param}` slots), `font` (key into `fonts`), `size` (px at 1×), `color`, `at`, `letterSpacing` (mask1x), `clipTo` |
-| `rect` | `box`, `color` (RGBA alpha allowed), `fitTo`, `widthOf` |
+| `text` | `text` (may hold `{param}` slots), `font` (key into `fonts`), `size` (px at 1×), `color`, `at`, `letterSpacing` (mask1x), `clipTo`, `clipRect` (mask1x) |
+| `rect` | `box`, `color` (RGBA alpha allowed), `fitTo` (`max` caps the fitted width), `widthOf`, `wipeDir` (`"right"` default, `"down"` grows the height: the Stage03b C stem) |
 | `roundRect` | `box`, `radius`, `fill`, `strokeColor`, `stroke` |
 | `line` | `from`, `to`, `width`, `color`, `opacityMode` (`"mixWith"`: see profiles) |
 | `route` | `points` (polyline traced by `progress`), `width`, `color` |
 | `ellipse` | `box`, `fill`, `strokeColor`, `stroke` |
 | `ring` | `box`, `color`, `stroke` (outline only) |
-| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. |
+| `group` | `at` (offset), `children`. Plain groups pass their opacity, offset, wipe and progress on to their children. With `flatten: true` and `size: [w, h]`, the children are drawn into **one** 2× sprite, the way a keycap is a plate plus centred text (`align: {"h":"center","v":"center","dy":-2}`). Children of a flattened group cannot animate on their own. `supersample` (default 2) is the factor the group is drawn at before the Lanczos reduction: the Stage13C/14 keys and menu tags were drawn at 3×. A child text may also use `align: {"h":"center","v":"top","top":15}` (its ink top at that group y), as the Stage13C Mac keys stack a symbol over its name. |
 | `repeat` | `count` (number or expression), `as` (variable name, default `i`), `actor` (a template whose fields may be `{"expr": …}`, with an id like `segment{i}`) |
 
 ## Constraints
@@ -211,6 +213,10 @@ Fields of each type:
 - **`clipTo`** (text): `{"actor": "strapMain", "inset": [l, t, r, b]}`. The text is visible only
   inside the target's *current* box, shrunk by the inset, so it follows the strap's wipe. An empty
   clip hides the text.
+- **`clipRect`** (mask1x text): `{"box": [x0, y0, x1, y1], "rise": 85, "riseSnap": "trunc"}`. A fixed
+  window (PIL-inclusive corners) whose top sits `snap((1 − p)·rise)` below `y0`, with p the actor's
+  entrance phase, so the text is revealed upwards and the window stays open through the exit
+  (Stage03b A and C v1). `riseSnap` is `"trunc"` (int(), default) or `"round"` (half to even).
 - **`align`**: `{"x": {"to": "title", "edge": "start", "offset": 3}, "y": {"to": "title", "edge": "baseline", "offset": 78.5}}`.
   The actor moves so that its own edge of the same kind (`ownEdge` overrides which one) lands on
   the target's edge plus the offset.
@@ -328,6 +334,13 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   |---|---|
   | 15_A_Step_Focus | 150/150 frames identical |
   | 03b_LT_B_25 | 150/150 frames identical |
+  | 15_B_Definition_Card, 15_C_Pro_Tip | 150/150 frames identical |
+  | 14_A_Menu_Path, 14_B_Setting_Change | 150/150 frames identical |
+  | 13_A_Shortcut_Keys, 13_B_Source_Credit, 13_C_Editorial_Checklist | 150/150 frames identical |
+  | 13C_U1/U2/U3 (Universal and macOS shortcuts) | 150/150 frames identical |
+  | 03b_LT_A_25, 03b_LT_C_25_REV | 150/150 frames identical |
+  | 03b_LT_B_60, 03b_LT_C_60_REV | 360/360 frames identical |
+  | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the
   frozen helpers.

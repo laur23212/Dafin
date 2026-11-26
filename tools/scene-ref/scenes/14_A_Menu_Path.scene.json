@@ -1,0 +1,568 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.instructional.menu-path",
+ "label": "Menu Path",
+ "category": "Instructional Titles",
+ "source": {
+  "asset": "14_A_Menu_Path",
+  "sha256": "8ed3a29b971f421acadd3cbc9b0e55b1303973426b39af8b1ce9106eff70c914",
+  "script": "Dafin_TitleDesign_Part6_Stage14_TutorialUtility_Delta_v6.1.2 :: source/render_stage14.py scene_a",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "OFF": [
+   242,
+   243,
+   240
+  ],
+  "SOFT": [
+   165,
+   177,
+   187
+  ],
+  "AQUA": [
+   123,
+   209,
+   192
+  ],
+  "SAND": [
+   207,
+   181,
+   145
+  ],
+  "NEUTRAL": [
+   132,
+   149,
+   159
+  ],
+  "PANEL": [
+   25,
+   33,
+   42
+  ],
+  "STEEL": [
+   77,
+   90,
+   102
+  ]
+ },
+ "params": [
+  {
+   "id": "caption",
+   "type": "text",
+   "default": "MENU PATH",
+   "label": "Caption"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Export your video",
+   "label": "Title"
+  },
+  {
+   "id": "step1",
+   "type": "text",
+   "default": "File",
+   "label": "Menu 1"
+  },
+  {
+   "id": "step2",
+   "type": "text",
+   "default": "Export",
+   "label": "Menu 2"
+  },
+  {
+   "id": "step3",
+   "type": "text",
+   "default": "Video",
+   "label": "Menu 3 (highlighted)"
+  }
+ ],
+ "actors": [
+  {
+   "id": "caption",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{caption}",
+   "font": "semi",
+   "size": 25,
+   "color": "SAND",
+   "at": {
+    "baseline": [
+     352.0,
+     335.0
+    ]
+   },
+   "optional": true,
+   "in": {
+    "start": 0.2,
+    "dur": 0.36,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 9
+    }
+   },
+   "out": {
+    "start": 4.8,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 70,
+   "color": "OFF",
+   "at": {
+    "baseline": [
+     343.0,
+     439.5
+    ]
+   },
+   "in": {
+    "start": 0.34,
+    "dur": 0.49,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 12
+    }
+   },
+   "out": {
+    "start": 4.8,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    346,
+    505
+   ],
+   "to": [
+    1555,
+    505
+   ],
+   "width": 1,
+   "color": [
+    98,
+    111,
+    120
+   ],
+   "in": {
+    "start": 0.64,
+    "dur": 0.57,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.91,
+    "dur": 0.37,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "item1",
+   "role": "menuItem",
+   "type": "group",
+   "flatten": true,
+   "supersample": 3,
+   "at": [
+    341,
+    585
+   ],
+   "size": [
+    208,
+    115
+   ],
+   "in": {
+    "start": 0.92,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.71,
+    "dur": 0.31,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "item1Plate",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      205,
+      112
+     ],
+     "radius": 14,
+     "fill": [
+      25,
+      33,
+      42,
+      247
+     ],
+     "strokeColor": [
+      77,
+      90,
+      102,
+      255
+     ],
+     "stroke": 2
+    },
+    {
+     "id": "item1Label",
+     "type": "text",
+     "text": "{step1}",
+     "font": "semi",
+     "size": 42,
+     "color": "OFF",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "chevron1a",
+   "role": "separator",
+   "type": "line",
+   "width": 2,
+   "color": "SOFT",
+   "opacityMode": "mixWith",
+   "in": {
+    "start": 1.17,
+    "dur": 0.27,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.83,
+    "dur": 0.29,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "from": [
+    589,
+    631
+   ],
+   "to": [
+    601,
+    642
+   ]
+  },
+  {
+   "id": "chevron1b",
+   "role": "separator",
+   "type": "line",
+   "width": 2,
+   "color": "SOFT",
+   "opacityMode": "mixWith",
+   "in": {
+    "start": 1.17,
+    "dur": 0.27,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.83,
+    "dur": 0.29,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "from": [
+    601,
+    642
+   ],
+   "to": [
+    589,
+    653
+   ]
+  },
+  {
+   "id": "item2",
+   "role": "menuItem",
+   "type": "group",
+   "flatten": true,
+   "supersample": 3,
+   "at": [
+    643,
+    585
+   ],
+   "size": [
+    274,
+    115
+   ],
+   "in": {
+    "start": 1.21,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.67,
+    "dur": 0.31,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "item2Plate",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      271,
+      112
+     ],
+     "radius": 14,
+     "fill": [
+      25,
+      33,
+      42,
+      247
+     ],
+     "strokeColor": [
+      77,
+      90,
+      102,
+      255
+     ],
+     "stroke": 2
+    },
+    {
+     "id": "item2Label",
+     "type": "text",
+     "text": "{step2}",
+     "font": "semi",
+     "size": 42,
+     "color": "OFF",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "chevron2a",
+   "role": "separator",
+   "type": "line",
+   "width": 2,
+   "color": "SOFT",
+   "opacityMode": "mixWith",
+   "in": {
+    "start": 1.46,
+    "dur": 0.27,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.83,
+    "dur": 0.29,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "from": [
+    957,
+    631
+   ],
+   "to": [
+    969,
+    642
+   ]
+  },
+  {
+   "id": "chevron2b",
+   "role": "separator",
+   "type": "line",
+   "width": 2,
+   "color": "SOFT",
+   "opacityMode": "mixWith",
+   "in": {
+    "start": 1.46,
+    "dur": 0.27,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.83,
+    "dur": 0.29,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "from": [
+    969,
+    642
+   ],
+   "to": [
+    957,
+    653
+   ]
+  },
+  {
+   "id": "item3",
+   "role": "menuItem",
+   "type": "group",
+   "flatten": true,
+   "supersample": 3,
+   "at": [
+    1035,
+    585
+   ],
+   "size": [
+    244,
+    115
+   ],
+   "in": {
+    "start": 1.5,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.63,
+    "dur": 0.31,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "children": [
+    {
+     "id": "item3Plate",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      241,
+      112
+     ],
+     "radius": 14,
+     "fill": [
+      42,
+      40,
+      35,
+      247
+     ],
+     "strokeColor": [
+      207,
+      181,
+      145,
+      255
+     ],
+     "stroke": 2
+    },
+    {
+     "id": "item3Label",
+     "type": "text",
+     "text": "{step3}",
+     "font": "semi",
+     "size": 42,
+     "color": "OFF",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  }
+ ]
+}

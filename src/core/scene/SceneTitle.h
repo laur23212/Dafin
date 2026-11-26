@@ -31,7 +31,7 @@ struct Rgba
 
 struct Ease
 {
-    enum Kind { Linear, Smoothstep, OutCubic, OutQuart, Bezier };
+    enum Kind { Linear, Smoothstep, OutCubic, OutQuart, Smootherstep, Bezier };
     Kind kind = Smoothstep;
     double x1 = 0, y1 = 0, x2 = 1, y2 = 1;
     double operator()(double u) const;
@@ -63,6 +63,7 @@ struct Actor
     QString parent;         // id of the enclosing group, empty at top level
     TimedBlock in, out;
     QStringList dependsOn;
+    bool truncOffsets = false; // "offsetSnap": "trunc" — the Stage13 keycaps snapped dy with int()
 
     // text
     QString text, font;
@@ -74,9 +75,17 @@ struct Actor
     double letterSpacing = 0.0;
     QString clipActor;      // clipTo
     double clipInset[4] = {0, 0, 0, 0};
+    // clipRect (mask1x): a fixed window whose top rises with the actor's entrance:
+    // top = box.y0 + snap((1 - in-phase) * rise), PIL-inclusive corners (Stage03b A/C name reveals)
+    bool hasClipRect = false;
+    double clipRect[4] = {0, 0, 0, 0};
+    double clipRise = 0.0;
+    bool clipRiseRound = false; // "riseSnap": "round" (half to even); default "trunc" (int())
     // flattened-group child alignment ("align": {"h":"center","v":"center","dy":..})
     bool centerInGroup = false;
     double centerDy = 0.0;
+    bool alignTop = false;  // "v": "top": the ink top sits at centerTop (group px)
+    double centerTop = 0.0;
 
     // box shapes
     bool hasBox = false;
@@ -87,6 +96,8 @@ struct Actor
     double stroke = 0.0;
     QString fitActor;
     double fitPad = 0.0, fitMin = 0.0;
+    double fitMax = -1.0;   // fitTo.max: cap on the fitted width (< 0 = none)
+    bool wipeDown = false;  // "wipeDir": "down": the wipe grows the height instead of the width
     QStringList widthOf;
     double restWidth = -1.0; // resolved by resolveConstraints; < 0 = box width
 

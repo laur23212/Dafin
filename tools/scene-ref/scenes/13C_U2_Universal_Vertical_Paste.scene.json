@@ -1,0 +1,684 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.instructional.universal-shortcut-paste",
+ "label": "Universal Shortcut — Paste (stacked)",
+ "category": "Instructional Titles",
+ "source": {
+  "asset": "13C_U2_Universal_Vertical_Paste",
+  "sha256": "6ef1419afcfa5819581501b3fb4d7ef003a095f298ccb164deafa9dce4aa3245",
+  "script": "Dafin Stage13C :: render_stage13C_universal_shortcut.py U2_Universal_Vertical_Paste",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "sprite2x",
+  "mixColor": "DARK"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 19
+  }
+ },
+ "palette": {
+  "DARK": [
+   9,
+   12,
+   17
+  ],
+  "WHITE": [
+   242,
+   243,
+   240
+  ],
+  "MINT": [
+   123,
+   209,
+   192
+  ],
+  "MUTED": [
+   165,
+   177,
+   187
+  ],
+  "MAC_LINE": [
+   184,
+   194,
+   200
+  ]
+ },
+ "fonts": {
+  "regular": {
+   "family": "Noto Sans Display",
+   "weight": 400,
+   "file": "NotoSansDisplay-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  },
+  "semi": {
+   "family": "Noto Sans Display",
+   "weight": 600,
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "package": "fonts-noto-extra 20201225-2",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "symbol": {
+   "family": "Noto Sans Symbols 2",
+   "weight": 400,
+   "file": "NotoSansSymbols2-Regular.ttf",
+   "package": "fonts-noto-core 20201225-2",
+   "sha256": "876598db5f1e3bef2bc77c4d94c5b0d5d2c1620be4878a06f18fb5434e331688"
+  }
+ },
+ "params": [
+  {
+   "id": "eyebrow",
+   "type": "text",
+   "default": "SCURTĂTURĂ UNIVERSALĂ",
+   "label": "Eyebrow"
+  },
+  {
+   "id": "title",
+   "type": "text",
+   "default": "Lipește",
+   "label": "Action"
+  },
+  {
+   "id": "note",
+   "type": "text",
+   "default": "Denumirea tastei poate fi afișată sub simbol.",
+   "label": "Note"
+  }
+ ],
+ "actors": [
+  {
+   "id": "eyebrow",
+   "role": "eyebrow",
+   "type": "text",
+   "text": "{eyebrow}",
+   "font": "semi",
+   "size": 25,
+   "color": "MINT",
+   "at": {
+    "baseline": [
+     355.0,
+     192.0
+    ]
+   },
+   "in": {
+    "start": 0.18,
+    "dur": 0.35,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 7
+    }
+   },
+   "out": {
+    "start": 4.79,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "semi",
+   "size": 73,
+   "color": "WHITE",
+   "at": {
+    "baseline": [
+     346.0,
+     286.5
+    ]
+   },
+   "in": {
+    "start": 0.32,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 11
+    }
+   },
+   "out": {
+    "start": 4.75,
+    "dur": 0.33,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "rule",
+   "role": "divider",
+   "type": "line",
+   "from": [
+    350,
+    367
+   ],
+   "to": [
+    1561,
+    367
+   ],
+   "width": 1,
+   "color": "MUTED",
+   "in": {
+    "start": 0.55,
+    "dur": 0.6,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.9,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "platform1",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "WINDOWS / LINUX",
+   "font": "semi",
+   "size": 25,
+   "color": "MINT",
+   "at": {
+    "baseline": [
+     357.0,
+     464.5
+    ]
+   },
+   "in": {
+    "start": 0.7,
+    "dur": 0.37,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.73,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "platform2",
+   "role": "platformLabel",
+   "type": "text",
+   "text": "macOS",
+   "font": "semi",
+   "size": 25,
+   "color": "MAC_LINE",
+   "at": {
+    "baseline": [
+     357.0,
+     707.5
+    ]
+   },
+   "in": {
+    "start": 0.88,
+    "dur": 0.37,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.73,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "g1key1",
+   "role": "key",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    350,
+    505
+   ],
+   "size": [
+    188,
+    107
+   ],
+   "in": {
+    "start": 0.91,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.72,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "keyName": "ctrl",
+   "keyFamily": "pc",
+   "children": [
+    {
+     "id": "g1key1Cap",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      185,
+      104
+     ],
+     "radius": 14,
+     "fill": [
+      23,
+      32,
+      39,
+      244
+     ],
+     "strokeColor": "MINT",
+     "stroke": 2
+    },
+    {
+     "id": "g1key1Label",
+     "type": "text",
+     "text": "CTRL",
+     "font": "semi",
+     "size": 43,
+     "color": "WHITE",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "g1plus1",
+   "role": "joiner",
+   "type": "text",
+   "text": "+",
+   "font": "regular",
+   "size": 41,
+   "color": "MUTED",
+   "at": {
+    "baseline": [
+     561.0,
+     570.5
+    ]
+   },
+   "in": {
+    "start": 1.08,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.75,
+    "dur": 0.28,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "g1key2",
+   "role": "key",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    606,
+    505
+   ],
+   "size": [
+    118,
+    107
+   ],
+   "in": {
+    "start": 1.08,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.72,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "keyName": "v",
+   "keyFamily": "pc",
+   "children": [
+    {
+     "id": "g1key2Cap",
+     "type": "roundRect",
+     "box": [
+      2,
+      2,
+      115,
+      104
+     ],
+     "radius": 14,
+     "fill": [
+      23,
+      32,
+      39,
+      244
+     ],
+     "strokeColor": "MINT",
+     "stroke": 2
+    },
+    {
+     "id": "g1key2Label",
+     "type": "text",
+     "text": "V",
+     "font": "semi",
+     "size": 43,
+     "color": "WHITE",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "g2key1",
+   "role": "key",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    350,
+    744
+   ],
+   "size": [
+    258,
+    132
+   ],
+   "in": {
+    "start": 1.42,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.72,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "keyName": "command",
+   "keyFamily": "mac",
+   "supersample": 3,
+   "children": [
+    {
+     "id": "g2key1Cap",
+     "type": "roundRect",
+     "box": [
+      3,
+      3,
+      254,
+      128
+     ],
+     "radius": 20,
+     "fill": [
+      38,
+      44,
+      51,
+      254
+     ],
+     "strokeColor": "MAC_LINE",
+     "stroke": 2
+    },
+    {
+     "id": "g2key1Shine",
+     "type": "line",
+     "from": [
+      18,
+      6
+     ],
+     "to": [
+      240,
+      6
+     ],
+     "color": [
+      223,
+      229,
+      231
+     ],
+     "alpha": 46,
+     "width": 1
+    },
+    {
+     "id": "g2key1Label",
+     "type": "text",
+     "text": "⌘",
+     "font": "symbol",
+     "size": 53,
+     "color": "WHITE",
+     "align": {
+      "h": "center",
+      "v": "top",
+      "top": 15
+     }
+    },
+    {
+     "id": "g2key1Name",
+     "type": "text",
+     "text": "Command / Cmd",
+     "font": "regular",
+     "size": 25,
+     "color": [
+      210,
+      218,
+      223
+     ],
+     "align": {
+      "h": "center",
+      "v": "top",
+      "top": 91
+     }
+    }
+   ]
+  },
+  {
+   "id": "g2plus1",
+   "role": "joiner",
+   "type": "text",
+   "text": "+",
+   "font": "regular",
+   "size": 41,
+   "color": "MUTED",
+   "at": {
+    "baseline": [
+     631.0,
+     822.5
+    ]
+   },
+   "in": {
+    "start": 1.59,
+    "dur": 0.38,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.75,
+    "dur": 0.28,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "g2key2",
+   "role": "key",
+   "type": "group",
+   "flatten": true,
+   "at": [
+    676,
+    744
+   ],
+   "size": [
+    122,
+    132
+   ],
+   "in": {
+    "start": 1.59,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0,
+     "dy": 14
+    }
+   },
+   "out": {
+    "start": 4.72,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "keyName": "v",
+   "keyFamily": "mac",
+   "supersample": 3,
+   "children": [
+    {
+     "id": "g2key2Cap",
+     "type": "roundRect",
+     "box": [
+      3,
+      3,
+      118,
+      128
+     ],
+     "radius": 20,
+     "fill": [
+      38,
+      44,
+      51,
+      254
+     ],
+     "strokeColor": "MAC_LINE",
+     "stroke": 2
+    },
+    {
+     "id": "g2key2Shine",
+     "type": "line",
+     "from": [
+      18,
+      6
+     ],
+     "to": [
+      104,
+      6
+     ],
+     "color": [
+      223,
+      229,
+      231
+     ],
+     "alpha": 46,
+     "width": 1
+    },
+    {
+     "id": "g2key2Label",
+     "type": "text",
+     "text": "V",
+     "font": "semi",
+     "size": 43,
+     "color": "WHITE",
+     "align": {
+      "h": "center",
+      "v": "center",
+      "dy": -2
+     }
+    }
+   ]
+  },
+  {
+   "id": "note",
+   "role": "description",
+   "type": "text",
+   "text": "{note}",
+   "font": "regular",
+   "size": 25,
+   "color": "MUTED",
+   "at": {
+    "baseline": [
+     357.0,
+     974.0
+    ]
+   },
+   "in": {
+    "start": 2.1,
+    "dur": 0.36,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.64,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}
