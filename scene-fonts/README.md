@@ -13,7 +13,8 @@ ship it.
 
 All files are the Debian/Ubuntu package files, byte for byte, under the SIL Open Font License 1.1
 (`OFL-Noto.txt`, `OFL-Inter.txt`), except FreeSerif (GNU FreeFont: GPL-3+ with the font exception,
-which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
+which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the ParaType PT fonts
+(ParaType Free Font License, `COPYING-ParaType.txt`) and Roboto Slab (Apache 2.0, `COPYING-RobotoSlab.txt`).
 
 | File | sha256 | Package |
 |---|---|---|
@@ -30,6 +31,12 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
 | FreeSerif.ttf | c57bf5de095af4e070c2acb5bce634316409ed4203b5098f4fdadb691dc7b3d2 | fonts-freefont-ttf 20211204+svn4273-2 (Stage03b A); GPL-3+ with the font exception, `COPYING-FreeFont.txt` |
 | InterDisplay-Medium.otf | cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c | fonts-inter 4.0+ds-1 (Part5 Stage05) |
 | NotoSerifDisplay-Medium.ttf | ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19 | fonts-noto-extra 20201225-2 (Part5 Stage05) |
+| PTS75F.ttf | 576b59732fff967895eba1eed0fc5f8cdb069ea31fde878c0cdc36aa2d4615ef | fonts-paratype 20181108-3 (PT Sans Bold) |
+| PTC55F.ttf | 17831d9f44e62fb9b80c91827af8eafa51cb0f61529a7176c9c5135555384e70 | fonts-paratype 20181108-3 (PT Sans Caption) |
+| PTC75F.ttf | 9a1a5425abb2f16d85cd8a677879b59b595c5c55014b0fc60233f810aedd7292 | fonts-paratype 20181108-3 (PT Sans Caption Bold) |
+| PTF55F.ttf | d074251529defb38523f3d89cfadfc2491515b32c22f154a8fc6b4c184415a69 | fonts-paratype 20181108-3 (PT Serif) |
+| PTF75F.ttf | 71a57caa616bec6f7266bddb176defd481f4edfca357123d4d3d8bb942b10f26 | fonts-paratype 20181108-3 (PT Serif Bold) |
+| RobotoSlab-Bold.otf | f860d0a2b4323863d94f76d579d4ddb54048c87d07f3bff936f40c22d7cb49dd | fonts-roboto-slab 1.100263+20170512-2 |
 
 Stage10 (Light, Black) is not here yet: those scenes use the
 reserved effects, which v1 refuses.

@@ -170,6 +170,41 @@ def check_stage06(src: Path, frames):
     return check_pil(m, (('06_Metric', m.frame_a), ('06_Location', m.frame_c)), frames)
 
 
+def check_stage07(src: Path, frames):
+    """Part5 Stage07 (pil1x) through the plate adapter. Kinetic is frame_a as rendered; Numbered
+    Insights v2 and Question & Answer v3 are frame_b/frame_c with the typography passes'
+    fonts (render_typography_v2.py, then render_targeted_fixes_v3.py), set here as those scripts
+    set them. The frame's matte is the port's base layer; its footage crops are the test start."""
+    from PIL import Image, ImageFont
+    s7 = plate_adapter(next(src.glob('*render_stage07.py')), 'stage07_adapter')
+    PT, f = '/usr/share/fonts/truetype/paratype/', ImageFont.truetype
+    s7.B_S.update({'eyebrow': s7.spr('DE ȚINUT MINTE', f(PT + 'PTS75F.ttf', 26), s7.TEAL),
+                   'title': s7.spr('3 PRINCIPII', f('/usr/share/fonts/opentype/roboto/slab/RobotoSlab-Bold.otf', 80), s7.PAPER),
+                   'sub': s7.spr('Un ghid scurt, fără complicații.', f(PT + 'PTC55F.ttf', 28), (204, 213, 213, 255)),
+                   'idxs': [s7.spr(x, f(PT + 'PTC55F.ttf', 28), (153, 195, 195, 255)) for x in ('01', '02', '03')],
+                   'rows': [s7.spr(x, f(PT + 'PTS75F.ttf', 62), s7.PAPER) for x in ('CLARITATE', 'RITM', 'CONSECVENȚĂ')]})
+    s7.C_S.update({'eyebrow': s7.spr('O ÎNTREBARE ESENȚIALĂ', f(PT + 'PTC75F.ttf', 27), s7.GOLD),
+                   'answer_tag': s7.spr('RĂSPUNSUL', f(PT + 'PTC55F.ttf', 27), (27, 31, 33, 255)),
+                   'sub': s7.spr('Dincolo de prima impresie.', f(PT + 'PTC55F.ttf', 27), (186, 194, 193, 255)),
+                   'line1': s7.spr('CUM FACEM', f(PT + 'PTF55F.ttf', 130), s7.PAPER),
+                   'line2': s7.spr('SĂ CONTEZE?', f(PT + 'PTF55F.ttf', 130), s7.PAPER),
+                   'answer': s7.spr('PRIN DETALII.', f(PT + 'PTF75F.ttf', 74), s7.PAPER)})
+    W, H = 1920, 1080
+    a0 = Image.new('RGBA', (W, H), (17, 23, 28, 255)); a0.alpha_composite(s7.photo.crop((520, 0, 1420, 1080)).convert('RGBA'), (1020, 0))
+    b0 = Image.new('RGBA', (W, H), (15, 21, 27, 255)); b0.alpha_composite(s7.photo.crop((446, 0, 1496, 1080)).convert('RGBA'), (0, 0))
+    c0 = Image.new('RGBA', (W, H), (20, 22, 25, 255))
+    out = []
+    for name, fn, start in (('07_Kinetic', s7.frame_a, a0), ('07_Insights_v2', s7.frame_b, b0), ('07_QA_v3', s7.frame_c, c0)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:  # the proofs were encoded from RGB: compare RGB
+            mx, n = diff(np.array(fn(i / 25).convert('RGB')), np.array(r.draw(i / 25, start).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_stage13_primitives(src: Path):
     """Shapes the two ports do not use, against the frozen Stage13 helpers (and Stage15's plate)."""
     b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_frozen')
@@ -219,6 +254,7 @@ def main():
     ap.add_argument('--stage03b-crev', type=Path, help='folder with C_25fps_refined_source.py')
     ap.add_argument('--stage05', type=Path, help='folder with render_stage05.py')
     ap.add_argument('--stage06', type=Path, help='folder with render_stage06.py')
+    ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--frames', default='all')
@@ -236,6 +272,8 @@ def main():
         res.extend(check_stage05(o.stage05, frames))
     if o.stage06:
         res.extend(check_stage06(o.stage06, frames))
+    if o.stage07:
+        res.extend(check_stage07(o.stage07, frames))
     if o.stage13c:
         res.extend(check_stage13c(o.stage13c, frames))
     if o.stage03b:

@@ -557,6 +557,10 @@ class Pil1x:
         self.full_opacity = float(r.get('fullOpacity', 1.0))   # table applied below this (Stage06 .999)
         self.alpha_trunc = r.get('alphaTable') == 'trunc'      # int(a·p) instead of round
         self.skip_empty = bool(r.get('skipEmptyRects'))        # pane(): x1 <= x0 or y1 <= y0 draws nothing
+        # Stage07 put(): skips below (not at) .002, reveals by cropping int(w·v) px when v < .999
+        self.skip_le = r.get('skipCompare', 'le' if self.min_opacity > 0.001 else 'lt') == 'le'
+        self.reveal_crop = r.get('revealMode') == 'crop'
+        self.full_reveal = float(r.get('fullReveal', 1.0))
 
     def font(self, key, size):
         return _truetype(font_path(self.sc, key, self.font_dirs), int(size), False)
@@ -592,11 +596,12 @@ class Pil1x:
     # -- visibility -------------------------------------------------------------------------
     def chan(self, a, t):
         """The actor's channels with its plain groups folded in (as Sprite2x.walk does)."""
-        ch = core.channels(a, t)
+        clock = lambda aid, name: self.chan(self.by_id[aid], t)[name]
+        ch = core.channels(a, t, clock)
         p = a.get('_parent')
         while p:
             g = self.by_id[p]
-            gc = core.channels(g, t)
+            gc = core.channels(g, t, clock)
             for k in ('opacity', 'wipe', 'progress', 'scale', 'vscale'):
                 ch[k] *= gc[k]
             ch['dx'] += gc['dx']
@@ -619,8 +624,19 @@ class Pil1x:
     def draw(self, t, canvas=None):
         W, H = self.sc.width, self.sc.height
         c = canvas.copy() if canvas is not None else Image.new('RGBA', (W, H), (0, 0, 0, 0))
+        self.alpha_mode = canvas is None
+        # layer "base": Stage07's matte composition, drawn first and never wiped
+        base = [a for a in self.sc.actors if a.get('layer') == 'base' or
+                (a.get('_parent') and self.by_id[a['_parent']].get('layer') == 'base')]
+        rest = [a for a in self.sc.actors if a not in base]
+        self._draw_list(c, base, t)
         before = c.copy()
-        for a in self.sc.actors:
+        self._draw_list(c, rest, t)
+        return self._exits(c, before, t, canvas)
+
+    def _draw_list(self, c, actors, t):
+        W, H = self.sc.width, self.sc.height
+        for a in actors:
             if a.get('_parent') and self.by_id[a['_parent']].get('pane'):
                 continue  # drawn with its pane group
             if a['type'] == 'group' and not a.get('pane'):
@@ -639,10 +655,15 @@ class Pil1x:
                     if self.visible(k, t):
                         self.draw_shape(d, k, self.chan(k, t))
                 c.alpha_composite(pane)
+            elif a.get('draw') == 'direct':  # Stage07: ImageDraw straight on the frame (replaces)
+                self.draw_shape(ImageDraw.Draw(c), a, ch, opaque=self.alpha_mode)
             else:
                 pane = Image.new('RGBA', (W, H), (0, 0, 0, 0))
                 self.draw_shape(ImageDraw.Draw(pane), a, ch)
                 c.alpha_composite(pane)
+
+    def _exits(self, c, before, t, canvas):
+        W, H = self.sc.width, self.sc.height
         es = self.sc.raw.get('exitSlide')
         if es and t >= float(es['start']):
             # Stage06 rigid exit: the title as it stood at `hold`, cropped to `rect`, slides down.
@@ -662,19 +683,37 @@ class Pil1x:
             if p >= 1:
                 return before
             if p > 0:
-                limit = round(ew['right'] - (ew['right'] - ew['left']) * p)
                 m = Image.new('L', (W, H), 0)
-                ImageDraw.Draw(m).rectangle((0, 0, max(0, limit), H), fill=255)
+                md = ImageDraw.Draw(m)
+                mode = ew.get('mode', 'span')
+                if mode == 'right':    # Stage07 A: keep x <= round(W·(1 - q))
+                    md.rectangle((0, 0, round(W * (1 - p)), H), fill=255)
+                elif mode == 'left':   # Stage07 C: keep x >= round(W·q)
+                    md.rectangle((round(W * p), 0, W, H), fill=255)
+                elif mode == 'top':    # Stage07 B: keep y >= round(H·q)
+                    md.rectangle((0, round(H * p), W, H), fill=255)
+                else:                  # Stage05: keep x <= round(right - (right - left)·p)
+                    md.rectangle((0, 0, max(0, round(ew['right'] - (ew['right'] - ew['left']) * p)), H), fill=255)
                 c = Image.composite(c, before, m)
         return c
 
     def draw_text(self, c, a, ch, text=None):
         im, (x, y) = self.sprite(a, text)
         op = max(0.0, min(1.0, ch['opacity']))
-        if op < self.min_opacity or (self.min_opacity > 0.001 and op <= self.min_opacity):
+        if op < self.min_opacity or (self.skip_le and op <= self.min_opacity):
+            return
+        rev = a.get('reveal')
+        if rev and self.reveal_crop:  # Stage07 put(): crop to max(1, int(w·v)) px
+            v = max(0.0, min(1.0, ch['wipe']))
+            if v < self.min_reveal:
+                return
+            img = im.crop((0, 0, max(1, int(im.width * v)), im.height)) if v < self.full_reveal else im
+            if op < self.full_opacity:
+                img = img.copy()
+                img.putalpha(img.getchannel('A').point(lambda q: round(q * op)))
+            c.alpha_composite(img, (round(x + ch['dx']), round(y + ch['dy'])))
             return
         alpha = im.getchannel('A')
-        rev = a.get('reveal')
         if rev:
             v = max(0.0, min(1.0, ch['wipe']))
             if v == 0 or (self.min_reveal and ch['wipe'] <= self.min_reveal):
@@ -698,8 +737,12 @@ class Pil1x:
         r, g, b, A = self.rgba(a, key)
         return (r, g, b, round(A * ch['opacity']))
 
-    def draw_shape(self, d, a, ch):
+    def draw_shape(self, d, a, ch, opaque=False):
         tp = a['type']
+        if opaque:  # direct draws ended up opaque in the RGB proofs; the alpha layer keeps them so
+            ch = dict(ch, opacity=1.0)
+            a = {**a, **{k: list(core.parse_color(a[k], self.sc.palette)[:3]) + [255]
+                          for k in ('color', 'fill', 'strokeColor') if k in a}}
         if tp in ('rect', 'roundRect'):
             x0, y0, x1, y1 = a['box']
             w, h = x1 - x0, y1 - y0
@@ -712,6 +755,9 @@ class Pil1x:
             if ch['vscale'] != 1:  # collapse to the vertical centre
                 trim = h * (1 - ch['vscale']) / 2
                 y0, y1 = y0 + trim, y1 - trim
+            if 'strokeColor' in a and 'color' not in a and 'fill' not in a:  # outline only (Stage07 C frame)
+                d.rectangle((x0, y0, x1, y1), outline=self.ink(a, ch, 'strokeColor'), width=int(a.get('stroke', 1)))
+                return
             fill = self.ink(a, ch, 'fill' if tp == 'roundRect' else 'color')
             if self.skip_empty and (x1 <= x0 or y1 <= y0):
                 return

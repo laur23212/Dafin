@@ -498,13 +498,24 @@ def blocks(v):
     return list(v) if isinstance(v, list) else [v]
 
 
-def channels(actor: dict, t: float) -> dict:
+def channels(actor: dict, t: float, clock=None) -> dict:
+    """`clock(actor_id, channel)` resolves blocks timed by another actor's channel instead of t
+    (`"clock": {"actor": id, "channel": "wipe"}`: Stage07's answer tag eases on the block's reveal)."""
     ch = {'opacity': 1.0, 'wipe': 1.0, 'progress': 1.0, 'dx': 0.0, 'dy': 0.0, 'scale': 1.0, 'vscale': 1.0}
     for blk_in in blocks(actor.get('in')):
-        _apply_in(ch, actor, blk_in, t)
+        _apply_in(ch, actor, blk_in, _clock_t(blk_in, t, clock))
     for blk_out in blocks(actor.get('out')):
-        _apply_out(ch, actor, blk_out, t)
+        _apply_out(ch, actor, blk_out, _clock_t(blk_out, t, clock))
     return ch
+
+
+def _clock_t(blk, t, clock):
+    c = blk.get('clock') if blk else None
+    if not c:
+        return t
+    if clock is None:
+        raise SceneError('a clock-timed block needs the scene (pil1x only)')
+    return clock(c['actor'], c['channel'])
 
 
 def _apply_in(ch, actor, blk_in, t):

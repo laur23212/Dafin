@@ -816,6 +816,13 @@ TimedBlock blockOf(const QJsonValue &v, bool isIn, const QString &actorId)
     b.start = numberOf(o.value(QStringLiteral("start")), actorId + QStringLiteral(": start"));
     b.dur = o.contains(QStringLiteral("dur")) ? numberOf(o.value(QStringLiteral("dur")), actorId + QStringLiteral(": dur")) : 0.0;
     b.ease = easeOf(o.value(QStringLiteral("ease")), actorId);
+    const QJsonObject clock = o.value(QStringLiteral("clock")).toObject();
+    if (!clock.isEmpty()) {
+        b.clockActor = clock.value(QStringLiteral("actor")).toString();
+        b.clockChannel = clock.value(QStringLiteral("channel")).toString();
+        if (b.clockActor.isEmpty() || !channelNames().contains(b.clockChannel))
+            fail(QStringLiteral("%1: clock needs an actor and a channel").arg(actorId));
+    }
     const QString key = isIn ? QStringLiteral("from") : QStringLiteral("to");
     const QJsonObject vals = o.contains(key) ? o.value(key).toObject()
                                              : QJsonObject{{QStringLiteral("opacity"), 0}};
@@ -909,6 +916,8 @@ struct Loader
         for (const QJsonValue &w : r.value(QStringLiteral("segmentWeights")).toArray())
             a.segmentWeights << w.toDouble();
         a.pane = r.value(QStringLiteral("pane")).toBool();
+        a.drawDirect = r.value(QStringLiteral("draw")).toString() == QLatin1String("direct");
+        a.layerBase = r.value(QStringLiteral("layer")).toString() == QLatin1String("base");
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
             a.dependsOn << d.toString();
         const QString &t = a.type;
@@ -1005,7 +1014,12 @@ struct Loader
             a.hasBox = true;
             if (!a.hasCenter)
                 a.radius = r.value(QStringLiteral("radius")).toDouble();
-            if (t == QLatin1String("rect") || t == QLatin1String("ring")) {
+            if (t == QLatin1String("rect") && !r.contains(QStringLiteral("color")) && r.contains(QStringLiteral("strokeColor"))) {
+                // an outline-only rect (Stage07 C's frame lines)
+                a.hasStroke = true;
+                a.strokeColor = colorOf(r.value(QStringLiteral("strokeColor")), palette, a.id);
+                a.stroke = r.contains(QStringLiteral("stroke")) ? r.value(QStringLiteral("stroke")).toDouble() : 1.0;
+            } else if (t == QLatin1String("rect") || t == QLatin1String("ring")) {
                 a.hasFill = t == QLatin1String("rect");
                 a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
                 a.fill = a.color;
@@ -1440,6 +1454,10 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
         sc.fullOpacity = render.contains(QStringLiteral("fullOpacity")) ? render.value(QStringLiteral("fullOpacity")).toDouble() : 1.0;
         sc.alphaTrunc = render.value(QStringLiteral("alphaTable")).toString() == QLatin1String("trunc");
         sc.skipEmptyRects = render.value(QStringLiteral("skipEmptyRects")).toBool();
+        sc.fullReveal = render.contains(QStringLiteral("fullReveal")) ? render.value(QStringLiteral("fullReveal")).toDouble() : 1.0;
+        sc.revealCrop = render.value(QStringLiteral("revealMode")).toString() == QLatin1String("crop");
+        sc.skipAtThreshold = render.value(QStringLiteral("skipCompare")).toString(sc.minOpacity > 0.001 ? QStringLiteral("le") : QStringLiteral("lt"))
+                             == QLatin1String("le");
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
 
@@ -1608,8 +1626,14 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.exitWipe.start = numberOf(ew.value(QStringLiteral("start")), QStringLiteral("exitWipe: start"));
             sc.exitWipe.dur = numberOf(ew.value(QStringLiteral("dur")), QStringLiteral("exitWipe: dur"));
             sc.exitWipe.ease = easeOf(ew.value(QStringLiteral("ease")), QStringLiteral("exitWipe"));
-            sc.exitWipeLeft = numberOf(ew.value(QStringLiteral("left")), QStringLiteral("exitWipe: left"));
-            sc.exitWipeRight = numberOf(ew.value(QStringLiteral("right")), QStringLiteral("exitWipe: right"));
+            sc.exitWipeMode = ew.value(QStringLiteral("mode")).toString(QStringLiteral("span"));
+            if (sc.exitWipeMode == QLatin1String("span")) {
+                sc.exitWipeLeft = numberOf(ew.value(QStringLiteral("left")), QStringLiteral("exitWipe: left"));
+                sc.exitWipeRight = numberOf(ew.value(QStringLiteral("right")), QStringLiteral("exitWipe: right"));
+            } else if (sc.exitWipeMode != QLatin1String("right") && sc.exitWipeMode != QLatin1String("left")
+                       && sc.exitWipeMode != QLatin1String("top")) {
+                fail(QStringLiteral("exitWipe.mode must be span, right, left or top"));
+            }
             he = anyOut ? qMin(he, sc.exitWipe.start) : sc.exitWipe.start;
             anyOut = true;
         }
@@ -1625,13 +1649,15 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
     return sc;
 }
 
-Channels channels(const Actor &actor, double t)
+namespace {
+Channels channelsWith(const Actor &actor, double t, const std::function<double(const QString &, const QString &)> &clock)
 {
     Channels ch;
     const auto apply = [&](const TimedBlock &b, bool isIn) {
         if (!b.present)
             return;
-        const double p = phase(t, b);
+        const double tb = b.clockActor.isEmpty() || !clock ? t : clock(b.clockActor, b.clockChannel);
+        const double p = phase(tb, b);
         for (const auto &[k, v] : b.values) {
             double *reveal = k == QLatin1String("opacity") ? &ch.opacity
                            : k == QLatin1String("wipe")    ? &ch.wipe
@@ -1656,9 +1682,37 @@ Channels channels(const Actor &actor, double t)
     return ch;
 }
 
+double channelByName(const Channels &ch, const QString &name)
+{
+    if (name == QLatin1String("opacity"))
+        return ch.opacity;
+    if (name == QLatin1String("wipe"))
+        return ch.wipe;
+    if (name == QLatin1String("progress"))
+        return ch.progress;
+    if (name == QLatin1String("scale"))
+        return ch.scale;
+    if (name == QLatin1String("vscale"))
+        return ch.vscale;
+    if (name == QLatin1String("dx"))
+        return ch.dx;
+    return ch.dy;
+}
+} // namespace
+
+Channels channels(const Actor &actor, double t)
+{
+    return channelsWith(actor, t, {});
+}
+
 Channels drawChannels(const Scene &scene, const Actor &actor, double t, bool *skip)
 {
-    Channels ch = channels(actor, t);
+    // A clock-timed block (Stage07 answer tag) runs on another actor's drawn channel.
+    const auto clock = [&scene, t](const QString &id, const QString &name) -> double {
+        const Actor *other = scene.actor(id);
+        return other ? channelByName(drawChannels(scene, *other, t, nullptr), name) : 1.0;
+    };
+    Channels ch = channelsWith(actor, t, clock);
     if (skip)
         *skip = false;
     QString p = actor.parent;

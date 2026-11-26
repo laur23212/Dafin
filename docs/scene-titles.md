@@ -319,6 +319,15 @@ Source: `render_stage05.py` and its siblings.
 - Scene `exitSlide: {"start", "dur", "ease", "rect": [x, y, w, h], "distance", "hold"}`: Stage06's
   rigid exit. The title as it stood at `hold`, cropped to `rect`, slides down by
   `round(distance·p)`, cut at the frame's bottom edge; at p = 1 nothing is left.
+- Stage07 settings: `skipCompare: "lt"`, `revealMode: "crop"` (the sprite cut to
+  `max(1, int(w·v))` px while `v < fullReveal`), `fullReveal` 0.999. `layer: "base"` actors (the
+  frame's matte, its fades and hairlines) are drawn first and are never wiped; `draw: "direct"`
+  writes straight on the frame as the scripts' `ImageDraw.Draw(im)` did, which the RGB proofs show
+  opaque, so the alpha layer keeps them opaque. A rect with `strokeColor` and no `color` is an
+  outline. `exitWipe.mode`: `"right"` keeps x ≤ round(W·(1−q)), `"left"` keeps x ≥ round(W·q),
+  `"top"` keeps y ≥ round(H·q); the default `"span"` is Stage05's `left`/`right` form.
+- A block may run on `"clock": {"actor": id, "channel": "wipe"}` instead of time: Stage07's answer
+  tag eases on `(blockReveal − 0.55) / 0.45`.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
   slide on another). Reveal channels multiply across blocks; offsets add.
 
@@ -376,6 +385,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 03b_LT_B_60, 03b_LT_C_60_REV | 360/360 frames identical |
   | 05_TutorialStep, 05_PrecisionCallout, 05_PullQuote (pil1x, over a test plate: the proofs' photo is missing) | 150/150 frames identical |
   | 06_Metric, 06_Location (pil1x, over a test plate) | 150/150 frames identical |
+  | 07_Kinetic, 07_Insights_v2, 07_QA_v3 (pil1x, RGB over the scripts' footage crops) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the

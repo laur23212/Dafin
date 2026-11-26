@@ -866,19 +866,46 @@ private:
     {
         const Scene &sc = r->scene;
         const double t = at; // the frame's own time, or the exitSlide's frozen hold
-        double limit = -1.0;
+        // layer "base" (Stage07 matte) first, outside the exit wipe; then everything else.
+        drawPilActors(c, t, true);
+        SkRect keep = SkRect::MakeWH(SkScalar(sc.width), SkScalar(sc.height));
         if (sc.exitWipe.present) {
             const TimedBlock &w = sc.exitWipe;
             const double p = w.dur <= 0.0 ? (t >= w.start ? 1.0 : 0.0) : w.ease((t - w.start) / w.dur);
             if (p >= 1.0)
                 return;
-            if (p > 0.0)
-                limit = roundHalfEven(sc.exitWipeRight - (sc.exitWipeRight - sc.exitWipeLeft) * p);
+            if (p > 0.0) {
+                const double W = sc.width, H = sc.height;
+                if (sc.exitWipeMode == QLatin1String("right"))
+                    keep = SkRect::MakeLTRB(0, 0, SkScalar(roundHalfEven(W * (1.0 - p)) + 1), SkScalar(H));
+                else if (sc.exitWipeMode == QLatin1String("left"))
+                    keep = SkRect::MakeLTRB(SkScalar(roundHalfEven(W * p)), 0, SkScalar(W), SkScalar(H));
+                else if (sc.exitWipeMode == QLatin1String("top"))
+                    keep = SkRect::MakeLTRB(0, SkScalar(roundHalfEven(H * p)), SkScalar(W), SkScalar(H));
+                else
+                    keep = SkRect::MakeLTRB(0, 0, SkScalar(qMax(0.0, roundHalfEven(sc.exitWipeRight - (sc.exitWipeRight - sc.exitWipeLeft) * p)) + 1), SkScalar(H));
+            }
         }
         c.save();
-        if (limit >= 0.0)
-            c.clipRect(SkRect::MakeLTRB(0, 0, SkScalar(limit + 1), SkScalar(sc.height)));
+        c.clipRect(keep);
+        drawPilActors(c, t, false);
+        c.restore();
+    }
+
+    static bool inBase(const Scene &sc, const Actor &a)
+    {
+        for (const Actor *node = &a; node; node = node->parent.isEmpty() ? nullptr : sc.actor(node->parent))
+            if (node->layerBase)
+                return true;
+        return false;
+    }
+
+    void drawPilActors(SkCanvas &c, double t, bool base) const
+    {
+        const Scene &sc = r->scene;
         for (const Actor &a : sc.actors) {
+            if (inBase(sc, a) != base)
+                continue;
             const Actor *parent = a.parent.isEmpty() ? nullptr : sc.actor(a.parent);
             if (parent && parent->pane)
                 continue; // drawn with its pane
@@ -899,7 +926,6 @@ private:
             else
                 drawPilShape(c, a, ch);
         }
-        c.restore();
     }
 
     void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch, double t) const
@@ -913,10 +939,25 @@ private:
         }
         const TextArt art = r->texts.value(key);
         const double op = qBound(0.0, ch.opacity, 1.0);
-        if (!art.image || op < sc.minOpacity || (sc.minOpacity > 0.001 && op <= sc.minOpacity))
+        if (!art.image || op < sc.minOpacity || (sc.skipAtThreshold && op <= sc.minOpacity))
             return;
-        if (!a.reveal.isEmpty() && sc.minReveal > 0.0 && ch.wipe <= sc.minReveal)
+        if (!a.reveal.isEmpty() && sc.minReveal > 0.0
+            && (sc.skipAtThreshold ? ch.wipe <= sc.minReveal : qBound(0.0, ch.wipe, 1.0) < sc.minReveal))
             return;
+        if (!a.reveal.isEmpty() && sc.revealCrop) {
+            // Stage07 put(): the sprite cropped to max(1, int(w·v)) px from its left edge.
+            const double v = qBound(0.0, ch.wipe, 1.0);
+            const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
+            const double L = art.ink.left() - 8 + x, w = art.ink.width() + 16;
+            c.save();
+            if (v < sc.fullReveal)
+                c.clipRect(SkRect::MakeLTRB(SkScalar(L), -1e6f, SkScalar(L + qMax(1.0, std::trunc(w * v))), 1e6f));
+            SkPaint paint;
+            paint.setColor(skColor(a.color, op));
+            c.drawImage(art.image, SkScalar(art.origin.x() + x), SkScalar(art.origin.y() + y), SkSamplingOptions(), &paint);
+            c.restore();
+            return;
+        }
         const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
         c.save();
         if (!a.reveal.isEmpty()) {
@@ -939,8 +980,16 @@ private:
         c.restore();
     }
 
-    void drawPilShape(SkCanvas &c, const Actor &a, const Channels &ch) const
+    void drawPilShape(SkCanvas &c, const Actor &actor, const Channels &channels) const
     {
+        // "draw": "direct" (Stage07) wrote straight on the RGB frame: opaque in the result.
+        Actor a = actor;
+        Channels ch = channels;
+        if (a.drawDirect) {
+            for (Rgba *col : {&a.color, &a.fill, &a.strokeColor, &a.ringColor, &a.dotColor, &a.stemColor})
+                col->a = 255;
+            ch.opacity = 1.0;
+        }
         const QString &tp = a.type;
         if (tp == QLatin1String("rect") || tp == QLatin1String("roundRect")) {
             double x0 = a.box[0], y0 = a.box[1], x1 = a.box[2], y1 = a.box[3];
@@ -960,8 +1009,15 @@ private:
             }
             SkPaint paint;
             paint.setAntiAlias(false);
-            paint.setColor(skColor(tp == QLatin1String("roundRect") ? a.fill : a.color, ch.opacity));
             const SkRect rr = SkRect::MakeLTRB(SkScalar(x0), SkScalar(y0), SkScalar(x1 + 1), SkScalar(y1 + 1));
+            if (!a.hasFill && a.hasStroke && tp == QLatin1String("rect")) { // outline only
+                paint.setStyle(SkPaint::kStroke_Style);
+                paint.setStrokeWidth(SkScalar(qMax(1.0, a.stroke)));
+                paint.setColor(skColor(a.strokeColor, ch.opacity));
+                c.drawRect(rr.makeInset(SkScalar(a.stroke / 2.0), SkScalar(a.stroke / 2.0)), paint);
+                return;
+            }
+            paint.setColor(skColor(tp == QLatin1String("roundRect") ? a.fill : a.color, ch.opacity));
             if (a.radius > 0)
                 c.drawRRect(SkRRect::MakeRectXY(rr, SkScalar(a.radius), SkScalar(a.radius)), paint);
             else

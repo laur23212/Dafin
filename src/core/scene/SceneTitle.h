@@ -45,6 +45,7 @@ struct TimedBlock
     double dur = 0.0;
     Ease ease;
     QList<QPair<QString, double>> values;
+    QString clockActor, clockChannel; // "clock": the phase runs on another actor's channel, not t
 };
 
 struct Channels
@@ -76,6 +77,8 @@ struct Actor
     QPointF center;
     double circleRadius = 0.0;
     bool pane = false;         // group: children drawn into one layer, composited once
+    bool drawDirect = false;   // "draw": "direct" (Stage07): written straight on the frame; opaque
+    bool layerBase = false;    // "layer": "base" (Stage07 matte): drawn first, never wiped
     bool wipeSnapRound = false;     // rect: x1 = x0 + round(w·wipe) (Stage06)
     bool progressSnapRound = false; // line: end.x = base + round((to.x - base)·progress) (Stage06)
     double progressBase = 0.0;
@@ -179,8 +182,11 @@ struct Scene
     double exitSlideRect[4] = {0, 0, 0, 0}; // x, y, w, h
     double exitSlideDistance = 0.0, exitSlideHold = 0.0;
     // pil1x render options (render.minOpacity, minReveal, fullOpacity, alphaTable, skipEmptyRects)
-    double minOpacity = 0.001, minReveal = 0.0, fullOpacity = 1.0;
+    double minOpacity = 0.001, minReveal = 0.0, fullOpacity = 1.0, fullReveal = 1.0;
     bool alphaTrunc = false, skipEmptyRects = false;
+    bool skipAtThreshold = false; // skipCompare "le" (Stage06) vs "lt" (Stage05/07)
+    bool revealCrop = false;      // revealMode "crop" (Stage07): max(1, int(w·v)) px of the sprite
+    QString exitWipeMode;         // "span" (Stage05 left/right), "right", "left", "top" (Stage07)
 
     const Actor *actor(const QString &id) const;
     int indexOf(const QString &id) const;
