@@ -1,0 +1,42 @@
+{
+  "archive": "1_New_LowerThirds_22.zip",
+  "sha256": "881e596801ec317660d74ae8fa1f4e96ea58acc400b3f4ea04df56764019d998",
+  "members": [
+    {
+      "member": "1_New_LowerThirds_22/All/Data/data.xml",
+      "sha256": "938ff79baa10dad9c1cf893dd72e4a588e39be34343f3d0232b42b838dca1d09",
+      "bytes": 18157
+    },
+    {
+      "member": "1_New_LowerThirds_22/All/Data/Lottie_lower3rd_22.json",
+      "sha256": "ee9b3a765f35e558a3b1c0ae8199f5d1bcabf53e1409b28489f863f59b69f576",
+      "bytes": 3985
+    },
+    {
+      "member": "1_New_LowerThirds_22/Data/data.xml",
+      "sha256": "938ff79baa10dad9c1cf893dd72e4a588e39be34343f3d0232b42b838dca1d09",
+      "bytes": 18157
+    },
+    {
+      "member": "1_New_LowerThirds_22/Data/Lottie_lower3rd_22.json",
+      "sha256": "ee9b3a765f35e558a3b1c0ae8199f5d1bcabf53e1409b28489f863f59b69f576",
+      "bytes": 3985
+    },
+    {
+      "member": "1_New_LowerThirds_22/previewVideo.mp4",
+      "sha256": "6267d27d5ff774a0b0c65d5c41ec5ecefdbbe7dea53d6893d54e27df19e2a1fb",
+      "bytes": 8188
+    },
+    {
+      "member": "1_New_LowerThirds_22/resinfo.json",
+      "sha256": "85dc385b649ecb279d72307908af876a0e52d5d444605f05ad810e7d7ac5be84",
+      "bytes": 3481
+    },
+    {
+      "member": "1_New_LowerThirds_22/thumbnail.png",
+      "sha256": "4339ec3c543505c9675868452cffde7f2afabd0128a3019bec6e0058e67ffa22",
+      "bytes": 1438
+    }
+  ],
+  "rights": "User provided for research; do not redistribute vendor assets. No original media or fonts included."
+}

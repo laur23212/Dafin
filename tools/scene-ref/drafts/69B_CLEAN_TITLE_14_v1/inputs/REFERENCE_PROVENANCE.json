@@ -1,0 +1,72 @@
+{
+  "archive": "1_Clean_Title_Design_Title_14.zip",
+  "sha256": "7368475369428714f19ac6635b5c4fde0f23d9b647fc83cf5df348533cbf2970",
+  "members": [
+    {
+      "member": "1_Clean_Title_Design_Title_14/All/Data/Clean Title Design Title 14.MP4",
+      "sha256": "897d4668a5c8cf737a90af1482b93edc1674add3c89a7c7587d52256b48f4af3",
+      "bytes": 51221
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/All/Data/Clean Title Design Title 14.png",
+      "sha256": "72322b24ea562c054e02fcb53e68c1440f26f9581b087372552511acbd71eb1f",
+      "bytes": 1128
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/All/Data/Clean Title Design Title 14_L0.MP4",
+      "sha256": "027c4b9d8215e2b46db066dc817919211b13dd1eba172ac4568e80b354e874c0",
+      "bytes": 55163
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/All/Data/data.json",
+      "sha256": "63db089ea83c979fa04b28b037ddf098cb18321b0f0a04cec3bf3974f70a1649",
+      "bytes": 12098
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/All/Font/2047100_Fugaz One.TTF",
+      "sha256": "14fd5becce8b0ae987e44b3f9fa9e3e6c87463e9585ac15db6c8271462068a62",
+      "bytes": 27868
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/Data/Clean Title Design Title 14.MP4",
+      "sha256": "897d4668a5c8cf737a90af1482b93edc1674add3c89a7c7587d52256b48f4af3",
+      "bytes": 51221
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/Data/Clean Title Design Title 14.png",
+      "sha256": "72322b24ea562c054e02fcb53e68c1440f26f9581b087372552511acbd71eb1f",
+      "bytes": 1128
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/Data/Clean Title Design Title 14_L0.MP4",
+      "sha256": "027c4b9d8215e2b46db066dc817919211b13dd1eba172ac4568e80b354e874c0",
+      "bytes": 55163
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/Data/data.json",
+      "sha256": "63db089ea83c979fa04b28b037ddf098cb18321b0f0a04cec3bf3974f70a1649",
+      "bytes": 12098
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/Font/2047100_Fugaz One.TTF",
+      "sha256": "14fd5becce8b0ae987e44b3f9fa9e3e6c87463e9585ac15db6c8271462068a62",
+      "bytes": 27868
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/previewVideo.mp4",
+      "sha256": "ea2e34bfacf18c340e548bec2b6e25b2cbaa004d7164669e67b6d12d101ae701",
+      "bytes": 14178
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/resinfo.json",
+      "sha256": "abd8c838e27be6e492fcd8f08ec45d3c24b3ec0393e9255792a65a1b3a2198d0",
+      "bytes": 3917
+    },
+    {
+      "member": "1_Clean_Title_Design_Title_14/thumbnail.png",
+      "sha256": "d2027c8cebf64c5342e74a74fc8d699b337324293ca705474cab0103f60127e6",
+      "bytes": 2977
+    }
+  ],
+  "rights": "User provided for research; do not redistribute vendor assets. No original media or fonts included."
+}

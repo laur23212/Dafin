@@ -1,0 +1,73 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.favourite.art33",
+ "label": "Art 33",
+ "category": "Favourites",
+ "source": {
+  "asset": "68_Art33",
+  "sha256": "4ed058418f6b5d1d735825ce3371f432417bca09a26867e3c2ffce0432699909",
+  "script": "drafts/d68_Art33.py (renderer b476b8bc5ca7)",
+  "status": "RECONSTRUCTED_APPROX; RECREATION_REVIEW_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 5.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "RubikMonoOne-Regular.ttf",
+   "sha256": "09711b5ef181d57e357932e47f1dbd0aa0db66f0e6a8e1693ca96d849d9a298a",
+   "package": "the creator's Filmora title 68_Art33 (OFL)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "ART",
+   "label": "Text"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "title",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "art33"
+   }
+  }
+ ]
+}

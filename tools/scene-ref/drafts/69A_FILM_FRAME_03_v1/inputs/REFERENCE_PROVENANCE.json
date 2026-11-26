@@ -1,0 +1,47 @@
+{
+  "archive": "1_1_Film_Frame_Title_03.zip",
+  "sha256": "1de9da2d58ddda95b2aef773472fa2088d12c793065bbc12c1a3771d94bc5695",
+  "members": [
+    {
+      "member": "1_1_Film_Frame_Title_03/Data/data.xml",
+      "sha256": "cb352b38d83f5a48b5b614b09de2e8b4ef57918ce58d9c42a839d12374f01ed6",
+      "bytes": 11377
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/Data/Film Frame Title 03.mp4",
+      "sha256": "78d7259c8b4b54e716fc8c69eab6445ff1d756d998f4ef9b45cf4f0cd6f7f141",
+      "bytes": 27441
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/Data/Film Frame Title 03.png",
+      "sha256": "dcfd470ebc12e628603f2cc9ef8ef033634dda730ae2ca618020b1fdebe6a731",
+      "bytes": 4514
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/Data/Film Frame Title 03_L0.mp4",
+      "sha256": "230334c5fe1abcb000276574d7a2c3a1e2c36c59039b6cd8cc039127f3e9ad9f",
+      "bytes": 40274
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/Font/2047244_思源黑体 CN Bold.otf",
+      "sha256": "97e5eff6dd208ccb814726458c8c7ab4b59327c62b9ee8df3440e7e835209ab9",
+      "bytes": 8608184
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/previewVideo.mp4",
+      "sha256": "083bed1c0aa9bdd94b4d6b53b4d936b4590a0e8537493a9105531de29b73deed",
+      "bytes": 21285
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/resinfo.json",
+      "sha256": "353630b5156eceecac1a9f15019d6f82e75f73ed264ef567fb23da50b7045197",
+      "bytes": 3097
+    },
+    {
+      "member": "1_1_Film_Frame_Title_03/thumbnail.png",
+      "sha256": "2b0236f583147189882403efd4088cfea801dde983def93c0ec8e0d49dee5dd3",
+      "bytes": 1907
+    }
+  ],
+  "rights": "User provided for research; do not redistribute vendor assets. No original media or fonts included."
+}

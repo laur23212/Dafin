@@ -1098,21 +1098,21 @@ public:
     bool has(const QString &font) const override { return face(font) != nullptr; }
     scene::gold::TextBox bbox(const QString &font, int px, const QString &text) const override
     {
-        const PilBox b = pilBBox(pixelFont(face(font), px), text, layout(font));
+        const PilBox b = pilBBox(font_(font, px), text, layout(font));
         return {b.left, b.top, b.right, b.bottom};
     }
     double length(const QString &font, int px, const QString &text) const override
     {
-        return pilAdvance(pixelFont(face(font), px), text, layout(font));
+        return pilAdvance(font_(font, px), text, layout(font));
     }
-    int ascender(const QString &font, int px) const override { return pilAscender(pixelFont(face(font), px)); }
+    int ascender(const QString &font, int px) const override { return pilAscender(font_(font, px)); }
     void draw(scene::gold::M8 &into, const QString &font, int px, const QString &text, double x, double y, int stroke) const override
     {
         if (into.empty() || !face(font))
             return;
         // PIL puts the pen on whole pixels with x half up but y half down (100.5 draws at 100).
         y = std::ceil(y - 0.5);
-        const SkBitmap bm = coverage(pilLayout(pixelFont(face(font), px), text, layout(font)), {SkScalar(x), SkScalar(y)},
+        const SkBitmap bm = coverage(pilLayout(font_(font, px), text, layout(font)), {SkScalar(x), SkScalar(y)},
                                      SkIRect::MakeWH(into.w, into.h), stroke);
         for (int j = 0; j < bm.height() && j < into.h; ++j) {
             const quint8 *row = static_cast<const quint8 *>(bm.getAddr(0, j));
@@ -1125,6 +1125,17 @@ public:
 
 private:
     sk_sp<SkTypeface> face(const QString &font) const { return faces_.value(font.section(QLatin1Char('+'), 0, 0)); }
+    // PIL's FreeType (2.14) auto-hints a TrueType font that has no bytecode (no fpgm; Fugaz One):
+    // so does draft1x, whatever FreeType Skia was built with.
+    SkFont font_(const QString &font, int px) const
+    {
+        const sk_sp<SkTypeface> tf = face(font);
+        SkFont f = pixelFont(tf, px);
+        if (raqm_ && tf && tf->getTableSize(SkSetFourByteTag('g', 'l', 'y', 'f')) > 0
+            && tf->getTableSize(SkSetFourByteTag('f', 'p', 'g', 'm')) == 0)
+            f.setForceAutoHinting(true);
+        return f;
+    }
     PilLayout layout(const QString &font) const
     {
         PilLayout l;

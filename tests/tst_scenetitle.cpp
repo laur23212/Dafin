@@ -664,9 +664,12 @@ private slots:
                             "64A", "64B", "64C", "64D", "65A", "65B", "65C", "65D", "66A", "66B", "66C", "66D", "67A",
                             "67B", "67C", "67D"})
             QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
-        // draft1x: the favourite Filmora styles (static, 5 s).
-        for (const char *n : {"68_Art27", "68_Art30"})
+        // draft1x: the favourite Filmora styles that stand still (5 s).
+        for (const char *n : {"68_Art27", "68_Art30", "68_Art33", "69E_OLD_TEXTURE"})
             QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << QList<int>{10, 40, 100} << QString();
+        // draft1x: the animated Stage 69 favourites (5 s; frames in, holding, out).
+        for (const char *n : {"69A_FILM_FRAME_03", "69B_CLEAN_TITLE_14", "69C_LOWER_THIRDS_22", "69D_BASIC_FONT_24"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << QList<int>{5, 15, 40, 100, 120} << QString();
         // Batch 1 ports, Part5 Stage05 to Stage11 (identical to their scripts on all 150 frames).
         QTest::newRow("05_TutorialStep") << scenePath("05_TutorialStep") << QStringLiteral("05_TutorialStep") << ports << QString();
         QTest::newRow("05_PrecisionCallout") << scenePath("05_PrecisionCallout") << QStringLiteral("05_PrecisionCallout") << ports << QString();

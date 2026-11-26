@@ -1,0 +1,73 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.favourite.oldtexture",
+ "label": "Old Texture",
+ "category": "Favourites",
+ "source": {
+  "asset": "69E_OLD_TEXTURE",
+  "sha256": "a7044e1704e9516dc86352447a8157be9476dbd0538699f9f4f5ab0cddf4afff",
+  "script": "drafts/69/render.py :: 69E_OLD_TEXTURE (renderer d46b53e860ef)",
+  "status": "RECONSTRUCTED_APPROX; RECREATION_REVIEW_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 5.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "draft1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "Koulen-Regular.ttf",
+   "sha256": "9d037a49fc1cbf0668502ba5f1951fdf7ab579e2d732d0c85173731827650dc8",
+   "package": "the creator's Filmora title 69E_OLD_TEXTURE (unmodified)"
+  }
+ },
+ "params": [
+  {
+   "id": "text",
+   "type": "text",
+   "default": "play Video game",
+   "label": "Text"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{text}",
+   "font": "title",
+   "size": 100,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "oldtexture"
+   }
+  }
+ ]
+}

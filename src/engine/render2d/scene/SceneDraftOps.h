@@ -555,4 +555,40 @@ inline Rgba perspectiveBicubic(const Rgba &src, const double c[8])
     return out;
 }
 
+
+// ImageDraw.polygon(points, fill) without anti-aliasing: the integer (truncated) points, the pixels
+// whose whole coordinates lie inside or on the outline (nonzero winding).
+inline void polygonFill(gold::M8 &m, const std::vector<std::pair<double, double>> &ptsIn, int value)
+{
+    if (ptsIn.size() < 3)
+        return;
+    std::vector<std::pair<double, double>> p;
+    for (const auto &q : ptsIn)
+        p.push_back({double(int(q.first)), double(int(q.second))});
+    double t = 1e9, b = -1e9;
+    for (const auto &q : p)
+        t = std::min(t, q.second), b = std::max(b, q.second);
+    for (int y = std::max(0, int(t)); y <= std::min(m.h - 1, int(b)); ++y) {
+        std::vector<double> xs;
+        for (size_t i = 0; i < p.size(); ++i) {
+            const auto &a = p[i], &c = p[(i + 1) % p.size()];
+            if (a.second == c.second) {
+                if (a.second == y) // a horizontal edge on this row is drawn
+                    for (int x = int(std::min(a.first, c.first)); x <= int(std::max(a.first, c.first)); ++x)
+                        if (x >= 0 && x < m.w)
+                            m.at(x, y) = std::uint8_t(value);
+                continue;
+            }
+            const double lo = std::min(a.second, c.second), hi = std::max(a.second, c.second);
+            if (y < lo || y >= hi)
+                continue;
+            xs.push_back(a.first + (y - a.second) * (c.first - a.first) / (c.second - a.second));
+        }
+        std::sort(xs.begin(), xs.end());
+        for (size_t i = 0; i + 1 < xs.size(); i += 2)
+            for (int x = std::max(0, int(std::ceil(xs[i] - 1e-9))); x <= std::min(m.w - 1, int(std::floor(xs[i + 1] + 1e-9))); ++x)
+                m.at(x, y) = std::uint8_t(value);
+    }
+}
+
 } // namespace drift::scene::draft

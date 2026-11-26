@@ -6,6 +6,10 @@
 #pragma once
 
 #include "SceneDraftOps.h"
+#include "SceneNumpyNormal.h"
+
+#include <QJsonArray>
+#include <QJsonObject>
 
 #include <QHash>
 #include <QRegularExpression>
@@ -23,6 +27,7 @@ struct DraftActor
     QString kind;
     QString font; // the scene's font key, for the favourites (one font each)
     std::optional<QString> text, secondary;
+    QJsonObject effect; // the scene's effect object (69A/B/C carry their measured graphic here)
 };
 
 class DraftEffect
@@ -2410,6 +2415,346 @@ private:
     Rgba unit_;
 };
 
+
+// ---- 69A–E: the five Stage 69 favourites, one shared script (drafts/69/render.py) -----------------------
+namespace s69 {
+
+inline double sm(double x) { x = clamp01(x); return x * x * (3 - 2 * x); }
+inline double frac(double n, double a, double b) { return clamp01((n - a) / (b - a)); }
+inline double bez(double a, double b, double c, double d, double t)
+{
+    return (1 - t) * (1 - t) * (1 - t) * a + 3 * (1 - t) * (1 - t) * t * b + 3 * (1 - t) * t * t * c + t * t * t * d;
+}
+inline double val0(const QJsonValue &v) { return v.isArray() ? v.toArray().at(0).toDouble() : v.toDouble(); }
+// The script's cubic_ease: the Lottie bezier's x solved by 28 bisections.
+inline double cubicEase(double x, const QJsonObject &o, const QJsonObject &i)
+{
+    const double x1 = val0(o.value(QLatin1String("x"))), y1 = val0(o.value(QLatin1String("y")));
+    const double x2 = val0(i.value(QLatin1String("x"))), y2 = val0(i.value(QLatin1String("y")));
+    double lo = 0, hi = 1;
+    for (int k = 0; k < 28; ++k) {
+        const double t = (lo + hi) / 2;
+        (bez(0, x1, x2, 1, t) < x ? lo : hi) = t;
+    }
+    return bez(0, y1, y2, 1, (lo + hi) / 2);
+}
+struct Interp { QJsonValue a, b; double t; };
+inline Interp interp(const QJsonArray &keys, double n)
+{
+    const QJsonObject k0 = keys.at(0).toObject();
+    if (n <= k0.value(QLatin1String("t")).toDouble())
+        return {k0.value(QLatin1String("s")), k0.value(QLatin1String("s")), 0};
+    for (int j = 0; j + 1 < keys.size(); ++j) {
+        const QJsonObject a = keys.at(j).toObject(), b = keys.at(j + 1).toObject();
+        if (n <= b.value(QLatin1String("t")).toDouble())
+            return {a.value(QLatin1String("s")), b.value(QLatin1String("s")),
+                    cubicEase(frac(n, a.value(QLatin1String("t")).toDouble(), b.value(QLatin1String("t")).toDouble()),
+                              a.value(QLatin1String("o")).toObject(), a.value(QLatin1String("i")).toObject())};
+    }
+    const QJsonValue s = keys.last().toObject().value(QLatin1String("s"));
+    return {s, s, 0};
+}
+
+// make_text(): per-character runs on prefix advances + tracking, shrunk (size and tracking together)
+// to maxw; the full mask with a 12 px margin, anchored on its ink centre.
+struct Text
+{
+    gold::M8 full;
+    std::vector<gold::M8> chars;
+    double anchor[2] = {0.5, 0.5};
+    int inkW = 1, inkH = 1;
+};
+inline Text makeText(const GoldText &g, const QString &font, const QString &text, double size, double tracking, double maxw)
+{
+    Text out;
+    if (text.isEmpty()) {
+        out.full = gold::M8(1, 1);
+        return out;
+    }
+    const QList<uint> cp = text.toUcs4();
+    auto sub = [&](int from, int n) { return QString::fromUcs4(reinterpret_cast<const char32_t *>(cp.constData()) + from, n); };
+    double fct = 1, tr = 0;
+    int px = 0, l = 0, r = 0, t = 0, bt = 0;
+    std::vector<std::pair<QString, double>> runs;
+    for (int it = 0; it < 6; ++it) {
+        px = std::max(1, pyRound(size * fct)), tr = tracking * fct;
+        runs.clear();
+        for (int i = 0; i < cp.size(); ++i)
+            runs.push_back({sub(i, 1), g.length(font, px, sub(0, i)) + i * tr});
+        const int asc = g.ascender(font, px);
+        double L = 1e18, R = -1e18;
+        t = 1 << 30, bt = -(1 << 30);
+        for (const auto &ru : runs) {
+            const TextBox b = g.bbox(font, px, ru.first);
+            L = std::min(L, ru.second + b.left), R = std::max(R, ru.second + b.right);
+            t = std::min(t, b.top + asc), bt = std::max(bt, b.bottom + asc);
+        }
+        l = int(std::floor(L)), r = int(std::ceil(R));
+        if (r - l <= maxw)
+            break;
+        fct *= maxw / (r - l);
+    }
+    const int asc = g.ascender(font, px), ww = std::max(1, r - l + 24), hh = std::max(1, bt - t + 24);
+    for (const auto &ru : runs) {
+        gold::M8 m(ww, hh);
+        g.draw(m, font, px, ru.first, pyRound(ru.second - l + 12), 12 - t + asc);
+        out.chars.push_back(std::move(m));
+    }
+    out.full = gold::M8(ww, hh);
+    if (std::abs(tr) < 1e-8)
+        g.draw(out.full, font, px, text, 12 - l, 12 - t + asc);
+    else
+        for (const gold::M8 &m : out.chars)
+            for (size_t i = 0; i < m.p.size(); ++i)
+                out.full.p[i] = std::max(out.full.p[i], m.p[i]);
+    int x0 = ww, y0 = hh, x1 = 0, y1 = 0;
+    for (int y = 0; y < hh; ++y)
+        for (int x = 0; x < ww; ++x)
+            if (out.full.at(x, y))
+                x0 = std::min(x0, x), y0 = std::min(y0, y), x1 = std::max(x1, x + 1), y1 = std::max(y1, y + 1);
+    if (x1 <= x0)
+        x0 = 0, y0 = 0, x1 = ww, y1 = hh;
+    out.anchor[0] = (x0 + x1) / 2.0, out.anchor[1] = (y0 + y1) / 2.0, out.inkW = x1 - x0, out.inkH = y1 - y0;
+    return out;
+}
+inline gold::M8 scaled(const gold::M8 &m, double a)
+{
+    if (a >= 1)
+        return m;
+    std::uint8_t lut[256];
+    for (int v = 0; v < 256; ++v)
+        lut[v] = std::uint8_t(pyRound(v * a));
+    gold::M8 o = m;
+    for (auto &v : o.p)
+        v = lut[v];
+    return o;
+}
+// layer(): the mask in one colour, its anchor at (cx, cy + dy).
+inline void layer(Rgba &c, const gold::M8 &m, Rgb col, double cx, double cy, const double *anchor = nullptr, double opacity = 1, double dy = 0)
+{
+    if (opacity <= 0)
+        return;
+    const gold::M8 mm = opacity < 1 ? scaled(m, opacity) : m;
+    const double ax = anchor ? anchor[0] : m.w / 2.0, ay = anchor ? anchor[1] : m.h / 2.0;
+    Rgba im = d::solid(mm.w, mm.h, col);
+    for (size_t i = 0; i < mm.p.size(); ++i)
+        im.p[i * 4 + 3] = mm.p[i];
+    composite(c, im, pyRound(cx - ax), pyRound(cy - ay + dy));
+}
+inline gold::M8 mergeChars(const Text &t, const std::vector<double> &w)
+{
+    bool all = true;
+    for (double v : w)
+        all = all && v >= 1;
+    if (all)
+        return t.full;
+    gold::M8 m(t.full.w, t.full.h);
+    for (size_t k = 0; k < t.chars.size(); ++k) {
+        if (w[k] <= 0)
+            continue;
+        const gold::M8 c = scaled(t.chars[k], w[k]);
+        for (size_t i = 0; i < m.p.size(); ++i)
+            m.p[i] = std::max(m.p[i], c.p[i]);
+    }
+    return m;
+}
+
+} // namespace s69
+
+class Stage69 : public DraftEffect
+{
+public:
+    enum Kind { Film03, Clean14, Lower22, Basic24, OldTexture };
+    Stage69(const GoldText &g, const DraftActor &a, Kind k) : k_(k), effect_(a.effect)
+    {
+        using namespace s69;
+        const QString f = a.font;
+        switch (k) {
+        case Film03:
+            main_ = makeText(g, f, val(a.text, "FILM FRAME"), 130, 46, 1190);
+            break;
+        case Clean14:
+            main_ = makeText(g, f, val(a.text, "TITLE HERE"), 235, 0, 1330);
+            sub_ = makeText(g, f, a.secondary ? *a.secondary : QStringLiteral(" COPYWRITING"), 48, 23, 650);
+            break;
+        case Lower22:
+            main_ = makeText(g, f, val(a.text, "YOUR TEXT HERE"), 56, 0, 690);
+            break;
+        case Basic24:
+            main_ = makeText(g, f, val(a.text, "Simple layout"), 281, 0, 1440);
+            sub_ = makeText(g, f, a.secondary ? *a.secondary : QStringLiteral("Perfect clean Modern     serif font."), 42, 10, 1276);
+            mainBlur_ = gaussianBlur(main_.full, 7);
+            break;
+        case OldTexture: {
+            main_ = makeText(g, f, val(a.text, "play Video game"), 270, 0, 1600);
+            const gold::M8 &m = main_.full;
+            edge_ = rankFilter(m, 11, true);
+            gold::NumpyRng rng(6805);
+            const gold::M8 al = gaussianBlur(m, 0.8f);
+            texture_ = Rgba(m.w, m.h);
+            const double face[3] = {251, 228, 74};
+            for (int y = 0; y < m.h; ++y)
+                for (int x = 0; x < m.w; ++x) {
+                    const double n = 0 + 7.0 * gold::standardNormal(rng);
+                    std::uint8_t *q = texture_.px(x, y);
+                    for (int c = 0; c < 3; ++c)
+                        q[c] = std::uint8_t(std::clamp(face[c] + n, 0.0, 255.0));
+                    q[3] = al.at(x, y);
+                }
+            break;
+        }
+        }
+        if (k == OldTexture) { // one still: the script's frame 70
+            still_ = Rgba(FW, FH);
+            frame(still_, 70);
+        }
+    }
+    void draw(Rgba &f, double t) const override
+    {
+        int n = pyRound(t * 25);
+        if (k_ == OldTexture) {
+            composite(f, still_, 0, 0);
+            return;
+        }
+        const int hold[2] = {k_ == Film03 ? 28 : (k_ == Clean14 ? 51 : (k_ == Lower22 ? 35 : 20)), k_ == Film03 ? 96 : (k_ == Lower22 ? 101 : 124)};
+        if (k_ != Lower22 && n >= hold[0] && n <= hold[1])
+            n = hold[0];
+        frame(f, n);
+    }
+
+private:
+    void graphic(Rgba &c, int n, Rgb col, double cx, double cy, double sc, bool blurEnds) const
+    {
+        const QJsonObject g = effect_.value(QLatin1String("graphic")).toObject();
+        const QJsonArray frames = g.value(QLatin1String("frames")).toArray();
+        if (frames.isEmpty())
+            return;
+        const QJsonObject fr = frames.at(std::min(n, int(frames.size()) - 1)).toObject();
+        const QJsonArray size = g.value(QLatin1String("source_size")).toArray();
+        gold::M8 m(pyRound(size.at(0).toDouble() * sc), pyRound(size.at(1).toDouble() * sc));
+        const int v = pyRound(fr.value(QLatin1String("opacity")).toDouble() * 255);
+        for (const QJsonValue &poly : fr.value(QLatin1String("polygons")).toArray()) {
+            std::vector<std::pair<double, double>> pts;
+            for (const QJsonValue &q : poly.toArray())
+                pts.push_back({double(pyRound(q.toArray().at(0).toDouble() * sc)), double(pyRound(q.toArray().at(1).toDouble() * sc))});
+            polygonFill(m, pts, v);
+        }
+        if (blurEnds && (n < 8 || n > 116))
+            m = gaussianBlur(m, 4);
+        s69::layer(c, m, col, cx, cy);
+    }
+    void lowerGraphic(Rgba &c, int n) const
+    {
+        using namespace s69;
+        const QJsonObject g = effect_.value(QLatin1String("lottie")).toObject();
+        Interp p = interp(g.value(QLatin1String("path_keys")).toArray(), n);
+        const QJsonObject a = p.a.toArray().at(0).toObject(), b = p.b.toArray().at(0).toObject();
+        auto lerpPts = [&](const char *key) {
+            std::vector<std::pair<double, double>> v;
+            const QJsonArray va = a.value(QLatin1String(key)).toArray(), vb = b.value(QLatin1String(key)).toArray();
+            for (int j = 0; j < va.size(); ++j)
+                v.push_back({va.at(j).toArray().at(0).toDouble() * (1 - p.t) + vb.at(j).toArray().at(0).toDouble() * p.t,
+                             va.at(j).toArray().at(1).toDouble() * (1 - p.t) + vb.at(j).toArray().at(1).toDouble() * p.t});
+            return v;
+        };
+        const auto v = lerpPts("v"), ii = lerpPts("i"), oo = lerpPts("o");
+        const Interp sk = interp(g.value(QLatin1String("scale_keys")).toArray(), n);
+        const double s = (sk.a.toArray().at(0).toDouble() * (1 - sk.t) + sk.b.toArray().at(0).toDouble() * sk.t) / 100 * .43 * .5 * 0.988;
+        if (s <= 0)
+            return;
+        std::vector<std::pair<double, double>> pts;
+        for (size_t j = 0; j < v.size(); ++j) {
+            const size_t k = (j + 1) % v.size();
+            for (int u = 0; u < 20; ++u) {
+                const double uu = u / 20.0;
+                pts.push_back({bez(v[j].first, v[j].first + oo[j].first, v[k].first + ii[k].first, v[k].first, uu) * s + 965 + 1.5 * s,
+                               bez(v[j].second, v[j].second + oo[j].second, v[k].second + ii[k].second, v[k].second, uu) * s + 918 - .134 * s});
+            }
+        }
+        gold::M8 m(FW, FH);
+        polygonFill(m, pts, 255);
+        for (int y = 0; y < FH; ++y)
+            for (int x = 0; x < FW; ++x)
+                if (m.at(x, y)) {
+                    std::uint8_t *q = c.px(x, y);
+                    q[0] = 255, q[1] = 242, q[2] = 6, q[3] = 255;
+                }
+    }
+    void frame(Rgba &c, int n) const
+    {
+        using namespace s69;
+        switch (k_) {
+        case Film03: {
+            graphic(c, n, {255, 222, 0}, 960, 574, 1.0, true);
+            const double a = sm(frac(n, 10, 28)), z = sm(frac(n, 97, 114)), h = main_.inkH + 8;
+            const double dy = h * (1 - a) - h * z;
+            if (n >= 10 && n < 114) {
+                Rgba temp(FW, FH);
+                layer(temp, main_.full, {12, 8, 7}, 1004, 574, main_.anchor, 1, dy);
+                const int top = pyRound(574 - main_.inkH / 2.0 - 4), bot = pyRound(574 + main_.inkH / 2.0 + 4);
+                for (int y = 0; y < FH; ++y)
+                    if (y < top || y >= bot)
+                        std::fill_n(temp.px(0, y), size_t(FW) * 4, std::uint8_t(0));
+                composite(c, temp, 0, 0);
+            }
+            break;
+        }
+        case Clean14: {
+            graphic(c, n, {255, 237, 0}, 923, 681, 1.4155, false);
+            std::vector<double> w;
+            for (size_t i = 0; i < main_.chars.size(); ++i)
+                w.push_back(sm(frac(n, 2 + 1.5 * i, 10 + 1.5 * i)));
+            layer(c, mergeChars(main_, w), {255, 255, 255}, 970, std::min(529.0, 640 - main_.inkH / 2.0), main_.anchor);
+            if (n >= 38) {
+                const double q = sm(frac(n, 38, 51));
+                const size_t L = sub_.chars.size();
+                std::vector<double> ws;
+                for (size_t i = 0; i < L; ++i) {
+                    const double d = std::abs(double(i) - (double(L) - 1) / 2) / std::max<double>(1, L) * .9;
+                    ws.push_back(sm(frac(q, d, d + .5)));
+                }
+                layer(c, mergeChars(sub_, ws), {0, 0, 0}, 922, 681, sub_.anchor);
+            }
+            break;
+        }
+        case Lower22: {
+            lowerGraphic(c, n);
+            const double q = frac(n, 20, 35) * (1 - frac(n, 96, 111));
+            const int num = pyRound(q * main_.chars.size());
+            std::vector<double> w;
+            for (size_t i = 0; i < main_.chars.size(); ++i)
+                w.push_back(int(i) < num ? 1 : 0);
+            layer(c, mergeChars(main_, w), {26, 26, 26}, 960, 924, main_.anchor);
+            break;
+        }
+        case Basic24: {
+            const double q = 1 - std::pow(1 - clamp01(frac(n, 0, 13)), 3), dy = 100 * (1 - q), op = sm(frac(n, 0, 5));
+            layer(c, mainBlur_, {128, 128, 128}, 961, 483, main_.anchor, op * 121 / 255, dy);
+            layer(c, main_.full, {255, 255, 255}, 960, 482, main_.anchor, op, dy);
+            const size_t L = sub_.chars.size();
+            std::vector<double> w;
+            for (size_t i = 0; i < L; ++i)
+                w.push_back(sm(frac(n, 7 + 8.0 * i / std::max<size_t>(1, L), 12 + 8.0 * i / std::max<size_t>(1, L))));
+            const gold::M8 sm8 = mergeChars(sub_, w);
+            layer(c, gaussianBlur(sm8, 7), {128, 128, 128}, 886, 744, sub_.anchor, 121 / 255.0);
+            layer(c, sm8, {255, 255, 255}, 885, 743, sub_.anchor);
+            break;
+        }
+        case OldTexture:
+            layer(c, edge_, {0, 0, 0}, 964, 544, main_.anchor);
+            layer(c, edge_, {0, 0, 0}, 960, 540, main_.anchor);
+            composite(c, texture_, pyRound(960 - main_.anchor[0]), pyRound(540 - main_.anchor[1]));
+            break;
+        }
+    }
+
+    Kind k_;
+    QJsonObject effect_;
+    s69::Text main_, sub_;
+    gold::M8 mainBlur_, edge_;
+    Rgba texture_, still_;
+};
+
 } // namespace d
 
 // Every draft1x effect type: its script's defaults (DEFAULT_TEXT, SECONDARY) and its class.
@@ -2440,6 +2785,16 @@ inline const std::vector<DraftKind> &draftTable()
                                           ArtStyle{88.004, 13.601, 145.511, 80.744, 0, 0, 7.17864, {170, 74, 55}, {255, 255, 255}});
          }},
         {"milestone", "km", nullptr, makeAs<Milestone>},
+        {"art33", "ART", nullptr,
+         [](const GoldText &g, const DraftActor &a) -> std::shared_ptr<const DraftEffect> {
+             return std::make_shared<Art>(g, a.font, val(a.text, "ART"),
+                                          ArtStyle{92.187, 11.417, 144.03, 81.479, 2.21935, 2.31468, 0, {255, 191, 23}, {183, 28, 28}});
+         }},
+        {"film03", "FILM FRAME", nullptr, [](const GoldText &g, const DraftActor &a) -> std::shared_ptr<const DraftEffect> { return std::make_shared<Stage69>(g, a, Stage69::Film03); }},
+        {"clean14", "TITLE HERE", " COPYWRITING", [](const GoldText &g, const DraftActor &a) -> std::shared_ptr<const DraftEffect> { return std::make_shared<Stage69>(g, a, Stage69::Clean14); }},
+        {"lower22", "YOUR TEXT HERE", nullptr, [](const GoldText &g, const DraftActor &a) -> std::shared_ptr<const DraftEffect> { return std::make_shared<Stage69>(g, a, Stage69::Lower22); }},
+        {"basic24", "Simple layout", "Perfect clean Modern     serif font.", [](const GoldText &g, const DraftActor &a) -> std::shared_ptr<const DraftEffect> { return std::make_shared<Stage69>(g, a, Stage69::Basic24); }},
+        {"oldtexture", "play Video game", nullptr, [](const GoldText &g, const DraftActor &a) -> std::shared_ptr<const DraftEffect> { return std::make_shared<Stage69>(g, a, Stage69::OldTexture); }},
         {"keyphrase", "Make every moment count", nullptr, makeAs<Keyphrase>},
         {"linebreak", "Make every moment count", nullptr, makeAs<Linebreak>},
         {"pullquote", "The best stories\nmake us look closer.", "FROM THE FIELD NOTES", makeAs<Pullquote>},

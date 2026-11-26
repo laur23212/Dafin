@@ -1,0 +1,27 @@
+{
+  "archive": "1_Basic_Font_Title_24.zip",
+  "sha256": "ffbdcad65624177f86c69e7d88c0d4d160869842bcb6db52effe27d952ddf9b2",
+  "members": [
+    {
+      "member": "1_Basic_Font_Title_24/Data/data.json",
+      "sha256": "68aee29edd6764761f3e52439a34117bcdc4036d46f426863c640e6157a537be",
+      "bytes": 11757
+    },
+    {
+      "member": "1_Basic_Font_Title_24/Font/16435898_Merriweather Black Italic.ttf",
+      "sha256": "1e0e3b15b0667c8e7eca1ee84d3a4b1d9791b47abe3b28d06e678a8c15a91482",
+      "bytes": 142620
+    },
+    {
+      "member": "1_Basic_Font_Title_24/resinfo.json",
+      "sha256": "238f5effdef261ca2a1746b533cf7c5a79b7d1f2945861d44512f4cc16831f51",
+      "bytes": 3540
+    },
+    {
+      "member": "1_Basic_Font_Title_24/thumbnail.png",
+      "sha256": "060f634b01c5ef2399f3b5adc0aa9713732a806d14bdb75b0fe7ed600d8cad79",
+      "bytes": 5556
+    }
+  ],
+  "rights": "User provided for research; do not redistribute vendor assets. No original media or fonts included."
+}
