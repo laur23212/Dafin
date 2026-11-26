@@ -1,0 +1,87 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.signal",
+ "label": "Signal",
+ "category": "Golden Run",
+ "source": {
+  "asset": "49A",
+  "sha256": "d07eb57e048a5f5cbbff5c859ceb213590c0fc1ac832e0357bbb2167643aff2a",
+  "script": "render_stage49.py :: Signal",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "bold": {
+   "file": "InterDisplay-Bold.otf",
+   "sha256": "4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "SIGNAL",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "bold",
+   "size": 318,
+   "color": [
+    241,
+    242,
+    237
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "signalWave",
+    "tracking": 9,
+    "ink": [
+     90,
+     153,
+     182
+    ],
+    "bars": [
+     0.67,
+     0.88,
+     0.63,
+     0.95,
+     0.72,
+     0.82
+    ]
+   }
+  }
+ ]
+}

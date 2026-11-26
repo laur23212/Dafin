@@ -457,6 +457,92 @@ inline MF signedField(const M8 &m, int thr, int mask)
     return s;
 }
 
+
+// ---- more cv2 / numpy pieces (the later stages) ------------------------------------------------
+// cv2.GaussianBlur(float, (0, 0), σ): kernel round(8σ + 1) | 1, BORDER_REFLECT_101.
+inline MF gaussian(const MF &src, double sigma)
+{
+    const int k = int(std::lround(sigma * 8.0 + 1.0)) | 1, r = k / 2;
+    std::vector<double> ker(static_cast<size_t>(k));
+    double sum = 0.0;
+    for (int i = 0; i < k; ++i) {
+        ker[size_t(i)] = std::exp(-double(i - r) * (i - r) / (2.0 * sigma * sigma));
+        sum += ker[size_t(i)];
+    }
+    for (double &v : ker)
+        v /= sum;
+    const auto refl = [](int i, int n) {
+        if (n == 1)
+            return 0;
+        while (i < 0 || i >= n)
+            i = i < 0 ? -i : 2 * n - 2 - i;
+        return i;
+    };
+    MF tmp(src.w, src.h), out(src.w, src.h);
+    for (int y = 0; y < src.h; ++y)
+        for (int x = 0; x < src.w; ++x) {
+            double v = 0;
+            for (int i = 0; i < k; ++i)
+                v += ker[size_t(i)] * src.at(refl(x + i - r, src.w), y);
+            tmp.at(x, y) = float(v);
+        }
+    for (int y = 0; y < src.h; ++y)
+        for (int x = 0; x < src.w; ++x) {
+            double v = 0;
+            for (int i = 0; i < k; ++i)
+                v += ker[size_t(i)] * tmp.at(x, refl(y + i - r, src.h));
+            out.at(x, y) = float(v);
+        }
+    return out;
+}
+
+// np.gradient: central differences inside, one-sided at the edges.
+inline void gradient(const MF &m, MF &gx, MF &gy)
+{
+    gx = MF(m.w, m.h);
+    gy = MF(m.w, m.h);
+    for (int y = 0; y < m.h; ++y)
+        for (int x = 0; x < m.w; ++x) {
+            gx.at(x, y) = m.w < 2 ? 0.f : (x == 0 ? m.at(1, y) - m.at(0, y) : x == m.w - 1 ? m.at(x, y) - m.at(x - 1, y) : (m.at(x + 1, y) - m.at(x - 1, y)) * 0.5f);
+            gy.at(x, y) = m.h < 2 ? 0.f : (y == 0 ? m.at(x, 1) - m.at(x, 0) : y == m.h - 1 ? m.at(x, y) - m.at(x, y - 1) : (m.at(x, y + 1) - m.at(x, y - 1)) * 0.5f);
+        }
+}
+
+// cv2.morphologyEx(MORPH_GRADIENT) with the 5 × 5 ellipse: dilation − erosion.
+inline M8 morphGradient5(const M8 &m)
+{
+    static const int k[5][5] = {{0, 0, 1, 0, 0}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {1, 1, 1, 1, 1}, {0, 0, 1, 0, 0}};
+    M8 out(m.w, m.h);
+    for (int y = 0; y < m.h; ++y)
+        for (int x = 0; x < m.w; ++x) {
+            int hi = 0, lo = 255;
+            for (int j = 0; j < 5; ++j)
+                for (int i = 0; i < 5; ++i) {
+                    if (!k[j][i])
+                        continue;
+                    const int xx = std::clamp(x + i - 2, 0, m.w - 1), yy = std::clamp(y + j - 2, 0, m.h - 1);
+                    hi = std::max(hi, int(m.at(xx, yy)));
+                    lo = std::min(lo, int(m.at(xx, yy)));
+                }
+            out.at(x, y) = std::uint8_t(hi - lo);
+        }
+    return out;
+}
+
+// cv2.polylines(…, thickness 2, LINE_AA) segment, max into a 0..1 layer (about 3.4 px across).
+inline void strokeAA(MF &m, double x0, double y0, double x1, double y1)
+{
+    const double dx = x1 - x0, dy = y1 - y0, len2 = dx * dx + dy * dy;
+    for (int y = int(std::min(y0, y1)) - 3; y <= int(std::max(y0, y1)) + 3; ++y)
+        for (int x = int(std::min(x0, x1)) - 3; x <= int(std::max(x0, x1)) + 3; ++x) {
+            if (x < 0 || y < 0 || x >= m.w || y >= m.h)
+                continue;
+            const double u = len2 > 0 ? std::clamp(((x - x0) * dx + (y - y0) * dy) / len2, 0.0, 1.0) : 0.0;
+            const double d = std::hypot(x - (x0 + u * dx), y - (y0 + u * dy));
+            m.at(x, y) = std::max(m.at(x, y), float(clamp01(2.2 - d)));
+        }
+}
+
 // ---- composites into the frame ------------------------------------------------------------------
 // render_stage25.put(): lighten.
 inline void putMax(Frame &f, const M8 &m, double xf, double yf, const double col[3], double opacity)

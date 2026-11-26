@@ -1,0 +1,78 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.resonance",
+ "label": "Resonance",
+ "category": "Golden Run",
+ "source": {
+  "asset": "48A",
+  "sha256": "ca8c3608e10176c19e3c2a45820ea6ae2f556b358557864b2feeea7775d29c57",
+  "script": "render_stage48_ripple.py (v6.3.63)",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "bold": {
+   "file": "InterDisplay-Bold.otf",
+   "sha256": "4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "RESONANCE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "bold",
+   "size": 250,
+   "color": [
+    245,
+    244,
+    238
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "rippleWave",
+    "accent": [
+     139,
+     198,
+     215
+    ]
+   }
+  }
+ ]
+}

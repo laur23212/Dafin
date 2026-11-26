@@ -1,0 +1,85 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.hatch",
+ "label": "Hatch",
+ "category": "Golden Run",
+ "source": {
+  "asset": "35B",
+  "sha256": "42e46aae07c161b52d74bd508588c22bcf4865e6e364a63ab9b574bc9eff7943",
+  "script": "render_stage35.py :: Hatch",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-SemiBold.ttf",
+   "sha256": "74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "HATCH",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 290,
+   "color": [
+    245,
+    244,
+    237
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "hatchEngrave",
+    "tracking": 6,
+    "margin": 96,
+    "line": [
+     180,
+     193,
+     194
+    ],
+    "cross": [
+     210,
+     195,
+     176
+    ]
+   }
+  }
+ ]
+}

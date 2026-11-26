@@ -45,7 +45,8 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`), the P
 | NotoSansDisplay-SemiCondensedBold.ttf | 7b2e466a506a2f6ce6ee807dd97fc157acc11d5c7c88dcb4c7af5729ae427906 | fonts-noto-extra 20201225-2 (Stage09 Split Motion C1) |
 | NotoSerifDisplay-SemiBold.ttf | 74c84080364d7a2a313abb524b8601ba14fe719d6c5cb400599861c38578fa40 | fonts-noto-extra 20201225-2 (Stage11 Phrase Reflow) |
 | NotoSansDisplay-Light.ttf | b2938eecdbdacbbcc9fab3641268d02afb0c0896335ab12331793195de019197 | fonts-noto-extra 20201225-2 (Stage10 Typography Morph) |
-| InterDisplay-ExtraBold.otf | 7f233cb770bedfb0e4d1d5bada87dade7505513b020ca4b1ae2566fa358263b4 | fonts-inter 4.0+ds-1 (Golden 25A, 26A) |
+| InterDisplay-ExtraBold.otf | 7f233cb770bedfb0e4d1d5bada87dade7505513b020ca4b1ae2566fa358263b4 | fonts-inter 4.0+ds-1 (Golden 25A, 26A, 39A) |
+| InterDisplay-Bold.otf | 4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970 | fonts-inter 4.0+ds-1 (Golden 32A, 33A, 34A, 35A, 48A, 49A) |
 | InterDisplay-Black.otf | c0ebb676933a45d73d16fea70c875f9f2b711b585c69b15962b7f2a890b5f8e8 | fonts-inter 4.0+ds-1 (Golden 25A, 26B, 27B, 28B, 28C, 29A, 29C, 30B) |
 | NotoSerifDisplay-BoldItalic.ttf | d3c055380d05e41732096c337226afe96640e7eaeaf7d1294556545b95ccc123 | fonts-noto-extra 20201225-2 (Golden 25B) |
 | NotoSerifDisplay-ExtraLight.ttf | 492dccca49ec4cfe08eb99fa911003be314dc6373f6aaf1285861724f17b5c3b | fonts-noto-extra 20201225-2 (Golden 26C) |

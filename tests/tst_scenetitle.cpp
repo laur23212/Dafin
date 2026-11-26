@@ -654,6 +654,9 @@ private slots:
         // Golden Run 18 (gold1x; identical to render_stage25.py … render_stage30.py on all 150 frames).
         for (const char *n : {"25A", "25B", "25C", "26A", "26B", "26C", "27A", "27B", "27C", "28A", "28B", "28C", "29A", "29B", "29C", "30A", "30B", "30C"})
             QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
+        // The later Golden Run stages (gold1x; identical to their scripts on all 150 frames).
+        for (const char *n : {"32A", "32B", "33A", "33B", "34A", "34B", "35A", "35B", "39A", "48A", "49A"})
+            QTest::newRow(n) << scenePath(n) << QString::fromLatin1(n) << ports << QString();
         // Batch 1 ports, Part5 Stage05 to Stage11 (identical to their scripts on all 150 frames).
         QTest::newRow("05_TutorialStep") << scenePath("05_TutorialStep") << QStringLiteral("05_TutorialStep") << ports << QString();
         QTest::newRow("05_PrecisionCallout") << scenePath("05_PrecisionCallout") << QStringLiteral("05_PrecisionCallout") << ports << QString();

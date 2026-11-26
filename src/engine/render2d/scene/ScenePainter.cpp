@@ -1080,10 +1080,13 @@ public:
     {
         return pilAdvance(pixelFont(faces_.value(font), px), text);
     }
+    int ascender(const QString &font, int px) const override { return pilAscender(pixelFont(faces_.value(font), px)); }
     void draw(scene::gold::M8 &into, const QString &font, int px, const QString &text, double x, double y) const override
     {
         if (into.empty() || !faces_.value(font))
             return;
+        // PIL puts the pen on whole pixels with x half up but y half down (100.5 draws at 100).
+        y = std::ceil(y - 0.5);
         const SkBitmap bm = coverage(basicLayout(pixelFont(faces_.value(font), px), text), {SkScalar(x), SkScalar(y)},
                                      SkIRect::MakeWH(into.w, into.h));
         for (int j = 0; j < bm.height() && j < into.h; ++j) {

@@ -1,0 +1,80 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.tidal",
+ "label": "Tidal",
+ "category": "Golden Run",
+ "source": {
+  "asset": "35A",
+  "sha256": "1badc31d1dc2dea98316bf46536be1a833bcf91afa3a4d47b123f0b8cb6bb5a6",
+  "script": "render_stage35.py :: Tidal",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "bold": {
+   "file": "InterDisplay-Bold.otf",
+   "sha256": "4253eed76d9014a469d7449934e54250497ee007f4d58dab4ddefe9f759b1970",
+   "package": "fonts-inter 4.0+ds-1"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "TIDAL",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "bold",
+   "size": 312,
+   "color": [
+    245,
+    244,
+    237
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "tidalInk",
+    "tracking": 9,
+    "margin": 95,
+    "wet": [
+     133,
+     173,
+     183
+    ]
+   }
+  }
+ ]
+}

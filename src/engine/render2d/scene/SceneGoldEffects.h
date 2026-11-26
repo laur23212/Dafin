@@ -32,6 +32,7 @@ public:
     virtual bool has(const QString &font) const = 0;
     virtual TextBox bbox(const QString &font, int px, const QString &text) const = 0;
     virtual double length(const QString &font, int px, const QString &text) const = 0; // getlength
+    virtual int ascender(const QString &font, int px) const = 0; // PIL's anchor 'la' offset to the baseline
     // ImageDraw.text((x, y), text, fill=255, anchor='ls') into an 8-bit mask
     virtual void draw(M8 &into, const QString &font, int px, const QString &text, double x, double y) const = 0;
 };
@@ -683,10 +684,30 @@ public:
                 if (!edge)
                     parts.push_back(std::move(px));
             }
+        // cv2.drawContours fills each outer contour, so every pixel >= 120 and every counter is solid.
         inks_ = bm;
-        for (const auto &px : parts)
+        for (auto &v : inks_.p)
+            if (v >= 120)
+                v = 255;
+        Img<int> seen(w, h, -1);
+        for (size_t k = 0; k < parts.size(); ++k) {
+            auto &px = parts[k];
             for (int q : px)
-                inks_.p[size_t(q)] = 255; // the solid form: counters filled
+                inks_.p[size_t(q)] = 255;
+            // A filled hole contour runs through the ink pixels around the counter (4-adjacent): include them.
+            const size_t n0 = px.size();
+            for (size_t i = 0; i < n0; ++i) {
+                const int x = px[i] % w, y = px[i] / w;
+                const int nb[4][2] = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+                for (const auto &d : nb) {
+                    const int nx = x + d[0], ny = y + d[1];
+                    if (nx < 0 || ny < 0 || nx >= w || ny >= h || bm.at(nx, ny) < 120 || seen.at(nx, ny) == int(k))
+                        continue;
+                    seen.at(nx, ny) = int(k);
+                    px.push_back(ny * w + nx);
+                }
+            }
+        }
         for (const auto &px : parts) {
             if (px.size() < 25)
                 continue;
@@ -1041,7 +1062,7 @@ public:
                 for (const auto &c : chains_[i]) {
                     const int count = std::max(1, int(c.size() * outline));
                     for (int k = 1; k < count; ++k)
-                        stroke(lines, c[size_t(k - 1)], c[size_t(k)]);
+                        strokeAA(lines, c[size_t(k - 1)].first, c[size_t(k - 1)].second, c[size_t(k)].first, c[size_t(k)].second);
                 }
         }
         const float k = float((1 - phase(e, "tracer", t)) * (1 - exitA));
@@ -1121,21 +1142,6 @@ private:
         }
         std::sort(out.begin(), out.end(), [](const Chain &p, const Chain &q) { return p.size() > q.size(); });
         return out;
-    }
-    // cv2.polylines(…, 2, LINE_AA): a 2 px anti-aliased segment, max into the layer.
-    static void stroke(MF &m, std::pair<int, int> p, std::pair<int, int> q)
-    {
-        const double x0 = p.first, y0 = p.second, x1 = q.first, y1 = q.second;
-        const double dx = x1 - x0, dy = y1 - y0, len2 = dx * dx + dy * dy;
-        for (int y = int(std::min(y0, y1)) - 3; y <= int(std::max(y0, y1)) + 3; ++y)
-            for (int x = int(std::min(x0, x1)) - 3; x <= int(std::max(x0, x1)) + 3; ++x) {
-                if (x < 0 || y < 0 || x >= m.w || y >= m.h)
-                    continue;
-                const double u = len2 > 0 ? std::clamp(((x - x0) * dx + (y - y0) * dy) / len2, 0.0, 1.0) : 0.0;
-                const double d = std::hypot(x - (x0 + u * dx), y - (y0 + u * dy));
-                const float v = float(clamp01(2.2 - d)); // cv2 2 px AA: ~3.4 px across
-                m.at(x, y) = std::max(m.at(x, y), v);
-            }
     }
     GoldActor a_;
     Region30 r_;
@@ -1268,6 +1274,788 @@ private:
     MF signed_;
 };
 
+// =================================================================================================
+// The later stages (render_stage32.py … render_stage49.py). Their numbers are fixed in the code as
+// the scripts had them; word, font, size, tracking and colours come from the actor.
+// =================================================================================================
+inline double cycNum(const QJsonObject &e, const char *k, int i)
+{
+    const QJsonArray a = e.value(QLatin1String(k)).toArray();
+    return a.isEmpty() ? 0.0 : a.at(i % a.size()).toDouble();
+}
+// PIL Image.getbbox()-based crop: [x0 − before, x1 + after) where x1 is one past the ink.
+inline M8 cropBox(const M8 &m, int before, int afterExclusive) { return cropInk(m, before, afterExclusive + 1); }
+
+// 32: each character drawn alone on the frame (anchor 'la' at (round(x), round(H/2 − 0.43 size))),
+// cropped 90/100 px around its ink.
+struct Glyph32
+{
+    M8 g;
+    int x0 = 0, y0 = 0, j = 0;
+};
+inline std::vector<Glyph32> glyphs32(const GoldText &gt, const GoldActor &a, double trk)
+{
+    const QStringList cs = chars(a.text);
+    double total = 0;
+    for (const QString &c : cs)
+        total += gt.length(a.font, a.size, c);
+    total += (cs.size() - 1) * trk;
+    double x = (FW - total) / 2;
+    const int asc = gt.ascender(a.font, a.size);
+    std::vector<Glyph32> out;
+    for (int j = 0; j < cs.size(); ++j) {
+        M8 im(FW, FH);
+        gt.draw(im, a.font, a.size, cs.at(j), roundEven(x), roundEven(FH / 2.0 - a.size * .43) + asc);
+        int x0 = FW, y0 = FH, x1 = -1, y1 = -1;
+        for (int y = 0; y < FH; ++y)
+            for (int xx = 0; xx < FW; ++xx)
+                if (im.at(xx, y)) {
+                    x0 = std::min(x0, xx); x1 = std::max(x1, xx);
+                    y0 = std::min(y0, y); y1 = std::max(y1, y);
+                }
+        if (x1 >= 0) {
+            Glyph32 g;
+            g.x0 = std::max(x0 - 90, 0);
+            g.y0 = std::max(y0 - 100, 0);
+            const int ex = std::min(x1 + 91, FW), ey = std::min(y1 + 101, FH);
+            g.g = M8(ex - g.x0, ey - g.y0);
+            for (int y = 0; y < g.g.h; ++y)
+                for (int xx = 0; xx < g.g.w; ++xx)
+                    g.g.at(xx, y) = im.at(g.x0 + xx, g.y0 + y);
+            g.j = j;
+            out.push_back(std::move(g));
+        }
+        x += gt.length(a.font, a.size, cs.at(j)) + trk;
+    }
+    return out;
+}
+inline void maxInto(Frame &f, int x0, int y0, int w, int h, const std::function<void(int, int, float *)> &rgb)
+{
+    for (int y = std::max(0, y0); y < std::min(FH, y0 + h); ++y)
+        for (int x = std::max(0, x0); x < std::min(FW, x0 + w); ++x) {
+            float c[3];
+            rgb(x - x0, y - y0, c);
+            std::uint8_t *p = f.px(x, y);
+            for (int k = 0; k < 3; ++k)
+                p[k] = std::max(p[k], sat8(double(c[k])));
+        }
+}
+inline void setInto(Frame &f, int x0, int y0, int w, int h, const std::function<void(int, int, float *)> &rgb)
+{
+    for (int y = std::max(0, y0); y < std::min(FH, y0 + h); ++y)
+        for (int x = std::max(0, x0); x < std::min(FW, x0 + w); ++x) {
+            float c[3];
+            rgb(x - x0, y - y0, c);
+            std::uint8_t *p = f.px(x, y);
+            for (int k = 0; k < 3; ++k)
+                p[k] = sat8(double(c[k]));
+        }
+}
+inline double ssm(double t) { return smooth(t); }
+
+class SplitRegister : public GoldEffect
+{
+public:
+    SplitRegister(const GoldText &g, const GoldActor &a) : a_(a), gl_(glyphs32(g, a, num(a.effect, "tracking"))) {}
+    void draw(Frame &f, double t) const override
+    {
+        const double fade = ssm((t - .06) / .35) * (1 - ssm((t - 5.27) / .52));
+        for (const Glyph32 &gl : gl_) {
+            const int hh = gl.g.h, ww = gl.g.w;
+            const double lock = ssm((t - .21 - gl.j * .083) / 1.15), depart = ssm((t - 4.37 - gl.j * .043) / .86);
+            const double aa = 1 - lock + depart, d = 51 * aa, dx = 21 * aa;
+            const auto half = [&](bool upper, double sx, double sy) {
+                // remap of g·mask: the half kept is where (y < line) in source coordinates
+                const double x0 = sx, y0 = sy;
+                const int ix = int(std::floor(x0)), iy = int(std::floor(y0));
+                const double fx = x0 - ix, fy = y0 - iy;
+                double v = 0;
+                for (int j = 0; j < 2; ++j)
+                    for (int i = 0; i < 2; ++i) {
+                        const int px = ix + i, py = iy + j;
+                        if (px < 0 || py < 0 || px >= ww || py >= hh)
+                            continue;
+                        const bool up = py < hh * .50 + (px - ww * .5) * .17;
+                        if (up != upper)
+                            continue;
+                        v += gl.g.at(px, py) * (i ? fx : 1 - fx) * (j ? fy : 1 - fy);
+                    }
+                return v;
+            };
+            maxInto(f, gl.x0, gl.y0, ww, hh, [&](int x, int y, float *c) {
+                const double u = half(true, x - dx, y + d), l = half(false, x + dx, y - d);
+                const double al = std::max(u, l) * fade;
+                for (int k = 0; k < 3; ++k)
+                    c[k] = float(std::trunc(al / 255 * a_.color[k]));
+            });
+        }
+    }
+
+private:
+    GoldActor a_;
+    std::vector<Glyph32> gl_;
+};
+
+class GlyphTorsion : public GoldEffect
+{
+public:
+    GlyphTorsion(const GoldText &g, const GoldActor &a) : a_(a), gl_(glyphs32(g, a, num(a.effect, "tracking"))) {}
+    void draw(Frame &f, double t) const override
+    {
+        const double fade = ssm((t - .04) / .38) * (1 - ssm((t - 5.28) / .5)), pi = 3.14159265358979323846;
+        for (const Glyph32 &gl : gl_) {
+            const int hh = gl.g.h, ww = gl.g.w;
+            const double cx = ww / 2., cy = hh / 2.;
+            const double aa = (1 - ssm((t - .17 - gl.j * .075) / 1.36)) + ssm((t - 4.45 - gl.j * .038) / .82);
+            maxInto(f, gl.x0, gl.y0, ww, hh, [&](int x, int y, float *c) {
+                const double nrm = (y - cy) / std::max(hh, 1);
+                const double warp = aa * (36 * std::sin(nrm * pi * 2.05 + gl.j * .34) * (0.68 + 0.32 * std::cos((x - cx) / std::max(ww, 1) * pi)));
+                const double mx = (x - cx - warp) / (1 - 0.18 * aa) + cx, my = y - aa * 14 * std::sin((x - cx) / std::max(ww, 1) * pi * 1.3);
+                const double al = std::round(bilinear(gl.g, mx, my)) * fade / 255.;
+                const double ridge = clamp01((std::cos(nrm * pi * 2.05 + gl.j * .34) + 1) * .5);
+                const double add[3] = {10, 7, 4};
+                for (int k = 0; k < 3; ++k)
+                    c[k] = float(std::trunc(al * std::trunc(a_.color[k] + add[k] * ridge * aa)));
+            });
+        }
+    }
+
+private:
+    GoldActor a_;
+    std::vector<Glyph32> gl_;
+};
+
+// 33A/34A/35: the word with its pens at round(x), the ink cropped by PIL's getbbox.
+inline M8 wordMask(const GoldText &g, const GoldActor &a, double trk, int canvasW, int canvasH, double startX, double baseline, int before,
+                   int afterExclusive)
+{
+    const QStringList cs = chars(a.text);
+    M8 im(canvasW, canvasH);
+    double x = startX;
+    for (const QString &c : cs) {
+        g.draw(im, a.font, a.size, c, roundEven(x), baseline);
+        x += g.length(a.font, a.size, c) + trk;
+    }
+    return cropBox(im, before, afterExclusive);
+}
+inline double sumAdv(const GoldText &g, const GoldActor &a, double trk)
+{
+    const QStringList cs = chars(a.text);
+    double s = 0;
+    for (const QString &c : cs)
+        s += g.length(a.font, a.size, c);
+    return s + trk * (cs.size() - 1);
+}
+
+class ImprintPress : public GoldEffect
+{
+public:
+    ImprintPress(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        const double trk = num(a.effect, "tracking");
+        m_ = wordMask(g, a, trk, int(std::ceil(sumAdv(g, a, trk))) + 200, a.size + 250, 100, a.size + 60, 22, 22);
+        M8 bin(m_.w, m_.h);
+        for (size_t q = 0; q < bin.p.size(); ++q)
+            bin.p[q] = m_.p[q] > 100;
+        dist_ = chamfer(bin, 5);
+        MF gx, gy;
+        gradient(gaussian(dist_, 2.8), gx, gy);
+        rim_ = MF(m_.w, m_.h);
+        shade_ = MF(m_.w, m_.h);
+        for (size_t q = 0; q < rim_.p.size(); ++q) {
+            const double len = std::max(.001, std::sqrt(double(gx.p[q]) * gx.p[q] + double(gy.p[q]) * gy.p[q]));
+            rim_.p[q] = float(clamp01((14 - dist_.p[q]) / 13.0) * clamp01(dist_.p[q] / 1.5));
+            shade_.p[q] = float(clamp01(gx.p[q] / len * .68 + gy.p[q] / len * (-.72) + .58));
+        }
+    }
+    void draw(Frame &f, double t) const override
+    {
+        const int w = m_.w, h = m_.h, x0 = (FW - w) / 2, y0 = (FH - h) / 2;
+        const double imp = ssm((t - .12) / .64) * (1 - ssm((t - 5.10) / .7));
+        const double travel = (clamp01((t - .50) / .86) * 1.45 - .22) * w, gfade = 1 - ssm((t - 1.45) / .40);
+        double inc = ssm((t - .91) / .72);
+        if (t >= 1.70)
+            inc = 1;
+        const double ink = inc * (1 - ssm((t - 4.55) / .56));
+        const double base[3] = {51, 57, 64}, gain[3] = {148, 154, 162}, gl[3] = {92, 90, 74};
+        setInto(f, x0, y0, w, h, [&](int x, int y, float *c) {
+            const size_t q = size_t(y) * size_t(w) + size_t(x);
+            const double body = m_.p[q] / 255.0;
+            if (ink >= .999) {
+                for (int k = 0; k < 3; ++k)
+                    c[k] = float(body * a_.color[k]);
+                return;
+            }
+            const double delay = clamp01(1 - dist_.p[q] / 13.5) * .18;
+            double grow = clamp01((ink - delay) / std::max(.001, 1 - delay));
+            grow = grow * grow * (3 - 2 * grow);
+            const double gleam = std::exp(-std::pow((x - travel) / 63, 2.0)) * rim_.p[q] * gfade;
+            for (int k = 0; k < 3; ++k) {
+                const double mat = std::clamp(base[k] + gain[k] * rim_.p[q] * (.48 + .52 * shade_.p[q]), 0.0, 255.0) + gleam * gl[k];
+                c[k] = float(body * imp * (1 - ink) * clamp01(mat / 255) * 255 + body * grow * a_.color[k]);
+            }
+        });
+    }
+
+private:
+    GoldActor a_;
+    M8 m_;
+    MF dist_, rim_, shade_;
+};
+
+class PairKerning : public GoldEffect
+{
+public:
+    PairKerning(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        for (const QString &c : chars(a.text)) {
+            const TextBox b = g.bbox(a.font, a.size, c);
+            const int pad = 10;
+            M8 m(std::max(1, b.right - b.left + 2 * pad), std::max(1, b.bottom - b.top + 2 * pad));
+            g.draw(m, a.font, a.size, c, pad - b.left, pad - b.top);
+            gl_.push_back({m, g.length(a.font, a.size, c), double(b.left - pad), double(b.top - pad)});
+        }
+        const int n = int(gl_.size());
+        QList<int> order;
+        for (const QJsonValue &v : a.effect.value(QStringLiteral("order")).toArray())
+            if (v.toInt() < n - 1)
+                order << v.toInt();
+        for (int i = 0; i < n - 1; ++i)
+            if (!order.contains(i))
+                order << i;
+        in_.assign(size_t(std::max(0, n - 1)), 0.0);
+        out_.assign(size_t(std::max(0, n - 1)), 0.0);
+        for (int r = 0; r < order.size(); ++r) {
+            in_[size_t(order[r])] = .31 + r * .172;
+            out_[size_t(order[order.size() - 1 - r])] = 4.63 + r * .155;
+        }
+    }
+    void draw(Frame &f, double t) const override
+    {
+        const QJsonObject &e = a_.effect;
+        const int n = int(gl_.size());
+        const double op = ssm((t - .10) / .25) * (1 - ssm((t - 5.60) / .32));
+        std::vector<float> gaps(size_t(std::max(0, n - 1)));
+        double total = 0;
+        for (const Glyph &g : gl_)
+            total += float(g.adv);
+        for (int i = 0; i < n - 1; ++i) {
+            const double target = cycNum(e, "target", i), wide = cycNum(e, "wide", i);
+            const double lock = outc((t - in_[size_t(i)]) / .40), rel = ssm((t - out_[size_t(i)]) / .38);
+            gaps[size_t(i)] = float(target + (wide - target) * (1 - lock + rel));
+            total += gaps[size_t(i)];
+        }
+        double x = (FW - total) / 2;
+        for (int i = 0; i < n; ++i) {
+            blendOver(f, gl_[size_t(i)].m, x + gl_[size_t(i)].xoff, FH / 2 + 94 + gl_[size_t(i)].yoff, a_.color, op);
+            x += float(gl_[size_t(i)].adv) + (i < n - 1 ? gaps[size_t(i)] : 0.f);
+        }
+    }
+
+private:
+    struct Glyph
+    {
+        M8 m;
+        double adv = 0, xoff = 0, yoff = 0;
+    };
+    GoldActor a_;
+    std::vector<Glyph> gl_;
+    std::vector<double> in_, out_;
+};
+
+class SolidExtract : public GoldEffect
+{
+public:
+    SolidExtract(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        const double trk = num(a.effect, "tracking");
+        const int pad = 100;
+        const M8 src = wordMask(g, a, trk, int(std::ceil(sumAdv(g, a, trk) + 2 * pad)), a.size + 2 * pad, pad, a.size + pad * .5, 55, 55);
+        alpha_ = border(src, 45, 45, 92, 92);
+        M8 in(alpha_.w, alpha_.h);
+        for (size_t q = 0; q < in.p.size(); ++q)
+            in.p[q] = alpha_.p[q] > 127;
+        sdf_ = signedField(alpha_, 127, 0);
+        for (float &v : sdf_.p)
+            v = -v; // d_out − d_in
+        int x0 = in.w, y0 = in.h, x1 = -1, y1 = -1;
+        for (int y = 0; y < in.h; ++y)
+            for (int x = 0; x < in.w; ++x)
+                if (in.at(x, y)) {
+                    x0 = std::min(x0, x); x1 = std::max(x1, x);
+                    y0 = std::min(y0, y); y1 = std::max(y1, y);
+                }
+        gb_ = {x0, y0, x1, y1};
+        cx_ = (x0 + x1) * .5;
+        cy_ = (y0 + y1) * .5;
+        rw_ = (x1 - x0) * .5 + 12;
+        rh_ = (y1 - y0) * .5 + 18;
+    }
+    void draw(Frame &f, double t) const override
+    {
+        const int w = alpha_.w, h = alpha_.h;
+        const double toSil = ssm((t - .48) / .43), toInk = ssm((t - .91) / .63), rev = ssm((t - 4.43) / .83);
+        const double grow = t < .48 ? 1 - std::pow(1 - clamp01((t - .10) / .40), 5.0) : (t > 5.26 ? 1 - ssm((t - 5.26) / .58) : 1.0);
+        const double ghw = w * .48 * grow;
+        const double finalInk = (1 - rev) * toSil * toInk, active = finalInk * (1 - finalInk);
+        double k = 1;
+        if (t < .22)
+            k *= ssm((t - .06) / .16);
+        if (t > 5.67)
+            k *= 1 - ssm((t - 5.67) / .28);
+        double oy[3];
+        rgb(a_.effect, "slabColor", oy);
+        const auto box = [](double qx, double qy, double r) { return std::hypot(std::max(qx, 0.0), std::max(qy, 0.0)) + std::min(std::max(qx, qy), 0.0) - r; };
+        setInto(f, (FW - w) / 2, (FH - h) / 2, w, h, [&](int x, int y, float *c) {
+            const size_t q = size_t(y) * size_t(w) + size_t(x);
+            const double slab0 = box(std::fabs(x - cx_) - (rw_ - 23), std::fabs(y - cy_) - (rh_ - 23), 23);
+            const double boxNow = box(std::fabs(x - cx_) - (ghw - 16), std::fabs(y - cy_) - ((gb_[3] - gb_[1]) * .5 + 19 - 16), 16);
+            const double slab = (t < .48 || t > 5.26) ? boxNow : slab0, sdf = sdf_.p[q];
+            double sg = ((1 - toSil) * slab + toSil * (sdf - 19.0)) * (1 - toInk) + sdf * toInk;
+            if (t > 4.43)
+                sg = (1 - rev) * sdf + rev * slab0;
+            if (t > 5.26)
+                sg = boxNow;
+            const double body = finalInk >= .999 ? alpha_.p[q] / 255. : clamp01(.5 - sg);
+            const double yrel = std::clamp((y - cy_) / std::max(rh_, 1.0), -1.0, 1.0);
+            const double hl = std::exp(-std::pow(sg / 5.0, 2.0)) * active * 26 * clamp01(.48 - .45 * yrel);
+            for (int i = 0; i < 3; ++i)
+                c[i] = float(std::clamp(body * (oy[i] * (1 - finalInk) + a_.color[i] * finalInk + hl), 0.0, 255.0) * k);
+        });
+    }
+
+private:
+    GoldActor a_;
+    M8 alpha_;
+    MF sdf_;
+    std::array<int, 4> gb_{};
+    double cx_ = 0, cy_ = 0, rw_ = 0, rh_ = 0;
+};
+
+class PrintRegister : public GoldEffect
+{
+public:
+    PrintRegister(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        const double trk = num(a.effect, "tracking");
+        double x = 0;
+        for (const QString &c : chars(a.text)) {
+            const TextBox b = g.bbox(a.font, a.size, c);
+            const int pad = 20;
+            M8 m(b.right - b.left + 2 * pad, b.bottom - b.top + 2 * pad);
+            g.draw(m, a.font, a.size, c, pad - b.left, pad - b.top);
+            gl_.push_back({m, x + b.left - pad, double(b.top - pad)});
+            x += g.length(a.font, a.size, c) + trk;
+        }
+        startX_ = (FW - (x - trk)) / 2;
+    }
+    void draw(Frame &f, double t) const override
+    {
+        const QJsonObject &e = a_.effect;
+        const double appear = ssm((t - .10) / .26) * (1 - ssm((t - 5.68) / .26));
+        if (appear < .001)
+            return;
+        double warm[3], blue[3];
+        rgb(e, "warm", warm);
+        rgb(e, "blue", blue);
+        const QJsonArray outward = e.value(QStringLiteral("outward")).toArray();
+        const int n = int(gl_.size());
+        for (int i = 0; i < n; ++i) {
+            const Glyph &g = gl_[size_t(i)];
+            const double reg = ssm((t - (.24 + i * .064)) / .90), sep = ssm((t - (4.52 + (n - 1 - i) * .045)) / .72);
+            const double loose = clamp01(1 - reg + sep);
+            const double ow = outward.isEmpty() ? 1.0 : outward.at(std::min(i, int(outward.size()) - 1)).toDouble();
+            const double dx = double(28.0f * float(ow)) * loose, dy = 13 * loose;
+            const int W2 = g.m.w + 100, H2 = g.m.h + 60;
+            const auto at = [&](double sx, double sy) { return bilinear(g.m, sx - 50, sy - 30); };
+            maxInto(f, int(roundEven(startX_ + g.x - 50)), int(roundEven(FH / 2 + 77 + g.y - 30)), W2, H2, [&](int x, int y, float *c) {
+                if (loose < .0001) {
+                    const double v = g.m.get(x - 50, y - 30) / 255.0;
+                    for (int k = 0; k < 3; ++k)
+                        c[k] = float(v * a_.color[k] * appear);
+                    return;
+                }
+                const double A = std::round(at(x + dx, y + dy)) / 255, B = std::round(at(x - dx, y - dy)) / 255;
+                const double ov = std::min(A, B);
+                for (int k = 0; k < 3; ++k)
+                    c[k] = float(((A - ov) * warm[k] + (B - ov) * blue[k] + ov * a_.color[k]) * appear);
+            });
+        }
+    }
+
+private:
+    struct Glyph
+    {
+        M8 m;
+        double x = 0, y = 0;
+    };
+    GoldActor a_;
+    std::vector<Glyph> gl_;
+    double startX_ = 0;
+};
+
+inline M8 word35(const GoldText &g, const GoldActor &a)
+{
+    const double trk = num(a.effect, "tracking");
+    const int margin = int(num(a.effect, "margin"));
+    return wordMask(g, a, trk, int(std::ceil(sumAdv(g, a, trk) + 2 * margin)), a.size + 2 * margin, margin, a.size + margin * .5, 48, 49);
+}
+
+class TidalInk : public GoldEffect
+{
+public:
+    TidalInk(const GoldText &g, const GoldActor &a) : a_(a), m_(word35(g, a))
+    {
+        int top = m_.h, bottom = -1;
+        for (int y = 0; y < m_.h; ++y)
+            for (int x = 0; x < m_.w; ++x)
+                if (m_.at(x, y) / 255.0 > .1) {
+                    top = std::min(top, y);
+                    bottom = std::max(bottom, y);
+                }
+        top_ = top;
+        bottom_ = bottom;
+        vessel_ = morphGradient5(m_);
+    }
+    void draw(Frame &f, double t) const override
+    {
+        const double p = t <= 4.38 ? ssm((t - .20) / 1.33) : 1 - ssm((t - 4.38) / 1.30);
+        if (p <= 0)
+            return;
+        const int w = m_.w, h = m_.h;
+        const double pi = 3.14159265358979323846, inkH = bottom_ - top_;
+        const double amp = 20.0 * (1 - ssm((p - .24) / .76));
+        const double active = 1 - ssm((p - .70) / .30), dry = ssm((p - .64) / .36);
+        const double vo = (1 - ssm((p - .68) / .31)) * ssm((t - .20) / .19);
+        double wet[3];
+        rgb(a_.effect, "wet", wet);
+        double k = 1;
+        if (t < .28)
+            k *= ssm((t - .20) / .10);
+        if (t > 5.63)
+            k *= 1 - ssm((t - 5.63) / .28);
+        const double vc[3] = {81., 106., 114.};
+        setInto(f, (FW - w) / 2, (FH - h) / 2, w, h, [&](int x, int y, float *c) {
+            const double ph = 2 * pi * x / (w * .74), cap = 2 * pi * x / 138;
+            const double surf = bottom_ + 28.0 - (inkH + 63.0) * p + amp * (0.82 * std::sin(ph + 2.5 * t) + 0.18 * std::sin(cap - 3.5 * t));
+            const double av = m_.at(x, y) / 255.0;
+            const double ink = p > .999 ? av : av * clamp01((y - surf + 1.2) / 3.0);
+            const double crest = std::exp(-std::pow((y - surf) / 2.5, 2.0));
+            const double refl = (1 - dry) * 7.0 * std::sin(ph * .45 + 1.1 * t);
+            const double inside = (1 - dry) * 8.0 * clamp01((y - surf) / std::max(inkH, 1.0));
+            for (int q = 0; q < 3; ++q) {
+                const double col = wet[q] * (1 - dry) + a_.color[q] * dry;
+                const double v = std::max(ink * std::clamp(col + refl + inside + crest * active * 35, 0.0, 255.0), vessel_.at(x, y) / 255.0 * vc[q] * vo);
+                c[q] = float(v * k);
+            }
+        });
+    }
+
+private:
+    GoldActor a_;
+    M8 m_, vessel_;
+    double top_ = 0, bottom_ = 0;
+};
+
+class HatchEngrave : public GoldEffect
+{
+public:
+    HatchEngrave(const GoldText &g, const GoldActor &a) : a_(a), m_(word35(g, a)) {}
+    void draw(Frame &f, double t) const override
+    {
+        const double p = t <= 4.42 ? ssm((t - .13) / 1.50) : 1 - ssm((t - 4.42) / 1.34);
+        if (p <= 0)
+            return;
+        const int w = m_.w, h = m_.h;
+        const double pa = 16.2, pb = 17.1, pi = 3.14159265358979323846;
+        const double A = 1 - std::pow(1 - clamp01((p - .025) / .85), 4.0), B = 1 - std::pow(1 - clamp01((p - .28) / .62), 4.0);
+        const double wa = .45 + 8.35 * ssm((p - .12) / .84), wb = .35 + 9.15 * ssm((p - .34) / .62), solid = ssm((p - .77) / .23);
+        double line[3], cross[3];
+        rgb(a_.effect, "line", line);
+        rgb(a_.effect, "cross", cross);
+        double k = 1;
+        if (t < .21)
+            k *= ssm((t - .13) / .08);
+        if (t > 5.69)
+            k *= 1 - ssm((t - 5.69) / .24);
+        const auto pmod = [](double v, double m) { const double r = std::fmod(v, m); return r < 0 ? r + m : r; };
+        setInto(f, (FW - w) / 2, (FH - h) / 2, w, h, [&](int x, int y, float *c) {
+            const double av = m_.at(x, y) / 255.0;
+            const double da = std::fabs(pmod((x + .64 * y) + pa * .5, pa) - pa * .5), db = std::fabs(pmod((x - .78 * y) + pb * .5, pb) - pb * .5);
+            const double la = clamp01((wa - da + .85) / 1.15) * A, lb = clamp01((wb - db + .85) / 1.15) * B;
+            double cov = (1 - (1 - la) * (1 - lb)) * av;
+            cov = solid >= .999 ? av : cov * (1 - solid) + av * solid;
+            const double inter = std::min(la, lb) * (1 - solid) * av, hl = 3.5 * std::sin(2 * pi * (x + .64 * y) / pa) * (1 - solid) * av;
+            for (int q = 0; q < 3; ++q)
+                c[q] = float(std::clamp(cov * (line[q] * (1 - solid) + a_.color[q] * solid) + (cross[q] - line[q]) * inter * .30 + hl, 0.0, 255.0) * k);
+        });
+    }
+
+private:
+    GoldActor a_;
+    M8 m_;
+};
+
+class GridReflow : public GoldEffect
+{
+public:
+    GridReflow(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        const QStringList cs = chars(a.text);
+        const double trk = num(a.effect, "tracking");
+        double start = FW * .5 - sumAdv(g, a, trk) * .5;
+        const int half = (int(cs.size()) + 1) / 2;
+        for (int i = 0; i < cs.size(); ++i) {
+            M8 im(400, 410);
+            g.draw(im, a.font, a.size, cs.at(i), 80, 326);
+            int x0 = 400, y0 = 410, x1 = -1, y1 = -1;
+            for (int y = 0; y < 410; ++y)
+                for (int x = 0; x < 400; ++x)
+                    if (im.at(x, y)) {
+                        x0 = std::min(x0, x); x1 = std::max(x1, x);
+                        y0 = std::min(y0, y); y1 = std::max(y1, y);
+                    }
+            const double adv = g.length(a.font, a.size, cs.at(i));
+            if (x1 < 0) {
+                start += adv;
+                continue;
+            }
+            Part p;
+            const int cx0 = std::max(0, x0 - 5), cy0 = std::max(0, y0 - 5);
+            p.m = M8(std::min(400, x1 + 6) - cx0, std::min(410, y1 + 6) - cy0);
+            for (int y = 0; y < p.m.h; ++y)
+                for (int x = 0; x < p.m.w; ++x)
+                    p.m.at(x, y) = im.at(cx0 + x, cy0 + y);
+            p.fx = start + ((x0 + x1) * .5 - 80) + trk * i;
+            p.fy = FH * .5 + (((y0 + y1) * .5 - 326) + 106);
+            p.ix = FW * .5 + ((i % std::max(1, half)) - (half - 1) / 2.0) * 255;
+            p.iy = FH * .5 + (i < half ? -151 : 151);
+            p.i = i;
+            p.top = i < half;
+            parts_.push_back(std::move(p));
+            start += adv;
+        }
+        double lx = 1e9, rx = -1e9;
+        for (const Part &p : parts_) {
+            lx = std::min(lx, p.fx - p.m.w / 2.0);
+            rx = std::max(rx, p.fx + p.m.w / 2.0);
+        }
+        for (Part &p : parts_)
+            p.fx += FW * .5 - (lx + rx) * .5;
+    }
+    void draw(Frame &f, double t) const override
+    {
+        if (t < .10 || t >= 5.92)
+            return;
+        const double fade = ssm((t - .10) / .2) * (1 - ssm((t - 5.63) / .27));
+        double px, py;
+        if (t < 4.5) {
+            px = ssm((t - .18) / .43);
+            py = ssm((t - .57) / .33);
+        } else {
+            py = 1 - ssm((t - 4.49) / .35);
+            px = 1 - ssm((t - 4.91) / .52);
+        }
+        double lower[3];
+        rgb(a_.effect, "lower", lower);
+        for (const Part &p : parts_) {
+            const double x = p.ix * (1 - px) + p.fx * px, y = p.iy * (1 - py) + p.fy * py;
+            const double theta = (p.i % 2 ? 2.8 : -3.2) * (1 - py);
+            const M8 small = std::fabs(theta) > .06 ? warpAffine(p.m, rotationMatrix(p.m.w / 2.0, p.m.h / 2.0, theta), p.m.w, p.m.h, false) : p.m;
+            double tone[3];
+            for (int k = 0; k < 3; ++k)
+                tone[k] = p.top ? a_.color[k] : lower[k] * (1 - py) + a_.color[k] * py;
+            maxInto(f, int(roundEven(x - p.m.w / 2.0)), int(roundEven(y - p.m.h / 2.0)), p.m.w, p.m.h, [&](int xx, int yy, float *c) {
+                const double al = small.at(xx, yy) / 255. * fade;
+                for (int k = 0; k < 3; ++k)
+                    c[k] = float(std::trunc(al * tone[k]));
+            });
+        }
+    }
+
+private:
+    struct Part
+    {
+        M8 m;
+        double fx = 0, fy = 0, ix = 0, iy = 0;
+        int i = 0;
+        bool top = true;
+    };
+    GoldActor a_;
+    std::vector<Part> parts_;
+};
+
+class RippleWave : public GoldEffect
+{
+public:
+    RippleWave(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        // textbbox((0, 0), anchor 'la') and the word drawn there, centred on the frame
+        const TextBox b = g.bbox(a.font, a.size, a.text);
+        const int asc = g.ascender(a.font, a.size);
+        const double top = b.top + asc, bottom = b.bottom + asc;
+        M8 full(FW, FH);
+        g.draw(full, a.font, a.size, a.text, (FW - (b.right - b.left)) / 2.0 - b.left, (FH - (bottom - top)) / 2.0 - top + asc);
+        int x0 = FW, y0 = FH, x1 = -1, y1 = -1;
+        for (int y = 0; y < FH; ++y)
+            for (int x = 0; x < FW; ++x)
+                if (full.at(x, y) > 1) {
+                    x0 = std::min(x0, x); x1 = std::max(x1, x);
+                    y0 = std::min(y0, y); y1 = std::max(y1, y);
+                }
+        if (x1 < 0)
+            return;
+        bx_ = std::max(0, x0 - 125);
+        by_ = std::max(0, y0 - 130);
+        m_ = M8(std::min(FW, x1 + 126) - bx_, std::min(FH, y1 + 131) - by_);
+        for (int y = 0; y < m_.h; ++y)
+            for (int x = 0; x < m_.w; ++x)
+                m_.at(x, y) = full.at(bx_ + x, by_ + y);
+        cx_ = (FW / 2.0 - bx_) + 30.0;
+        cy_ = (FH / 2.0 - by_) + 1.0;
+    }
+    void draw(Frame &f, double t) const override
+    {
+        if (m_.empty())
+            return;
+        double acc[3];
+        rgb(a_.effect, "accent", acc);
+        const double p = (t - 0.42) / 0.75, k = ssm((t - 0.06) / 0.25) * (1 - ssm((t - 5.38) / 0.49));
+        const bool on = p >= 0 && p <= 1;
+        const double ign = on ? ssm(p / 0.065) : 0, init = t < 0.52 ? std::max(0.0, 1 - std::fabs(t - 0.47) / 0.052) : 0;
+        setInto(f, bx_, by_, m_.w, m_.h, [&](int x, int y, float *c) {
+            const double vx = x - cx_, vy = y - cy_, dist = std::sqrt(vx * vx + vy * vy + 1e-3);
+            double displ = 0, halo = 0;
+            if (on) {
+                const double band = std::exp(-std::pow((dist - 1100 * p) / 100.0, 2.0));
+                displ = 9.0 * band * ign;
+                halo = 0.48 * band * ign + 0.18 * init * std::exp(-std::pow(dist / 95.0, 2.0));
+            }
+            const double wv = std::round(bilinear(m_, x - vx / dist * displ, y - vy / dist * displ * 0.49)) / 255.0;
+            const double mix = clamp01(halo);
+            for (int q = 0; q < 3; ++q)
+                c[q] = float((a_.color[q] * (1 - mix) + acc[q] * mix) * wv * k);
+        });
+    }
+
+private:
+    GoldActor a_;
+    M8 m_;
+    int bx_ = 0, by_ = 0;
+    double cx_ = 0, cy_ = 0;
+};
+
+class SignalWave : public GoldEffect
+{
+public:
+    SignalWave(const GoldText &g, const GoldActor &a) : a_(a)
+    {
+        const QStringList cs = chars(a.text);
+        const double trk = num(a.effect, "tracking"), total = sumAdv(g, a, trk);
+        const int asc = g.ascender(a.font, a.size);
+        M8 im(FW, FH);
+        double x = (FW - total) * 0.5;
+        for (const QString &c : cs) {
+            g.draw(im, a.font, a.size, c, roundEven(x), 360 + asc);
+            x += g.length(a.font, a.size, c) + trk;
+        }
+        int ymin = FH, ymax = -1;
+        for (int y = 0; y < FH; ++y)
+            for (int xx = 0; xx < FW; ++xx)
+                if (im.at(xx, y)) {
+                    ymin = std::min(ymin, y);
+                    ymax = std::max(ymax, y);
+                }
+        if (ymax < 0)
+            return;
+        const int dy = int(roundEven(FH / 2.0 - (ymin + ymax) / 2.0));
+        M8 rolled(FW, FH);
+        for (int y = 0; y < FH; ++y)
+            for (int xx = 0; xx < FW; ++xx)
+                rolled.at(xx, ((y + dy) % FH + FH) % FH) = im.at(xx, y);
+        int x0 = FW, y0 = FH, x1 = -1, y1 = -1;
+        for (int y = 0; y < FH; ++y)
+            for (int xx = 0; xx < FW; ++xx)
+                if (rolled.at(xx, y)) {
+                    x0 = std::min(x0, xx); x1 = std::max(x1, xx);
+                    y0 = std::min(y0, y); y1 = std::max(y1, y);
+                }
+        box_ = {std::max(x0 - 95, 0), std::max(y0 - 120, 0), std::min(x1 + 96, FW), std::min(y1 + 121, FH)};
+        m_ = M8(box_[2] - box_[0], box_[3] - box_[1]);
+        for (int y = 0; y < m_.h; ++y)
+            for (int xx = 0; xx < m_.w; ++xx)
+                m_.at(xx, y) = rolled.at(box_[0] + xx, box_[1] + y);
+        x = (FW - total) * 0.5;
+        for (const QString &c : cs) {
+            const double wd = g.length(a.font, a.size, c);
+            centers_.push_back(x + wd / 2 - box_[0]);
+            x += wd + trk;
+        }
+        int ax0 = m_.w, ax1 = -1, ay0 = m_.h, ay1 = -1;
+        for (int y = 0; y < m_.h; ++y)
+            for (int xx = 0; xx < m_.w; ++xx)
+                if (m_.at(xx, y) > 10) {
+                    ax0 = std::min(ax0, xx); ax1 = std::max(ax1, xx);
+                    ay0 = std::min(ay0, y); ay1 = std::max(ay1, y);
+                }
+        xmin_ = ax0;
+        xmax_ = ax1;
+        yc_ = (ay0 + ay1) * 0.5;
+    }
+    void draw(Frame &f, double t) const override
+    {
+        if (m_.empty())
+            return;
+        const auto ramp = [t](double s, double e) { return ssm((t - s) / (e - s)); };
+        const double word = ramp(.43, .80) * (1 - ramp(4.84, 5.25));
+        const double bars = ramp(.24, .43) * (1 - ramp(.50, .78)) + ramp(5.03, 5.25) * (1 - ramp(5.39, 5.67));
+        const double wave = ramp(.06, .19) * (1 - ramp(.25, .43)) + ramp(5.44, 5.65) * (1 - ramp(5.73, 5.93));
+        double ink[3];
+        rgb(a_.effect, "ink", ink);
+        M8 barM(m_.w, m_.h);
+        const int cy = int(roundEven(yc_));
+        if (bars > 0.005)
+            for (size_t j = 0; j < centers_.size(); ++j) {
+                const double pulse = 1 + 0.10 * std::sin(12 * t + j * 1.25);
+                const int hh = int(roundEven((56 + 108 * cycNum(a_.effect, "bars", int(j)) * pulse) * std::min(1.0, 0.75 + 0.25 * bars)));
+                const int xc = int(roundEven(centers_[j]));
+                for (int y = std::max(0, cy - hh / 2); y <= std::min(m_.h - 1, cy + hh / 2); ++y)
+                    for (int x = std::max(0, xc - 8); x <= std::min(m_.w - 1, xc + 8); ++x)
+                        barM.at(x, y) = 255;
+            }
+        MF waveM(m_.w, m_.h);
+        if (wave > 0.005) {
+            const double pi = 3.14159265358979323846;
+            double px = 0, py = 0;
+            bool first = true;
+            for (int xc = xmin_ - 50; xc < xmax_ + 51; xc += 2) {
+                const double u = (xc - xmin_) / std::max(1.0, double(xmax_ - xmin_));
+                const double env = std::pow(std::max(0.0, std::sin(pi * u)), 0.85);
+                const double osc = (46 * std::sin(2 * pi * (3.25 * u + 0.07)) + 18 * std::sin(2 * pi * (8.1 * u + 0.14)) + 6 * std::sin(2 * pi * 16 * u)) * env;
+                const double y = std::nearbyint(yc_ + osc);
+                if (!first)
+                    strokeAA(waveM, px, py, xc, y);
+                px = xc;
+                py = y;
+                first = false;
+            }
+        }
+        setInto(f, box_[0], box_[1], m_.w, m_.h, [&](int x, int y, float *c) {
+            const double mv = m_.at(x, y) / 255. * word, bv = barM.at(x, y) / 255. * bars, wv = waveM.at(x, y) * wave;
+            for (int q = 0; q < 3; ++q)
+                c[q] = float(std::max({mv * a_.color[q], bv * (ink[q] * .94 + a_.color[q] * .06), wv * ink[q]}));
+        });
+    }
+
+private:
+    GoldActor a_;
+    M8 m_;
+    std::array<int, 4> box_{};
+    std::vector<double> centers_;
+    int xmin_ = 0, xmax_ = 0;
+    double yc_ = 0;
+};
+
 } // namespace detail
 
 inline const QStringList &goldKinds()
@@ -1277,7 +2065,11 @@ inline const QStringList &goldKinds()
                                QStringLiteral("spectralInk"), QStringLiteral("glyphPivot"), QStringLiteral("mirrorUnfold"),
                                QStringLiteral("slantMorph"), QStringLiteral("counterRelease"), QStringLiteral("inverseTransit"),
                                QStringLiteral("depthCast"), QStringLiteral("pleatUnfold"), QStringLiteral("particleCoalesce"),
-                               QStringLiteral("contourTrace"), QStringLiteral("characterReel"), QStringLiteral("isolineCollapse")};
+                               QStringLiteral("contourTrace"), QStringLiteral("characterReel"), QStringLiteral("isolineCollapse"),
+                               QStringLiteral("splitRegister"), QStringLiteral("glyphTorsion"), QStringLiteral("imprintPress"),
+                               QStringLiteral("pairKerning"), QStringLiteral("solidExtract"), QStringLiteral("printRegister"),
+                               QStringLiteral("tidalInk"), QStringLiteral("hatchEngrave"), QStringLiteral("gridReflow"),
+                               QStringLiteral("rippleWave"), QStringLiteral("signalWave")};
     return k;
 }
 
@@ -1303,6 +2095,17 @@ inline std::unique_ptr<GoldEffect> makeGoldEffect(const GoldText &g, const GoldA
     if (k == QLatin1String("contourTrace")) return std::make_unique<ContourTrace>(g, a);
     if (k == QLatin1String("characterReel")) return std::make_unique<CharacterReel>(g, a);
     if (k == QLatin1String("isolineCollapse")) return std::make_unique<IsolineCollapse>(g, a);
+    if (k == QLatin1String("splitRegister")) return std::make_unique<SplitRegister>(g, a);
+    if (k == QLatin1String("glyphTorsion")) return std::make_unique<GlyphTorsion>(g, a);
+    if (k == QLatin1String("imprintPress")) return std::make_unique<ImprintPress>(g, a);
+    if (k == QLatin1String("pairKerning")) return std::make_unique<PairKerning>(g, a);
+    if (k == QLatin1String("solidExtract")) return std::make_unique<SolidExtract>(g, a);
+    if (k == QLatin1String("printRegister")) return std::make_unique<PrintRegister>(g, a);
+    if (k == QLatin1String("tidalInk")) return std::make_unique<TidalInk>(g, a);
+    if (k == QLatin1String("hatchEngrave")) return std::make_unique<HatchEngrave>(g, a);
+    if (k == QLatin1String("gridReflow")) return std::make_unique<GridReflow>(g, a);
+    if (k == QLatin1String("rippleWave")) return std::make_unique<RippleWave>(g, a);
+    if (k == QLatin1String("signalWave")) return std::make_unique<SignalWave>(g, a);
     return nullptr;
 }
 

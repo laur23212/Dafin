@@ -1014,7 +1014,11 @@ struct Loader
             QStringLiteral("spectralInk"), QStringLiteral("glyphPivot"), QStringLiteral("mirrorUnfold"),
             QStringLiteral("slantMorph"), QStringLiteral("counterRelease"), QStringLiteral("inverseTransit"),
             QStringLiteral("depthCast"), QStringLiteral("pleatUnfold"), QStringLiteral("particleCoalesce"),
-            QStringLiteral("contourTrace"), QStringLiteral("characterReel"), QStringLiteral("isolineCollapse")};
+            QStringLiteral("contourTrace"), QStringLiteral("characterReel"), QStringLiteral("isolineCollapse"),
+            QStringLiteral("splitRegister"), QStringLiteral("glyphTorsion"), QStringLiteral("imprintPress"),
+            QStringLiteral("pairKerning"), QStringLiteral("solidExtract"), QStringLiteral("printRegister"),
+            QStringLiteral("tidalInk"), QStringLiteral("hatchEngrave"), QStringLiteral("gridReflow"),
+            QStringLiteral("rippleWave"), QStringLiteral("signalWave")};
         if (sc.profile == Profile::Gold1x && t == QLatin1String("text")) {
             if (!goldKinds.contains(effType))
                 fail(QStringLiteral("%1: gold1x needs a known effect, not '%2'").arg(a.id, effType));

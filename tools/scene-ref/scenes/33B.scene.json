@@ -1,0 +1,97 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.golden.cadence",
+ "label": "Cadence",
+ "category": "Golden Run",
+ "source": {
+  "asset": "33B",
+  "sha256": "6a25c4b9b53908a50d70cba58fea98efdc59f8db5b64ec79b4135801c428c8c7",
+  "script": "render_stage33.py :: Cadence",
+  "status": "GOLDEN_RUN_APPROVED"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "gold1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "serif": {
+   "file": "NotoSerifDisplay-SemiBoldItalic.ttf",
+   "sha256": "a526accf800873339a9568f16a30229a05070cb9a31825011c3819e99c98532a",
+   "package": "fonts-noto-extra 20201225-2"
+  }
+ },
+ "params": [
+  {
+   "id": "word",
+   "type": "text",
+   "default": "CADENCE",
+   "label": "Word"
+  }
+ ],
+ "actors": [
+  {
+   "id": "word",
+   "role": "title",
+   "type": "text",
+   "text": "{word}",
+   "font": "serif",
+   "size": 282,
+   "color": [
+    246,
+    237,
+    222
+   ],
+   "at": {
+    "baseline": [
+     960,
+     540
+    ]
+   },
+   "effect": {
+    "type": "pairKerning",
+    "target": [
+     10,
+     3,
+     7,
+     5,
+     7,
+     5
+    ],
+    "wide": [
+     76,
+     78,
+     90,
+     82,
+     78,
+     74
+    ],
+    "order": [
+     2,
+     3,
+     1,
+     4,
+     0,
+     5
+    ]
+   }
+  }
+ ]
+}

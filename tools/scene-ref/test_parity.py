@@ -389,6 +389,55 @@ def check_golden(src: Path, frames):
     return out
 
 
+def check_later(src: Path, frames):
+    """The later Golden Run stages (32A … 49A, gold1x straight into the scripts' black frame). `src`
+    is the B2 folder with <name>/source/render_stageNN*.py. TEST-ONLY adapter: each script runs from
+    a temporary copy with its output folder moved there (they make their folders on import)."""
+    import tempfile, re
+    fonts = HERE.parent.parent / 'scene-fonts'
+
+    def load(path, name):
+        tmp = Path(tempfile.mkdtemp())
+        code = path.read_text()
+        root = f"ROOT=Path({str(tmp)!r})" if re.search(r"ROOT\s*=\s*Path\(", code) else f"ROOT={str(tmp)!r}"
+        code = re.sub(r"ROOT\s*=\s*(Path\()?['\"][^'\"]*['\"]\)?", root, code, count=1)
+        (tmp / f'{name}.py').write_text(code)
+        return load_module(tmp / f'{name}.py', name)
+
+    def script(k):
+        if k in ('32A', '32B'):
+            m = load(src / '32A' / 'source' / 'render_stage32.py', 'later32')
+            if k == '32A':
+                g = m.textmask('VECTOR', str(fonts / 'InterDisplay-Bold.otf'), 280, 5)
+                return lambda t: m.effect_a(int(round(t * 25)), g)
+            g = m.textmask('SOVEREIGN', str(fonts / 'NotoSerifDisplay-MediumItalic.ttf'), 212, 2)
+            return lambda t: m.effect_b(int(round(t * 25)), g)
+        if k[:2] in ('33', '34'):
+            return load(src / k / 'source' / f'render_stage{k[:2]}.py', f'later{k}').SCENES[k][1]().frame
+        if k[:2] == '35':
+            return load(src / k / 'source' / 'render_stage35.py', f'later{k}').SCENES[k]().frame
+        if k == '39A':
+            return load(src / k / 'source' / 'render_stage39.py', 'later39').Reflow().frame
+        if k == '48A':
+            m = load(src / k / 'source' / 'render_stage48_ripple.py', 'later48')
+            return lambda t: m.frame(int(round(t * 25)))
+        return load(src / k / 'source' / 'render_stage49.py', 'later49').Signal().compose
+
+    out = []
+    for name in ('32A', '32B', '33A', '33B', '34A', '34B', '35A', '35B', '39A', '48A', '49A'):
+        want = script(name)
+        r = render.make_renderer(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            got = np.zeros((1080, 1920, 3), np.uint8)
+            r.draw_direct(got, i / 25)
+            mx, n = diff(want(i / 25), got)
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_chapters_v4(src: Path, frames):
     """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
     as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
@@ -583,6 +632,7 @@ def main():
     ap.add_argument('--stage11', type=Path, help='folder with render_stage11.py')
     ap.add_argument('--stage10', type=Path, help='folder with render_stage10.py')
     ap.add_argument('--golden', type=Path, help='the Golden18 folder (25A … 30C, each with source/render_stageNN.py)')
+    ap.add_argument('--later', type=Path, help='the B2 later-stages folder (32A … 49A, each with source/render_stageNN*.py)')
     ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
@@ -617,6 +667,8 @@ def main():
         res.extend(check_stage10(o.stage10, frames))
     if o.golden:
         res.extend(check_golden(o.golden, frames))
+    if o.later:
+        res.extend(check_later(o.later, frames))
     if o.chapters_v4:
         res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:

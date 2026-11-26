@@ -340,7 +340,578 @@ def ease30(t):
     return t * t * (3 - 2 * t)
 
 
-class Gold1x:
+# ================================================================================================
+# B2: later stages (render_stage32.py … render_stage49.py). The numbers stay in the code as the
+# scripts had them; the word, font, size, tracking and colours come from the actor.
+# ================================================================================================
+def np_smooth(t):
+    t = np.clip(t, 0., 1.)
+    return t * t * (3 - 2 * t)
+
+
+def fsm(t):
+    t = float(np.clip(t, 0, 1))
+    return t * t * (3 - 2 * t)
+
+
+def f_out(t, k):
+    t = float(np.clip(t, 0, 1))
+    return 1 - (1 - t) ** k
+
+
+def cyc(seq, i):
+    return seq[i % len(seq)]
+
+
+class B2:
+    """Mixin: the B2 effects; self.fp(font key) gives the font file."""
+
+    # -- 32A Vector: each glyph split by one tilted cut, the halves close the seam --------------
+    def _glyphs32(self, a, e):
+        def make():
+            f = ImageFont.truetype(self.fp(a['font']), int(a['size']))
+            word, tracking, size = a['text'], e['tracking'], int(a['size'])
+            d = ImageDraw.Draw(Image.new('L', (1, 1)))
+            advances = [d.textlength(c, font=f) for c in word]
+            total = sum(advances) + (len(word) - 1) * tracking
+            x, cy, out = (W - total) / 2, H / 2, []
+            for j, (c, adv) in enumerate(zip(word, advances)):
+                im = Image.new('L', (W, H))
+                ImageDraw.Draw(im).text((round(x), round(cy - size * .43)), c, font=f, fill=255)
+                ar = np.asarray(im)
+                xx, yy = np.nonzero(ar)[1], np.nonzero(ar)[0]
+                if len(xx):
+                    x0, x1 = max(int(xx.min()) - 90, 0), min(int(xx.max()) + 91, W)
+                    y0, y1 = max(int(yy.min()) - 100, 0), min(int(yy.max()) + 101, H)
+                    out.append((ar[y0:y1, x0:x1].copy(), x0, y0, j, c))
+                x += adv + tracking
+            return out
+        return self.get(('g32', a['id'], a['text']), make)
+
+    def split_register(self, img, a, e, t):
+        C1 = np.array(a['color'][:3], dtype=np.uint8)
+        fadein = np_smooth((t - .06) / .35)
+        fadeout = 1 - np_smooth((t - 5.27) / .52)
+        for g, x0, y0, j, c in self._glyphs32(a, e):
+            hh, ww = g.shape
+            yy, xx = np.indices((hh, ww), dtype=np.float32)
+            line = hh * .50 + (xx - ww * .5) * .17
+            upper = (yy < line).astype(np.float32)
+            lower = 1 - upper
+            lock = np_smooth((t - .21 - j * .083) / 1.15)
+            depart = np_smooth((t - 4.37 - j * .043) / .86)
+            aa = 1 - lock + depart
+            d, dx = 51 * aa, 21 * aa
+            ui = cv2.remap(g * upper, (xx - dx).astype(np.float32), (yy + d).astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            li = cv2.remap(g * lower, (xx + dx).astype(np.float32), (yy - d).astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            alpha = np.maximum(ui, li) * fadein * fadeout
+            sub = img[y0:y0 + hh, x0:x0 + ww]
+            sub[:] = np.maximum(sub, (alpha[:, :, None] / 255 * C1).astype(np.uint8))
+
+    # -- 32B Sovereign: a twist inside each glyph relaxes to the clean letter --------------------
+    def glyph_torsion(self, img, a, e, t):
+        fadein = np_smooth((t - .04) / .38)
+        fadeout = 1 - np_smooth((t - 5.28) / .5)
+        c0 = a['color'][:3]
+        for g, x0, y0, j, c in self._glyphs32(a, e):
+            hh, ww = g.shape
+            yy, xx = np.indices((hh, ww), dtype=np.float32)
+            cx, cy = ww / 2., hh / 2.
+            settled = np_smooth((t - .17 - j * .075) / 1.36)
+            out = np_smooth((t - 4.45 - j * .038) / .82)
+            aa = (1 - settled) + out
+            normalized = (yy - cy) / max(hh, 1)
+            warp = aa * (36 * np.sin(normalized * math.pi * 2.05 + j * .34) * (0.68 + 0.32 * np.cos((xx - cx) / max(ww, 1) * math.pi)))
+            compression = (1 - 0.18 * aa)
+            mx = ((xx - cx - warp) / compression + cx).astype(np.float32)
+            my = (yy - aa * 14 * np.sin((xx - cx) / max(ww, 1) * math.pi * 1.3)).astype(np.float32)
+            alpha = cv2.remap(g, mx, my, cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+            ridge = np.clip((np.cos(normalized * math.pi * 2.05 + j * .34) + 1) * .5, 0, 1)
+            rgb = np.stack([c0[0] + 10 * ridge * aa, c0[1] + 7 * ridge * aa, c0[2] + 4 * ridge * aa], axis=-1).astype(np.uint8)
+            sub = img[y0:y0 + hh, x0:x0 + ww]
+            k = (alpha.astype(np.float32) * fadein * fadeout / 255.)[:, :, None]
+            sub[:] = np.maximum(sub, (k * rgb).astype(np.uint8))
+
+    # -- 33A Imprint: the word pressed into a material, then ink fills from the walls in ---------
+    def imprint_press(self, frame, a, e, t):
+        def make():
+            word, size, tracking = a['text'], int(a['size']), e['tracking']
+            font = ImageFont.truetype(self.fp(a['font']), size)
+            adv = [font.getlength(ch) for ch in word]
+            total = sum(adv) + tracking * (len(word) - 1)
+            im = Image.new('L', (int(math.ceil(total)) + 200, size + 250), 0)
+            di = ImageDraw.Draw(im)
+            x, baseline = 100., size + 60
+            for ch, ad in zip(word, adv):
+                di.text((round(x), baseline), ch, anchor='ls', font=font, fill=255)
+                x += ad + tracking
+            bb = im.getbbox()
+            mask = np.array(im.crop((max(bb[0] - 22, 0), max(bb[1] - 22, 0), min(bb[2] + 22, im.width), min(bb[3] + 22, im.height))))
+            m = np.where(mask > 100, 1, 0).astype(np.uint8)
+            dist = cv2.distanceTransform(m, cv2.DIST_L2, 5)
+            dd = cv2.GaussianBlur(dist, (0, 0), 2.8)
+            dy, dx = np.gradient(dd)
+            length = np.maximum(.001, np.sqrt(dx * dx + dy * dy))
+            nx, ny = dx / length, dy / length
+            rim = np.clip((14 - dist) / 13.0, 0, 1) * np.clip(dist / 1.5, 0, 1)
+            inside = mask.astype(np.float32) / 255
+            xx, yy = np.meshgrid(np.arange(mask.shape[1], dtype=np.float32), np.arange(mask.shape[0], dtype=np.float32))
+            sh = np.clip(nx * .68 + ny * (-.72) + .58, 0, 1)
+            pm = np.stack([np.clip(51 + 148 * rim * (.48 + .52 * sh), 0, 255), np.clip(57 + 154 * rim * (.48 + .52 * sh), 0, 255),
+                           np.clip(64 + 162 * rim * (.48 + .52 * sh), 0, 255)], axis=-1)
+            return mask, dist, rim, inside, xx, pm
+        mask, dist, rim, inside, xx, pm = self.get(('imprint', a['id'], a['text']), make)
+        h, w = mask.shape
+        x0, y0 = (W - w) // 2, (H - h) // 2
+        IVORY = np.array(a['color'][:3], np.float32)
+        impression = fsm((t - .12) / .64) * (1 - fsm((t - 5.10) / .7))
+        gleam_phase = float(np.clip((t - .50) / .86, 0, 1))
+        travel = (gleam_phase * 1.45 - .22) * w
+        gleam = np.exp(-((xx - travel) / 63) ** 2) * rim * (1 - fsm((t - 1.45) / .40))
+        material = pm + gleam[:, :, None] * np.array([92, 90, 74], np.float32)
+        inc = fsm((t - .91) / .72)
+        if t >= 1.70:
+            inc = 1.
+        ink = inc * (1 - fsm((t - 4.55) / .56))
+        if ink < .999:
+            distdelay = np.clip(1 - dist / 13.5, 0, 1) * .18
+            grow = np.clip((ink - distdelay) / np.maximum(.001, 1 - distdelay), 0, 1)
+            grow = grow * grow * (3 - 2 * grow)
+        else:
+            grow = 1.0
+        body = inside[:, :, None]
+        ink_rgba = body * (grow[..., None] if not np.isscalar(grow) else grow)
+        base_rgba = (body * impression * (1 - ink)) * np.clip(material / 255, 0, 1)
+        paint = base_rgba * 255 + ink_rgba * IVORY[None, None, :]
+        if ink >= .999:
+            paint = body * IVORY[None, None, :]
+        frame[y0:y0 + h, x0:x0 + w] = np.clip(paint, 0, 255).astype(np.uint8)
+
+    # -- 33B Cadence: the pairs lock into their kerning one by one, then let go ------------------
+    def pair_kerning(self, frame, a, e, t):
+        def make():
+            ft = ImageFont.truetype(self.fp(a['font']), int(a['size']))
+            out = []
+            for ch in a['text']:
+                bb = ft.getbbox(ch, anchor='ls')
+                pad = 10
+                w, h = max(1, int(math.ceil(bb[2] - bb[0] + 2 * pad))), max(1, int(math.ceil(bb[3] - bb[1] + 2 * pad)))
+                im = Image.new('L', (w, h), 0)
+                ImageDraw.Draw(im).text((pad - bb[0], pad - bb[1]), ch, anchor='ls', font=ft, fill=255)
+                out.append({'advance': ft.getlength(ch), 'mask': np.array(im), 'xoff': bb[0] - pad, 'yoff': bb[1] - pad})
+            return out
+        glyphs = self.get(('cadence', a['id'], a['text']), make)
+        n = len(glyphs)
+        adv = np.array([g['advance'] for g in glyphs], np.float32)
+        target = np.array([cyc(e['target'], i) for i in range(n - 1)], np.float32)
+        wide = np.array([cyc(e['wide'], i) for i in range(n - 1)], np.float32)
+        order = [o for o in e['order'] if o < n - 1] + [i for i in range(n - 1) if i not in e['order']]
+        instarts = {idx: .31 + rank * .172 for rank, idx in enumerate(order)}
+        outstarts = {idx: 4.63 + rank * .155 for rank, idx in enumerate(reversed(order))}
+        baseline = H // 2 + 94
+        op = fsm((t - .10) / .25) * (1 - fsm((t - 5.60) / .32))
+
+        def gap(i):
+            lock = f_out((t - instarts[i]) / .40, 3)
+            release = fsm((t - outstarts[i]) / .38)
+            return target[i] + (wide[i] - target[i]) * (1 - lock + release)
+        gaps = np.array([gap(i) for i in range(n - 1)], np.float32)
+        x = (W - (adv.sum() + gaps.sum())) / 2
+        for i, g in enumerate(glyphs):
+            blend_paste(frame, g['mask'], x + g['xoff'], baseline + g['yoff'], np.array(a['color'][:3], np.float32), op)
+            x += adv[i] + (gaps[i] if i < n - 1 else 0)
+
+    # -- 34A Extract: one solid slab is carved away into the typography ---------------------------
+    def solid_extract(self, img, a, e, t):
+        def make():
+            word, size, tracking, padding = a['text'], int(a['size']), e['tracking'], 100
+            f = ImageFont.truetype(self.fp(a['font']), size)
+            advances = [f.getlength(ch) for ch in word]
+            width = int(math.ceil(sum(advances) + tracking * (len(word) - 1) + 2 * padding))
+            im = Image.new('L', (width, size + 2 * padding), 0)
+            d = ImageDraw.Draw(im)
+            x = padding
+            for ch, adv in zip(word, advances):
+                d.text((round(x), size + padding * .5), ch, anchor='ls', font=f, fill=255)
+                x += adv + tracking
+            bb = im.getbbox()
+            src = np.asarray(im.crop((max(0, bb[0] - 55), max(0, bb[1] - 55), min(im.width, bb[2] + 55), min(im.height, bb[3] + 55))))
+            hh, ww = src.shape
+            padx, pady = 92, 45
+            h, w = hh + 2 * pady, ww + 2 * padx
+            alpha = np.zeros((h, w), np.uint8)
+            alpha[pady:pady + hh, padx:padx + ww] = src
+            yy, xx = np.indices((h, w), dtype=np.float32)
+            m = (alpha > 127).astype(np.uint8)
+            sdf = cv2.distanceTransform(1 - m, cv2.DIST_L2, cv2.DIST_MASK_PRECISE) - cv2.distanceTransform(m, cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+            iy, ix = np.where(m > 0)
+            gb = (int(ix.min()), int(iy.min()), int(ix.max()), int(iy.max()))
+            cx, cy = (ix.min() + ix.max()) * .5, (iy.min() + iy.max()) * .5
+            rw, rh = (ix.max() - ix.min()) * .5 + 12, (iy.max() - iy.min()) * .5 + 18
+            corner = 23.0
+            qx, qy = np.abs(xx - cx) - (rw - corner), np.abs(yy - cy) - (rh - corner)
+            slab = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - corner
+            yrel = np.clip((yy - cy) / max(rh, 1), -1, 1)
+            return alpha, xx, yy, sdf, gb, cx, cy, slab, yrel
+        alpha, xx, yy, sdf, gb, cx, cy, slab0, yrel = self.get(('extract', a['id'], a['text']), make)
+        h, w = alpha.shape
+        x0, y0 = (W - w) // 2, (H - h) // 2
+        IVORY, OYSTER = np.array(a['color'][:3], np.float32), np.array(e['slabColor'][:3], np.float32)
+        to_sil, to_ink, reverse = fsm((t - .48) / .43), fsm((t - .91) / .63), fsm((t - 4.43) / .83)
+        if t < .48:
+            grow = f_out((t - .10) / .40, 5)
+        elif t > 5.26:
+            grow = 1 - fsm((t - 5.26) / .58)
+        else:
+            grow = 1.0
+        ghw = w * .48 * grow
+        qx = np.abs(xx - cx) - (ghw - 16)
+        qy = np.abs(yy - cy) - ((gb[3] - gb[1]) * .5 + 19 - 16)
+        box_now = np.hypot(np.maximum(qx, 0), np.maximum(qy, 0)) + np.minimum(np.maximum(qx, qy), 0) - 16
+        slab = box_now if (t < .48 or t > 5.26) else slab0
+        prep = (1 - to_sil) * slab + to_sil * (sdf - 19.0)
+        signed = prep * (1 - to_ink) + sdf * to_ink
+        if t > 4.43:
+            signed = (1 - reverse) * sdf + reverse * slab0
+        if t > 5.26:
+            signed = box_now
+        body = np.clip(.5 - signed, 0, 1)
+        final_ink = (1 - reverse) * to_sil * to_ink
+        if final_ink >= .999:
+            body = alpha.astype(np.float32) / 255.
+        color = OYSTER[None, None, :] * (1 - final_ink) + IVORY[None, None, :] * final_ink
+        active = final_ink * (1 - final_ink)
+        highlight = np.exp(-(signed / 5.0) ** 2) * active * 26 * np.clip(.48 - .45 * yrel, 0, 1)
+        rgb = np.clip(body[:, :, None] * (color + highlight[:, :, None]), 0, 255)
+        if t < .22:
+            rgb *= fsm((t - .06) / .16)
+        if t > 5.67:
+            rgb *= 1 - fsm((t - 5.67) / .28)
+        img[y0:y0 + h, x0:x0 + w] = rgb.astype(np.uint8)
+
+    # -- 34B Parallel: two displaced print impressions converge into each glyph ------------------
+    def print_register(self, img, a, e, t):
+        def make():
+            f = ImageFont.truetype(self.fp(a['font']), int(a['size']))
+            res, x = [], 0
+            for ch in a['text']:
+                box = f.getbbox(ch, anchor='ls')
+                pad = 20
+                w, h = math.ceil(box[2] - box[0] + 2 * pad), math.ceil(box[3] - box[1] + 2 * pad)
+                im = Image.new('L', (w, h), 0)
+                ImageDraw.Draw(im).text((pad - box[0], pad - box[1]), ch, font=f, anchor='ls', fill=255)
+                res.append({'coverage': np.asarray(im), 'x': x + box[0] - pad, 'y': box[1] - pad})
+                x += f.getlength(ch) + e['tracking']
+            return res, x - e['tracking']
+        glyphs, total = self.get(('register', a['id'], a['text']), make)
+        baseline, startx, n = H // 2 + 77, (W - total) / 2, len(glyphs)
+        IVORY, WARM, BLUE = (np.array(c[:3], np.float32) for c in (a['color'], e['warm'], e['blue']))
+        appear = fsm((t - .10) / .26) * (1 - fsm((t - 5.68) / .26))
+        if appear < .001:
+            return
+        for i, g in enumerate(glyphs):
+            hh, ww = g['coverage'].shape
+            x, y = startx + g['x'], baseline + g['y']
+            registration = fsm((t - (.24 + i * .064)) / .90)
+            separation = fsm((t - (4.52 + (n - 1 - i) * .045)) / .72)
+            loose = float(np.clip(1 - registration + separation, 0, 1))
+            outward = e['outward'][i] if i < len(e['outward']) else e['outward'][-1]
+            dx, dy = float(28 * np.float32(outward)) * loose, 13 * loose  # the script's outward is float32
+            ma = np.zeros((hh + 60, ww + 100), np.uint8)
+            ma[30:30 + hh, 50:50 + ww] = g['coverage']
+            A = cv2.warpAffine(ma, np.float32([[1, 0, -dx], [0, 1, -dy]]), (ww + 100, hh + 60), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+            B = cv2.warpAffine(ma, np.float32([[1, 0, dx], [0, 1, dy]]), (ww + 100, hh + 60), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+            af, bf = A.astype(np.float32) / 255, B.astype(np.float32) / 255
+            overlap = np.minimum(af, bf)
+            warm, blue = np.clip(af - overlap, 0, 1), np.clip(bf - overlap, 0, 1)
+            rgba = warm[:, :, None] * WARM[None, None, :] + blue[:, :, None] * BLUE[None, None, :] + overlap[:, :, None] * IVORY[None, None, :]
+            if loose < .0001:
+                rgba = ma[:, :, None].astype(np.float32) / 255 * IVORY[None, None, :]
+            xx, yy = int(round(x - 50)), int(round(y - 30))
+            x0, y0, x1, y1 = max(0, xx), max(0, yy), min(W, xx + ww + 100), min(H, yy + hh + 60)
+            if x0 >= x1 or y0 >= y1:
+                continue
+            dest = img[y0:y1, x0:x1]
+            dest[:] = np.maximum(dest, np.uint8(np.clip(rgba[y0 - yy:y1 - yy, x0 - xx:x1 - xx] * appear, 0, 255)))
+
+    # -- 35A Tidal: ink rises in the letters like liquid in a vessel ---------------------------
+    def _word35(self, a, e):
+        def make():
+            word, size, tracking, margin = a['text'], int(a['size']), e['tracking'], e['margin']
+            f = ImageFont.truetype(self.fp(a['font']), size)
+            advances = [f.getlength(ch) for ch in word]
+            width = int(math.ceil(sum(advances) + tracking * (len(word) - 1) + 2 * margin))
+            canvas = Image.new('L', (width, size + 2 * margin), 0)
+            d = ImageDraw.Draw(canvas)
+            x = margin
+            for ch, adv in zip(word, advances):
+                d.text((round(x), size + margin * .5), ch, font=f, anchor='ls', fill=255)
+                x += adv + tracking
+            b = canvas.getbbox()
+            return np.asarray(canvas.crop((max(0, b[0] - 48), max(0, b[1] - 48), min(width, b[2] + 49), min(size + 2 * margin, b[3] + 49)))).copy()
+        return self.get(('w35', a['id'], a['text']), make)
+
+    def tidal_ink(self, frame, a, e, t):
+        mask = self._word35(a, e)
+        def make():
+            av = mask.astype(np.float32) / 255.
+            h, w = mask.shape
+            yy, xx = np.indices((h, w), dtype=np.float32)
+            ys, xs = np.where(av > .1)
+            edge = cv2.morphologyEx(mask, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+            return av, yy, 2 * math.pi * xx / (w * .74), 2 * math.pi * xx / 138, float(ys.min()), float(ys.max()), np.clip(edge.astype(np.float32) / 255., 0, 1)
+        av, yy, ph, cap, top, bottom, vessel = self.get(('tidal', a['id'], a['text']), make)
+        h, w = mask.shape
+        x0, y0 = (W - w) // 2, (H - h) // 2
+        p = float(np_smooth((t - .20) / 1.33)) if t <= 4.38 else float(1 - np_smooth((t - 4.38) / 1.30))
+        if p <= 0:
+            return
+        BLUE, IVORY = np.array(e['wet'][:3], np.float32), np.array(a['color'][:3], np.float32)
+        ink_height = bottom - top
+        wave_amp = 20.0 * (1 - np_smooth((p - .24) / .76))
+        wave = wave_amp * (0.82 * np.sin(ph + 2.5 * t) + 0.18 * np.sin(cap - 3.5 * t))
+        surface = bottom + 28.0 - (ink_height + 63.0) * p + wave
+        fluid = np.clip((yy - surface + 1.2) / 3.0, 0, 1)
+        ink = av * fluid
+        if p > .999:
+            ink = av
+        if not np.any(ink > .001):
+            return
+        crest = np.exp(-((yy - surface) / 2.5) ** 2)
+        active = (1 - np_smooth((p - .70) / .30))
+        dry = np_smooth((p - .64) / .36)
+        color = BLUE * (1 - dry) + IVORY * dry
+        refl = (1 - dry) * 7.0 * np.sin(ph * .45 + 1.1 * t)
+        inside = (1 - dry) * 8.0 * np.clip((yy - surface) / max(ink_height, 1), 0, 1)
+        rgb = ink[:, :, None] * np.clip(color[None, None, :] + refl[:, :, None] + inside[:, :, None] + (crest * active * 35)[:, :, None], 0, 255)
+        vo = (1 - np_smooth((p - .68) / .31)) * np_smooth((t - .20) / .19)
+        rgb = np.maximum(rgb, vessel[:, :, None] * np.array([81., 106., 114.], np.float32)[None, None, :] * vo)
+        if t < .28:
+            rgb *= np_smooth((t - .20) / .10)
+        if t > 5.63:
+            rgb *= 1 - np_smooth((t - 5.63) / .28)
+        frame[y0:y0 + h, x0:x0 + w] = rgb.astype(np.uint8)
+
+    # -- 35B Hatch: two engraved line gratings thicken into solid ink ---------------------------
+    def hatch_engrave(self, frame, a, e, t):
+        mask = self._word35(a, e)
+        def make():
+            av = mask.astype(np.float32) / 255.
+            h, w = mask.shape
+            yy, xx = np.indices((h, w), dtype=np.float32)
+            pa, pb = 16.2, 17.1
+            return (av, np.abs(np.mod((xx + .64 * yy) + pa * .5, pa) - pa * .5), np.abs(np.mod((xx - .78 * yy) + pb * .5, pb) - pb * .5),
+                    3.5 * np.sin(2 * math.pi * (xx + .64 * yy) / pa))
+        av, da, db, bright = self.get(('hatch', a['id'], a['text']), make)
+        h, w = mask.shape
+        x0, y0 = (W - w) // 2, (H - h) // 2
+        p = float(np_smooth((t - .13) / 1.50)) if t <= 4.42 else float(1 - np_smooth((t - 4.42) / 1.34))
+        if p <= 0:
+            return
+        SILVER, IVORY, WARM = (np.array(c[:3], np.float32) for c in (e['line'], a['color'], e['cross']))
+        A = 1 - (1 - float(np.clip((p - .025) / .85, 0, 1))) ** 4
+        Bv = 1 - (1 - float(np.clip((p - .28) / .62, 0, 1))) ** 4
+        wa = .45 + 8.35 * np_smooth((p - .12) / .84)
+        wb = .35 + 9.15 * np_smooth((p - .34) / .62)
+        la = np.clip((wa - da + .85) / 1.15, 0, 1) * A
+        lb = np.clip((wb - db + .85) / 1.15, 0, 1) * Bv
+        coverage = (1 - (1 - la) * (1 - lb)) * av
+        solid = np_smooth((p - .77) / .23)
+        if solid >= .999:
+            coverage = av
+        else:
+            coverage = coverage * (1 - solid) + av * solid
+        tint = SILVER[None, None, :] * (1 - solid) + IVORY[None, None, :] * solid
+        inter = (np.minimum(la, lb) * (1 - solid) * av)[:, :, None]
+        hl = bright[:, :, None] * (1 - solid) * av[:, :, None]
+        rgb = coverage[:, :, None] * tint + (WARM - SILVER)[None, None, :] * inter * .30 + hl
+        if t < .21:
+            rgb *= np_smooth((t - .13) / .08)
+        if t > 5.69:
+            rgb *= 1 - np_smooth((t - 5.69) / .24)
+        frame[y0:y0 + h, x0:x0 + w] = np.uint8(np.clip(rgb, 0, 255))
+
+    # -- 39A Reflow: the letters leave a two-row grid and settle into the word -------------------
+    def grid_reflow(self, out, a, e, t):
+        def make():
+            word = a['text']
+            font = ImageFont.truetype(self.fp(a['font']), int(a['size']))
+            dr = ImageDraw.Draw(Image.new('L', (4, 4)))
+            advances = [dr.textlength(ch, font=font) for ch in word]
+            start = W * .5 - (sum(advances) + e['tracking'] * (len(word) - 1)) * .5
+            parts = []
+            half = (len(word) + 1) // 2
+            for i, (ch, advance) in enumerate(zip(word, advances)):
+                glyph = Image.new('L', (400, 410), 0)
+                ImageDraw.Draw(glyph).text((80, 326), ch, font=font, fill=255, anchor='ls')
+                ar = np.asarray(glyph)
+                yy, xx = np.where(ar > 0)
+                if len(xx) == 0:
+                    start += advance
+                    continue
+                x0, x1, y0, y1 = max(0, int(xx.min()) - 5), min(400, int(xx.max()) + 6), max(0, int(yy.min()) - 5), min(410, int(yy.max()) + 6)
+                am = ar[y0:y1, x0:x1].copy()
+                cent = ((xx.min() + xx.max()) * .5, (yy.min() + yy.max()) * .5)
+                fx = start + (cent[0] - 80) + e['tracking'] * i
+                fy = H * .5 + ((cent[1] - 326) + 106)
+                col = i % half if half else 0
+                ix = W * .5 + (col - (half - 1) / 2) * 255
+                iy = H * .5 + (-151 if i < half else 151)
+                parts.append({'glyph': am.astype(np.float32) / 255., 'w': am.shape[1], 'h': am.shape[0], 'initial': (ix, iy), 'final': (fx, fy), 'index': i, 'top': i < half})
+                start += advance
+            lx = min(p['final'][0] - p['w'] / 2 for p in parts)
+            rx = max(p['final'][0] + p['w'] / 2 for p in parts)
+            shift = W * .5 - (lx + rx) * .5
+            for p in parts:
+                p['final'] = (p['final'][0] + shift, p['final'][1])
+            return parts
+        parts = self.get(('reflow', a['id'], a['text']), make)
+        if t < .10 or t >= 5.92:
+            return
+        IVORY, LIME = np.array(a['color'][:3], np.float32), np.array(e['lower'][:3], np.float32)
+        fade = fsm((t - .10) / .2) * (1 - fsm((t - 5.63) / .27))
+        if t < 4.5:
+            px, py = fsm((t - .18) / .43), fsm((t - .57) / .33)
+        else:
+            py, px = 1 - fsm((t - 4.49) / .35), 1 - fsm((t - 4.91) / .52)
+        for p in parts:
+            i = p['index']
+            sx, sy = p['initial']
+            tx, ty = p['final']
+            x, y = sx * (1 - px) + tx * px, sy * (1 - py) + ty * py
+            theta = (2.8 if i % 2 else -3.2) * (1 - py)
+            small = p['glyph']
+            if abs(theta) > .06:
+                mat = cv2.getRotationMatrix2D((p['w'] / 2, p['h'] / 2), theta, 1.)
+                small = cv2.warpAffine(small, mat, (p['w'], p['h']), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+            xx, yy = int(round(x - p['w'] / 2)), int(round(y - p['h'] / 2))
+            xx0, yy0, xx1, yy1 = max(0, xx), max(0, yy), min(W, xx + p['w']), min(H, yy + p['h'])
+            if xx1 <= xx0 or yy1 <= yy0:
+                continue
+            alpha = small[yy0 - yy:yy1 - yy, xx0 - xx:xx1 - xx] * fade
+            roi = out[yy0:yy1, xx0:xx1]
+            tone = IVORY if p['top'] else (LIME * (1 - py) + IVORY * py)
+            np.maximum(roi, (alpha[:, :, None] * tone).astype(np.uint8), out=roi)
+
+    # -- 48A Resonance: one travelling ripple bends the glyphs and tints them as it passes -------
+    def ripple_wave(self, out, a, e, t):
+        def make():
+            font = ImageFont.truetype(self.fp(a['font']), int(a['size']))
+            canvas = Image.new('L', (W, H), 0)
+            d = ImageDraw.Draw(canvas)
+            box = d.textbbox((0, 0), a['text'], font=font, stroke_width=0)
+            bw, bh = box[2] - box[0], box[3] - box[1]
+            d.text(((W - bw) / 2 - box[0], (H - bh) / 2 - box[1]), a['text'], font=font, fill=255)
+            full = np.asarray(canvas)
+            yp, xp = np.where(full > 1)
+            x0, y0 = max(0, int(xp.min()) - 125), max(0, int(yp.min()) - 130)
+            x1, y1 = min(W, int(xp.max()) + 126), min(H, int(yp.max()) + 131)
+            mask = full[y0:y1, x0:x1].copy()
+            hh, ww = mask.shape
+            Y, X = np.indices((hh, ww), dtype=np.float32)
+            cx, cy = (W / 2 - x0) + 30.0, (H / 2 - y0) + 1.0
+            VX, VY = X - cx, Y - cy
+            DIST = np.sqrt(VX * VX + VY * VY + 1e-3)
+            return mask, (x0, y0, x1, y1), X, Y, VX / DIST, VY / DIST, DIST
+        mask, (x0, y0, x1, y1), X, Y, NX, NY, DIST = self.get(('ripple', a['id'], a['text']), make)
+        hh, ww = mask.shape
+        WHITE, BLUE = np.array(a['color'][:3], dtype=np.float32), np.array(e['accent'][:3], dtype=np.float32)
+        p = (t - 0.42) / 0.75
+        if p < 0 or p > 1:
+            displ = halo = np.zeros((hh, ww), dtype=np.float32)
+        else:
+            band = np.exp(-((DIST - 1100 * p) / 100.0) ** 2)
+            ignition = fsm(p / 0.065)
+            displ = (9.0 * band * ignition).astype(np.float32)
+            chroma = 0.48 * band * ignition
+            if t < 0.52:
+                chroma += 0.18 * max(0.0, 1 - abs(t - 0.47) / 0.052) * np.exp(-(DIST / 95.0) ** 2)
+            halo = chroma.astype(np.float32)
+        warped = cv2.remap(mask, (X - NX * displ).astype(np.float32), (Y - NY * displ * 0.49).astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+        mix = np.clip(halo, 0, 1)[:, :, None]
+        color = WHITE[None, None, :] * (1 - mix) + BLUE[None, None, :] * mix
+        k = fsm((t - 0.06) / (0.31 - 0.06)) * (1 - fsm((t - 5.38) / (5.87 - 5.38)))
+        out[y0:y1, x0:x1] = np.uint8(np.clip(color * (warped[:, :, None] / 255.0) * k, 0, 255))
+
+    # -- 49A Signal: a waveform, then level bars, become the word ---------------------------------
+    def signal_wave(self, frame, a, e, t):
+        def make():
+            word = a['text']
+            font = ImageFont.truetype(self.fp(a['font']), int(a['size']))
+            d = ImageDraw.Draw(Image.new('L', (8, 8)))
+            widths = [d.textlength(c, font=font) for c in word]
+            track = e['tracking']
+            total = sum(widths) + track * (len(word) - 1)
+            x = (W - total) * 0.5
+            im = Image.new('L', (W, H), 0)
+            pp = ImageDraw.Draw(im)
+            for c, wd in zip(word, widths):
+                pp.text((round(x), 360), c, font=font, fill=255)
+                x += wd + track
+            ar = np.asarray(im)
+            yy, xx = np.where(ar > 0)
+            ar = np.roll(ar, round(H / 2 - (yy.min() + yy.max()) / 2), axis=0)
+            yy, xx = np.where(ar > 0)
+            bbox = (max(int(xx.min()) - 95, 0), max(int(yy.min()) - 120, 0), min(int(xx.max()) + 96, W), min(int(yy.max()) + 121, H))
+            centers = []
+            x = (W - total) * 0.5
+            for wd in widths:
+                centers.append(x + wd / 2 - bbox[0])
+                x += wd + track
+            mask = ar[bbox[1]:bbox[3], bbox[0]:bbox[2]]
+            act = np.where(mask > 10)
+            return mask, bbox, centers, int(act[1].min()), int(act[1].max()), (int(act[0].min()) + int(act[0].max())) * 0.5
+        mask, box, centers, xmin, xmax, ycenter = self.get(('signal', a['id'], a['text']), make)
+        WHITE, INK = np.array(a['color'][:3], np.float32), np.array(e['ink'][:3], np.float32)
+
+        def ramp(u, s, f):
+            return fsm((u - s) / (f - s))
+        word_alpha = ramp(t, .43, .80) * (1 - ramp(t, 4.84, 5.25))
+        bars_alpha = ramp(t, .24, .43) * (1 - ramp(t, .50, .78)) + ramp(t, 5.03, 5.25) * (1 - ramp(t, 5.39, 5.67))
+        wave_alpha = ramp(t, .06, .19) * (1 - ramp(t, .25, .43)) + ramp(t, 5.44, 5.65) * (1 - ramp(t, 5.73, 5.93))
+        maskf = mask.astype(np.float32) / 255.
+        sub = maskf[:, :, None] * word_alpha * WHITE[None, None, :]
+        bars = np.zeros_like(mask)
+        cy = int(round(ycenter))
+        for j, x0 in enumerate(centers):
+            if not bars_alpha > 0.005:
+                break
+            factor = cyc(e['bars'], j)
+            pulse = 1 + 0.10 * math.sin(12 * t + j * 1.25)
+            hh = int(round((56 + 108 * factor * pulse) * min(1, 0.75 + 0.25 * bars_alpha)))
+            xc = int(round(x0))
+            cv2.rectangle(bars, (xc - 8, cy - hh // 2), (xc + 8, cy + hh // 2), 255, -1, cv2.LINE_AA)
+        sub = np.maximum(sub, (bars.astype(np.float32) / 255. * bars_alpha)[:, :, None] * (INK[None, None, :] * .94 + WHITE[None, None, :] * .06))
+        wave = np.zeros_like(mask)
+        if wave_alpha > 0.005:
+            xc = np.arange(xmin - 50, xmax + 51, 2)
+            u = (xc - xmin) / max(1., xmax - xmin)
+            env = np.maximum(0, np.sin(np.pi * u)) ** 0.85
+            osc = (46 * np.sin(2 * np.pi * (3.25 * u + 0.07)) + 18 * np.sin(2 * np.pi * (8.1 * u + 0.14)) + 6 * np.sin(2 * np.pi * 16 * u)) * env
+            pts = np.stack([xc, np.rint(ycenter + osc).astype(np.int32)], axis=1).astype(np.int32)
+            cv2.polylines(wave, [pts], False, 255, 2, cv2.LINE_AA)
+        sub = np.maximum(sub, (wave.astype(np.float32) / 255. * wave_alpha)[:, :, None] * INK[None, None, :])
+        x0, y0, x1, y1 = box
+        frame[y0:y1, x0:x1] = np.clip(sub, 0, 255).astype(np.uint8)
+
+
+def blend_paste(canvas, mask, xpos, ypos, color, alpha=1.0):
+    """render_stage33.paste()."""
+    alpha = float(np.clip(alpha, 0, 1))
+    if alpha < 1e-4:
+        return
+    ih, iw = mask.shape
+    x, y = int(round(xpos)), int(round(ypos))
+    x0, y0, x1, y1 = max(0, x), max(0, y), min(W, x + iw), min(H, y + ih)
+    if x1 <= x0 or y1 <= y0:
+        return
+    a = (mask[y0 - y:y1 - y, x0 - x:x1 - x].astype(np.float32) / 255 * alpha)[:, :, None]
+    c = np.asarray(color, dtype=np.float32).reshape(1, 1, 3)
+    dest = canvas[y0:y1, x0:x1, :]
+    dest[:] = np.clip(dest.astype(np.float32) * (1 - a) + a * c, 0, 255).astype(np.uint8)
+
+
+class Gold1x(B2):
     def __init__(self, sc, font_path):
         self.sc, self.font_path = sc, font_path
         self.cache = {}
@@ -907,7 +1478,11 @@ class Gold1x:
              'spectralInk': 'spectral_ink', 'glyphPivot': 'glyph_pivot', 'mirrorUnfold': 'mirror_unfold',
              'slantMorph': 'slant_morph', 'counterRelease': 'counter_release', 'inverseTransit': 'inverse_transit',
              'depthCast': 'depth_cast', 'pleatUnfold': 'pleat_unfold', 'particleCoalesce': 'particle_coalesce',
-             'contourTrace': 'contour_trace', 'characterReel': 'character_reel', 'isolineCollapse': 'isoline_collapse'}
+             'contourTrace': 'contour_trace', 'characterReel': 'character_reel', 'isolineCollapse': 'isoline_collapse',
+             'splitRegister': 'split_register', 'glyphTorsion': 'glyph_torsion', 'imprintPress': 'imprint_press',
+             'pairKerning': 'pair_kerning', 'solidExtract': 'solid_extract', 'printRegister': 'print_register',
+             'tidalInk': 'tidal_ink', 'hatchEngrave': 'hatch_engrave', 'gridReflow': 'grid_reflow',
+             'rippleWave': 'ripple_wave', 'signalWave': 'signal_wave'}
 
     def draw_direct(self, canvas, t):
         for a in self.sc.actors:

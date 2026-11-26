@@ -22,7 +22,7 @@ struct FtText : GoldText {
   QHash<QString,QString> paths; mutable QHash<QString,FT_Face> faces; mutable QHash<QString,hb_font_t*> hbs;
   FT_Face face(const QString&k,int px) const { QString key=k+QString::number(px); auto it=faces.find(key); if(it!=faces.end())return *it;
     FT_Face f; if(FT_New_Face(lib,paths.value(k).toUtf8().constData(),0,&f)){fprintf(stderr,"no font %s\n",qPrintable(k));exit(2);} FT_Set_Pixel_Sizes(f,0,px);
-    faces.insert(key,f); hb_font_t*h=hb_ft_font_create_referenced(f); hb_ft_font_set_load_flags(h,FT_LOAD_DEFAULT); hbs.insert(key,h); return f; }
+    faces.insert(key,f); hb_font_t*h=hb_ft_font_create_referenced(f); hb_ft_font_set_load_flags(h,FT_LOAD_DEFAULT|FT_LOAD_NO_HINTING); hbs.insert(key,h); return f; }
   struct G{unsigned gid; double x,y;};
   std::vector<G> shape(const QString&k,int px,const QString&t,double*adv) const { face(k,px); hb_font_t*h=hbs.value(k+QString::number(px)); hb_buffer_t*b=hb_buffer_create(); QByteArray u=t.toUtf8();
     hb_buffer_add_utf8(b,u.constData(),u.size(),0,u.size()); hb_buffer_guess_segment_properties(b); hb_shape(h,b,nullptr,0); unsigned n; auto*inf=hb_buffer_get_glyph_infos(b,&n); auto*pos=hb_buffer_get_glyph_positions(b,&n);
@@ -32,9 +32,10 @@ struct FtText : GoldText {
     for(auto&g:gs){ FT_Load_Glyph(f,g.gid,FT_LOAD_DEFAULT); FT_Glyph_Metrics&m=f->glyph->metrics; if(!m.width) continue; int x0=int(std::floor(g.x+0.5))+int(std::floor(m.horiBearingX/64.0)), x1=int(std::floor(g.x+0.5))+int(std::ceil((m.horiBearingX+m.width)/64.0));
       int y0=-int(std::ceil(m.horiBearingY/64.0)), y1=-int(std::floor((m.horiBearingY-m.height)/64.0)); if(!any){l=x0;tp=y0;r=x1;bt=y1;any=true;} else {l=std::min(l,x0);tp=std::min(tp,y0);r=std::max(r,x1);bt=std::max(bt,y1);} }
     b.left=std::min(0,l); b.right=std::max(int(std::floor(adv+0.5)),r); b.top=any?std::min(0,tp):0; b.bottom=any?std::max(0,bt):0; return b; }
+  int ascender(const QString&k,int px) const override { FT_Face f=face(k,px); return int(std::ceil(f->size->metrics.ascender/64.0)); }
   double length(const QString&k,int px,const QString&t) const override { double adv; shape(k,px,t,&adv); return adv; }
   void draw(M8&m,const QString&k,int px,const QString&t,double x,double y) const override { FT_Face f=face(k,px); auto gs=shape(k,px,t,nullptr);
-    for(auto&g:gs){ FT_Load_Glyph(f,g.gid,FT_LOAD_RENDER); auto*gl=f->glyph; int ox=int(std::floor(x+g.x+0.5))+gl->bitmap_left, oy=int(std::floor(y+0.5))-gl->bitmap_top;
+    for(auto&g:gs){ FT_Load_Glyph(f,g.gid,FT_LOAD_RENDER); auto*gl=f->glyph; int ox=int(std::floor(x+g.x+0.5))+gl->bitmap_left, oy=int(std::ceil(y-0.5))-gl->bitmap_top;
       for(unsigned j=0;j<gl->bitmap.rows;++j)for(unsigned i=0;i<gl->bitmap.width;++i){int X=ox+i,Y=oy+j; if(X<0||Y<0||X>=m.w||Y>=m.h)continue; int v=gl->bitmap.buffer[j*gl->bitmap.pitch+i]; int o=m.at(X,Y); m.at(X,Y)=std::uint8_t(o+(255-o)*v/255);} } }
 };
 int main(int argc,char**argv){ FT_Init_FreeType(&lib);

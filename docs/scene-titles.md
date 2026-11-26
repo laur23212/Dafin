@@ -352,7 +352,7 @@ Source: `render_stage05.py` and its siblings.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
   slide on another). Reveal channels multiply across blocks; offsets add.
 
-### gold1x (the Golden Run 18)
+### gold1x (the Golden Run 18 and the later stages)
 
 The Golden Run proofs (`render_stage25.py` … `render_stage30.py`, three scenes each) drew light
 onto a pure black frame with numpy and OpenCV. In gold1x every text actor carries an `effect`
@@ -361,12 +361,15 @@ naming one of the 18 mechanisms, with the scene's own numbers as fields: `contou
 `weightMorph` (26C), `spectralInk` (27A), `glyphPivot` (27B), `mirrorUnfold` (27C),
 `slantMorph` (28A), `counterRelease` (28B), `inverseTransit` (28C), `depthCast` (29A),
 `pleatUnfold` (29B), `particleCoalesce` (29C), `contourTrace` (30A), `characterReel` (30B),
-`isolineCollapse` (30C). Timing pairs are `[start, dur]` (a third number is the per-letter
+`isolineCollapse` (30C). The later stages (B2) add 11 more: `splitRegister` (32A),
+`glyphTorsion` (32B), `imprintPress` (33A), `pairKerning` (33B), `solidExtract` (34A),
+`printRegister` (34B), `tidalInk` (35A), `hatchEngrave` (35B), `gridReflow` (39A), `rippleWave`
+(48A), `signalWave` (49A). Timing pairs are `[start, dur]` (a third number is the per-letter
 stagger). The word, the second word of 25A (`to`) and the colours are params; a different word
 re-runs the layout, the masks and the fields.
 
 The reference (`tools/scene-ref/golden.py`) repeats each script step for step and is identical to
-it on all 150 frames (`test_parity.py --golden`). Native (`engine/render2d/scene/SceneGoldOps.h`,
+it on all 150 frames (`test_parity.py --golden`, and `--later` for 32A … 49A). Native (`engine/render2d/scene/SceneGoldOps.h`,
 `SceneGoldEffects.h`) runs the same steps in plain C++ on a black frame and keys it on black:
 alpha = the brightest channel, colour = frame ÷ alpha, which gives the same light over black and
 the same tint over footage. Its cv2 stand-ins were measured against OpenCV here: INTER_AREA and
@@ -374,11 +377,12 @@ INTER_CUBIC resizes and the L2 3 × 3 / 5 × 5 / exact distance transforms equal
 warpAffine within 1 level. 29C's particles come from numpy's `default_rng(1009)` (PCG64 +
 SeedSequence) rebuilt bit for bit, so every dot lands where the script put it. Two steps are
 modelled rather than copied: 28B finds the counters as the background that does not reach the
-mask's edge (the script used odd-depth cv2 contours, the same regions for letters), and 30A
-traces each glyph's borders with Moore tracing, down the left side first like cv2.findContours.
-Run against the reference with FreeType + HarfBuzz text standing in for Skia, every scene's frames
-10–65 have SSIM 0.93–1.00 (lowest: 30C's thin rings and 28A's entrance at 0.93–0.96, from small text
-layout differences of that stand-in).
+mask's edge, plus the ink pixels next to them (the script filled odd-depth cv2 contours, which run
+through those pixels), and 30A traces each glyph's borders with Moore tracing, down the left side
+first like cv2.findContours. Text follows PIL to the pixel: advances on hb-ft's unhinted 26.6 grid
+(`pilAdvance`), and a pen at a half pixel goes right in x but up in y (`ceil(y − 0.5)`), as
+ImageDraw.text does. Run against the reference with FreeType + HarfBuzz text standing in for Skia,
+all 29 scenes have SSIM ≥ 0.988 on frames 10–135 (26 of them 1.000).
 
 ### cov1x (Chapter A v4 / B v4, RECONSTRUCTED_APPROX)
 
@@ -460,6 +464,7 @@ composite); the alpha layer is solved from a render over black and over white. N
   | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
   | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
   | 25A … 30C, the Golden Run 18 (gold1x into the scripts' black frame) | 150/150 frames identical |
+  | 32A … 49A, the later stages (gold1x into the scripts' black frame) | 150/150 frames identical |
   | 10_TypographyMorph, 10_MaskedLightReveal, 10_PrecisionFocus (fx1x over the script's backgrounds) | 150/150 frames identical |
   | 11_ArcResolve, 11_PhraseReflow (pil1x over the script's gradients) | 150/150 frames identical |
   | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |
