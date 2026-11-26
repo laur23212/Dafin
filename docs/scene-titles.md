@@ -346,6 +346,16 @@ Source: `render_stage05.py` and its siblings.
 - `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
   slide on another). Reveal channels multiply across blocks; offsets add.
 
+### cv1x (Stage11 Anchor Note v4, Stage12 Anchor family)
+
+Straight into an opaque RGB frame, as those scripts drew. `route` is sprite2x's cv2 line
+(`render.minRoute`: no line below that many px of drawn length). An `ellipse` (`fill`) or `ring`
+(`color`, `stroke`) with `center` and `radius` is `cv2.circle(LINE_AA)` in its colour mixed with
+`render.mixColor` by the opacity (`render.mixSnap`: `"trunc"` int(), else round). A text is a 1x PIL
+label with its pen at `at: {"ascender": [x, y]}` (anchor `la`), composited as
+`uint8(view·(1 − a) + ink·a)`. The alpha layer carries each opacity instead of the mix. Anchor
+Index's badges are their own text params; a blank badge leaves the ring.
+
 ### cov1x (Chapter A v4 / B v4, RECONSTRUCTED_APPROX)
 
 The original v4 scripts are SOURCE_MISSING; the reference is `dafin_chapters_v4_recon.py`, rebuilt
@@ -420,6 +430,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 08_Cinematic_Garamond / Inter / RobotoSlab / Lato (pil1x over the script's charcoal) | 150/150 frames identical |
   | 04_Dark_Chapter_A_v2 (pil1x over the script's backdrop) | 150/150 frames identical |
   | 09_WordRelay_A1, 09_SplitMotion_C1, 09_WordShift_B7 (pil1x over the scripts' plates; C's photo is a test plate) | 150/150 frames identical |
+  | 11_AnchorNote_v4, 12_A_Anchor_Bracket, 12_B_Anchor_Measure, 12B_C_Anchor_Index_Manual (cv1x into the scripts' black plate) | 150/150 frames identical |
   | 04_Chapter_A_v4, 04_Chapter_B_v4 (cov1x against the reconstruction, RGB and alpha) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 

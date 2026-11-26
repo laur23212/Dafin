@@ -1,0 +1,430 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.anchor.bracket",
+ "label": "Anchor Bracket",
+ "category": "Anchors & Callouts",
+ "source": {
+  "asset": "12_A_Anchor_Bracket",
+  "sha256": "e7d9eeaa86bfa181772a040cf9294cebbf2d7cedc88ad20c739a23f885cf688b",
+  "script": "base_stage12_anchor_family_v6.0.2.py :: candidate_a",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "cv1x",
+  "mixColor": [
+   6,
+   7,
+   11
+  ],
+  "mixSnap": "round",
+  "minRoute": 0.001
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "semi": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  }
+ },
+ "params": [
+  {
+   "id": "label",
+   "type": "text",
+   "default": "ZONĂ DE INTERES",
+   "label": "Label"
+  }
+ ],
+ "actors": [
+  {
+   "id": "corner1h",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1000,
+     435
+    ],
+    [
+     1040,
+     435
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner1v",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1000,
+     435
+    ],
+    [
+     1000,
+     475
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner2h",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1390,
+     435
+    ],
+    [
+     1350,
+     435
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner2v",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1390,
+     435
+    ],
+    [
+     1390,
+     475
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner3h",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1000,
+     670
+    ],
+    [
+     1040,
+     670
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner3v",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1000,
+     670
+    ],
+    [
+     1000,
+     630
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner4h",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1390,
+     670
+    ],
+    [
+     1350,
+     670
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "corner4v",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1390,
+     670
+    ],
+    [
+     1390,
+     630
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.2,
+    "dur": 0.44,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 5.1,
+    "dur": 0.42,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "leader",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1000,
+     435
+    ],
+    [
+     940,
+     404
+    ],
+    [
+     548,
+     404
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.78,
+    "dur": 0.78,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.63,
+    "dur": 0.5,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "label",
+   "role": "title",
+   "type": "text",
+   "text": "{label}",
+   "font": "semi",
+   "size": 50,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "at": {
+    "ascender": [
+     552,
+     328
+    ]
+   },
+   "in": {
+    "start": 1.24,
+    "dur": 0.46,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.45,
+    "dur": 0.36,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}

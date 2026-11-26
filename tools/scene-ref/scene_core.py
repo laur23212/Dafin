@@ -19,7 +19,7 @@ FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
 ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat', 'pin'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
-PROFILES = {'sprite2x', 'mask1x', 'pil1x', 'cov1x'}
+PROFILES = {'sprite2x', 'mask1x', 'pil1x', 'cov1x', 'cv1x'}
 
 
 class SceneError(ValueError):

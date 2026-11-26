@@ -280,6 +280,36 @@ def check_stage09(src: Path, frames):
     return out
 
 
+def check_anchors(note: Path, family: Path, frames):
+    """Stage11 Anchor Note v4 (render_anchor_note_static_v4.py) and Stage12 Anchor Bracket, Measure
+    and Index (base_stage12_anchor_family_v6.0.2.py candidates a/b/c), cv1x straight into the
+    scripts' black plate. TEST-ONLY adapter: Anchor Note's output folder is moved to a temporary
+    one (it makes its folders on import)."""
+    import tempfile
+    tmp = Path(tempfile.mkdtemp())
+    code = (note / 'render_anchor_note_static_v4.py').read_text().replace(
+        "ROOT=Path('/mnt/data/Dafin_Part6_Transfer_2026-11-22/Anchor_Note_v4_Static_Point')", f"ROOT=Path({str(tmp)!r})")
+    (tmp / 'anchor_note_adapter.py').write_text(code)
+    an = load_module(tmp / 'anchor_note_adapter.py', 'anchor_note_v4')
+    fam = load_module(family / 'base_stage12_anchor_family_v6.0.2.py', 'anchor_family')
+    bg = np.empty((1080, 1920, 3), np.uint8)
+    bg[:] = (6, 7, 11)
+    out = []
+    for name, fn in (('11_AnchorNote_v4', an.render), ('12_A_Anchor_Bracket', lambda i: fam.render(fam.candidate_a, i)),
+                     ('12_B_Anchor_Measure', lambda i: fam.render(fam.candidate_b, i)),
+                     ('12B_C_Anchor_Index_Manual', lambda i: fam.render(fam.candidate_c, i))):
+        r = render.Cv1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            got = bg.copy()
+            r.draw_direct(got, i / 25)
+            mx, n = diff(fn(i), got)
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_chapters_v4(src: Path, frames):
     """Chapter A v4 / B v4 against the reconstruction script, over its plain preview background and
     as alpha. (RECONSTRUCTED_APPROX: the original v4 script is SOURCE_MISSING.)"""
@@ -353,6 +383,8 @@ def main():
     ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
     ap.add_argument('--dark-chapter-a', type=Path, help='folder with render_a_dark_v2.py')
     ap.add_argument('--stage09', type=Path, help='folder with reference_render_stage09.py, render_stage09_refinements.py, render.py (B7)')
+    ap.add_argument('--anchors', type=Path, nargs=2, metavar=('NOTE_DIR', 'FAMILY_DIR'),
+                    help='folders with render_anchor_note_static_v4.py and base_stage12_anchor_family_v6.0.2.py')
     ap.add_argument('--chapters-v4', type=Path, help='folder with dafin_chapters_v4_recon.py + chapters_v4_params.json')
     ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
@@ -376,6 +408,8 @@ def main():
         res.extend(check_stage07(o.stage07, frames))
     if o.stage09:
         res.extend(check_stage09(o.stage09, frames))
+    if o.anchors:
+        res.extend(check_anchors(*o.anchors, frames))
     if o.chapters_v4:
         res.extend(check_chapters_v4(o.chapters_v4, frames))
     if o.dark_chapter_a:

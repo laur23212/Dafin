@@ -1023,8 +1023,79 @@ class Cov1x:
         return Image.fromarray(np.dstack([rgb, acc_a * 255]).clip(0, 255).astype(np.uint8), 'RGBA')
 
 
+class Cv1x(Sprite2x):
+    """Stage11 Anchor Note v4 / Stage12 Anchor family: straight into an opaque RGB frame. Routes are
+    sprite2x's cv2 lines (skipped below render.minRoute px of drawn length); a dot (ellipse) or ring
+    with a centre is cv2.circle in the colour mixed with mixColor (int or round, render.mixSnap);
+    texts are 1x PIL labels (anchor 'la' at at.ascender) composited as
+    uint8(view·(1 − a) + ink·a) in float32."""
+
+    def __init__(self, sc, font_dirs=()):
+        super().__init__(sc, font_dirs)
+        r = sc.raw.get('render', {})
+        self.min_route = float(r.get('minRoute', 0.0))
+        self.mix_trunc = r.get('mixSnap') == 'trunc'
+
+    def label(self, a):
+        key = ('label', a['id'], a['text'], a['font'], a['size'])
+        if key not in self.cache:
+            f = _truetype(font_path(self.sc, a['font'], self.font_dirs), int(a['size']), False)
+            x1, y1, x2, y2 = ImageDraw.Draw(Image.new('RGBA', (4, 4))).textbbox((0, 0), a['text'], font=f)
+            pad = 8
+            im = Image.new('RGBA', (max(1, x2 + 2 * pad), max(1, y2 + 2 * pad)), (0, 0, 0, 0))
+            ImageDraw.Draw(im).text((pad, pad), a['text'], font=f, fill=(*self.color(a)[:3], 255))
+            arr = np.array(im)
+            self.cache[key] = (arr[:, :, 3:4].astype(np.float32) / 255.0, arr[:, :, :3].astype(np.float32), pad)
+        return self.cache[key]
+
+    def _draw(self, a, ch, canvas, acc):
+        t = a['type']
+        op = ch['opacity']
+        if t == 'text':
+            if op <= 0:
+                return
+            al, ink, pad = self.label(a)
+            x = int(a['at']['ascender'][0]) - pad + int(round(ch['dx']))
+            y = int(a['at']['ascender'][1]) - pad + int(round(ch['dy']))
+            H, W = self.sc.height, self.sc.width
+            hh, ww = al.shape[:2]
+            x1, y1, x2, y2 = max(x, 0), max(y, 0), min(x + ww, W), min(y + hh, H)
+            if x2 <= x1 or y2 <= y1:
+                return
+            alpha = al[y1 - y:y2 - y, x1 - x:x2 - x] * op
+            if canvas is not None:
+                view = canvas[y1:y2, x1:x2]
+                view[:] = np.uint8(np.clip(view * (1 - alpha) + ink[y1 - y:y2 - y, x1 - x:x2 - x] * alpha, 0, 255))
+            else:
+                src = np.concatenate([np.array(self.color(a)[:3], np.float32) / 255. * alpha, alpha], axis=2)
+                acc[y1:y2, x1:x2] = src + acc[y1:y2, x1:x2] * (1 - alpha)
+            return
+        if t in ('ellipse', 'ring') and 'center' in a:
+            if op <= 0:
+                return
+            col = self.color(a, 'fill' if t == 'ellipse' else 'color')
+            c = (int(a['center'][0]), int(a['center'][1]))
+            th = -1 if t == 'ellipse' else int(a.get('stroke', 2))
+            if canvas is not None:
+                mix = [self.mix_color[k] * (1 - op) + col[k] * op for k in range(3)]
+                px = tuple(int(v) if self.mix_trunc else int(round(v)) for v in mix)
+                cv2.circle(canvas, c, int(a['radius']), px, th, cv2.LINE_AA)
+            else:
+                m = np.zeros(acc.shape[:2], np.uint8)
+                cv2.circle(m, c, int(a['radius']), 255, th, cv2.LINE_AA)
+                al = (m.astype(np.float32) / 255. * min(1, op))[:, :, None]
+                src = np.concatenate([np.array(col[:3], np.float32) / 255. * al, al], axis=2)
+                acc[:] = src + acc * (1 - al)
+            return
+        if t == 'route' and self.min_route:
+            pts = [tuple(int(v) for v in p) for p in a['points']]
+            if sum(math.dist(p, q) for p, q in zip(pts, pts[1:])) * max(0., min(1., ch['progress'])) < self.min_route:
+                return
+        super()._draw(a, ch, canvas, acc)
+
+
 def make_renderer(sc, font_dirs=()):
-    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x}[sc.profile](sc, font_dirs)
+    return {'sprite2x': Sprite2x, 'mask1x': Mask1x, 'pil1x': Pil1x, 'cov1x': Cov1x, 'cv1x': Cv1x}[sc.profile](sc, font_dirs)
 
 
 # ----------------------------------------------------------------------------------------------

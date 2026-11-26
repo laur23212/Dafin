@@ -328,6 +328,10 @@ private slots:
         QTest::newRow("08_Cinematic_Inter") << scenePath("08_Cinematic_Inter") << QStringLiteral("08_Cinematic_Inter");
         QTest::newRow("08_Cinematic_RobotoSlab") << scenePath("08_Cinematic_RobotoSlab") << QStringLiteral("08_Cinematic_RobotoSlab");
         QTest::newRow("08_Cinematic_Lato") << scenePath("08_Cinematic_Lato") << QStringLiteral("08_Cinematic_Lato");
+        QTest::newRow("11_AnchorNote_v4") << scenePath("11_AnchorNote_v4") << QStringLiteral("11_AnchorNote_v4");
+        QTest::newRow("12_A_Anchor_Bracket") << scenePath("12_A_Anchor_Bracket") << QStringLiteral("12_A_Anchor_Bracket");
+        QTest::newRow("12_B_Anchor_Measure") << scenePath("12_B_Anchor_Measure") << QStringLiteral("12_B_Anchor_Measure");
+        QTest::newRow("12B_C_Anchor_Index_Manual") << scenePath("12B_C_Anchor_Index_Manual") << QStringLiteral("12B_C_Anchor_Index_Manual");
         QTest::newRow("09_WordRelay_A1") << scenePath("09_WordRelay_A1") << QStringLiteral("09_WordRelay_A1");
         QTest::newRow("09_SplitMotion_C1") << scenePath("09_SplitMotion_C1") << QStringLiteral("09_SplitMotion_C1");
         QTest::newRow("09_WordShift_B7") << scenePath("09_WordShift_B7") << QStringLiteral("09_WordShift_B7");

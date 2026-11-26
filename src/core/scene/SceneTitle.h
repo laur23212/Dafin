@@ -21,7 +21,7 @@ namespace drift::scene {
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
 
-enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x };
+enum class Profile { Sprite2x, Mask1x, Pil1x, Cov1x, Cv1x };
 
 struct Rgba
 {

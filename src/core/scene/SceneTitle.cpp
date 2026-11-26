@@ -1491,6 +1491,8 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Pil1x;
         else if (profile == QLatin1String("cov1x"))
             sc.profile = Profile::Cov1x;
+        else if (profile == QLatin1String("cv1x"))
+            sc.profile = Profile::Cv1x;
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
         sc.supersample = render.contains(QStringLiteral("supersample")) ? render.value(QStringLiteral("supersample")).toInt() : 1;

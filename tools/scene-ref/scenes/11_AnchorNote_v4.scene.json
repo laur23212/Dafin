@@ -1,0 +1,165 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.anchor.note",
+ "label": "Anchor Note",
+ "category": "Anchors & Callouts",
+ "source": {
+  "asset": "11_AnchorNote_v4",
+  "sha256": "6f2c18f85ab8e7f9ca625366539b87ed1f53f1d37743fd7f26c0d18b8f3daf76",
+  "script": "render_anchor_note_static_v4.py (Stage11 C, static point v4)",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "cv1x",
+  "mixColor": [
+   6,
+   7,
+   11
+  ],
+  "mixSnap": "trunc",
+  "minRoute": 0.0001
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "semi": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  }
+ },
+ "params": [
+  {
+   "id": "label",
+   "type": "text",
+   "default": "PUNCT DE INTERES",
+   "label": "Label"
+  }
+ ],
+ "actors": [
+  {
+   "id": "leader",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1290,
+     590
+    ],
+    [
+     1030,
+     426
+    ],
+    [
+     724,
+     426
+    ]
+   ],
+   "width": 2,
+   "color": [
+    239,
+    242,
+    246
+   ],
+   "in": {
+    "start": 0.62,
+    "dur": 0.9,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.7,
+    "dur": 0.66,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "dot",
+   "role": "accent",
+   "type": "ellipse",
+   "center": [
+    1290,
+    590
+   ],
+   "radius": 6,
+   "fill": [
+    239,
+    242,
+    246
+   ],
+   "in": {
+    "start": 0.14,
+    "dur": 0.36,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 5.4,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "label",
+   "role": "title",
+   "type": "text",
+   "text": "{label}",
+   "font": "semi",
+   "size": 52,
+   "color": [
+    247,
+    248,
+    250
+   ],
+   "at": {
+    "ascender": [
+     724,
+     344
+    ]
+   },
+   "in": {
+    "start": 1.18,
+    "dur": 0.46,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.52,
+    "dur": 0.32,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}

@@ -788,6 +788,13 @@ public:
             if (a.type != QLatin1String("text") || scene.profile == Profile::Cov1x)
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
+            if (scene.profile == Profile::Cv1x) { // Stage11/12 labels: 1x PIL, anchor 'la' at at.ascender
+                const SkFont f1 = pixelFont(tf, int(a.size));
+                SkFontMetrics fm;
+                f1.getMetrics(&fm);
+                texts.insert(a.id, pilText(f1, a.text, QPointF(a.ascender.x(), a.ascender.y() + std::ceil(-fm.fAscent))));
+                continue;
+            }
             if (scene.profile == Profile::Pil1x && a.spriteChapter) {
                 const TrackedArt ta = chapterText(pixelFont(tf, int(a.size)), a.text, a.letterSpacing, a.baseline);
                 texts.insert(a.id, ta.art);
@@ -1032,6 +1039,11 @@ public:
             c.restore();
             return;
         }
+        if (sc.profile == Profile::Cv1x) {
+            paintCv(c);
+            c.restore();
+            return;
+        }
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
             bool skip = false;
@@ -1056,6 +1068,42 @@ public:
     }
 
 private:
+    // cv1x (Stage11/12 anchors): cv2 routes, AA dots and rings, 1x labels; the proofs mixed each
+    // colour with their black plate, the alpha layer carries the opacity instead.
+    void paintCv(SkCanvas &c) const
+    {
+        const Scene &sc = r->scene;
+        for (const Actor &a : sc.actors) {
+            bool skip = false;
+            const Channels ch = scene::drawChannels(sc, a, t, &skip);
+            if (skip || a.type == QLatin1String("group"))
+                continue;
+            const double op = qBound(0.0, ch.opacity, 1.0);
+            if (a.type == QLatin1String("line") || a.type == QLatin1String("route")) {
+                drawLine(c, a, ch, true);
+            } else if (a.type == QLatin1String("text")) {
+                const TextArt art = r->texts.value(a.id);
+                if (!art.image || op <= 0.0)
+                    continue;
+                SkPaint paint;
+                paint.setColor(skColor(a.color, op));
+                c.drawImage(art.image, SkScalar(art.origin.x() + roundHalfEven(ch.dx)), SkScalar(art.origin.y() + roundHalfEven(ch.dy)),
+                            SkSamplingOptions(), &paint);
+            } else if (a.hasCenter && op > 0.0) {
+                // cv2.circle(LINE_AA): pixel centres at whole coordinates.
+                SkPaint paint;
+                paint.setAntiAlias(true);
+                const bool ring = a.type == QLatin1String("ring");
+                paint.setColor(skColor(ring ? a.strokeColor : a.fill, op));
+                if (ring) {
+                    paint.setStyle(SkPaint::kStroke_Style);
+                    paint.setStrokeWidth(SkScalar(qMax(1.0, a.stroke)));
+                }
+                c.drawCircle(SkScalar(a.center.x() + 0.5), SkScalar(a.center.y() + 0.5), SkScalar(a.circleRadius + (ring ? 0.0 : 0.5)), paint);
+            }
+        }
+    }
+
     // cov1x: m = coverage · alpha · group · fade · crop wipe (· the clipTo actor's wiped box);
     // colour = c·(1 − m) + ink·m in actor order; drawn as one unpremultiplied image.
     void paintCov(SkCanvas &c, const SkSamplingOptions &sampling) const

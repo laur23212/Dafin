@@ -1,0 +1,312 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.anchor.measure",
+ "label": "Anchor Measure",
+ "category": "Anchors & Callouts",
+ "source": {
+  "asset": "12_B_Anchor_Measure",
+  "sha256": "96052fae7b801a3a292159bd13ab23f5b0283c2de018d516f34ea7b2d1ecb631",
+  "script": "base_stage12_anchor_family_v6.0.2.py :: candidate_b",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "cv1x",
+  "mixColor": [
+   6,
+   7,
+   11
+  ],
+  "mixSnap": "round",
+  "minRoute": 0.001
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "semi": {
+   "file": "NotoSansDisplay-SemiBold.ttf",
+   "sha256": "9fa1f6b9fc7d95e0aa49ec75a90ce858e0a4c55b839811eb64abb7798afc94fd"
+  },
+  "reg": {
+   "file": "NotoSansDisplay-Regular.ttf",
+   "sha256": "3dd456595e9226472ab8adaf9408400c671b97dbba241d883d05e2ab70ceadac"
+  }
+ },
+ "params": [
+  {
+   "id": "value",
+   "type": "text",
+   "default": "640 PX",
+   "label": "Value"
+  },
+  {
+   "id": "caption",
+   "type": "text",
+   "default": "DISTANȚĂ",
+   "label": "Caption"
+  }
+ ],
+ "actors": [
+  {
+   "id": "pin1",
+   "role": "accent",
+   "type": "ellipse",
+   "center": [
+    640,
+    580
+   ],
+   "radius": 4,
+   "fill": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.16,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 5.38,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "pin2",
+   "role": "accent",
+   "type": "ellipse",
+   "center": [
+    1280,
+    580
+   ],
+   "radius": 4,
+   "fill": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.16,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 5.38,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   }
+  },
+  {
+   "id": "span",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     640,
+     580
+    ],
+    [
+     1280,
+     580
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.6,
+    "dur": 0.86,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.78,
+    "dur": 0.57,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "tick1",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     640,
+     560
+    ],
+    [
+     640,
+     600
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.92,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.72,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "tick2",
+   "role": "accent",
+   "type": "route",
+   "points": [
+    [
+     1280,
+     560
+    ],
+    [
+     1280,
+     600
+    ]
+   ],
+   "width": 2,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "in": {
+    "start": 0.92,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "progress": 0
+    }
+   },
+   "out": {
+    "start": 4.72,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "to": {
+     "progress": 0
+    }
+   }
+  },
+  {
+   "id": "value",
+   "role": "title",
+   "type": "text",
+   "text": "{value}",
+   "font": "semi",
+   "size": 60,
+   "color": [
+    238,
+    242,
+    248
+   ],
+   "at": {
+    "ascender": [
+     843,
+     432
+    ]
+   },
+   "in": {
+    "start": 1.28,
+    "dur": 0.45,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.47,
+    "dur": 0.34,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  },
+  {
+   "id": "caption",
+   "role": "description",
+   "type": "text",
+   "text": "{caption}",
+   "font": "reg",
+   "size": 26,
+   "color": [
+    176,
+    185,
+    196
+   ],
+   "at": {
+    "ascender": [
+     891,
+     517
+    ]
+   },
+   "in": {
+    "start": 1.44,
+    "dur": 0.4,
+    "ease": "smoothstep",
+    "from": {
+     "opacity": 0
+    }
+   },
+   "out": {
+    "start": 4.32,
+    "dur": 0.3,
+    "ease": "smoothstep",
+    "to": {
+     "opacity": 0
+    }
+   },
+   "optional": true
+  }
+ ]
+}
