@@ -546,6 +546,58 @@ TextArt pilText(const SkFont &font, const QString &text, QPointF pen)
     return art;
 }
 
+// Stage08 tracked text: each glyph laid out alone, at round(pen), pen += its advance + tracking.
+// The art is placed as the script's sprite: ink left 8 px + bearing, ink top 9 px from its top;
+// `spriteW`/`spriteH` (in art.ink of a QRectF built here) give the sprite's own size.
+struct TrackedArt
+{
+    TextArt art;
+    double spriteW = 0.0, spriteH = 0.0;
+};
+
+TrackedArt trackedText(const SkFont &font, const QString &text, double tracking)
+{
+    TrackedArt out;
+    std::vector<GlyphRun> runs;
+    double pen = 8.0, sumAdv = 0.0;
+    for (int i = 0; i < text.size(); ++i) {
+        const QString ch = text.mid(i, 1);
+        std::vector<GlyphRun> one = basicLayout(font, ch);
+        double adv = 0.0;
+        for (GlyphRun &r : one) {
+            for (SkPoint &p : r.pos)
+                p.fX += SkScalar(std::round(pen));
+            std::vector<SkScalar> w(r.glyphs.size());
+            r.font.getWidths({r.glyphs.data(), r.glyphs.size()}, {w.data(), w.size()});
+            for (SkScalar v : w)
+                adv += v;
+            runs.push_back(std::move(r));
+        }
+        sumAdv += adv;
+        pen += adv + tracking;
+    }
+    const SkIRect bounds = layoutBounds(runs, {0, 0});
+    const SkBitmap cov = coverage(runs, {0, 0}, bounds);
+    const SkIRect ink = alphaBox(cov);
+    out.spriteW = std::ceil(sumAdv + tracking * qMax(0, int(text.size()) - 1)) + 16;
+    if (ink.isEmpty()) {
+        out.spriteH = 20;
+        return out;
+    }
+    SkBitmap crop;
+    crop.allocPixels(SkImageInfo::MakeA8(ink.width(), ink.height()));
+    cov.readPixels(crop.pixmap(), ink.left(), ink.top());
+    crop.setImmutable();
+    out.art.mask = crop;
+    out.art.image = crop.asImage();
+    // In sprite coordinates: x as laid out from pen 8, ink top at 9.
+    out.art.origin = QPointF(bounds.left() + ink.left(), 9.0);
+    out.art.ink = QRectF(out.art.origin, QSizeF(ink.width(), ink.height()));
+    out.art.valid = true;
+    out.spriteH = ink.height() + 20;
+    return out;
+}
+
 // PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
 // coordinates. Width 1 is a thin line.
 void pilLine(SkCanvas &c, double ax, double ay, double bx, double by, double width, SkColor color)
@@ -573,6 +625,7 @@ public:
     Scene scene;
     quint64 key = 0;
     QHash<QString, TextArt> texts;
+    QHash<QString, QSizeF> trackedSprites; // Stage08: the sprite size the centring uses
 
     void build(const QStringList &dirs, QString *error)
     {
@@ -592,6 +645,12 @@ public:
             if (a.type != QLatin1String("text"))
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
+            if (scene.profile == Profile::Pil1x && a.tracked) {
+                const TrackedArt ta = trackedText(pixelFont(tf, int(a.size)), a.text, a.tracking);
+                texts.insert(a.id, ta.art);
+                trackedSprites.insert(a.id, QSizeF(ta.spriteW, ta.spriteH));
+                continue;
+            }
             if (scene.profile == Profile::Pil1x) {
                 const SkFont f1 = pixelFont(tf, int(a.size));
                 // at.right/top: the script's sprite (ink + 8 px padding) has its right edge and top
@@ -931,6 +990,25 @@ private:
     void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch, double t) const
     {
         const Scene &sc = r->scene;
+        if (a.tracked) {
+            // Stage08: centred sprite, left-to-right crop int(w·ent), opacity 1 − exit.
+            const TextArt art = r->texts.value(a.id);
+            const QSizeF sp = r->trackedSprites.value(a.id);
+            if (!art.image || ch.wipe <= 0.0 || ch.opacity <= 0.0)
+                return;
+            const double x = std::trunc(a.centerAt.x() - sp.width() / 2.0);
+            const double y = std::trunc(roundHalfEven(a.centerAt.y() - sp.height() / 2.0 + ch.dy));
+            const double vis = std::trunc(sp.width() * ch.wipe);
+            if (vis <= 0.0)
+                return;
+            c.save();
+            c.clipRect(SkRect::MakeXYWH(SkScalar(x), SkScalar(y), SkScalar(vis), SkScalar(sp.height())));
+            SkPaint paint;
+            paint.setColor(skColor(a.color, qMin(1.0, ch.opacity)));
+            c.drawImage(art.image, SkScalar(x + art.origin.x()), SkScalar(y + art.origin.y()), SkSamplingOptions(), &paint);
+            c.restore();
+            return;
+        }
         QString key = a.id;
         if (a.hasCounter) {
             const TimedBlock &k = a.counter;

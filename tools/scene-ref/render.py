@@ -588,6 +588,59 @@ class Pil1x:
             self.cache[key] = (im, (x, y))
         return self.cache[key]
 
+    def tracked_sprite(self, a):
+        """Stage08 Cinematic: glyph by glyph at round(pen), pen += textlength(ch) + tracking, on a
+        sprite ceil(Σadvances + tracking·(n−1)) + 16 wide, int(bbox height) + 20 tall."""
+        key = ('tracked', a['id'], a['text'], a['font'], a['size'], a['tracking'])
+        if key not in self.cache:
+            f = self.font(a['font'], a['size'])
+            td = ImageDraw.Draw(Image.new('RGBA', (4, 4), (0, 0, 0, 0)))
+            text = a['text']
+            adv = [td.textlength(ch, font=f) for ch in text]
+            bb = td.textbbox((0, 0), text, font=f)
+            tw = int(math.ceil(sum(adv) + a['tracking'] * (len(text) - 1))) + 16
+            th = int(bb[3] - bb[1]) + 20
+            im = Image.new('RGBA', (tw, th), (0, 0, 0, 0))
+            d = ImageDraw.Draw(im)
+            x = 8.0
+            for ch, w in zip(text, adv):
+                d.text((round(x), 9 - bb[1]), ch, font=f, fill=self.rgba(a), stroke_width=0)
+                x += w + a['tracking']
+            self.cache[key] = im
+        return self.cache[key]
+
+    def draw_tracked(self, c, a, ch):
+        im = self.tracked_sprite(a)
+        ent, alpha = ch['wipe'], ch['opacity']  # alpha = 1 − ex (the exit's opacity)
+        if ent <= 0 or alpha <= 0:
+            return
+        cx, cy = a['at']['center']
+        x = int(cx - im.width / 2)
+        y = int(round(cy - im.height / 2 + ch['dy']))
+        vis = int(im.width * ent)
+        if vis <= 0:
+            return
+        src = im.crop((0, 0, vis, im.height))
+        if self.alpha_mode or a.get('composite') != 'numpy':
+            sp = src.copy()
+            sp.putalpha(src.getchannel('A').point(lambda q: round(q * alpha)))
+            c.alpha_composite(sp, (x, y), (max(0, -x), max(0, -y))) if x < 0 or y < 0 else c.alpha_composite(sp, (x, y))
+            return
+        # The script's numpy blend on its BGR frame: trunc(t·(1−a)) + round(c·a), uint8.
+        arr = np.array(c)
+        sr = np.asarray(src, dtype=np.uint8)
+        h, w = sr.shape[:2]
+        W, H = self.sc.width, self.sc.height
+        x1, y1, x2, y2 = max(0, x), max(0, y), min(W, x + w), min(H, y + h)
+        if x2 <= x1 or y2 <= y1:
+            return
+        s = sr[y1 - y:y2 - y, x1 - x:x2 - x]
+        av = (s[:, :, 3:4].astype(np.float32) / 255.0) * alpha
+        tgt = arr[y1:y2, x1:x2, :3]
+        np.multiply(tgt, 1.0 - av, out=tgt, casting='unsafe')
+        tgt += np.round(s[:, :, :3].astype(np.float32) * av).astype(np.uint8)
+        c.paste(Image.fromarray(arr, 'RGBA'))
+
     def counter_text(self, a, t):
         """counter: {start, dur, ease, to}: the text is str(round(to·phase)) (Stage06 Metric)."""
         c = a['counter']
@@ -646,7 +699,9 @@ class Pil1x:
                     c.alpha_composite(Image.new('RGBA', (W, H), (0, 0, 0, 0)))
                 continue
             ch = self.chan(a, t)
-            if a['type'] == 'text':
+            if a['type'] == 'text' and 'tracking' in a:
+                self.draw_tracked(c, a, ch)
+            elif a['type'] == 'text':
                 self.draw_text(c, a, ch, self.counter_text(a, t) if a.get('counter') else None)
             elif a['type'] == 'group':
                 pane = Image.new('RGBA', (W, H), (0, 0, 0, 0))

@@ -783,6 +783,8 @@ Ease easeOf(const QJsonValue &v, const QString &what)
         e.kind = Ease::OutQuart;
     else if (s == QLatin1String("smootherstep"))
         e.kind = Ease::Smootherstep;
+    else if (s == QLatin1String("easeInCubic"))
+        e.kind = Ease::InCubic;
     else {
         static const QRegularExpression re(QStringLiteral(R"(^cubic-bezier\(([^)]*)\)$)"));
         const QRegularExpressionMatch m = re.match(QString(s).remove(QLatin1Char(' ')));
@@ -940,6 +942,9 @@ struct Loader
             const QJsonObject at = r.value(QStringLiteral("at")).toObject();
             if (at.contains(QStringLiteral("baseline"))) {
                 a.baseline = pointOf(at.value(QStringLiteral("baseline")), a.id + QStringLiteral(": at"));
+            } else if (at.contains(QStringLiteral("center"))) {
+                a.anchorCenter = true;
+                a.centerAt = pointOf(at.value(QStringLiteral("center")), a.id + QStringLiteral(": at.center"));
             } else if (at.contains(QStringLiteral("right"))) {
                 a.anchorRight = true;
                 a.anchorRightX = numberOf(at.value(QStringLiteral("right")), a.id + QStringLiteral(": at.right"));
@@ -949,6 +954,10 @@ struct Loader
                 a.anchorPoint = pointOf(at.value(a.anchorKind), a.id + QStringLiteral(": at"));
             } else if (parent.isEmpty() || !r.value(QStringLiteral("align")).toObject().contains(QStringLiteral("h"))) {
                 fail(QStringLiteral("%1: text needs at.baseline").arg(a.id));
+            }
+            if (r.contains(QStringLiteral("tracking"))) {
+                a.tracked = true;
+                a.tracking = r.value(QStringLiteral("tracking")).toDouble();
             }
             const QJsonObject counter = r.value(QStringLiteral("counter")).toObject();
             if (!counter.isEmpty()) {
@@ -1288,6 +1297,8 @@ double Ease::operator()(double u) const
     }
     case Smootherstep: // same operation order as the Stage03b C revision's ease5
         return u * u * u * (u * (6.0 * u - 15.0) + 10.0);
+    case InCubic:
+        return u * u * u;
     case Bezier:
         if (u == 0.0 || u == 1.0)
             return u;

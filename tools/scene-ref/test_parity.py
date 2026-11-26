@@ -205,6 +205,24 @@ def check_stage07(src: Path, frames):
     return out
 
 
+def check_stage08_cinematic(src: Path, frames):
+    """Stage08 Cinematic Statement, four typefaces: overlay_fast on the script's own charcoal BG."""
+    m = load_module(src / 'render_font_alternatives.py', 'stage08_cinematic')
+    out = []
+    for k, key in (('Garamond', 'A_EB_Garamond_Regular'), ('Inter', 'B_Inter_Display_Medium'),
+                   ('RobotoSlab', 'C_Roboto_Slab_Bold'), ('Lato', 'D_Lato_Heavy')):
+        spr, _ = m.glyph_sprite(m.CHOSEN[key])
+        name = '08_Cinematic_' + k
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(m.overlay_fast(m.BACKGROUND, spr, i / 25)[:, :, ::-1], np.array(r.draw(i / 25, m.BG).convert('RGB')))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_stage13_primitives(src: Path):
     """Shapes the two ports do not use, against the frozen Stage13 helpers (and Stage15's plate)."""
     b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_frozen')
@@ -255,6 +273,7 @@ def main():
     ap.add_argument('--stage05', type=Path, help='folder with render_stage05.py')
     ap.add_argument('--stage06', type=Path, help='folder with render_stage06.py')
     ap.add_argument('--stage07', type=Path, help='folder with render_stage07.py')
+    ap.add_argument('--stage08-cinematic', type=Path, help='folder with render_font_alternatives.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--frames', default='all')
@@ -274,6 +293,8 @@ def main():
         res.extend(check_stage06(o.stage06, frames))
     if o.stage07:
         res.extend(check_stage07(o.stage07, frames))
+    if o.stage08_cinematic:
+        res.extend(check_stage08_cinematic(o.stage08_cinematic, frames))
     if o.stage13c:
         res.extend(check_stage13c(o.stage13c, frames))
     if o.stage03b:

@@ -1,0 +1,92 @@
+{
+ "format": "dafin.scene-title",
+ "version": 1,
+ "id": "dafin.cinematic.statement-robotoslab",
+ "label": "Cinematic Statement C Roboto Slab",
+ "category": "Cinematic Titles",
+ "source": {
+  "asset": "08_Cinematic_RobotoSlab",
+  "sha256": "c20578eb3fdd4f2334eb436c99a5e958a313af9493949a10002bef84dd611f39",
+  "script": "Dafin_Part5_Stage08 :: render_font_alternatives.py overlay_fast",
+  "status": "ART_APPROVED_NATIVE_PENDING"
+ },
+ "canvas": {
+  "width": 1920,
+  "height": 1080
+ },
+ "timing": {
+  "duration": 6.0,
+  "fps": 25,
+  "cadence": "match"
+ },
+ "render": {
+  "profile": "pil1x"
+ },
+ "preview": {
+  "background": {
+   "kind": "base"
+  },
+  "encode": {
+   "preset": "veryfast",
+   "crf": 18
+  }
+ },
+ "fonts": {
+  "title": {
+   "file": "RobotoSlab-Bold.otf",
+   "sha256": "f860d0a2b4323863d94f76d579d4ddb54048c87d07f3bff936f40c22d7cb49dd",
+   "package": "fonts-roboto-slab 1.100263+20170512-2"
+  }
+ },
+ "params": [
+  {
+   "id": "title",
+   "type": "text",
+   "default": "TOTUL SE SCHIMBĂ",
+   "label": "Statement"
+  }
+ ],
+ "actors": [
+  {
+   "id": "title",
+   "role": "title",
+   "type": "text",
+   "text": "{title}",
+   "font": "title",
+   "size": 132,
+   "tracking": 4.5,
+   "color": [
+    238,
+    233,
+    223,
+    255
+   ],
+   "at": {
+    "center": [
+     960,
+     540
+    ]
+   },
+   "reveal": "x",
+   "composite": "numpy",
+   "in": {
+    "start": 0.2,
+    "dur": 1.05,
+    "ease": "easeOutCubic",
+    "from": {
+     "wipe": 0,
+     "dy": 23
+    }
+   },
+   "out": {
+    "start": 5.05,
+    "dur": 0.66,
+    "ease": "easeInCubic",
+    "to": {
+     "opacity": 0,
+     "dy": 12
+    }
+   }
+  }
+ ]
+}

@@ -31,7 +31,7 @@ struct Rgba
 
 struct Ease
 {
-    enum Kind { Linear, Smoothstep, OutCubic, OutQuart, Smootherstep, Bezier };
+    enum Kind { Linear, Smoothstep, OutCubic, OutQuart, Smootherstep, InCubic, Bezier };
     Kind kind = Smoothstep;
     double x1 = 0, y1 = 0, x2 = 1, y2 = 1;
     double operator()(double u) const;
@@ -79,6 +79,10 @@ struct Actor
     bool pane = false;         // group: children drawn into one layer, composited once
     bool drawDirect = false;   // "draw": "direct" (Stage07): written straight on the frame; opaque
     bool layerBase = false;    // "layer": "base" (Stage07 matte): drawn first, never wiped
+    bool tracked = false;      // text "tracking" (Stage08): glyph by glyph at round(pen), + tracking
+    double tracking = 0.0;
+    bool anchorCenter = false; // at: {"center": [x, y]}: the tracked sprite centred there
+    QPointF centerAt;
     bool wipeSnapRound = false;     // rect: x1 = x0 + round(w·wipe) (Stage06)
     bool progressSnapRound = false; // line: end.x = base + round((to.x - base)·progress) (Stage06)
     double progressBase = 0.0;

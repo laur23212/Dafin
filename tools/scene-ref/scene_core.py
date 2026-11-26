@@ -68,6 +68,7 @@ EASES = {
     'smoothstep': lambda u: (lambda x: x * x * (3 - 2 * x))(clamp01(u)),
     'easeOutCubic': lambda u: 1 - (1 - clamp01(u)) ** 3,
     'easeOutQuart': lambda u: 1 - (1 - clamp01(u)) ** 4,
+    'easeInCubic': lambda u: clamp01(u) ** 3,
     # Stage03b C revision's ease5: x*x*x*(x*(6*x-15)+10), evaluated in that order
     'smootherstep': lambda u: (lambda x: x * x * x * (x * (6 * x - 15) + 10))(clamp01(u)),
 }
