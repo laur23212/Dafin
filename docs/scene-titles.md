@@ -288,6 +288,28 @@ Source: `Stage03b_Alternative_LowerThird_Families_v1/source/render.py`.
 - Rectangles are written straight into the canvas: later shapes *replace* earlier ones, alpha
   included. This is how the coral seam overwrites both straps.
 
+### pil1x (Part5 Stage05–08)
+
+Source: `render_stage05.py` and its siblings.
+- Text is a 1× PIL sprite (basic layout) with 8 px of padding, composited at `round(x + dx)`.
+  `reveal: "x"` (from the left) or `"y"` (from the bottom) cuts the sprite by the actor's `wipe`
+  (`0 … round(w·v) − 1`, inclusive); opacity is a `round(α·p)` table, clamped to 0…255.
+- Every shape is drawn on its own transparent full-frame pane, then `alpha_composite`d, in order.
+  A `group` with `pane: true` draws its children into one pane (a leader line and its dots).
+  Rects take `x1 = x0 + w·wipe` (`wipeSnap: "int1"`: `x0 + max(1, int(w·wipe))`); `vscale` trims a
+  rect or a line equally at both ends (`collapse: "ends"` on a line trims its rest length; otherwise
+  `progress` grows it from `from` and `vscale` collapses that to its centre). Lines are PIL lines
+  (no anti-aliasing). A `route` may give `segmentWeights` (shares of progress per segment). An
+  `ellipse`/`ring` may be `center` + `radius`, the radius being `round(radius·scale)`.
+- `visibleWhen: [{"actor": id, "channel": "wipe", "gt": 0.01}]` draws an actor only past a
+  threshold, as the scripts' `if p > .01:` did (`actor` defaults to itself; groups apply to
+  their children).
+- Scene `exitWipe: {"start", "dur", "ease", "left", "right"}` closes the whole title: everything
+  right of `round(right − (right − left)·p)` is removed; at p = 1 nothing is left. It counts as an
+  exit for the hold.
+- `in` and `out` may be arrays of blocks: one curve per channel group (a reveal on one curve, a
+  slide on another). Reveal channels multiply across blocks; offsets add.
+
 ## Preview and matte
 
 - `preview.background` is the matte the proof was judged on. It is used only for previews and
@@ -340,6 +362,7 @@ them ("ask for the extension") rather than fake them. Their mechanisms, from `re
   | 13C_U1/U2/U3 (Universal and macOS shortcuts) | 150/150 frames identical |
   | 03b_LT_A_25, 03b_LT_C_25_REV | 150/150 frames identical |
   | 03b_LT_B_60, 03b_LT_C_60_REV | 360/360 frames identical |
+  | 05_TutorialStep, 05_PrecisionCallout, 05_PullQuote (pil1x, over a test plate: the proofs' photo is missing) | 150/150 frames identical |
   | 03b_LT_A_60 | 358/360 identical; frames 40 and 61 differ by 1 level on 1 pixel (Pillow's bicubic shift of a full-canvas mask vs the script's 1100×250 layer) |
 
   The Stage13 keycap, the check ring, the Stage15 plate and the route are also identical to the

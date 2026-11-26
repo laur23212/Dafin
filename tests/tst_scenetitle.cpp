@@ -316,6 +316,9 @@ private slots:
         QTest::newRow("03b_LT_B_60") << scenePath("03b_LT_B_60") << QStringLiteral("03b_LT_B_60");
         QTest::newRow("03b_LT_C_25_REV") << scenePath("03b_LT_C_25_REV") << QStringLiteral("03b_LT_C_25_REV");
         QTest::newRow("03b_LT_C_60_REV") << scenePath("03b_LT_C_60_REV") << QStringLiteral("03b_LT_C_60_REV");
+        QTest::newRow("05_TutorialStep") << scenePath("05_TutorialStep") << QStringLiteral("05_TutorialStep");
+        QTest::newRow("05_PrecisionCallout") << scenePath("05_PrecisionCallout") << QStringLiteral("05_PrecisionCallout");
+        QTest::newRow("05_PullQuote") << scenePath("05_PullQuote") << QStringLiteral("05_PullQuote");
         QTest::newRow("13_A_Shortcut_Keys") << scenePath("13_A_Shortcut_Keys") << QStringLiteral("13_A_Shortcut_Keys");
         QTest::newRow("13_B_Source_Credit") << scenePath("13_B_Source_Credit") << QStringLiteral("13_B_Source_Credit");
         QTest::newRow("13_C_Editorial_Checklist") << scenePath("13_C_Editorial_Checklist") << QStringLiteral("13_C_Editorial_Checklist");

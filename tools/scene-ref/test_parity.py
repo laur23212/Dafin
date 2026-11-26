@@ -132,6 +132,32 @@ def check_stage03b_crev(src: Path, frames):
     return [check_layer(n, lambda t: m.design_c(d, t), frames) for n in ('03b_LT_C_25_REV', '03b_LT_C_60_REV')]
 
 
+def check_stage05(src: Path, frames):
+    """Part5 Stage05 (pil1x). The proofs' photo plate (Dafin_clean_source_check.png) is not in the
+    archives, so this TEST-ONLY adapter points the script at a generated plate; both sides then
+    draw over the same base."""
+    import tempfile
+    from PIL import Image
+    tmp = Path(tempfile.mkdtemp())
+    y, x = np.mgrid[0:1080, 0:1920]
+    plate = np.dstack([(40 + x / 1920 * 90 + y / 1080 * 30) % 256, (110 + np.sin(x / 90) * 30) % 256, (70 + y / 1080 * 80) % 256])
+    Image.fromarray(plate.astype(np.uint8)).save(tmp / 'plate.png')
+    code = (src / 'render_stage05.py').read_text().replace(
+        "SOURCE=Path('/mnt/data/Dafin_clean_source_check.png')", f"SOURCE=Path({str(tmp / 'plate.png')!r})")
+    (tmp / 'render_stage05_adapter.py').write_text(code)
+    m = load_module(tmp / 'render_stage05_adapter.py', 'stage05_adapter')
+    out = []
+    for name, fn in (('05_TutorialStep', m.a_frame), ('05_PrecisionCallout', m.b_frame), ('05_PullQuote', m.c_frame)):
+        r = render.Pil1x(core.load_scene(HERE / 'scenes' / f'{name}.scene.json'))
+        bad = []
+        for i in frames:
+            mx, n = diff(np.array(fn(i / 25)), np.array(r.draw(i / 25, m.BASE)))
+            if mx:
+                bad.append({'frame': i, 'max': mx, 'pixels': n})
+        out.append({'example': name, 'frames': len(frames), 'mismatched': bad})
+    return out
+
+
 def check_stage13_primitives(src: Path):
     """Shapes the two ports do not use, against the frozen Stage13 helpers (and Stage15's plate)."""
     b = load_module(src / 'frozen_stage13_approved_renderer_reference.py', 'stage13_frozen')
@@ -179,6 +205,7 @@ def main():
     ap.add_argument('--stage03b', type=Path)
     ap.add_argument('--stage13', type=Path, help='folder with frozen_stage13_approved_renderer_reference.py')
     ap.add_argument('--stage03b-crev', type=Path, help='folder with C_25fps_refined_source.py')
+    ap.add_argument('--stage05', type=Path, help='folder with render_stage05.py')
     ap.add_argument('--stage14', type=Path, help='Stage14_TutorialUtility_Delta_v6.1.2/source')
     ap.add_argument('--stage13c', type=Path, help='folder with render_stage13C_universal_shortcut.py + its frozen copy')
     ap.add_argument('--frames', default='all')
@@ -192,6 +219,8 @@ def main():
         res.extend(check_stage15(o.stage15, frames))
     if o.stage14:
         res.extend(check_stage14(o.stage14, frames))
+    if o.stage05:
+        res.extend(check_stage05(o.stage05, frames))
     if o.stage13c:
         res.extend(check_stage13c(o.stage13c, frames))
     if o.stage03b:

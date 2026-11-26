@@ -21,7 +21,7 @@ namespace drift::scene {
 inline constexpr const char *kFormat = "dafin.scene-title";
 inline constexpr int kVersion = 1;
 
-enum class Profile { Sprite2x, Mask1x };
+enum class Profile { Sprite2x, Mask1x, Pil1x };
 
 struct Rgba
 {
@@ -50,10 +50,11 @@ struct TimedBlock
 struct Channels
 {
     double opacity = 1.0, wipe = 1.0, progress = 1.0, scale = 1.0, dx = 0.0, dy = 0.0;
+    double vscale = 1.0; // collapse to the vertical centre (pil1x accents and rules)
     bool operator==(const Channels &o) const
     {
         return opacity == o.opacity && wipe == o.wipe && progress == o.progress && scale == o.scale
-            && dx == o.dx && dy == o.dy;
+            && dx == o.dx && dy == o.dy && vscale == o.vscale;
     }
 };
 
@@ -62,7 +63,19 @@ struct Actor
     QString id, role, type; // type: text rect roundRect line route ellipse ring group
     QString parent;         // id of the enclosing group, empty at top level
     TimedBlock in, out;
+    QList<TimedBlock> inMore, outMore; // "in"/"out" given as arrays: one curve per channel group
     QStringList dependsOn;
+    // pil1x
+    struct Condition { QString actor; QString channel; double gt = 0.0; }; // actor empty = self
+    QList<Condition> visibleWhen;
+    QString reveal;           // text: "x" (from the left) or "y" (from the bottom), driven by wipe
+    bool wipeSnapInt1 = false; // rect: x1 = x0 + max(1, int(w·wipe)) (Stage05 A)
+    bool collapseEnds = false; // line: vscale trims both ends of the rest line (Stage05 A)
+    QList<double> segmentWeights; // route: share of progress per segment
+    bool hasCenter = false;    // ellipse/ring given as center + radius; radius scales with "scale"
+    QPointF center;
+    double circleRadius = 0.0;
+    bool pane = false;         // group: children drawn into one layer, composited once
     bool truncOffsets = false; // "offsetSnap": "trunc" — the Stage13 keycaps snapped dy with int()
 
     // text
@@ -145,6 +158,9 @@ struct Scene
     QVariantMap values;    // resolved param values
     QList<Actor> actors;   // flat, draw order, groups before their children
     double holdStart = 0.0, holdEnd = 0.0;
+    // exitWipe: the whole title is cut from the right as it closes (pil1x Stage05)
+    TimedBlock exitWipe;
+    double exitWipeLeft = 0.0, exitWipeRight = 0.0;
 
     const Actor *actor(const QString &id) const;
     int indexOf(const QString &id) const;

@@ -19,7 +19,7 @@ FORMAT_ID = 'dafin.scene-title'
 FORMAT_VERSION = 1
 ACTOR_TYPES = {'text', 'rect', 'roundRect', 'line', 'route', 'ellipse', 'ring', 'group', 'repeat'}
 RESERVED_EFFECTS = {'sdfMorph', 'maskedLight', 'focusMix'}
-PROFILES = {'sprite2x', 'mask1x'}
+PROFILES = {'sprite2x', 'mask1x', 'pil1x'}
 
 
 class SceneError(ValueError):
@@ -432,10 +432,13 @@ def resolve_align(actors, by_id):
 def scene_events(sc: Scene):
     ins, outs = [], []
     for a in sc.actors:
-        if 'in' in a:
-            ins.append(float(a['in']['start']) + float(a['in'].get('dur', 0)))
-        if 'out' in a:
-            outs.append(float(a['out']['start']))
+        for b in blocks(a.get('in')):
+            ins.append(float(b['start']) + float(b.get('dur', 0)))
+        for b in blocks(a.get('out')):
+            outs.append(float(b['start']))
+    ew = sc.raw.get('exitWipe')
+    if ew:  # a scene-wide closing wipe is an exit too
+        outs.append(float(ew['start']))
     D0 = sc.design_duration
     hold_start = max(ins) if ins else 0.0
     hold_end = min(outs) if outs else D0
@@ -483,14 +486,28 @@ def cadence_time(sc: Scene, t: float, project_fps: float) -> float:
 # ----------------------------------------------------------------------------------------------
 # Animated channels of one actor at design time t.
 
-REVEAL = ('opacity', 'wipe', 'progress')  # multiplicative, rest value 1
+REVEAL = ('opacity', 'wipe', 'progress', 'vscale')  # multiplicative, rest value 1 (vscale: collapse to the vertical centre)
 OFFSET = ('dx', 'dy')                     # additive, rest value 0
 SCALE = ('scale',)                        # multiplicative, rest value 1
 
 
+def blocks(v):
+    """`in` / `out` is one timed block or a list of them (one curve per channel group)."""
+    if not v:
+        return []
+    return list(v) if isinstance(v, list) else [v]
+
+
 def channels(actor: dict, t: float) -> dict:
-    ch = {'opacity': 1.0, 'wipe': 1.0, 'progress': 1.0, 'dx': 0.0, 'dy': 0.0, 'scale': 1.0}
-    blk_in, blk_out = actor.get('in'), actor.get('out')
+    ch = {'opacity': 1.0, 'wipe': 1.0, 'progress': 1.0, 'dx': 0.0, 'dy': 0.0, 'scale': 1.0, 'vscale': 1.0}
+    for blk_in in blocks(actor.get('in')):
+        _apply_in(ch, actor, blk_in, t)
+    for blk_out in blocks(actor.get('out')):
+        _apply_out(ch, actor, blk_out, t)
+    return ch
+
+
+def _apply_in(ch, actor, blk_in, t):
     if blk_in:
         p = phase(t, float(blk_in['start']), float(blk_in.get('dur', 0)), blk_in.get('ease'))
         frm = blk_in.get('from', {'opacity': 0})
@@ -501,6 +518,9 @@ def channels(actor: dict, t: float) -> dict:
                 ch[k] += v * (1 - p)
             else:
                 raise SceneError(f'{actor["id"]}: unknown channel {k!r}')
+
+
+def _apply_out(ch, actor, blk_out, t):
     if blk_out:
         p = phase(t, float(blk_out['start']), float(blk_out.get('dur', 0)), blk_out.get('ease'))
         to = blk_out.get('to', {'opacity': 0})
@@ -511,7 +531,6 @@ def channels(actor: dict, t: float) -> dict:
                 ch[k] += v * p
             else:
                 raise SceneError(f'{actor["id"]}: unknown channel {k!r}')
-    return ch
 
 
 def legacy_round(v: float) -> int:

@@ -801,7 +801,8 @@ Ease easeOf(const QJsonValue &v, const QString &what)
 const QSet<QString> &channelNames()
 {
     static const QSet<QString> names{QStringLiteral("opacity"), QStringLiteral("wipe"), QStringLiteral("progress"),
-                                     QStringLiteral("scale"), QStringLiteral("dx"), QStringLiteral("dy")};
+                                     QStringLiteral("scale"), QStringLiteral("dx"), QStringLiteral("dy"),
+                                     QStringLiteral("vscale")};
     return names;
 }
 
@@ -873,8 +874,40 @@ struct Loader
             a.truncOffsets = true;
         else if (!snapMode.isEmpty() && snapMode != QLatin1String("round"))
             fail(QStringLiteral("%1: offsetSnap must be \"round\" or \"trunc\"").arg(a.id));
-        a.in = blockOf(r.value(QStringLiteral("in")), true, a.id);
-        a.out = blockOf(r.value(QStringLiteral("out")), false, a.id);
+        const auto blocksOf = [&](const QJsonValue &v, bool isIn, TimedBlock &first, QList<TimedBlock> &more) {
+            if (v.isArray()) {
+                const QJsonArray arr = v.toArray();
+                for (int i = 0; i < arr.size(); ++i) {
+                    const TimedBlock b = blockOf(arr.at(i), isIn, a.id);
+                    if (i == 0)
+                        first = b;
+                    else
+                        more.append(b);
+                }
+            } else {
+                first = blockOf(v, isIn, a.id);
+            }
+        };
+        blocksOf(r.value(QStringLiteral("in")), true, a.in, a.inMore);
+        blocksOf(r.value(QStringLiteral("out")), false, a.out, a.outMore);
+        for (const QJsonValue &cv : r.value(QStringLiteral("visibleWhen")).toArray()) {
+            const QJsonObject co = cv.toObject();
+            Actor::Condition cond;
+            cond.actor = co.value(QStringLiteral("actor")).toString();
+            cond.channel = co.value(QStringLiteral("channel")).toString();
+            cond.gt = co.value(QStringLiteral("gt")).toDouble();
+            if (!channelNames().contains(cond.channel))
+                fail(QStringLiteral("%1: visibleWhen on unknown channel '%2'").arg(a.id, cond.channel));
+            a.visibleWhen.append(cond);
+        }
+        a.reveal = r.value(QStringLiteral("reveal")).toString();
+        if (!a.reveal.isEmpty() && a.reveal != QLatin1String("x") && a.reveal != QLatin1String("y"))
+            fail(QStringLiteral("%1: reveal must be \"x\" or \"y\"").arg(a.id));
+        a.wipeSnapInt1 = r.value(QStringLiteral("wipeSnap")).toString() == QLatin1String("int1");
+        a.collapseEnds = r.value(QStringLiteral("collapse")).toString() == QLatin1String("ends");
+        for (const QJsonValue &w : r.value(QStringLiteral("segmentWeights")).toArray())
+            a.segmentWeights << w.toDouble();
+        a.pane = r.value(QStringLiteral("pane")).toBool();
         for (const QJsonValue &d : r.value(QStringLiteral("dependsOn")).toArray())
             a.dependsOn << d.toString();
         const QString &t = a.type;
@@ -939,12 +972,23 @@ struct Loader
         } else if (t == QLatin1String("rect") || t == QLatin1String("roundRect") || t == QLatin1String("ellipse")
                    || t == QLatin1String("ring")) {
             const QJsonArray box = r.value(QStringLiteral("box")).toArray();
-            if (box.size() != 4)
-                fail(QStringLiteral("%1: box must be [x0, y0, x1, y1]").arg(a.id));
+            if (r.contains(QStringLiteral("center")) && (t == QLatin1String("ellipse") || t == QLatin1String("ring"))) {
+                a.hasCenter = true;
+                a.center = pointOf(r.value(QStringLiteral("center")), a.id + QStringLiteral(": center"));
+                a.circleRadius = numberOf(r.value(QStringLiteral("radius")), a.id + QStringLiteral(": radius"));
+                a.box[0] = a.center.x() - a.circleRadius;
+                a.box[1] = a.center.y() - a.circleRadius;
+                a.box[2] = a.center.x() + a.circleRadius;
+                a.box[3] = a.center.y() + a.circleRadius;
+            } else {
+                if (box.size() != 4)
+                    fail(QStringLiteral("%1: box must be [x0, y0, x1, y1]").arg(a.id));
+                for (int i = 0; i < 4; ++i)
+                    a.box[i] = numberOf(box.at(i), a.id + QStringLiteral(": box"));
+            }
             a.hasBox = true;
-            for (int i = 0; i < 4; ++i)
-                a.box[i] = numberOf(box.at(i), a.id + QStringLiteral(": box"));
-            a.radius = r.value(QStringLiteral("radius")).toDouble();
+            if (!a.hasCenter)
+                a.radius = r.value(QStringLiteral("radius")).toDouble();
             if (t == QLatin1String("rect") || t == QLatin1String("ring")) {
                 a.hasFill = t == QLatin1String("rect");
                 a.color = colorOf(r.value(QStringLiteral("color")), palette, a.id);
@@ -1352,6 +1396,8 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             sc.profile = Profile::Sprite2x;
         else if (profile == QLatin1String("mask1x"))
             sc.profile = Profile::Mask1x;
+        else if (profile == QLatin1String("pil1x"))
+            sc.profile = Profile::Pil1x;
         else
             fail(QStringLiteral("unknown render profile '%1'").arg(profile));
 
@@ -1438,10 +1484,14 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
             const int other = sc.indexOf(it.value());
             if (other < 0)
                 fail(QStringLiteral("%1: sync with unknown actor '%2'").arg(it.key(), it.value()));
-            if (sc.actors.at(other).in.present)
+            if (sc.actors.at(other).in.present) {
                 sc.actors[self].in = sc.actors.at(other).in;
-            if (sc.actors.at(other).out.present)
+                sc.actors[self].inMore = sc.actors.at(other).inMore;
+            }
+            if (sc.actors.at(other).out.present) {
                 sc.actors[self].out = sc.actors.at(other).out;
+                sc.actors[self].outMore = sc.actors.at(other).outMore;
+            }
         }
         QSet<QString> done, busy;
         for (int i = 0; i < sc.actors.size(); ++i)
@@ -1476,14 +1526,33 @@ std::optional<Scene> loadScene(const QJsonObject &doc, const QJsonObject &overri
         double hs = 0.0, he = sc.duration;
         bool anyIn = false, anyOut = false;
         for (const Actor &a : std::as_const(sc.actors)) {
-            if (a.in.present) {
-                hs = anyIn ? qMax(hs, a.in.start + a.in.dur) : a.in.start + a.in.dur;
+            QList<TimedBlock> ins{a.in}, outs{a.out};
+            ins += a.inMore;
+            outs += a.outMore;
+            for (const TimedBlock &b : std::as_const(ins)) {
+                if (!b.present)
+                    continue;
+                hs = anyIn ? qMax(hs, b.start + b.dur) : b.start + b.dur;
                 anyIn = true;
             }
-            if (a.out.present) {
-                he = anyOut ? qMin(he, a.out.start) : a.out.start;
+            for (const TimedBlock &b : std::as_const(outs)) {
+                if (!b.present)
+                    continue;
+                he = anyOut ? qMin(he, b.start) : b.start;
                 anyOut = true;
             }
+        }
+        // A scene-wide exitWipe is an exit too.
+        const QJsonObject ew = doc.value(QStringLiteral("exitWipe")).toObject();
+        if (!ew.isEmpty()) {
+            sc.exitWipe.present = true;
+            sc.exitWipe.start = numberOf(ew.value(QStringLiteral("start")), QStringLiteral("exitWipe: start"));
+            sc.exitWipe.dur = numberOf(ew.value(QStringLiteral("dur")), QStringLiteral("exitWipe: dur"));
+            sc.exitWipe.ease = easeOf(ew.value(QStringLiteral("ease")), QStringLiteral("exitWipe"));
+            sc.exitWipeLeft = numberOf(ew.value(QStringLiteral("left")), QStringLiteral("exitWipe: left"));
+            sc.exitWipeRight = numberOf(ew.value(QStringLiteral("right")), QStringLiteral("exitWipe: right"));
+            he = anyOut ? qMin(he, sc.exitWipe.start) : sc.exitWipe.start;
+            anyOut = true;
         }
         if (he < hs)
             fail(QStringLiteral("exits start (%1s) before the last entrance ends (%2s)").arg(pyFloatStr(he), pyFloatStr(hs)));
@@ -1509,6 +1578,7 @@ Channels channels(const Actor &actor, double t)
                            : k == QLatin1String("wipe")    ? &ch.wipe
                            : k == QLatin1String("progress") ? &ch.progress
                            : k == QLatin1String("scale")   ? &ch.scale
+                           : k == QLatin1String("vscale")  ? &ch.vscale
                                                             : nullptr;
             if (reveal) {
                 *reveal *= isIn ? v + (1.0 - v) * p : 1.0 - (1.0 - v) * p;
@@ -1519,7 +1589,11 @@ Channels channels(const Actor &actor, double t)
         }
     };
     apply(actor.in, true);
+    for (const TimedBlock &b : actor.inMore)
+        apply(b, true);
     apply(actor.out, false);
+    for (const TimedBlock &b : actor.outMore)
+        apply(b, false);
     return ch;
 }
 
@@ -1543,6 +1617,7 @@ Channels drawChannels(const Scene &scene, const Actor &actor, double t, bool *sk
         ch.wipe *= gc.wipe;
         ch.progress *= gc.progress;
         ch.scale *= gc.scale;
+        ch.vscale *= gc.vscale;
         ch.dx += gc.dx + g->groupAt.x();
         ch.dy += gc.dy + g->groupAt.y();
         p = g->parent;

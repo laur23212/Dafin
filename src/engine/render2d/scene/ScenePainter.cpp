@@ -39,6 +39,7 @@ using scene::Channels;
 using scene::Profile;
 using scene::Rgba;
 using scene::Scene;
+using scene::TimedBlock;
 
 namespace {
 
@@ -517,6 +518,47 @@ TextArt maskText(const SkFont &font, const QString &text, double letterSpacing, 
     return art;
 }
 
+// pil1x text: the scripts' 1x PIL sprite (basic layout: kerning, no ligatures), as an A8 mask at
+// the pen; drawn in the actor's colour like mask1x.
+TextArt pilText(const SkFont &font, const QString &text, QPointF pen)
+{
+    TextArt art;
+    const std::vector<GlyphRun> runs = basicLayout(font, text);
+    const SkPoint origin{SkScalar(pen.x()), SkScalar(pen.y())};
+    const SkIRect bounds = layoutBounds(runs, origin);
+    const SkBitmap cov = coverage(runs, origin, bounds);
+    const SkIRect ink = alphaBox(cov);
+    if (ink.isEmpty()) {
+        art.origin = pen;
+        art.ink = QRectF(pen, QSizeF(0, 0));
+        art.valid = true;
+        return art;
+    }
+    SkBitmap crop;
+    crop.allocPixels(SkImageInfo::MakeA8(ink.width(), ink.height()));
+    cov.readPixels(crop.pixmap(), ink.left(), ink.top());
+    crop.setImmutable();
+    art.mask = crop;
+    art.image = crop.asImage();
+    art.origin = QPointF(bounds.left() + ink.left(), bounds.top() + ink.top());
+    art.ink = QRectF(art.origin, QSizeF(ink.width(), ink.height()));
+    art.valid = true;
+    return art;
+}
+
+// PIL's ImageDraw.line: not anti-aliased, square ends at the end points, pixel centres on whole
+// coordinates. Width 1 is a thin line.
+void pilLine(SkCanvas &c, double ax, double ay, double bx, double by, double width, SkColor color)
+{
+    SkPaint paint;
+    paint.setAntiAlias(false);
+    paint.setStyle(SkPaint::kStroke_Style);
+    paint.setStrokeWidth(SkScalar(qMax(1.0, std::trunc(width))));
+    paint.setStrokeCap(SkPaint::kButt_Cap);
+    paint.setColor(color);
+    c.drawLine(SkScalar(ax + 0.5), SkScalar(ay + 0.5), SkScalar(bx + 0.5), SkScalar(by + 0.5), paint);
+}
+
 SkColor skColor(const Rgba &c, double alphaScale = 1.0)
 {
     const int a = int(std::lround(qBound(0.0, c.a * alphaScale, 255.0)));
@@ -550,6 +592,10 @@ public:
             if (a.type != QLatin1String("text"))
                 continue;
             const sk_sp<SkTypeface> tf = faces.value(a.font);
+            if (scene.profile == Profile::Pil1x) {
+                texts.insert(a.id, pilText(pixelFont(tf, int(a.size)), a.text, a.baseline));
+                continue;
+            }
             if (scene.profile == Profile::Sprite2x || inFlatGroup(a)) {
                 QPointF pen = a.baseline;
                 if (a.anchorKind == QLatin1String("sprite")) {
@@ -716,6 +762,11 @@ public:
         c.scale(SkScalar(s), SkScalar(s));
         const bool exact = s == 1.0 && offX == std::floor(offX);
         const SkSamplingOptions sampling = exact ? SkSamplingOptions() : SkSamplingOptions(SkCubicResampler::Mitchell());
+        if (sc.profile == Profile::Pil1x) {
+            paintPil(c);
+            c.restore();
+            return;
+        }
         const bool sprite = sc.profile == Profile::Sprite2x;
         for (const Actor &a : sc.actors) {
             bool skip = false;
@@ -740,6 +791,181 @@ public:
     }
 
 private:
+    // ---- pil1x (Part5 Stage05-08): every part on its own layer, in order; scene exitWipe ----
+    static double channelValue(const Channels &ch, const QString &name)
+    {
+        if (name == QLatin1String("opacity"))
+            return ch.opacity;
+        if (name == QLatin1String("wipe"))
+            return ch.wipe;
+        if (name == QLatin1String("progress"))
+            return ch.progress;
+        if (name == QLatin1String("scale"))
+            return ch.scale;
+        if (name == QLatin1String("vscale"))
+            return ch.vscale;
+        if (name == QLatin1String("dx"))
+            return ch.dx;
+        return ch.dy;
+    }
+
+    bool pilVisible(const Actor &a) const
+    {
+        const Scene &sc = r->scene;
+        for (const Actor *node = &a; node; node = node->parent.isEmpty() ? nullptr : sc.actor(node->parent)) {
+            for (const Actor::Condition &cond : node->visibleWhen) {
+                const Actor *other = cond.actor.isEmpty() ? node : sc.actor(cond.actor);
+                if (!other)
+                    continue;
+                if (!(channelValue(scene::drawChannels(sc, *other, t, nullptr), cond.channel) > cond.gt))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    void paintPil(SkCanvas &c) const
+    {
+        const Scene &sc = r->scene;
+        double limit = -1.0;
+        if (sc.exitWipe.present) {
+            const TimedBlock &w = sc.exitWipe;
+            const double p = w.dur <= 0.0 ? (t >= w.start ? 1.0 : 0.0) : w.ease((t - w.start) / w.dur);
+            if (p >= 1.0)
+                return;
+            if (p > 0.0)
+                limit = roundHalfEven(sc.exitWipeRight - (sc.exitWipeRight - sc.exitWipeLeft) * p);
+        }
+        c.save();
+        if (limit >= 0.0)
+            c.clipRect(SkRect::MakeLTRB(0, 0, SkScalar(limit + 1), SkScalar(sc.height)));
+        for (const Actor &a : sc.actors) {
+            const Actor *parent = a.parent.isEmpty() ? nullptr : sc.actor(a.parent);
+            if (parent && parent->pane)
+                continue; // drawn with its pane
+            const bool group = a.type == QLatin1String("group");
+            if ((group && !a.pane) || !pilVisible(a))
+                continue;
+            if (group) {
+                c.saveLayer(nullptr, nullptr);
+                for (const Actor &k : sc.actors)
+                    if (k.parent == a.id && pilVisible(k))
+                        drawPilShape(c, k, scene::drawChannels(sc, k, t, nullptr));
+                c.restore();
+                continue;
+            }
+            const Channels ch = scene::drawChannels(sc, a, t, nullptr);
+            if (a.type == QLatin1String("text"))
+                drawPilText(c, a, ch);
+            else
+                drawPilShape(c, a, ch);
+        }
+        c.restore();
+    }
+
+    void drawPilText(SkCanvas &c, const Actor &a, const Channels &ch) const
+    {
+        const TextArt art = r->texts.value(a.id);
+        const double op = qBound(0.0, ch.opacity, 1.0);
+        if (!art.image || op < 0.001)
+            return;
+        const double x = roundHalfEven(ch.dx), y = roundHalfEven(ch.dy);
+        c.save();
+        if (!a.reveal.isEmpty()) {
+            // The scripts revealed the whole sprite (ink plus 8 px of padding) from one side.
+            const double v = qBound(0.0, ch.wipe, 1.0);
+            if (v == 0.0) {
+                c.restore();
+                return;
+            }
+            const double L = art.ink.left() - 8 + x, T = art.ink.top() - 8 + y;
+            const double w = art.ink.width() + 16, h = art.ink.height() + 16;
+            if (a.reveal == QLatin1String("x"))
+                c.clipRect(SkRect::MakeLTRB(SkScalar(L), SkScalar(T), SkScalar(L + qMax(0.0, roundHalfEven(w * v))), SkScalar(T + h + 1)));
+            else
+                c.clipRect(SkRect::MakeLTRB(SkScalar(L), SkScalar(T + h - qMax(0.0, roundHalfEven(h * v))), SkScalar(L + w + 1), SkScalar(T + h + 1)));
+        }
+        SkPaint paint;
+        paint.setColor(skColor(a.color, op));
+        c.drawImage(art.image, SkScalar(art.origin.x() + x), SkScalar(art.origin.y() + y), SkSamplingOptions(), &paint);
+        c.restore();
+    }
+
+    void drawPilShape(SkCanvas &c, const Actor &a, const Channels &ch) const
+    {
+        const QString &tp = a.type;
+        if (tp == QLatin1String("rect") || tp == QLatin1String("roundRect")) {
+            double x0 = a.box[0], y0 = a.box[1], x1 = a.box[2], y1 = a.box[3];
+            const double w = x1 - x0, h = y1 - y0;
+            if (a.wipeSnapInt1)
+                x1 = x0 + qMax(1.0, std::trunc(w * ch.wipe));
+            else if (ch.wipe != 1.0)
+                x1 = x0 + w * ch.wipe;
+            if (ch.vscale != 1.0) {
+                const double trim = h * (1.0 - ch.vscale) / 2.0;
+                y0 += trim;
+                y1 -= trim;
+            }
+            SkPaint paint;
+            paint.setAntiAlias(false);
+            paint.setColor(skColor(tp == QLatin1String("roundRect") ? a.fill : a.color, ch.opacity));
+            const SkRect rr = SkRect::MakeLTRB(SkScalar(x0), SkScalar(y0), SkScalar(x1 + 1), SkScalar(y1 + 1));
+            if (a.radius > 0)
+                c.drawRRect(SkRRect::MakeRectXY(rr, SkScalar(a.radius), SkScalar(a.radius)), paint);
+            else
+                c.drawRect(rr, paint);
+        } else if (tp == QLatin1String("line")) {
+            double ax = a.from.x(), ay = a.from.y(), bx = a.to.x(), by = a.to.y();
+            const double p = ch.progress, v = ch.vscale;
+            if (a.collapseEnds) {
+                const double L = by - ay;
+                ay += L * (1.0 - v) / 2.0;
+                by -= L * (1.0 - v) / 2.0;
+            } else if (p != 1.0 || v != 1.0) {
+                const double L = by - ay, top = ay;
+                ay = top + (L * p) * (1.0 - v) / 2.0;
+                by = top + (L * p) * (1.0 + v) / 2.0;
+            }
+            pilLine(c, ax, ay, bx, by, a.width, skColor(a.color, ch.opacity));
+        } else if (tp == QLatin1String("route")) {
+            const double p = qBound(0.0, ch.progress, 1.0);
+            const int n = int(a.points.size()) - 1;
+            double start = 0.0;
+            for (int i = 0; i < n; ++i) {
+                const QPointF q0 = a.points.at(i), q1 = a.points.at(i + 1);
+                const double wgt = i < a.segmentWeights.size() ? a.segmentWeights.at(i) : 1.0 / n;
+                if (i == n - 1 || p <= start + wgt) {
+                    const double q = (p - start) / wgt;
+                    pilLine(c, q0.x(), q0.y(), q0.x() + (q1.x() - q0.x()) * q, q0.y() + (q1.y() - q0.y()) * q, a.width,
+                            skColor(a.color, ch.opacity));
+                    break;
+                }
+                pilLine(c, q0.x(), q0.y(), q1.x(), q1.y(), a.width, skColor(a.color, ch.opacity));
+                start += wgt;
+            }
+        } else if (tp == QLatin1String("ellipse") || tp == QLatin1String("ring")) {
+            SkRect bb;
+            if (a.hasCenter) {
+                const double rad = roundHalfEven(a.circleRadius * ch.scale);
+                bb = SkRect::MakeLTRB(SkScalar(a.center.x() - rad), SkScalar(a.center.y() - rad),
+                                      SkScalar(a.center.x() + rad + 1), SkScalar(a.center.y() + rad + 1));
+            } else {
+                bb = SkRect::MakeLTRB(SkScalar(a.box[0]), SkScalar(a.box[1]), SkScalar(a.box[2] + 1), SkScalar(a.box[3] + 1));
+            }
+            SkPaint paint;
+            paint.setAntiAlias(false);
+            if (tp == QLatin1String("ring")) {
+                SkRRect outer = SkRRect::MakeOval(bb), inner;
+                outer.inset(SkScalar(a.stroke), SkScalar(a.stroke), &inner);
+                paint.setColor(skColor(a.color, ch.opacity));
+                c.drawDRRect(outer, inner, paint);
+            } else {
+                paint.setColor(skColor(a.fill, ch.opacity));
+                c.drawOval(bb, paint);
+            }
+        }
+    }
+
     void drawSpriteText(SkCanvas &c, const Actor &a, const Channels &ch, const SkSamplingOptions &sampling,
                         double ox, double oy) const
     {
@@ -982,9 +1208,13 @@ std::shared_ptr<const VectorPainter> makeScenePainter(std::shared_ptr<const Scen
     };
     for (const Actor &a : renderer->scene.actors) {
         const Channels ch = scene::drawChannels(renderer->scene, a, designT, nullptr);
-        for (double v : {ch.opacity, ch.wipe, ch.progress, ch.scale, ch.dx, ch.dy})
+        for (double v : {ch.opacity, ch.wipe, ch.progress, ch.scale, ch.dx, ch.dy, ch.vscale})
             mix(v);
     }
+    // The pil1x exit wipe moves while every actor rests: it must change the key too.
+    const TimedBlock &ew = renderer->scene.exitWipe;
+    if (ew.present)
+        mix(ew.dur <= 0.0 ? (designT >= ew.start ? 1.0 : 0.0) : ew.ease((designT - ew.start) / ew.dur));
     p->key = h ? h : 1;
     p->r = std::move(renderer);
     return p;

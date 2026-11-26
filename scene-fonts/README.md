@@ -28,6 +28,8 @@ which lets documents and renders embed it freely; `COPYING-FreeFont.txt`).
 | NotoSansDisplay-SemiCondensedExtraBold.ttf | b224e7ec937a28e4b7f4925acf5be35ac480489fac28f598185f3e1af91473a4 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
 | NotoSansDisplay-SemiCondensedMedium.ttf | 1d1ab248177e1fd53daf9f481215e27ddf948578b8d99c51962de399f7a77e96 | fonts-noto-extra 20201225-2 (Stage03b C revision) |
 | FreeSerif.ttf | c57bf5de095af4e070c2acb5bce634316409ed4203b5098f4fdadb691dc7b3d2 | fonts-freefont-ttf 20211204+svn4273-2 (Stage03b A); GPL-3+ with the font exception, `COPYING-FreeFont.txt` |
+| InterDisplay-Medium.otf | cf438d4cd4979fda59150c773af3381d5b18627826672234846722bb6d06b86c | fonts-inter 4.0+ds-1 (Part5 Stage05) |
+| NotoSerifDisplay-Medium.ttf | ae125c4ab952dd4e9c70beb9b4b7a268ed541b4d5f609935c00ace16e7409d19 | fonts-noto-extra 20201225-2 (Part5 Stage05) |
 
-Stage10 (Light, Black, Medium, Noto Serif Display Medium) is not here yet: those scenes use the
+Stage10 (Light, Black) is not here yet: those scenes use the
 reserved effects, which v1 refuses.
